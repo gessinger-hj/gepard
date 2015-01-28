@@ -146,7 +146,6 @@ Admin.prototype._execute = function ( action, what, callback )
 	    			if ( callback )
 	    			{
 	    				callback.call ( null, list ) ;
-	    				this.end() ;
 	    				return ;
 	    			}
 		    		if ( ! list || ! list.length )
@@ -219,10 +218,16 @@ Admin.prototype.getInfoForApplication = function ( applicationName, callback )
 };
 Admin.prototype.getNumberOfApplications = function ( applicationName, callback )
 {
+	var thiz = this ;
 	this.info ( "lsconn", function lsconn ( list )
 	{
 		var n = 0 ;
-		if ( ! list || ! list.length ) return n ;
+		if ( ! list || ! list.length )
+		{
+			callback.call ( null, n ) ;
+		  thiz.socket.end() ;
+			return ;
+		}
 		for ( var i = 0 ; i < list.length ; i++ )
 		{
 			if ( list[i].applicationName === applicationName )
@@ -231,6 +236,7 @@ Admin.prototype.getNumberOfApplications = function ( applicationName, callback )
 			}
 		}
 		callback.call ( null, n ) ;
+	  thiz.socket.end() ;
 	});
 };
 module.exports = Admin ;
