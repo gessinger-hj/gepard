@@ -11,7 +11,6 @@ var Event               = require ( "./Event" ) ;
 var T                   = require ( "./Tango" ) ;
 var MultiHash           = require ( "./MultiHash" ) ;
 var Log                 = require ( "./LogFile" ) ;
-var WebSocketEventProxy = require ( "./WebSocketEventProxy" ) ;
 
 /**
  * Description
@@ -827,6 +826,7 @@ if ( require.main === module )
     b.listen() ;
     if ( T.getBool ( "web", false ) )
     {
+      var WebSocketEventProxy = require ( "./WebSocketEventProxy" ) ;
       var wse = new WebSocketEventProxy() ;
       wse.listen() ;
       b.on ( "shutdown", function onshutdown(e)
