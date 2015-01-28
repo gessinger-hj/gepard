@@ -8,9 +8,9 @@ var net                 = require ( 'net' ) ;
 var util                = require ( 'util' ) ;
 var EventEmitter        = require ( "events" ).EventEmitter ;
 var Event               = require ( "./Event" ) ;
-var T                   = require ( "../Tango" ) ;
-var MultiHash           = require ( "../MultiHash" ) ;
-var Log                 = require ( "../LogFile" ) ;
+var T                   = require ( "./Tango" ) ;
+var MultiHash           = require ( "./MultiHash" ) ;
+var Log                 = require ( "./LogFile" ) ;
 var WebSocketEventProxy = require ( "./WebSocketEventProxy" ) ;
 
 /**
@@ -782,7 +782,6 @@ module.exports = Broker ;
 if ( require.main === module )
 {
   var Admin = require ( "./Admin" ) ;
-  var File  = require ( "../File" ) ;
   new Admin().isRunning ( function admin_is_running ( state )
   {
     if ( state )
@@ -795,20 +794,31 @@ if ( require.main === module )
   function execute()
   {
     var s = T.getProperty ( "GEPARD_LOG" ) ;
-    var GEPARD_LOG ;
+    var fs = require ( "fs" ) ;
+    var fname ;
     if ( s )
     {
-      GEPARD_LOG = new File ( s ) ;
+      fname = s ;
     }
     else
     {
-      var fs = require ( "fs" ) ;
-      var GEPARD_LOG = new File ( T.resolve ( "%HOME%/log" ) ) ;
-      T.setProperty ( "GEPARD_LOG", GEPARD_LOG.toString() ) ;
+      fname = T.resolve ( "%HOME%/log" ) ;
+      T.setProperty ( "GEPARD_LOG", fname ) ;
     }
-    if ( ! GEPARD_LOG.isDirectory() )
+    try
     {
-      GEPARD_LOG.mkdir() ;
+      fs.statSync ( fname ).isDirectory() ;
+    }
+    catch ( exc )
+    {
+      try
+      {
+        fs.mkdirSync ( fname ) ;
+      }
+      catch ( exc )
+      {
+        console.log ( exc ) ;
+      }
     }
 
     Log.init ( "level=info,Xedirect=3,file=%GEPARD_LOG%/%APPNAME%.log:max=1m:v=4") ;

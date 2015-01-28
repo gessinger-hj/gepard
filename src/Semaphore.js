@@ -1,4 +1,4 @@
-var T      = require ( "../Tango" ) ;
+var T      = require ( "./Tango" ) ;
 var Event  = require ( "./Event" ) ;
 var Client = require ( "./Client" ) ;
 

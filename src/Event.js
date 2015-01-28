@@ -160,13 +160,6 @@ tangojs.gp.Event.prototype =
 	      }
 	      if ( typeof document === 'undefined' )
 	      {
-		      if ( o.type === 'Xml' )
-		      {
-		        var txml = require ( "Xml" ) ;
-		        var f = new txml.XmlFactory() ;
-		        obj[k] = f.create ( o.value ) ;
-		        continue ;
-		      }
 		      if ( o.type === "Buffer" && Array.isArray ( o.data ) )
 		      {
 		        obj[k] = new Buffer ( o.data ) ;

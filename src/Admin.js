@@ -1,6 +1,6 @@
 var net   = require('net');
 var Event = require ( "./Event" ) ;
-var T     = require ( "../Tango" ) ;
+var T     = require ( "./Tango" ) ;
 
 /**
  * @constructor

@@ -7,9 +7,9 @@ var Client       = require ( "./Client" ) ;
 var Lock         = require ( "./Lock" ) ;
 var Semaphore    = require ( "./Semaphore" ) ;
 
-var Log          = require ( "../LogFile" ) ;
-var MultiHash    = require ( "../MultiHash" ) ;
-var T            = require ( "../Tango" ) ;
+var Log          = require ( "./LogFile" ) ;
+var MultiHash    = require ( "./MultiHash" ) ;
+var T            = require ( "./Tango" ) ;
 
 /**
  * Description

@@ -3,11 +3,11 @@ var os           = require('os');
 var EventEmitter = require ( "events" ).EventEmitter ;
 var util         = require ( "util" ) ;
 
-var T            = require ( "../Tango" ) ;
+var T            = require ( "./Tango" ) ;
 var Event        = require ( "./Event" ) ;
-var MultiHash    = require ( "../MultiHash" ) ;
-var Log          = require ( "../LogFile" ) ;
-var User         = require ( "../User" ) ;
+var MultiHash    = require ( "./MultiHash" ) ;
+var Log          = require ( "./LogFile" ) ;
+var User         = require ( "./User" ) ;
 
 var counter = 0 ;
 /**
