@@ -1,0 +1,37 @@
+{
+    "name": "gepard",
+    "description": "General purpose commnucations for distributed applications / events, semaphores and messages",
+    "version": "1.0.0",
+    "homepage": "https://github.com/gessinger-hj",
+    "keywords": [
+    		"distributed-applications", "events", "semaphores", "locks", "messages"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/gessinger-hj/gepard.git"
+    },
+    "author": {
+        "name": "Hans-Jürgen Gessinger",
+        "email": "gessinger.hj@gmail.com",
+        "url": ""
+    },
+    "licenses": [
+      {
+        "type": "MIT",
+        "url": "https://github.com/gessinger-hj/gepard/LICENSE.md"
+      }
+    ],
+    "readmeFilename": "README.md",
+    "bugs": {
+      "url": "https://github.com/gessinger-hj/gepard/issues"
+    },
+    "main": "index.js",
+    "engines": {
+        "node": ">= 0.10"
+    },
+    "dependencies": {
+        "nodejs-websocket":">=1.2"
+    },
+    "devDependencies": {
+    }
+}
