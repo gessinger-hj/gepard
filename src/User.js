@@ -10,9 +10,9 @@ var util = require ( "util" ) ;
 var User = function ( id, key, pwd )
 {
 	this.className = "User" ;
-	this.id = id ;
-	this.key = key ;
-	this._pwd = pwd ;
+	this.id        = id ;
+	this.key       = key ;
+	this._pwd      = pwd ;
 };
 /**
  * Description
