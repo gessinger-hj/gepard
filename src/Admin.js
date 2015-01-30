@@ -244,7 +244,11 @@ Admin.prototype.getNumberOfApplications = function ( applicationName, callback )
 module.exports = Admin ;
 if ( require.main === module )
 {
-	var ad = new Admin() ;
+	var port = T.getProperty ( "gepard.port", 17501 ) ;
+	var host = T.getProperty ( "gepard.host" ) ;
+
+	var ad = new Admin ( port, host ) ;
+
 	var what = T.getProperty ( "shutdown" ) ;
 	if ( what )
 	{

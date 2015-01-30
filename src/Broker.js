@@ -774,8 +774,6 @@ Broker.prototype.listen = function ( port, callback )
   this.server.listen ( this.port, callback ) ;
 };
 
-var host = T.getProperty ( "gepard.host" ) ;
-
 module.exports = Broker ;
 
 if ( require.main === module )
