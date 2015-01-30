@@ -785,7 +785,7 @@ if ( ! tangojs.Tango )
 // }
 // var Tango = new TangoClass() ;
 // module.exports = util.Tango ;
-module.exports = Tango ;
+module.exports = tangojs.Tango ;
 if ( require.main === module )
 {
   var str = "%HOME%" ;
