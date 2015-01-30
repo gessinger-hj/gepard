@@ -36,7 +36,7 @@
     },
     "bin": {
       "gp.admin" : "./src/Admin.js"
-    , "gp.broker" : "./src/Broker.js"
+    , "gp.broker" : "./bin/broker"
     , "gp.shutdown" : "./bin/shutdown"
     , "gp.info" : "./bin/info"
     }
