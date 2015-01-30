@@ -1,4 +1,11 @@
-#!/bin/sh
+#!/usr/bin/env node
 
-node $GEPARD_SRC/Admin $*
+#node $GEPARD_SRC/Admin $*:w
+
+require('../').CLI(process.argv.slice(2), function(error) {
+  if (error) {
+    process.exit(1)
+  }
+})
+
 

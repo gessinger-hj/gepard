@@ -35,7 +35,6 @@
     "devDependencies": {
     },
     "bin": {
-        "gp.admin" : "./bin/gp.admin",
-        "gp.admin" : "./bin/gp.admin.bat"
+        "gp.admin" : "./src/Admin.js"
     }
 }
