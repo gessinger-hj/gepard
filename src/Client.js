@@ -809,7 +809,6 @@ Client.prototype.aquireSemaphore = function ( resourceId, callback )
  */
 Client.prototype.releaseSemaphore = function ( resourceId )
 {
-T.lwhere (  ) ;
   if ( typeof resourceId !== 'string' || ! resourceId )
   {
     Log.logln ( "Client.releaseSemaphore: resourceId must be a string." ) ;
@@ -829,8 +828,6 @@ T.lwhere (  ) ;
   var uid = os.hostname() + "_" + this.socket.localPort + "-" + counter ;
   e.setUniqueId ( uid ) ;
   delete this._ownedSemaphores[resourceId] ;
-T.lwhere (  ) ;
-console.log ( e ) ;
   this.send ( e ) ;
 };
 Client.prototype._releaseAllSemaphores = function()
