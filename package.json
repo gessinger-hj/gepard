@@ -33,5 +33,9 @@
         "nodejs-websocket":">=1.2"
     },
     "devDependencies": {
+    },
+    "bin": {
+        "gp.admin" : "./bin/gp.admin",
+        "gp.admin" : "./bin/gp.admin.bat"
     }
 }
