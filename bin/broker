@@ -1,0 +1,19 @@
+#!/usr/bin/env node
+var fs     = require('fs') ;
+var spawn  = require('child_process').spawn ;
+var Gepard = require ( "../src/Gepard" ) ;
+var Path 	 = require ( "path" ) ;
+
+var logDir = Gepard.getLogDirectory() ;
+
+var dir = Path.join ( logDir, "gp.broker.log" ) ;
+
+var out    = fs.openSync ( dir, 'w' ) ;
+var err    = fs.openSync ( dir, 'w' ) ;
+
+ var child = spawn('node', [ "../src/Broker" ], {
+   detached: true,
+   stdio: [ 'ignore', out, err ]
+ });
+
+child.unref();

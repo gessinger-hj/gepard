@@ -5,11 +5,12 @@ var Client = require ( "./Client" ) ;
 /**
  * Description
  * @constructor
+ * @param {string} resourceId
  * @param {int} [port]
  * @param {string} [host]
  * @return 
  */
-Lock = function ( resourceId, port, host )
+var Lock = function ( resourceId, port, host )
 {
   this.className = "Lock" ;
   this._resourceId = resourceId ;

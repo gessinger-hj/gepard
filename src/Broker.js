@@ -779,6 +779,7 @@ module.exports = Broker ;
 if ( require.main === module )
 {
   var Admin = require ( "./Admin" ) ;
+  var Gepard = require ( "./Gepard" ) ;
   new Admin().isRunning ( function admin_is_running ( state )
   {
     if ( state )
@@ -790,34 +791,7 @@ if ( require.main === module )
   });
   function execute()
   {
-    var s = T.getProperty ( "GEPARD_LOG" ) ;
-    var fs = require ( "fs" ) ;
-    var fname ;
-    if ( s )
-    {
-      fname = s ;
-    }
-    else
-    {
-      fname = T.resolve ( "%HOME%/log" ) ;
-      T.setProperty ( "GEPARD_LOG", fname ) ;
-    }
-    try
-    {
-      fs.statSync ( fname ).isDirectory() ;
-    }
-    catch ( exc )
-    {
-      try
-      {
-        fs.mkdirSync ( fname ) ;
-      }
-      catch ( exc )
-      {
-        console.log ( exc ) ;
-      }
-    }
-
+    var logDir = Gepard.getLogDirectory() ;
     Log.init ( "level=info,Xedirect=3,file=%GEPARD_LOG%/%APPNAME%.log:max=1m:v=4") ;
 
     var b = new Broker() ;

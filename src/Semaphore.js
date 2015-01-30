@@ -9,7 +9,7 @@ var Client = require ( "./Client" ) ;
  * @param {string} [host]
  * @return 
  */
-Semaphore = function ( resourceId, port, host )
+var Semaphore = function ( resourceId, port, host )
 {
   this.className = "Semaphore" ;
   this._resourceId = resourceId ;
