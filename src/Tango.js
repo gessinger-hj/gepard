@@ -686,6 +686,15 @@ TangoClass.prototype.resolve = function ( src, map, delimiter )
         {
           v = this.resolve ( v, map, delimiter ) ;
         }
+        if ( typeof v !== 'string' && name === 'HOME' )
+        {
+          var hp = this.getProperty ( "HOMEPATH" ) ;
+          var hd = this.getProperty ( "HOMEDRIVE" ) ;
+          if ( hp && hd )
+          {
+            v = hd + hp ;
+          }
+        }
         if ( typeof v === 'string' )
         {
           tgt += v ;
@@ -728,6 +737,15 @@ TangoClass.prototype.resolve = function ( src, map, delimiter )
           if ( v && v.indexOf ( delimiter ) >= 0  )
           {
             v = this.resolve ( v, map, delimiter ) ;
+          }
+          if ( typeof v !== 'string' && name === 'HOME' )
+          {
+            var hp = this.getProperty ( "HOMEPATH" ) ;
+            var hd = this.getProperty ( "HOMEDRIVE" ) ;
+            if ( hp && hd )
+            {
+              v = hd + hp ;
+            }
           }
           if ( typeof v === 'string' )
           {
