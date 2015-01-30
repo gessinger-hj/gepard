@@ -15,6 +15,10 @@ var T     = require ( "./Tango" ) ;
 var Admin = function ( port, host )
 {
 	this.port = T.getProperty ( "gepard.port", port ) ;
+	if ( ! this.port )
+	{
+		this.port = 17501 ;
+	}
 	this.host = T.getProperty ( "gepard.host", host ) ;
 };
 /**
