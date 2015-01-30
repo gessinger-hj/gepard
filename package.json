@@ -35,6 +35,7 @@
     "devDependencies": {
     },
     "bin": {
-        "gp.admin" : "./src/Admin.js"
+      "gp.admin" : "./src/Admin.js"
+    , "gp.broker" : "./src/Broker.js"
     }
 }
