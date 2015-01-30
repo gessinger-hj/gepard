@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 var net   = require('net');
 var Event = require ( "./Event" ) ;
 var T     = require ( "./Tango" ) ;
