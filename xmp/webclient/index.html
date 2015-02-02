@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gepard Examples</title>
+    <style type="text/css">
+        input#chat {
+            width: 410px
+        }
+
+        #console-container {
+            width: 400px;
+        }
+
+        #console {
+            border: 1px solid #CCCCCC;
+            border-right-color: #999999;
+            border-bottom-color: #999999;
+            height: 170px;
+            overflow-y: scroll;
+            padding: 5px;
+            width: 100%;
+        }
+
+        #console p {
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+<script type="text/javascript" src="Event.js" ></script>
+<script type="text/javascript" src="MultiHash.js" ></script>
+<script type="text/javascript" src="GPWebClient.js" ></script>
+<script type="text/javascript">
+var Console = {};
+Console.log = function ( message )
+{
+    var p = document.createElement('div');
+    p.style.wordWrap = 'break-word';
+    p.innerHTML = message;
+    this._log ( p ) ;
+}
+Console._log = function ( p )
+{
+    var console = document.getElementById('console');
+    console.appendChild(p);
+    while (console.childNodes.length > 25) {
+        console.removeChild(console.firstChild);
+    }
+    console.scrollTop = console.scrollHeight;
+};
+
+var Xmp1 = {};
+
+Xmp1.initialize = function()
+{
+  this.port = 17502 ;
+  var thiz = this ;
+  try
+  {
+    this.wc = tangojs.gp.getWebClient ( this.port ) ;
+    this.wc.on ( "open", function onopen()
+    {
+    }) ;
+  }
+  catch ( exc )
+  {
+    console.log ( exc ) ;
+  }
+};
+Xmp1.sendEvent = function ( name )
+{
+    this.wc.fire ( name,
+    { error:function error_callback(e)
+      {
+        Console.log ( "Error" ) ;
+        Console.log ( e.getStatus().reason ) ;
+      }
+    } ) ;
+};
+Xmp1.lock = function ( name )
+{
+    this.lock = this.wc.getLock ( name ) ;
+    this.lock.aquire ( function lock_callback ( err, lock )
+    {
+        Console.log ( "" + lock ) ;
+    }) ;
+};
+Xmp1.unlock = function()
+{
+    if ( ! this.lock ) return ;
+    this.lock.release() ;
+    this.lock = null ;
+};
+Xmp1.semAquire = function ( name )
+{
+    this.sem = this.wc.getSemaphore ( name ) ;
+    Console.log ( "Aquiring semaphore=" + name ) ;
+    this.sem.aquire ( function sem_callback ( err, sem )
+    {
+        Console.log ( "" + sem ) ;
+    }) ;
+};
+Xmp1.semRelease = function()
+{
+    if ( ! this.sem ) return ;
+    this.sem.release() ;
+    this.sem = null ;
+};
+Xmp1.on = function ( name )
+{
+    this.eventName = name ;
+  var thiz = this ;
+  Console.log ( "Listen to event: " + name ) ;
+  this.wc.on ( name, function event_listener_callback ( e )
+  {
+    Console.log ( thiz.toFullString ( e ) ) ;
+  }) ;
+}
+Xmp1.removeEventListener = function()
+{
+    if ( ! this.eventName ) return ;
+    this.wc.removeEventListener ( this.eventName ) ;
+};
+Xmp1.toFullString = function ( text, indent )
+{
+  if ( ! indent ) indent = "" ;
+  if ( Array.isArray ( text ) || ( typeof ( text ) == 'object' && text ) )
+  {
+    var str = "" ;
+    if ( text.jsClassName && typeof ( text.toString ) == 'function' )
+    {
+      str += indent + text + "\n" ;
+      return ;
+    }
+    if ( typeof ( text.nodeType ) == 'number' && text.nodeName && typeof ( text.firstChild  ) )
+    {
+      str += indent + text + "\n" ;
+      return ;
+    }
+    for ( var key in text )
+    {
+      var p = text [ key ] ;
+      if ( typeof ( p ) == 'function' ) continue ;
+      if ( Array.isArray ( p ) || ( typeof ( p ) == 'object' && ! ( p instanceof Date ) ) )
+      {
+        str += indent + "[" + key + "]=\n" + this.toFullString ( p, indent + "  " ) + "\n" ;
+        continue ;
+      }
+      str += indent + "[" + key + "]=" + p + "\n" ;
+    }
+    return str ;
+  }
+  return String ( text ) ;
+};
+
+</script>
+</head>
+<body>
+    <div>
+    <button onclick='Xmp1.sendEvent("ALARM")'>send event ( ALARM )</button>
+    <br/>
+    <button onclick='Xmp1.on("CONFIG-CHANGED")'>listen to ( CONFIG-CHANGED )</button>
+    <br/>Resource:
+    <button onclick='Xmp1.lock("user:4711")'>aquire</button>
+    <button onclick='Xmp1.unlock()'>release</button>
+    <br/>Semaphore:
+    <button onclick='Xmp1.semAquire("user:10000")'>aquire</button>
+    <button onclick='Xmp1.semRelease()'>release</button>
+    <div id="console-container">
+        <div id="console"></div>
+    </div>
+</div>
+<script type="text/javascript">
+try
+{
+    Xmp1.initialize();
+}
+catch ( exc )
+{
+    Console.log ( "" + exc ) ;
+}
+</script>
+</body>
+</html>
