@@ -160,6 +160,13 @@ tangojs.gp.Event.prototype =
 	      }
 	      if ( typeof document === 'undefined' )
 	      {
+		      if ( o.type === 'Xml' )
+		      {
+		        var txml = require ( "Xml" ) ;
+		        var f = new txml.XmlFactory() ;
+		        obj[k] = f.create ( o.value ) ;
+		        continue ;
+		      }
 		      if ( o.type === "Buffer" && Array.isArray ( o.data ) )
 		      {
 		        obj[k] = new Buffer ( o.data ) ;
@@ -231,8 +238,8 @@ tangojs.gp.Event.prototype =
 			+ ",type=" + this.type
 			+ "]\n"
 			+ ( this.user ? "[user=" + this.user + "]" : "" )
-			+ "[control=" + TSys.toFullString ( this.control ) + "]\n"
-			+ "[body=" + TSys.toFullString ( this.body ) + "]" ;
+			+ "[control=" + ACSys.toFullString ( this.control ) + "]\n"
+			+ "[body=" + ACSys.toFullString ( this.body ) + "]" ;
 		}
 	},
 	/**
@@ -485,6 +492,16 @@ tangojs.gp.Event.prototype =
 	},
 	/**
 	 * Description
+	 * @method getStatus
+	 * @return MemberExpression
+	 */
+	getStatus: function()
+	{
+		if ( ! this.control ) return ;
+		return this.control.status ;
+	},
+	/**
+	 * Description
 	 * @method getStatusReason
 	 * @return MemberExpression
 	 */
@@ -507,7 +524,7 @@ else
 	if ( require.main === module )
 	{
 		var util = require ( "util" ) ;
-		var T = require ( "Tango" ) ;
+		var T = require ( "Acronyl" ) ;
 
 		var User = require ( "User" ) ;
 		var File = require ( "File" ) ;

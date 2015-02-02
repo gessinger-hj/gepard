@@ -89,13 +89,25 @@ Semaphore.prototype.release = function()
 module.exports = Semaphore ;
 if ( require.main === module )
 {
-  var key = T.getProperty ( "key", "user:10000" ) ;
+  if ( T.getProperty ( "help" ) )
+  {
+    console.log (
+      "Gepard example: Semaphore, aquire a given semaphore.\n"
+    + "Usage: node Semaphore [options]\n"
+    + "  Options are: -Dname=<semaphore-name>, default <semaphore-name>=user:10000\n"
+    + "               -Dname=<auto>, release semaphore imediately after getting owner.\n"
+    ) ;
+    process.exit() ;
+  }
+
+  var key = T.getProperty ( "name", "user:10000" ) ;
   var auto = T.getProperty ( "auto" ) ;
   var sem = new Semaphore ( key ) ;
-  sem.aquire ( function ( err, l )
+  console.log ( "Aquiring semaphor=" + key ) ;
+  sem.aquire ( function ( err )
   {
-    // console.log ( "err=" + err ) ;
     console.log ( this.toString() ) ;
+    console.log ( "Is owner: " + this.isOwner() ) ;
     if ( auto )
     {
       this.release() ;

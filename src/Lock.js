@@ -99,7 +99,16 @@ Lock.prototype.release = function()
 module.exports = Lock ;
 if ( require.main === module )
 {
-  var key = T.getProperty ( "key", "user:4711" ) ;
+  if ( T.getProperty ( "help" ) )
+  {
+    console.log (
+      "Gepard example: Lock, lock a given resource.\n"
+    + "Usage: node Lock [-Dname=<resource-name>], default <resource-name>=user:4711"
+    ) ;
+    process.exit() ;
+  }
+
+  var key = T.getProperty ( "name", "user:4711" ) ;
   var auto = T.getProperty ( "auto" ) ;
   var lock = new Lock ( key ) ;
   lock.aquire ( function ( err, l )
