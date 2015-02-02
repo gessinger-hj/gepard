@@ -8,14 +8,14 @@
         }
 
         #console-container {
-            width: 400px;
+            width: 600px;
         }
 
         #console {
             border: 1px solid #CCCCCC;
             border-right-color: #999999;
             border-bottom-color: #999999;
-            height: 170px;
+            height: 300px;
             overflow-y: scroll;
             padding: 5px;
             width: 100%;
@@ -128,12 +128,12 @@ Xmp1.toFullString = function ( text, indent )
     var str = "" ;
     if ( text.jsClassName && typeof ( text.toString ) == 'function' )
     {
-      str += indent + text + "\n" ;
+      str += indent + text + "<br/>" ;
       return ;
     }
     if ( typeof ( text.nodeType ) == 'number' && text.nodeName && typeof ( text.firstChild  ) )
     {
-      str += indent + text + "\n" ;
+      str += indent + text + "<br/>" ;
       return ;
     }
     for ( var key in text )
@@ -142,10 +142,10 @@ Xmp1.toFullString = function ( text, indent )
       if ( typeof ( p ) == 'function' ) continue ;
       if ( Array.isArray ( p ) || ( typeof ( p ) == 'object' && ! ( p instanceof Date ) ) )
       {
-        str += indent + "[" + key + "]=\n" + this.toFullString ( p, indent + "  " ) + "\n" ;
+        str += indent + "\"" + key + "\": <br/>" + this.toFullString ( p, indent + "  " ) + "<br/>" ;
         continue ;
       }
-      str += indent + "[" + key + "]=" + p + "\n" ;
+      str += indent + "\"" + key + "\": \"" + p + "\"<br/>" ;
     }
     return str ;
   }
