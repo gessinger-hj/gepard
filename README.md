@@ -3,3 +3,9 @@ General purpose communucations for distributed applications / events, semaphores
 
 ## Contributors
 - Hans-Jürgen Gessinger
+
+## Features
+* High performance
+* Minimal configuration with
+	- GEPARD_PORT
+	- [GEPARD_HOST]
