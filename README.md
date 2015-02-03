@@ -29,7 +29,7 @@ node_modules/.bin/gp.admin [ --help ]
 
 ## Install
 
-npm git+https://github.com/gessinger-hj/gepard
+npm install git+https://github.com/gessinger-hj/gepard
 
 ## Configuration
 
@@ -134,121 +134,160 @@ for ( var i = 0 ; i < array.length ; i++ )
 
 ### Event listener
 
-#### In Application
+Application
 
 ```js
-var G = require ( "gepard" ) ;
-var c = new G.Client() ;
-c.on ( "ALARM", function(e)
-{
-  console.log ( e ) ;
-});
+  var G = require ( "gepard" ) ;
+  var c = new G.Client() ;
+```
+Browser
+
+```js
+  var client = tangojs.gp.getWebClient ( 17502 ) ;
 ```
 
-#### In Browser
+Code
 
 ```js
-var wc = tangojs.gp.getWebClient ( 17502 ) ;
-wc.on ( "ALARM", function event_listener_callback ( e )
+c.on ( "ALARM", function event_listener_callback(e)
 {
   console.log ( e.toString() ) ;
-}) ;
+});
 ```
 
 ### Event Emitter
 
-#### In Application
+Application
 
 ```js
 var G = require ( "gepard" ) ;
-var c = new G.Client() ;
-c.fire ( "ALARM",
+var client = new G.Client() ;
+client.fire ( "ALARM",
 {
+  var thiz = this ;
   write: function()
   {
-    c.end() ;
+    thiz.end() ; // close connection after written
   }
 });
 ```
 
-#### In Browser
+Browser
 
 ```js
-var wc = tangojs.gp.getWebClient ( 17502 ) ;
-wc.fire ( "CONFIG-CHANGED" ) ;
+var client = tangojs.gp.getWebClient ( 17502 ) ;
+client.fire ( "CONFIG-CHANGED" ) ;
 ```
-
 
 #### Locks
 
-#### In Application
+Application
+
 ```js
-var lock = new Lock ( "user:4711" ) ;
+  var G = require ( "gepard" ) ;
+  var lock = new G.Lock ( "user:4711" ) ;
+```
+Browser
+
+```js
+  var client = tangojs.gp.getWebClient ( 17502 ) ;
+  var lock = client.getLock ( "user:4711" ) ;
+```
+Code
+
+```js
 lock.aquire ( function ( err )
 {
   console.log ( this.toString() ) ;
   if ( this.isOwner() )
   {
-  	.........
-  	.........
-  	.........
+    .........
+    .........
+    .........
     this.release() ;
   }
 } ) ;
 ```
-#### In Browser
-```js
-var wc = tangojs.gp.getWebClient ( 17502 ) ;
-var lock = wc.getLock ( "user:4711" ) ;
-lock.aquire ( function lock_callback ( err )
-{
-  console.log ( "" + this ) ;
-  if ( this.isOwner() )
-  {
-    ............
-    ............
-    ............
-  	this.release() ;
-  }
-}) ;
-
-```
 
 ### Semaphores
 
-#### In Application
+Application
 
 ```js
-var sem = new Semaphore ( "user:10000" ) ;
+  var G = require ( "gepard" ) ;
+  var sem = new G.Semaphore ( "user:10000" ) ;
+```
+Browser
+
+```js
+var client = tangojs.gp.getWebClient ( 17502 ) ;
+var sem = client.getSemaphore ( "user:10000" ) ;
+```
+
+Code
+
+```js
 sem.aquire ( function ( err )
 {
   console.log ( this.toString() ) ;
   console.log ( "Is owner: " + this.isOwner() ) ;
   if ( this.isOwner() )
   {
-  	.....................
-  	.....................
-  	.....................
+    .....................
+    .....................
+    .....................
     this.release() ;
   }
 } ) ;
 ```
-#### In Browser
-```js
-var wc = tangojs.gp.getWebClient ( 17502 ) ;
+### Request / result
 
-var sem = wc.getSemaphore ( "user:10000" ) ;
-this.sem.aquire ( function sem_callback ( err )
-{
-  console.log ( "" + this ) ;
-  if ( this.isOwner() )
+##### Send request
+
+Application:
+
+```js
+  var G = require ( "gepard" ) ;
+  var client = new G.Client()
+```
+Browser:
+
+```js
+  var client = tangojs.gp.getWebClient ( 17502 ) ;
+```
+Code:
+
+```js
+client().request ( "getList"
+, function result(e)
   {
-  	.....................
-  	.....................
-  	.....................
-    this.release() ;
-  }
-}) ;
+    console.log ( e.getBody().list ) ;
+    this.end() ;
+  });
+```
+
+##### Send result
+
+Application:
+
+```js
+  var G = require ( "gepard" ) ;
+  var client = new G.Client()
+```
+Browser:
+
+```js
+  var client = tangojs.gp.getWebClient ( 17502 ) ;
+```
+Code:
+
+```js
+var list = [ "one", "two", "three" ] ;
+client.on ( "getList", function ( e )
+{
+  e.getBody().list = list ;
+  this.sendResult ( e ) ;
+});
 ```
 
 ## Examples Long
@@ -317,9 +356,11 @@ var G  = require ( "gepard" ) ;
 
 var c = new G.Client() ;
 
-c.fire ( "CONFIG-CHANGED",
+var event = new G.Event ( "CONFIG-CHANGED" ) ;
+event.setBody ( { "config-name" : "app.conf" } ) ;
+c.fire ( event,
 {
-  write: function()
+  write: function() // close connection after write
   {
     c.end() ;
   }
@@ -334,7 +375,9 @@ c.fire ( "CONFIG-CHANGED",
 ```
 ```js
 var wc = tangojs.gp.getWebClient ( 17502 ) ;
-wc.fire ( "CONFIG-CHANGED" ) ;
+var event = new tangojs.gp.Event ( "CONFIG-CHANGED" ) ;
+event.setBody ( { "config-name" : "app.conf" } ) ;
+wc.fire ( event ) ;
 ```
 
 
@@ -345,7 +388,7 @@ wc.fire ( "CONFIG-CHANGED" ) ;
 ## Features
 * High performance
 * Minimal configuration with
-	- GEPARD_PORT
+  - GEPARD_PORT
 	- [GEPARD_HOST]
 * All client features like event listener, event emitter, semaphores, locks and messages
 	are available in any web-browser apps.
