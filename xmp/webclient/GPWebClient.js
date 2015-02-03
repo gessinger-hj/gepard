@@ -816,7 +816,7 @@ tangojs.gp.Semaphore.prototype._aquireSemaphoreCallback = function ( err, e )
     this._aquireSemaphoreResult = e ;
     this._isSemaphoreOwner = e.body.isSemaphoreOwner ;
   }
-  this._callback.call ( this, err, this ) ;
+  this._callback.call ( this, err ) ;
 };
 /**
  * Description
@@ -876,7 +876,7 @@ tangojs.gp.Lock.prototype._lockResourceCallback = function ( err, e )
 {
   this._lockResourceResult = e ;
   this._isLockOwner = e.body.isLockOwner ;
-  this._callback.call ( null, err, this ) ;
+  this._callback.call ( this, err ) ;
 };
 /**
  * Description

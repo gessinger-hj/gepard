@@ -60,6 +60,12 @@ Xmp1.initialize = function()
     this.wc.on ( "open", function onopen()
     {
     }) ;
+    this.wc.on ( "error", function onerror()
+    {
+    }) ;
+    this.wc.on ( "close", function onclose()
+    {
+    }) ;
   }
   catch ( exc )
   {
@@ -79,9 +85,9 @@ Xmp1.sendEvent = function ( name )
 Xmp1.lock = function ( name )
 {
     this.lock = this.wc.getLock ( name ) ;
-    this.lock.aquire ( function lock_callback ( err, lock )
+    this.lock.aquire ( function lock_callback ( err )
     {
-        Console.log ( "" + lock ) ;
+        Console.log ( "" + this ) ;
     }) ;
 };
 Xmp1.unlock = function()
@@ -94,9 +100,9 @@ Xmp1.semAquire = function ( name )
 {
     this.sem = this.wc.getSemaphore ( name ) ;
     Console.log ( "Aquiring semaphore=" + name ) ;
-    this.sem.aquire ( function sem_callback ( err, sem )
+    this.sem.aquire ( function sem_callback ( err )
     {
-        Console.log ( "" + sem ) ;
+        Console.log ( "" + this ) ;
     }) ;
 };
 Xmp1.semRelease = function()
@@ -107,7 +113,7 @@ Xmp1.semRelease = function()
 };
 Xmp1.on = function ( name )
 {
-    this.eventName = name ;
+  this.eventName = name ;
   var thiz = this ;
   Console.log ( "Listen to event: " + name ) ;
   this.wc.on ( name, function event_listener_callback ( e )
