@@ -58,7 +58,7 @@ Lock.prototype._lockResourceCallback = function ( err, e )
 {
   this._lockResourceResult = e ;
   this._isLockOwner = e.body.isLockOwner ;
-  this._callback.call ( null, err, this ) ;
+  this._callback.call ( this, err ) ;
   if ( ! this._isLockOwner )
   {
     if ( this._isClientOwner && this._client )
@@ -113,11 +113,10 @@ if ( require.main === module )
   var lock = new Lock ( key ) ;
   lock.aquire ( function ( err, l )
   {
-    console.log ( "err=" + err ) ;
-    console.log ( "l=" + l ) ;
+    console.log ( "" + this.toString() ) ;
     if ( auto )
     {
-      l.release() ;
+      this.release() ;
     }
   } ) ;
 }
