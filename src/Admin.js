@@ -253,7 +253,16 @@ if ( require.main === module )
 
 	var ad = new Admin ( port, host ) ;
 
-	var what = T.getProperty ( "shutdown" ) ;
+	var what = T.getProperty ( "help" ) ;
+	if ( what )
+	{
+		console.log ( "Admin tool for Gepard" ) ;
+		console.log ( "Usage: node Admin.js [ options ]" ) ;
+		console.log ( "Options are: -Dinfo | -Dshutdown[=<connectin-id>] | -DisRunning" ) ;
+		console.log ( "The form -D<name>[=<value> or --<name>[=<value>] are aquvalent." ) ;
+		return ;
+	}
+	what = T.getProperty ( "shutdown" ) ;
 	if ( what )
 	{
 		if ( what === "true" ) what = null ;
