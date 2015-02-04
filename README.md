@@ -1,7 +1,18 @@
 # gepard
 General purpose communucation and synchronization layer for distributed applications / events, semaphores and messages
 
-[TOC]
+<!-- MarkdownTOC -->
+
+- [Overview](#overview)
+	- [Install](#install)
+	- [Configuration](#configuration)
+	- [Use Cases](#use-cases)
+	- [Examples Short](#examples-short)
+	- [Examples Long](#examples-long)
+	- [Contributors](#contributors)
+	- [Features](#features)
+
+<!-- /MarkdownTOC -->
 
 # Overview
 Gepard is a system consisting of a broker and connected clients.
