@@ -4,29 +4,30 @@ General purpose communucation and synchronization layer for distributed applicat
 <!-- MarkdownTOC -->
 
 - [Overview](#overview)
-	- [Install](#install)
-	- [Configuration](#configuration)
-	- [Use Cases](#use-cases)
-		- [Configuration Changes ( Events )](#configuration-changes--events-)
-		- [Concurrent editing of a Dataset ( Semaphores )](#concurrent-editing-of-a-dataset--semaphores-)
-		- [Synchronization of file processing ( Locks )](#synchronization-of-file-processing--locks-)
-	- [Examples Short](#examples-short)
-		- [Event listener](#event-listener)
-		- [Event Emitter](#event-emitter)
-			- [Locks](#locks)
-		- [Semaphores](#semaphores)
-		- [Request / result](#request--result)
-			- [Send request](#send-request)
-			- [Send result](#send-result)
-	- [Examples Long](#examples-long)
-		- [Event listener](#event-listener-1)
-			- [In Application](#in-application)
-			- [In Browser](#in-browser)
-		- [Event Emitter](#event-emitter-1)
-			- [In Application](#in-application-1)
-			- [In Browser](#in-browser-1)
-	- [Contributors](#contributors)
-	- [Features](#features)
+  - [Install](#install)
+  - [Hello World](#hello-world)
+  - [Configuration](#configuration)
+  - [Use Cases](#use-cases)
+    - [Configuration Changes ( Events )](#configuration-changes--events-)
+    - [Concurrent editing of a Dataset ( Semaphores )](#concurrent-editing-of-a-dataset--semaphores-)
+    - [Synchronization of file processing ( Locks )](#synchronization-of-file-processing--locks-)
+  - [Examples Short](#examples-short)
+    - [Event listener](#event-listener)
+    - [Event Emitter](#event-emitter)
+      - [Locks](#locks)
+    - [Semaphores](#semaphores)
+    - [Request / result](#request--result)
+      - [Send request](#send-request)
+      - [Send result](#send-result)
+  - [Examples Long](#examples-long)
+    - [Event listener](#event-listener-1)
+      - [In Application](#in-application)
+      - [In Browser](#in-browser)
+    - [Event Emitter](#event-emitter-1)
+      - [In Application](#in-application-1)
+      - [In Browser](#in-browser-1)
+  - [Contributors](#contributors)
+  - [Features](#features)
 
 <!-- /MarkdownTOC -->
 
@@ -57,6 +58,20 @@ node_modules/.bin/gp.admin [ --help ]
 ## Install
 
 npm install git+https://github.com/gessinger-hj/gepard
+
+## Hello World
+Here is the most loved "Hello World" example.
+
+All commands are in the directory: node_modules/.bin
+
+1.  __gp.broker<br/>__
+    start the gepard broker
+1.  __gp.listen --name=hello<br/>__
+    start a listener for events named __hello__
+1.  __gp.emit --name=hello<br/>__
+    emit an event with name __hello
+1.  __gp.info<br/>__
+    show basic information from the broker
 
 ## Configuration
 

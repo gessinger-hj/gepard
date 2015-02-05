@@ -146,7 +146,7 @@ Admin.prototype._execute = function ( action, what, callback )
 		    var e = Event.prototype.deserialize ( m ) ;
 		    if ( e.getType() === "getInfoResult" )
 		    {
-		    	if ( what === "lsconn" )
+		    	if ( what === "conn" )
 		    	{
 		    		list = e.body.connectionList ;
 	    			if ( callback )
@@ -169,7 +169,7 @@ Admin.prototype._execute = function ( action, what, callback )
 			    	}
 		    	}
 		    	else
-		    	if ( what === "lslock" )
+		    	if ( what === "lock" )
 		    	{
 		    		list = e.body.lockList ;
 	    			if ( callback )
@@ -188,8 +188,56 @@ Admin.prototype._execute = function ( action, what, callback )
 			    		{
 			    			desc = list[i] ;
 			    			str = desc.owner.application ;
-			    			console.log ( "%s\t%s\t%s:%s", desc.resourceId, desc.owner.sid, desc.owner.hostname, desc.applicationName ) ;
+			    			console.log ( "%s\t%s\t%s:%s", desc.resourceId, desc.owner.sid, desc.owner.hostname, desc.owner.applicationName ) ;
 			    		}
+		    		}
+		    	}
+		    	else
+		    	if ( what === "sem" )
+		    	{
+		    		list = e.body.semaphoreList ;
+	    			if ( callback )
+	    			{
+	    				callback.call ( null, list ) ;
+	    				this.end() ;
+	    				return ;
+	    			}
+		    		if ( ! list || ! list.length )
+		    		{
+		    			console.log ( "No semaphores" ) ;
+		    		}
+		    		else
+		    		{
+			    		for ( i = 0 ; i < list.length ; i++ )
+			    		{
+			    			desc = list[i] ;
+			    			str = desc.owner.application ;
+			    			console.log ( "%s\t%s\t%s:%s", desc.resourceId, desc.owner.sid, desc.owner.hostname, desc.owner.applicationName ) ;
+			    		}
+		    		}
+		    	}
+		    	else
+		    	if ( what === "events" )
+		    	{
+		    		var mapping = e.body.mapping ;
+		    		var pattern = e.body.currentEventPattern ;
+	    			if ( callback )
+	    			{
+	    				callback.call ( null, mapping ) ;
+	    				this.end() ;
+	    				return ;
+	    			}
+		    		if ( ! mapping )
+		    		{
+		    			console.log ( "No event listener" ) ;
+		    		}
+		    		else
+		    		{
+		    			for ( var eventName in mapping )
+		    			{
+		    				var l = mapping[eventName] ;
+			    			console.log ( "%s\t%s", eventName, l ) ;
+		    			}
 		    		}
 		    	}
 		    	else
@@ -208,7 +256,7 @@ Admin.prototype._execute = function ( action, what, callback )
 };
 Admin.prototype.getInfoForApplication = function ( applicationName, callback )
 {
-	this.info ( "lsconn", function lsconn ( list )
+	this.info ( "conn", function lsconn ( list )
 	{
 		var al = [] ;
 		if ( ! list || ! list.length ) return al ;
@@ -225,7 +273,7 @@ Admin.prototype.getInfoForApplication = function ( applicationName, callback )
 Admin.prototype.getNumberOfApplications = function ( applicationName, callback )
 {
 	var thiz = this ;
-	this.info ( "lsconn", function lsconn ( list )
+	this.info ( "conn", function lsconn ( list )
 	{
 		var n = 0 ;
 		if ( ! list || ! list.length )
@@ -258,8 +306,22 @@ if ( require.main === module )
 	{
 		console.log ( "Admin tool for Gepard" ) ;
 		console.log ( "Usage: node Admin.js [ options ]" ) ;
-		console.log ( "Options are: -Dinfo | -Dshutdown[=<connectin-id>] | -DisRunning" ) ;
-		console.log ( "The form -D<name>[=<value> or --<name>[=<value>] are aquvalent." ) ;
+		console.log ( "Options are:" ) ;
+		console.log ( "  --help" ) ;
+		console.log ( "      display this text" ) ;
+		console.log ( "  -Dinfo[=<value>]" ) ;
+		console.log ( "      without <value>: display all available information from the broker" ) ;
+		console.log ( "      Allowed values are:" ) ;
+		console.log ( "        conn      list all connections" ) ;
+		console.log ( "        lock      list all locks" ) ;
+		console.log ( "        sem       list all semaphores" ) ;
+		console.log ( "        events    list all event-names listened to" ) ;
+		console.log ( "  -Dshutdown[=<connectin-id>]" ) ;
+		console.log ( "      without <connection-id>: send a shutdown event" ) ;
+		console.log ( "        to all clients and shutdown the broker." ) ;
+		console.log ( "      with <connection-id>: send a shutdown event" ) ;
+		console.log ( "        to the specified client and close the connection." ) ;
+		console.log ( "The form -D<name>[=<value> or --<name>[=<value>] are aquivalent." ) ;
 		return ;
 	}
 	what = T.getProperty ( "shutdown" ) ;
@@ -274,7 +336,7 @@ if ( require.main === module )
 	{
 		if ( what === "true" )
 		{
-			console.log ( "Missing application name for -Drun=" ) ;
+			console.log ( "Missing application name for -Drun=<" ) ;
 			return ;
 		}
 		ad.getNumberOfApplications ( what, function getNumberOfApplications ( n )
