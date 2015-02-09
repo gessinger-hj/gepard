@@ -40,6 +40,6 @@
     , "gp.shutdown" : "./bin/shutdown"
     , "gp.info" : "./bin/info"
     , "gp.listen" : "./xmp/Listener.js"
-    , "gp.emit" : "./xmp/Emmitter.js"
+    , "gp.emit" : "./xmp/Emitter.js"
     }
 }
