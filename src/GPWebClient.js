@@ -783,8 +783,15 @@ gepard.Semaphore = function ( client, resourceId )
 {
   this.className         = "Semaphore" ;
   this._resourceId       = resourceId ;
-  this._client           = client ;
   this._isSemaphoreOwner = false ;
+  if ( typeof client === 'string' )
+  {
+    this._client = gepard.getWebClient() ;
+  }
+  else
+  {
+    this._client = client ;
+  }
 };
 
 /**
@@ -846,8 +853,15 @@ gepard.Lock = function ( client, resourceId )
 {
   this.className = "Lock" ;
   this._resourceId = resourceId ;
-  this._client = client ;
   this._isLockOwner = false ;
+  if ( typeof client === 'string' )
+  {
+    this._client = gepard.getWebClient() ;
+  }
+  else
+  {
+    this._client = client ;
+  }
 };
 /**
  * Description
