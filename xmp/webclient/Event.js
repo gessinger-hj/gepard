@@ -1,5 +1,4 @@
-if ( typeof tangojs === 'undefined' ) tangojs = {} ;
-if ( typeof tangojs.gp === 'undefined' ) tangojs.gp = {} ;
+if ( typeof gepard === 'undefined' ) gepard = {} ;
 
 if ( !Array.isArray )
 {
@@ -21,11 +20,11 @@ if ( !Array.isArray )
  * @param {} data
  * @return 
  */
-tangojs.gp.Event = function ( name, type, data )
+gepard.Event = function ( name, type, data )
 {
 	this._init ( name, type, data ) ;
 };
-tangojs.gp.Event.prototype =
+gepard.Event.prototype =
 {
 	/**
 	 * Description
@@ -84,10 +83,10 @@ tangojs.gp.Event.prototype =
 				throw exc ;
 			}
 	  }
-	  if ( deepClassInspection ) tangojs.gp.Event.prototype.deepDeserializeClass ( obj ) ;
+	  if ( deepClassInspection ) gepard.Event.prototype.deepDeserializeClass ( obj ) ;
 	  if ( ! classNameToConstructor )
 	  {
-	  	classNameToConstructor = { "Event": tangojs.gp.Event } ;
+	  	classNameToConstructor = { "Event": gepard.Event } ;
 	  }
 	  if ( obj.className && typeof obj.className === 'string' )
 	  {
@@ -532,19 +531,19 @@ tangojs.gp.Event.prototype =
 };
 if ( typeof document !== 'undefined' )
 {
-	tangojs.gp.serialize = tangojs.gp.Event.prototype.serialize ;
-	tangojs.gp.deserialize = tangojs.gp.Event.prototype.deserialize ;
+	gepard.serialize = gepard.Event.prototype.serialize ;
+	gepard.deserialize = gepard.Event.prototype.deserialize ;
 }
 else
 {
-	module.exports = tangojs.gp.Event ;
+	module.exports = gepard.Event ;
 
 	if ( require.main === module )
 	{
-		var ne = new tangojs.gp.Event ( 'BC', "T" ) ;
+		var ne = new gepard.Event ( 'BC', "T" ) ;
 		var str = ne.serialize() ;
 		console.log ( "str=" + str ) ;
-		var o = tangojs.gp.Event.prototype.deserialize ( str ) ;
+		var o = gepard.Event.prototype.deserialize ( str ) ;
 		console.log ( o ) ;
 	}
 }

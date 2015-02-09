@@ -1,17 +1,16 @@
-if ( typeof tangojs === 'undefined' ) tangojs = {} ;
-if ( typeof tangojs.gp === 'undefined' ) tangojs.gp = {} ;
+if ( typeof gepard === 'undefined' ) gepard = {} ;
 
-tangojs.gp.counter = 0 ;
-tangojs.gp.getWebClient = function ( port )
+gepard.counter = 0 ;
+gepard.getWebClient = function ( port )
 {
-  if ( tangojs.gp._WebClientInstance ) return tangojs.gp._WebClientInstance ;
-  return new tangojs.gp.WebClient ( port ) ;
+  if ( gepard._WebClientInstance ) return gepard._WebClientInstance ;
+  return new gepard.WebClient ( port ) ;
 };
 /**
  * Description
  * @param {} port
  */
-tangojs.gp.WebClient = function ( port )
+gepard.WebClient = function ( port )
 {
   this._port                       = port ;
   this._socket                     = null ;
@@ -39,20 +38,20 @@ tangojs.gp.WebClient = function ( port )
   this._ownedSemaphores            = {} ;
   this._pendingAquireSemaphoreList = [] ;
 
-  tangojs.gp._WebClientInstance = this ;
+  gepard._WebClientInstance = this ;
 };
-tangojs.gp.WebClient.prototype._initialize = function()
+gepard.WebClient.prototype._initialize = function()
 {
 };
 /**
  * Description
  * @return BinaryExpression
  */
-tangojs.gp.WebClient.prototype._createUniqueEventId = function()
+gepard.WebClient.prototype._createUniqueEventId = function()
 {
-  return this._url + "_" + new Date().getTime() + "-" + this._proxyIdentifier + "-" + (tangojs.gp.counter++) ;
+  return this._url + "_" + new Date().getTime() + "-" + this._proxyIdentifier + "-" + (gepard.counter++) ;
 };
-tangojs.gp.WebClient.prototype.emit = function ( p1, eventName )
+gepard.WebClient.prototype.emit = function ( p1, eventName )
 {
   var list = this._onCallbackFunctions.get ( eventName ) ;
   if ( list )
@@ -66,7 +65,7 @@ tangojs.gp.WebClient.prototype.emit = function ( p1, eventName )
 /**
  * Description
  */
-tangojs.gp.WebClient.prototype._connect = function()
+gepard.WebClient.prototype._connect = function()
 {
   var thiz = this ;
   this._socket = new WebSocket ( this._url ) ;
@@ -113,7 +112,7 @@ tangojs.gp.WebClient.prototype._connect = function()
       }
       if ( m.charAt ( 0 ) === '{' )
       {
-        var e = tangojs.gp.deserialize ( m ) ;
+        var e = gepard.deserialize ( m ) ;
         var wid = e.getWebIdentifier() ;
         if ( e.isResult() )
         {
@@ -231,7 +230,7 @@ tangojs.gp.WebClient.prototype._connect = function()
    */
   this._socket.onopen = function()
   {
-    var einfo = new tangojs.gp.Event ( "system", "client_info" ) ;
+    var einfo = new gepard.Event ( "system", "client_info" ) ;
     einfo.body.userAgent = navigator.userAgent ;
     einfo.body.connectionTime = new Date() ;
     einfo.body.domain = document.domain ;
@@ -297,7 +296,7 @@ tangojs.gp.WebClient.prototype._connect = function()
  * Description
  * @return MemberExpression
  */
-tangojs.gp.WebClient.prototype.getSocket = function()
+gepard.WebClient.prototype.getSocket = function()
 {
   if ( ! this._socket )
   {
@@ -312,7 +311,7 @@ tangojs.gp.WebClient.prototype.getSocket = function()
  * @param {} callback
  * @return 
  */
-tangojs.gp.WebClient.prototype.fire = function ( params, callback )
+gepard.WebClient.prototype.fire = function ( params, callback )
 {
   this._fireEvent ( params, callback, null ) ;
 };
@@ -323,7 +322,7 @@ tangojs.gp.WebClient.prototype.fire = function ( params, callback )
  * @param {} callback
  * @return 
  */
-tangojs.gp.WebClient.prototype.request = function ( params, callback )
+gepard.WebClient.prototype.request = function ( params, callback )
 {
   if ( typeof params === 'string' )
   {
@@ -346,28 +345,28 @@ tangojs.gp.WebClient.prototype.request = function ( params, callback )
  * @param {} callback
  * @return 
  */
-tangojs.gp.WebClient.prototype.fireEvent = function ( params, callback )
+gepard.WebClient.prototype.fireEvent = function ( params, callback )
 {
   return this._fireEvent ( params, callback, null ) ;
 };
 /**
  */
-tangojs.gp.WebClient.prototype._fireEvent = function ( params, callback, opts )
+gepard.WebClient.prototype._fireEvent = function ( params, callback, opts )
 {
   var e = null, user ;
-  if ( params instanceof tangojs.gp.Event )
+  if ( params instanceof gepard.Event )
   {
     e = params ;
   }
   else
   if ( typeof params === 'string' )
   {
-    e = new tangojs.gp.Event ( params ) ;
+    e = new gepard.Event ( params ) ;
   }
   else
   if ( params && typeof params === 'object' )
   {
-    e = new tangojs.gp.Event ( params.name, params.type ) ;
+    e = new gepard.Event ( params.name, params.type ) ;
     e.setBody ( params.body ) ;
     e.setUser ( params.user ) ;
   }
@@ -409,7 +408,7 @@ tangojs.gp.WebClient.prototype._fireEvent = function ( params, callback, opts )
  * @param {} eventNameList
  * @param {} callback
  */
-tangojs.gp.WebClient.prototype.on = function ( eventNameList, callback )
+gepard.WebClient.prototype.on = function ( eventNameList, callback )
 {
   if ( typeof eventNameList === 'string' )
   {
@@ -429,7 +428,7 @@ tangojs.gp.WebClient.prototype.on = function ( eventNameList, callback )
  * @param {} eventNameList
  * @param {} callback
  */
-tangojs.gp.WebClient.prototype.addEventListener = function ( eventNameList, callback )
+gepard.WebClient.prototype.addEventListener = function ( eventNameList, callback )
 {
   if ( ! eventNameList ) throw new Error ( "Client.addEventListener: Missing eventNameList." ) ;
   if ( typeof callback !== 'function' ) throw new Error ( "Client.addEventListener: callback must be a function." ) ;
@@ -442,7 +441,7 @@ tangojs.gp.WebClient.prototype.addEventListener = function ( eventNameList, call
   {
     throw new Error ( "Client.addEventListener: eventNameList must not be empty." ) ;
   }
-  var e = new tangojs.gp.Event ( "system", "addEventListener" ) ;
+  var e = new gepard.Event ( "system", "addEventListener" ) ;
   if ( this._user )
   {
     e.setUser ( this._user ) ;
@@ -475,7 +474,7 @@ tangojs.gp.WebClient.prototype.addEventListener = function ( eventNameList, call
  * Description
  * @param {} eventNameOrFunction
  */
-tangojs.gp.WebClient.prototype.removeEventListener = function ( eventNameOrFunction )
+gepard.WebClient.prototype.removeEventListener = function ( eventNameOrFunction )
 {
   var i ;
   if ( typeof eventNameOrFunction === 'string' )
@@ -516,7 +515,7 @@ tangojs.gp.WebClient.prototype.removeEventListener = function ( eventNameOrFunct
       this._eventListenerFunctions.remove ( item ) ;
     }
     if ( ! eventNameList.length ) return ;
-    var e = new tangojs.gp.Event ( "system", "removeEventListener" ) ;
+    var e = new gepard.Event ( "system", "removeEventListener" ) ;
     e.setUser ( this._user ) ;
     e.body.eventNameList = eventNameList ;
     var s = this.getSocket() ;
@@ -528,7 +527,7 @@ tangojs.gp.WebClient.prototype.removeEventListener = function ( eventNameOrFunct
  * @param {} str
  * @return list
  */
-tangojs.gp.WebClient.prototype._splitJSONObjects = function ( str )
+gepard.WebClient.prototype._splitJSONObjects = function ( str )
 {
   var list = [] ;
   var pcounter = 1 ;
@@ -592,7 +591,7 @@ tangojs.gp.WebClient.prototype._splitJSONObjects = function ( str )
  * Description
  * @param {} message
  */
-tangojs.gp.WebClient.prototype.sendResult = function ( message )
+gepard.WebClient.prototype.sendResult = function ( message )
 {
   if ( ! message.isResultRequested() )
   {
@@ -607,7 +606,7 @@ tangojs.gp.WebClient.prototype.sendResult = function ( message )
  * Description
  * @param {} message
  */
-tangojs.gp.WebClient.prototype.send = function ( event )
+gepard.WebClient.prototype.send = function ( event )
 {
   this.getSocket().send ( event.serialize() ) ;
 };
@@ -615,7 +614,7 @@ tangojs.gp.WebClient.prototype.send = function ( event )
  * Description
  * @param {} what
  */
-tangojs.gp.WebClient.prototype._error = function ( what )
+gepard.WebClient.prototype._error = function ( what )
 {
   console.log ( what ) ;
 };
@@ -626,7 +625,7 @@ tangojs.gp.WebClient.prototype._error = function ( what )
  * @param {} callback
  * @return 
  */
-tangojs.gp.WebClient.prototype._lockResource = function ( resourceId, callback )
+gepard.WebClient.prototype._lockResource = function ( resourceId, callback )
 {
   if ( typeof resourceId !== 'string' || ! resourceId )
   {
@@ -644,7 +643,7 @@ tangojs.gp.WebClient.prototype._lockResource = function ( resourceId, callback )
     return ;
   }
 
-  var e = new tangojs.gp.Event ( "system", "lockResourceRequest" ) ;
+  var e = new gepard.Event ( "system", "lockResourceRequest" ) ;
   e.body.resourceId = resourceId ;
   var ctx = {} ;
   ctx.resourceId = resourceId ;
@@ -668,7 +667,7 @@ tangojs.gp.WebClient.prototype._lockResource = function ( resourceId, callback )
  * @param {} resourceId
  * @return 
  */
-tangojs.gp.WebClient.prototype._unlockResource = function ( resourceId )
+gepard.WebClient.prototype._unlockResource = function ( resourceId )
 {
   if ( typeof resourceId !== 'string' || ! resourceId )
   {
@@ -682,7 +681,7 @@ tangojs.gp.WebClient.prototype._unlockResource = function ( resourceId )
     return ;
   }
 
-  var e = new tangojs.gp.Event ( "system", "unlockResourceRequest" ) ;
+  var e = new gepard.Event ( "system", "unlockResourceRequest" ) ;
   e.body.resourceId = resourceId ;
   var s = this.getSocket() ;
   e.setUniqueId ( this._createUniqueEventId() ) ;
@@ -696,7 +695,7 @@ tangojs.gp.WebClient.prototype._unlockResource = function ( resourceId )
  * @param {} callback
  * @return 
  */
-tangojs.gp.WebClient.prototype._aquireSemaphore = function ( resourceId, callback )
+gepard.WebClient.prototype._aquireSemaphore = function ( resourceId, callback )
 {
   if ( typeof resourceId !== 'string' || ! resourceId )
   {
@@ -719,7 +718,7 @@ tangojs.gp.WebClient.prototype._aquireSemaphore = function ( resourceId, callbac
     return ;
   }
 
-  var e = new tangojs.gp.Event ( "system", "aquireSemaphoreRequest" ) ;
+  var e = new gepard.Event ( "system", "aquireSemaphoreRequest" ) ;
   e.body.resourceId = resourceId ;
   var ctx = {} ;
   ctx.resourceId = resourceId ;
@@ -744,7 +743,7 @@ tangojs.gp.WebClient.prototype._aquireSemaphore = function ( resourceId, callbac
  * @param {} resourceId
  * @return 
  */
-tangojs.gp.WebClient.prototype._releaseSemaphore = function ( resourceId )
+gepard.WebClient.prototype._releaseSemaphore = function ( resourceId )
 {
   if ( typeof resourceId !== 'string' || ! resourceId )
   {
@@ -752,14 +751,14 @@ tangojs.gp.WebClient.prototype._releaseSemaphore = function ( resourceId )
     return ;
   }
   delete this._aquiredSemaphores[resourceId] ;
-  var e = new tangojs.gp.Event ( "system", "releaseSemaphoreRequest" ) ;
+  var e = new gepard.Event ( "system", "releaseSemaphoreRequest" ) ;
   e.body.resourceId = resourceId ;
   var s = this.getSocket() ;
   e.setUniqueId ( this._createUniqueEventId() ) ;
   delete this._ownedSemaphores[resourceId] ;
   this.send ( e ) ;
 };
-tangojs.gp.WebClient.prototype._releaseAllSemaphores = function()
+gepard.WebClient.prototype._releaseAllSemaphores = function()
 {
   for ( var key in this._ownedSemaphores )
   {
@@ -767,20 +766,20 @@ tangojs.gp.WebClient.prototype._releaseAllSemaphores = function()
   }
   this.releaseSemaphore = {} ;
 };
-tangojs.gp.WebClient.prototype.getSemaphore = function ( resourceId )
+gepard.WebClient.prototype.getSemaphore = function ( resourceId )
 {
-  return new tangojs.gp.Semaphore ( this, resourceId ) ;
+  return new gepard.Semaphore ( this, resourceId ) ;
 };
-tangojs.gp.WebClient.prototype.getLock = function ( resourceId )
+gepard.WebClient.prototype.getLock = function ( resourceId )
 {
-  return new tangojs.gp.Lock ( this, resourceId ) ;
+  return new gepard.Lock ( this, resourceId ) ;
 };
 /**
  * Description
  * @constructor
  * @return 
  */
-tangojs.gp.Semaphore = function ( client, resourceId )
+gepard.Semaphore = function ( client, resourceId )
 {
   this.className         = "Semaphore" ;
   this._resourceId       = resourceId ;
@@ -793,7 +792,7 @@ tangojs.gp.Semaphore = function ( client, resourceId )
  * @method toString
  * @return string
  */
-tangojs.gp.Semaphore.prototype.toString = function()
+gepard.Semaphore.prototype.toString = function()
 {
   return "(" + this.className + ")[resourceId=" + this._resourceId + ",isOwner=" + this._isSemaphoreOwner + "]" ;
 };
@@ -804,12 +803,12 @@ tangojs.gp.Semaphore.prototype.toString = function()
  * @param {} callback
  * @return 
  */
-tangojs.gp.Semaphore.prototype.aquire = function ( callback )
+gepard.Semaphore.prototype.aquire = function ( callback )
 {
   this._callback = callback ;
   this._client._aquireSemaphore ( this._resourceId, this._aquireSemaphoreCallback.bind ( this ) ) ;
 };
-tangojs.gp.Semaphore.prototype._aquireSemaphoreCallback = function ( err, e )
+gepard.Semaphore.prototype._aquireSemaphoreCallback = function ( err, e )
 {
   if ( ! err )
   {
@@ -823,7 +822,7 @@ tangojs.gp.Semaphore.prototype._aquireSemaphoreCallback = function ( err, e )
  * @method isOwner
  * @return MemberExpression
  */
-tangojs.gp.Semaphore.prototype.isOwner = function()
+gepard.Semaphore.prototype.isOwner = function()
 {
   return this._isSemaphoreOwner ;
 };
@@ -832,7 +831,7 @@ tangojs.gp.Semaphore.prototype.isOwner = function()
  * @method release
  * @return 
  */
-tangojs.gp.Semaphore.prototype.release = function()
+gepard.Semaphore.prototype.release = function()
 {
   this._isSemaphoreOwner = false ;
   this._client._releaseSemaphore ( this._resourceId ) ;
@@ -843,7 +842,7 @@ tangojs.gp.Semaphore.prototype.release = function()
  * @param {string} resourceId
  * @return 
  */
-tangojs.gp.Lock = function ( client, resourceId )
+gepard.Lock = function ( client, resourceId )
 {
   this.className = "Lock" ;
   this._resourceId = resourceId ;
@@ -855,7 +854,7 @@ tangojs.gp.Lock = function ( client, resourceId )
  * @method toString
  * @return string
  */
-tangojs.gp.Lock.prototype.toString = function()
+gepard.Lock.prototype.toString = function()
 {
   return "(" + this.className + ")[resourceId=" + this._resourceId + ",isOwner=" + this._isLockOwner + "]" ;
 };
@@ -867,12 +866,12 @@ tangojs.gp.Lock.prototype.toString = function()
  * @param {} callback
  * @return 
  */
-tangojs.gp.Lock.prototype.aquire = function ( callback )
+gepard.Lock.prototype.aquire = function ( callback )
 {
   this._callback = callback ;
   this._client._lockResource ( this._resourceId, this._lockResourceCallback.bind ( this ) ) ;
 };
-tangojs.gp.Lock.prototype._lockResourceCallback = function ( err, e )
+gepard.Lock.prototype._lockResourceCallback = function ( err, e )
 {
   this._lockResourceResult = e ;
   this._isLockOwner = e.body.isLockOwner ;
@@ -883,7 +882,7 @@ tangojs.gp.Lock.prototype._lockResourceCallback = function ( err, e )
  * @method isOwner
  * @return MemberExpression
  */
-tangojs.gp.Lock.prototype.isOwner = function()
+gepard.Lock.prototype.isOwner = function()
 {
   return this._isLockOwner ;
 };
@@ -892,7 +891,7 @@ tangojs.gp.Lock.prototype.isOwner = function()
  * @method release
  * @return 
  */
-tangojs.gp.Lock.prototype.release = function()
+gepard.Lock.prototype.release = function()
 {
   if ( ! this._isLockOwner )
   {
