@@ -22,8 +22,31 @@ var Admin = function ( port, host )
 	this.host = T.getProperty ( "gepard.host", host ) ;
 };
 /**
- * Shutdown GPBroker
- * @method shutdown
+ * method getPort
+ * @return port
+ */
+Admin.prototype.getPort = function()
+{
+	return this.port ;
+};
+/**
+ * method getHost
+ * @return host
+ */
+Admin.prototype.getHost = function()
+{
+	return this.host ? this.host : "localhost" ;
+};
+/**
+ * method getHostPort
+ * @return host
+ */
+Admin.prototype.getHostPort = function()
+{
+	return this.getHost() + ":" + this.getPort() ;
+};
+/**
+ * Shutdown Broker
  * @param {} what
  * @return 
  */
@@ -51,11 +74,11 @@ Admin.prototype.isRunning = function ( callback )
 		this.socket = net.connect ( { port: this.port, host: this.host } ) ;
 		this.socket.on ( 'error', function socket_on_error( data )
 		{
-			callback.call ( null, false ) ;
+			callback.call ( thiz, false ) ;
 		});
 		this.socket.on ( "connect", function()
 		{
-			callback.call ( null, true ) ;
+			callback.call ( thiz, true ) ;
 			thiz.socket.end() ;
 		});
 	}
@@ -66,13 +89,14 @@ Admin.prototype.isRunning = function ( callback )
 
 Admin.prototype._execute = function ( action, what, callback )
 {
+	var thiz = this ;
 	try
 	{
 		this.socket = net.connect ( { port: this.port, host: this.host } ) ;
 	}
 	catch ( exc )
 	{
-		console.log ( "Not running" ) ;
+    console.log ( "Not running on " + this.getHostPort() ) ;
 		return ;
 	}
 	if ( action === "shutdown" )
@@ -103,7 +127,7 @@ Admin.prototype._execute = function ( action, what, callback )
 	}
 	this.socket.on ( 'error', function socket_on_error( data )
 	{
-		console.log ( "Not running" ) ;
+    console.log ( "Not running on " + thiz.getHostPort() ) ;
 		// T.lwhere (  ) ;
 		// T.log ( data ) ;
 	});

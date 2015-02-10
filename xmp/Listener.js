@@ -4,6 +4,7 @@ if ( require.main === module )
 {
 	var T      = require ( "../src/Tango" ) ;
 	var Client = require ( "../src/Client" ) ;
+  var Admin  = require ( "../src/Admin" ) ;
 
 	if ( T.getProperty ( "help" ) )
 	{
@@ -13,6 +14,16 @@ if ( require.main === module )
 		) ;
 		process.exit() ;
 	}
+
+  new Admin().isRunning ( function admin_is_running ( state )
+  {
+    if ( ! state )
+    {
+      console.log ( "Not running on " + this.getHostPort() ) ;
+      process.exit ( 1 ) ;
+    }
+  });
+
 
 	var name = T.getProperty ( "name", "ALARM" ) ;
 	var c = new Client() ;
