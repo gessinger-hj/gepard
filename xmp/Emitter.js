@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 if ( require.main === module )
 {
   var T      = require ( "../src/Tango" ) ;

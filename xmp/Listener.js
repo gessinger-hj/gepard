@@ -1,8 +1,10 @@
-var T      = require ( "../src/Tango" ) ;
-var Client = require ( "../src/Client" ) ;
+#!/usr/bin/env node
 
 if ( require.main === module )
 {
+	var T      = require ( "../src/Tango" ) ;
+	var Client = require ( "../src/Client" ) ;
+
 	if ( T.getProperty ( "help" ) )
 	{
 		console.log (
