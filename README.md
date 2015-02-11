@@ -133,7 +133,7 @@ Both do
 ```js
 var wc = tangojs.gp.getWebClient ( 17502 ) ;
 var sem = wc.getSemaphore ( "user:id:admin" ) ;
-this.sem.aquire ( function sem_callback ( err )
+this.sem.acquire ( function sem_callback ( err )
 {
   if ( this.isOwner() )
   {
@@ -246,7 +246,7 @@ Browser
 Code
 
 ```js
-lock.aquire ( function ( err )
+lock.acquire ( function ( err )
 {
   console.log ( this.toString() ) ;
   if ( this.isOwner() )
@@ -277,7 +277,7 @@ var sem = client.getSemaphore ( "user:10000" ) ;
 Code
 
 ```js
-sem.aquire ( function ( err )
+sem.acquire ( function ( err )
 {
   console.log ( this.toString() ) ;
   console.log ( "Is owner: " + this.isOwner() ) ;

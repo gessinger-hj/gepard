@@ -309,9 +309,9 @@ WebSocketEventProxy.prototype.handleSystemMessages = function ( conn, e )
 		conn._unlockResourceRequest  ( e ) ;
 	}
 	else
-	if ( e.getType() === 'aquireSemaphoreRequest' )
+	if ( e.getType() === 'acquireSemaphoreRequest' )
 	{
-		conn._aquireSemaphoreRequest  ( e ) ;
+		conn._acquireSemaphoreRequest  ( e ) ;
 	}
 	else
 	if ( e.getType() === 'releaseSemaphoreRequest' )
@@ -449,7 +449,7 @@ Conn.prototype._lockResourceRequest = function ( e )
 	}
 	var lock = new Lock ( resourceId, this.getClient() ) ;
 	this._locks[resourceId] = lock ;
-  lock.aquire ( function ( err )
+  lock.acquire ( function ( err )
   {
     e.setType ( "lockResourceResult" ) ;
   	if ( err )
@@ -491,7 +491,7 @@ Conn.prototype._unlockResourceRequest = function ( e )
 		this.client = null ;
   }
 };
-Conn.prototype._aquireSemaphoreRequest = function ( e )
+Conn.prototype._acquireSemaphoreRequest = function ( e )
 {
 	var thiz = this ;
 	var resourceId = e.body.resourceId  ;
@@ -502,9 +502,9 @@ Conn.prototype._aquireSemaphoreRequest = function ( e )
 	}
 	var sem = new Semaphore ( resourceId, this.getClient() ) ;
 	this._semaphores[resourceId] = sem ;
-  sem.aquire ( function ( err )
+  sem.acquire ( function ( err )
   {
-    e.setType ( "aquireSemaphoreResult" ) ;
+    e.setType ( "acquireSemaphoreResult" ) ;
   	if ( err )
   	{
   		e.body.isSemaphoreOwner = false ;

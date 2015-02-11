@@ -82,25 +82,25 @@ Xmp1.sendEvent = function ( name )
       }
     } ) ;
 };
-Xmp1.lock = function ( name )
+Xmp1.lockResource = function ( name )
 {
     this.lock = this.wc.getLock ( name ) ;
-    this.lock.aquire ( function lock_callback ( err )
+    this.lock.acquire ( function lock_callback ( err )
     {
         Console.log ( "" + this ) ;
     }) ;
 };
-Xmp1.unlock = function()
+Xmp1.unlockResource = function()
 {
     if ( ! this.lock ) return ;
     this.lock.release() ;
     this.lock = null ;
 };
-Xmp1.semAquire = function ( name )
+Xmp1.semAcquire = function ( name )
 {
     this.sem = this.wc.getSemaphore ( name ) ;
     Console.log ( "Aquiring semaphore=" + name ) ;
-    this.sem.aquire ( function sem_callback ( err )
+    this.sem.acquire ( function sem_callback ( err )
     {
         Console.log ( "" + this ) ;
     }) ;
@@ -166,10 +166,10 @@ Xmp1.toFullString = function ( text, indent )
     <br/>
     <button onclick='Xmp1.on("CONFIG-CHANGED")'>listen to ( CONFIG-CHANGED )</button>
     <br/>Resource:
-    <button onclick='Xmp1.lock("user:4711")'>aquire</button>
-    <button onclick='Xmp1.unlock()'>release</button>
+    <button onclick='Xmp1.lockResource("user:4711")'>acquire</button>
+    <button onclick='Xmp1.unlockResource()'>release</button>
     <br/>Semaphore:
-    <button onclick='Xmp1.semAquire("user:10000")'>aquire</button>
+    <button onclick='Xmp1.semAcquire("user:10000")'>acquire</button>
     <button onclick='Xmp1.semRelease()'>release</button>
     <div id="console-container">
         <div id="console"></div>

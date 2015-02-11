@@ -40,12 +40,12 @@ Lock.prototype.toString = function()
 
 /**
  * Description
- * @method aquire
+ * @method acquire
  * @param {} resourceId
  * @param {} callback
  * @return 
  */
-Lock.prototype.aquire = function ( callback )
+Lock.prototype.acquire = function ( callback )
 {
   if ( ! this._client )
   {
@@ -111,7 +111,7 @@ if ( require.main === module )
   var key = T.getProperty ( "name", "user:4711" ) ;
   var auto = T.getProperty ( "auto" ) ;
   var lock = new Lock ( key ) ;
-  lock.aquire ( function ( err )
+  lock.acquire ( function ( err )
   {
     console.log ( "" + this.toString() ) ;
     if ( auto )

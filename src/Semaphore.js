@@ -39,25 +39,25 @@ Semaphore.prototype.toString = function()
 };
 /**
  * Description
- * @method aquire
+ * @method acquire
  * @param {} resourceId
  * @param {} callback
  * @return 
  */
-Semaphore.prototype.aquire = function ( callback )
+Semaphore.prototype.acquire = function ( callback )
 {
   if ( ! this._client )
   {
     this._client = new Client ( this._port, this._host ) ;
   }
   this._callback = callback ;
-  this._client.aquireSemaphore ( this._resourceId, this._aquireSemaphoreCallback.bind ( this ) ) ;
+  this._client.acquireSemaphore ( this._resourceId, this._acquireSemaphoreCallback.bind ( this ) ) ;
 };
-Semaphore.prototype._aquireSemaphoreCallback = function ( err, e )
+Semaphore.prototype._acquireSemaphoreCallback = function ( err, e )
 {
   if ( ! err )
   {
-    this._aquireSemaphoreResult = e ;
+    this._acquireSemaphoreResult = e ;
     this._isSemaphoreOwner = e.body.isSemaphoreOwner ;
   }
   this._callback.call ( this, err ) ;
@@ -92,7 +92,7 @@ if ( require.main === module )
   if ( T.getProperty ( "help" ) )
   {
     console.log (
-      "Gepard example: Semaphore, aquire a given semaphore.\n"
+      "Gepard example: Semaphore, acquire a given semaphore.\n"
     + "Usage: node Semaphore [options]\n"
     + "  Options are: -Dname=<semaphore-name>, default <semaphore-name>=user:10000\n"
     + "               -Dname=<auto>, release semaphore imediately after aquiring ownership owner.\n"
@@ -104,7 +104,7 @@ if ( require.main === module )
   var auto = T.getProperty ( "auto" ) ;
   var sem = new Semaphore ( key ) ;
   console.log ( "Aquiring semaphor=" + key ) ;
-  sem.aquire ( function ( err )
+  sem.acquire ( function ( err )
   {
     console.log ( this.toString() ) ;
     console.log ( "Is owner: " + this.isOwner() ) ;

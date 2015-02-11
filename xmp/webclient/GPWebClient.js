@@ -32,11 +32,11 @@ gepard.WebClient = function ( port )
   this._proxyIdentifier            = null ;
   this._onCallbackFunctions        = new tangojs.MultiHash() ;
   this._pendingLockList            = [] ;
-  this._aquiredResources           = {} ;
+  this._acquiredResources           = {} ;
   this._ownedResources             = {} ;
-  this._aquiredSemaphores          = {} ;
+  this._acquiredSemaphores          = {} ;
   this._ownedSemaphores            = {} ;
-  this._pendingAquireSemaphoreList = [] ;
+  this._pendingAcquireSemaphoreList = [] ;
 
   gepard._WebClientInstance = this ;
 };
@@ -163,8 +163,8 @@ gepard.WebClient.prototype._connect = function()
           ////////////////////////////
           if ( e.getType() === "lockResourceResult" )
           {
-            ctx = thiz._aquiredResources[e.body.resourceId] ;
-            delete thiz._aquiredResources[e.body.resourceId] ;
+            ctx = thiz._acquiredResources[e.body.resourceId] ;
+            delete thiz._acquiredResources[e.body.resourceId] ;
             if ( e.body.isLockOwner )
             {
               thiz._ownedResources[e.body.resourceId] = ctx ;
@@ -183,12 +183,12 @@ gepard.WebClient.prototype._connect = function()
           ////////////////////////
           // semaphore handling //
           ////////////////////////
-          if ( e.getType() === "aquireSemaphoreResult" )
+          if ( e.getType() === "acquireSemaphoreResult" )
           {
             if ( e.body.isSemaphoreOwner )
             {
-              thiz._ownedSemaphores[e.body.resourceId] = thiz._aquiredSemaphores[e.body.resourceId] ;
-              delete thiz._aquiredSemaphores[e.body.resourceId] ;
+              thiz._ownedSemaphores[e.body.resourceId] = thiz._acquiredSemaphores[e.body.resourceId] ;
+              delete thiz._acquiredSemaphores[e.body.resourceId] ;
               ctx = thiz._ownedSemaphores[e.body.resourceId] ;
               ctx.callback.call ( thiz, null, e ) ;
             }
@@ -274,21 +274,21 @@ gepard.WebClient.prototype._connect = function()
         var ctx = thiz._pendingLockList[i] ;
         ctx.e.setUniqueId ( uid ) ;
         thiz._socket.send ( ctx.e.serialize() ) ;
-        thiz._aquiredResources[ctx.e.body.resourceId] = ctx;
+        thiz._acquiredResources[ctx.e.body.resourceId] = ctx;
       }
       thiz._pendingLockList.length = 0 ;
     }
-    if ( thiz._pendingAquireSemaphoreList.length )
+    if ( thiz._pendingAcquireSemaphoreList.length )
     {
-      for ( i = 0 ; i < thiz._pendingAquireSemaphoreList.length ; i++ )
+      for ( i = 0 ; i < thiz._pendingAcquireSemaphoreList.length ; i++ )
       {
         var uid = thiz._createUniqueEventId() ;
-        var ctx = thiz._pendingAquireSemaphoreList[i] ;
+        var ctx = thiz._pendingAcquireSemaphoreList[i] ;
         ctx.e.setUniqueId ( uid ) ;
         thiz._socket.send ( ctx.e.serialize() ) ;
-        thiz._aquiredSemaphores[ctx.e.body.resourceId] = ctx;
+        thiz._acquiredSemaphores[ctx.e.body.resourceId] = ctx;
       }
-      thiz._pendingAquireSemaphoreList.length = 0 ;
+      thiz._pendingAcquireSemaphoreList.length = 0 ;
     }
   };
 };
@@ -637,7 +637,7 @@ gepard.WebClient.prototype._lockResource = function ( resourceId, callback )
     this._error ( "Client.lockResource: callback must be a function." ) ;
     return ;
   }
-  if ( this._ownedResources[resourceId] || this._aquiredResources[resourceId] )
+  if ( this._ownedResources[resourceId] || this._acquiredResources[resourceId] )
   {
     this._error ( "Client.lockResource: already owner of resourceId=" + resourceId ) ;
     return ;
@@ -657,7 +657,7 @@ gepard.WebClient.prototype._lockResource = function ( resourceId, callback )
   if ( ! this._pendingLockList.length )
   {
     e.setUniqueId ( this._createUniqueEventId() ) ;
-    this._aquiredResources[resourceId] = ctx;
+    this._acquiredResources[resourceId] = ctx;
     this.send ( e ) ;
   }
 };
@@ -674,7 +674,7 @@ gepard.WebClient.prototype._unlockResource = function ( resourceId )
     this._error ( "Client.unlockResource: resourceId must be a string." ) ;
     return ;
   }
-  delete this._aquiredResources[resourceId] ;
+  delete this._acquiredResources[resourceId] ;
   if ( ! this._ownedResources[resourceId] )
   {
     this._error ( "Client.unlockResource: not owner of resourceId=" + resourceId ) ;
@@ -690,50 +690,50 @@ gepard.WebClient.prototype._unlockResource = function ( resourceId )
 };
 /**
  * Description
- * @method aquireSemaphore
+ * @method acquireSemaphore
  * @param {} resourceId
  * @param {} callback
  * @return 
  */
-gepard.WebClient.prototype._aquireSemaphore = function ( resourceId, callback )
+gepard.WebClient.prototype._acquireSemaphore = function ( resourceId, callback )
 {
   if ( typeof resourceId !== 'string' || ! resourceId )
   {
-    this._error ( "Client.aquireSemaphore: resourceId must be a string." ) ;
+    this._error ( "Client.acquireSemaphore: resourceId must be a string." ) ;
     return ;
   }
   if ( typeof callback !== 'function' )
   {
-    this._error ( "Client.aquireSemaphore: callback must be a function." ) ;
+    this._error ( "Client.acquireSemaphore: callback must be a function." ) ;
     return ;
   }
-  if ( this._aquiredSemaphores[resourceId] )
+  if ( this._acquiredSemaphores[resourceId] )
   {
-    this._error ( "Client.aquireSemaphore: already waiting for resourceId=" + resourceId ) ;
+    this._error ( "Client.acquireSemaphore: already waiting for resourceId=" + resourceId ) ;
     return ;
   }
   if ( this._ownedSemaphores[resourceId] )
   {
-    this._error ( "Client.aquireSemaphore: already owner of resourceId=" + resourceId ) ;
+    this._error ( "Client.acquireSemaphore: already owner of resourceId=" + resourceId ) ;
     return ;
   }
 
-  var e = new gepard.Event ( "system", "aquireSemaphoreRequest" ) ;
+  var e = new gepard.Event ( "system", "acquireSemaphoreRequest" ) ;
   e.body.resourceId = resourceId ;
   var ctx = {} ;
   ctx.resourceId = resourceId ;
   ctx.callback = callback ;
   ctx.e = e ;
 
-  if ( ! this._socket || this._pendingAquireSemaphoreList.length )
+  if ( ! this._socket || this._pendingAcquireSemaphoreList.length )
   {
-    this._pendingAquireSemaphoreList.push ( ctx ) ;
+    this._pendingAcquireSemaphoreList.push ( ctx ) ;
   }
   var s = this.getSocket() ;
-  if ( ! this._pendingAquireSemaphoreList.length )
+  if ( ! this._pendingAcquireSemaphoreList.length )
   {
     e.setUniqueId ( this._createUniqueEventId() ) ;
-    this._aquiredSemaphores[resourceId] = ctx;
+    this._acquiredSemaphores[resourceId] = ctx;
     this.send ( e ) ;
   }
 };
@@ -750,7 +750,7 @@ gepard.WebClient.prototype._releaseSemaphore = function ( resourceId )
     this._error ( "Client.releaseSemaphore: resourceId must be a string." ) ;
     return ;
   }
-  delete this._aquiredSemaphores[resourceId] ;
+  delete this._acquiredSemaphores[resourceId] ;
   var e = new gepard.Event ( "system", "releaseSemaphoreRequest" ) ;
   e.body.resourceId = resourceId ;
   var s = this.getSocket() ;
@@ -783,8 +783,15 @@ gepard.Semaphore = function ( client, resourceId )
 {
   this.className         = "Semaphore" ;
   this._resourceId       = resourceId ;
-  this._client           = client ;
   this._isSemaphoreOwner = false ;
+  if ( typeof client === 'string' )
+  {
+    this._client = gepard.getWebClient() ;
+  }
+  else
+  {
+    this._client = client ;
+  }
 };
 
 /**
@@ -798,21 +805,21 @@ gepard.Semaphore.prototype.toString = function()
 };
 /**
  * Description
- * @method aquire
+ * @method acquire
  * @param {} resourceId
  * @param {} callback
  * @return 
  */
-gepard.Semaphore.prototype.aquire = function ( callback )
+gepard.Semaphore.prototype.acquire = function ( callback )
 {
   this._callback = callback ;
-  this._client._aquireSemaphore ( this._resourceId, this._aquireSemaphoreCallback.bind ( this ) ) ;
+  this._client._acquireSemaphore ( this._resourceId, this._acquireSemaphoreCallback.bind ( this ) ) ;
 };
-gepard.Semaphore.prototype._aquireSemaphoreCallback = function ( err, e )
+gepard.Semaphore.prototype._acquireSemaphoreCallback = function ( err, e )
 {
   if ( ! err )
   {
-    this._aquireSemaphoreResult = e ;
+    this._acquireSemaphoreResult = e ;
     this._isSemaphoreOwner = e.body.isSemaphoreOwner ;
   }
   this._callback.call ( this, err ) ;
@@ -846,8 +853,15 @@ gepard.Lock = function ( client, resourceId )
 {
   this.className = "Lock" ;
   this._resourceId = resourceId ;
-  this._client = client ;
   this._isLockOwner = false ;
+  if ( typeof client === 'string' )
+  {
+    this._client = gepard.getWebClient() ;
+  }
+  else
+  {
+    this._client = client ;
+  }
 };
 /**
  * Description
@@ -861,12 +875,12 @@ gepard.Lock.prototype.toString = function()
 
 /**
  * Description
- * @method aquire
+ * @method acquire
  * @param {} resourceId
  * @param {} callback
  * @return 
  */
-gepard.Lock.prototype.aquire = function ( callback )
+gepard.Lock.prototype.acquire = function ( callback )
 {
   this._callback = callback ;
   this._client._lockResource ( this._resourceId, this._lockResourceCallback.bind ( this ) ) ;
