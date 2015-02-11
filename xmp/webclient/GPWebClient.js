@@ -1,8 +1,13 @@
 if ( typeof gepard === 'undefined' ) gepard = {} ;
 
 gepard.counter = 0 ;
+gepard.port = 17502 ; // default port
 gepard.getWebClient = function ( port )
 {
+  if ( ! port )
+  {
+    port = gepard.port ;
+  }
   if ( gepard._WebClientInstance ) return gepard._WebClientInstance ;
   return new gepard.WebClient ( port ) ;
 };
@@ -29,13 +34,13 @@ gepard.WebClient = function ( port )
     this._url = "wss://" + document.domain + ":" + this._port ;
   }
 
-  this._proxyIdentifier            = null ;
-  this._onCallbackFunctions        = new tangojs.MultiHash() ;
-  this._pendingLockList            = [] ;
+  this._proxyIdentifier             = null ;
+  this._onCallbackFunctions         = new tangojs.MultiHash() ;
+  this._pendingLockList             = [] ;
   this._acquiredResources           = {} ;
-  this._ownedResources             = {} ;
+  this._ownedResources              = {} ;
   this._acquiredSemaphores          = {} ;
-  this._ownedSemaphores            = {} ;
+  this._ownedSemaphores             = {} ;
   this._pendingAcquireSemaphoreList = [] ;
 
   gepard._WebClientInstance = this ;
@@ -786,7 +791,8 @@ gepard.Semaphore = function ( client, resourceId )
   this._isSemaphoreOwner = false ;
   if ( typeof client === 'string' )
   {
-    this._client = gepard.getWebClient() ;
+    this._resourceId = client ;
+    this._client     = gepard.getWebClient() ;
   }
   else
   {
@@ -856,6 +862,7 @@ gepard.Lock = function ( client, resourceId )
   this._isLockOwner = false ;
   if ( typeof client === 'string' )
   {
+    this._resourceId = client ;
     this._client = gepard.getWebClient() ;
   }
   else

@@ -10,7 +10,8 @@ if ( require.main === module )
   {
     console.log (
       "Gepard Examples: Emitter, emit a given event.\n"
-    + "Usage: node Emitter [-Dname=<event-name>], default <event-name>=CONFIG-CHANGED"
+    + "Usage: node Emitter [-Dname=<event-name>], default <event-name>=ALARM\n"
+    + "                    [-Dbody=<json-string>], example: {\"City\":\"Frankfurt\"}"
     ) ;
     process.exit() ;
   }
@@ -24,15 +25,33 @@ if ( require.main === module )
     }
   });
 
-  var name = T.getProperty ( "name", "CONFIG-CHANGED" ) ;
+  var name = T.getProperty ( "name", "ALARM" ) ;
+  var body = T.getProperty ( "body" ) ;
 
   var c = new Client() ;
 
-  c.fire ( name,
+  if ( body )
   {
-    write: function()
+    body = JSON.parse ( body ) ;
+    var e = new Event ( name, body ) ;
+    // or e = new Event ( name ) ;
+    // e.setBody ( body )
+    c.fire ( e,
     {
-      c.end() ;
-    }
-  });
+      write: function()
+      {
+        this.end() ;
+      }
+    });
+  }
+  else
+  {
+    c.fire ( name,
+    {
+      write: function()
+      {
+        this.end() ;
+      }
+    });
+  }
 }

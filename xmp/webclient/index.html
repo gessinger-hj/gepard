@@ -38,6 +38,14 @@ Console.log = function ( message )
     p.innerHTML = message;
     this._log ( p ) ;
 }
+Console.clear = function()
+{
+  var console = document.getElementById('console');
+  while (console.childNodes.length > 0) {
+    console.removeChild(console.firstChild);
+  }
+  console.scrollTop = console.scrollHeight;
+}
 Console._log = function ( p )
 {
     var console = document.getElementById('console');
@@ -48,9 +56,9 @@ Console._log = function ( p )
     console.scrollTop = console.scrollHeight;
 };
 
-var Xmp1 = {};
+var Xmp = {};
 
-Xmp1.initialize = function()
+Xmp.initialize = function()
 {
   this.port = 17502 ;
   var thiz = this ;
@@ -72,7 +80,7 @@ Xmp1.initialize = function()
     console.log ( exc ) ;
   }
 };
-Xmp1.sendEvent = function ( name )
+Xmp.sendEvent = function ( name )
 {
     this.wc.fire ( name,
     { error:function error_callback(e)
@@ -82,36 +90,36 @@ Xmp1.sendEvent = function ( name )
       }
     } ) ;
 };
-Xmp1.lockResource = function ( name )
+Xmp.lockResource = function ( name )
 {
-    this.lock = this.wc.getLock ( name ) ;
+    this.lock = new gepard.Lock ( name ) ;
     this.lock.acquire ( function lock_callback ( err )
     {
         Console.log ( "" + this ) ;
     }) ;
 };
-Xmp1.unlockResource = function()
+Xmp.unlockResource = function()
 {
     if ( ! this.lock ) return ;
     this.lock.release() ;
     this.lock = null ;
 };
-Xmp1.semAcquire = function ( name )
+Xmp.semAcquire = function ( name )
 {
-    this.sem = this.wc.getSemaphore ( name ) ;
+    this.sem = new gepard.Semaphore ( name ) ;
     Console.log ( "Aquiring semaphore=" + name ) ;
     this.sem.acquire ( function sem_callback ( err )
     {
         Console.log ( "" + this ) ;
     }) ;
 };
-Xmp1.semRelease = function()
+Xmp.semRelease = function()
 {
     if ( ! this.sem ) return ;
     this.sem.release() ;
     this.sem = null ;
 };
-Xmp1.on = function ( name )
+Xmp.on = function ( name )
 {
   this.eventName = name ;
   var thiz = this ;
@@ -121,12 +129,12 @@ Xmp1.on = function ( name )
     Console.log ( thiz.toFullString ( e ) ) ;
   }) ;
 }
-Xmp1.removeEventListener = function()
+Xmp.removeEventListener = function()
 {
     if ( ! this.eventName ) return ;
     this.wc.removeEventListener ( this.eventName ) ;
 };
-Xmp1.toFullString = function ( text, indent )
+Xmp.toFullString = function ( text, indent )
 {
   if ( ! indent ) indent = "" ;
   if ( Array.isArray ( text ) || ( typeof ( text ) == 'object' && text ) )
@@ -161,24 +169,24 @@ Xmp1.toFullString = function ( text, indent )
 </script>
 </head>
 <body>
-    <div>
-    <button onclick='Xmp1.sendEvent("ALARM")'>send event ( ALARM )</button>
-    <br/>
-    <button onclick='Xmp1.on("CONFIG-CHANGED")'>listen to ( CONFIG-CHANGED )</button>
-    <br/>Resource:
-    <button onclick='Xmp1.lockResource("user:4711")'>acquire</button>
-    <button onclick='Xmp1.unlockResource()'>release</button>
-    <br/>Semaphore:
-    <button onclick='Xmp1.semAcquire("user:10000")'>acquire</button>
-    <button onclick='Xmp1.semRelease()'>release</button>
+  <div>
+    <table>
+      <tr><td>Send event:</td><td><button onclick='Xmp.sendEvent("ALARM")'>ALARM</button></td></tr>
+      <tr><td>Listen to:</td><td><button onclick='Xmp.on("ALARM")'>ALARM</button></td></tr>
+      <tr><td>Resource:</td><td><button onclick='Xmp.lockResource("user:4711")'>acquire "user:4711"</button></td></tr>
+      <tr><td></td><td><button onclick='Xmp.unlockResource()'>release "user:4711"</button></td></tr>
+      <tr><td>Semaphore:</td><td><button onclick='Xmp.semAcquire("user:10000")'>acquire "user:1000"</button></td></tr>
+      <tr><td></td><td><button onclick='Xmp.semRelease()'>release "user:1000"</button></td></tr>
+    </table>
     <div id="console-container">
+      <button style='float:right;' onclick='Console.clear()'>Clear console</button>
         <div id="console"></div>
     </div>
-</div>
+  </div>
 <script type="text/javascript">
 try
 {
-    Xmp1.initialize();
+    Xmp.initialize();
 }
 catch ( exc )
 {

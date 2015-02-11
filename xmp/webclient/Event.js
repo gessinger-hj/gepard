@@ -189,6 +189,11 @@ gepard.Event.prototype =
 		this.name = "" ;
 		this.type = "" ;
 		this.setName ( name ) ;
+		if ( type && typeof type === 'object' )
+		{
+			data = type ;
+			type = "" ;
+		}
 		this.setType ( type ) ;
 		this.user = null ;
 		this.control = { createdAt: new Date() } ;

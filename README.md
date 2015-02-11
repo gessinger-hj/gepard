@@ -73,7 +73,7 @@ All commands are in the directory: node_modules/.bin
     start the gepard broker
 1.  __gp.listen --name=hello<br/>__
     start a listener for events named __hello__
-1.  __gp.emit --name=hello<br/>__
+1.  __gp.emit --name=hello<br/>__ [--body='{"City":"Frankfurt"}']
     emit an event with name __hello__
 1.  __gp.info<br/>__
     show basic information from the broker
@@ -93,7 +93,7 @@ The defaults are:
 The port, host and logging directory can be set either by
 supplying these items
 
-1. within creating an istance of Client or Broker in your code.
+1. within creating an instance of Client or Broker in your code.
 
 2. as startup arguments of your program as:
 	- -Dgepard.port=<port&gt;
@@ -131,8 +131,8 @@ In this case a Semaphore is very useful.
 Both do
 
 ```js
-var wc = tangojs.gp.getWebClient ( 17502 ) ;
-var sem = wc.getSemaphore ( "user:id:admin" ) ;
+gepard.port = 17502 ;
+var sem = new gepard.Semaphore ( "user:id:admin" ) ;
 this.sem.acquire ( function sem_callback ( err )
 {
   if ( this.isOwner() )
@@ -157,14 +157,14 @@ In this case Locks are very useful.
 The following should be done:
 
 ```js
-var fs = require ( "fs" ) ;
-var G  = require ( "gepard" ) ;
+var fs     = require ( "fs" ) ;
+var gepard = require ( "gepard" ) ;
 var lock ;
 
 var array = fs.readdirSync ( "foo/bar/input" ) ;
 for ( var i = 0 ; i < array.length ; i++ )
 {
-	lock = new G.Lock ( array[i], function()
+	lock = new gepard.Lock ( array[i], function()
 	{
 		try
 		{
@@ -187,13 +187,13 @@ for ( var i = 0 ; i < array.length ; i++ )
 Application
 
 ```js
-  var G = require ( "gepard" ) ;
-  var c = new G.Client() ;
+  var gepard = require ( "gepard" ) ;
+  var c = new gepard.Client() ;
 ```
 Browser
 
 ```js
-  var client = tangojs.gp.getWebClient ( 17502 ) ;
+  var client = gepard.getWebClient ( 17502 ) ;
 ```
 
 Code
@@ -210,8 +210,8 @@ c.on ( "ALARM", function event_listener_callback(e)
 Application
 
 ```js
-var G = require ( "gepard" ) ;
-var client = new G.Client() ;
+var gepard = require ( "gepard" ) ;
+var client = new gepard.Client() ;
 client.fire ( "ALARM",
 {
   var thiz = this ;
@@ -225,7 +225,7 @@ client.fire ( "ALARM",
 Browser
 
 ```js
-var client = tangojs.gp.getWebClient ( 17502 ) ;
+var client = gepard.getWebClient ( 17502 ) ;
 client.fire ( "CONFIG-CHANGED" ) ;
 ```
 
@@ -234,14 +234,14 @@ client.fire ( "CONFIG-CHANGED" ) ;
 Application
 
 ```js
-  var G = require ( "gepard" ) ;
-  var lock = new G.Lock ( "user:4711" ) ;
+  var gepard = require ( "gepard" ) ;
+  var lock = new gepard.Lock ( "user:4711" ) ;
 ```
 Browser
 
 ```js
-  var client = tangojs.gp.getWebClient ( 17502 ) ;
-  var lock = client.getLock ( "user:4711" ) ;
+gepard.port = 17502 ;
+  var lock = new gepard.Lock ( "user:4711" ) ;
 ```
 Code
 
@@ -264,14 +264,14 @@ lock.acquire ( function ( err )
 Application
 
 ```js
-  var G = require ( "gepard" ) ;
-  var sem = new G.Semaphore ( "user:10000" ) ;
+  var gepard = require ( "gepard" ) ;
+  var sem = new gepard.Semaphore ( "user:10000" ) ;
 ```
 Browser
 
 ```js
-var client = tangojs.gp.getWebClient ( 17502 ) ;
-var sem = client.getSemaphore ( "user:10000" ) ;
+gepard.port = 17502 ;
+var sem = new gepard.Semaphore ( "user:10000" ) ;
 ```
 
 Code
@@ -297,13 +297,13 @@ sem.acquire ( function ( err )
 Application:
 
 ```js
-  var G = require ( "gepard" ) ;
-  var client = new G.Client()
+  var gepard = require ( "gepard" ) ;
+  var client = new gepard.Client()
 ```
 Browser:
 
 ```js
-  var client = tangojs.gp.getWebClient ( 17502 ) ;
+  var client = gepard.getWebClient ( 17502 ) ;
 ```
 Code:
 
@@ -321,13 +321,13 @@ client().request ( "getList"
 Application:
 
 ```js
-  var G = require ( "gepard" ) ;
-  var client = new G.Client()
+  var gepard = require ( "gepard" ) ;
+  var client = new gepard.Client()
 ```
 Browser:
 
 ```js
-  var client = tangojs.gp.getWebClient ( 17502 ) ;
+  var client = gepard.getWebClient ( 17502 ) ;
 ```
 Code:
 
@@ -347,9 +347,9 @@ client.on ( "getList", function ( e )
 #### In Application
 
 ```js
-var G = require ( "gepard" ) ;
+var gepard = require ( "gepard" ) ;
 
-var c = new G.Client() ;
+var c = new gepard.Client() ;
 
 var eventName = "ALARM" ;
 var c = new Client() ;
@@ -381,7 +381,7 @@ c.on('shutdown', function()
 ```
 
 ```js
-    var wc = tangojs.gp.getWebClient ( 17502 ) ;
+    var wc = gepard.getWebClient ( 17502 ) ;
     this.wc.on ( "open", function onopen()
     {
     }) ;
@@ -402,11 +402,11 @@ c.on('shutdown', function()
 #### In Application
 
 ```js
-var G  = require ( "gepard" ) ;
+var gepard  = require ( "gepard" ) ;
 
-var c = new G.Client() ;
+var c = new gepard.Client() ;
 
-var event = new G.Event ( "CONFIG-CHANGED" ) ;
+var event = new gepard.Event ( "CONFIG-CHANGED" ) ;
 event.setBody ( { "config-name" : "app.conf" } ) ;
 c.fire ( event,
 {
@@ -424,8 +424,8 @@ c.fire ( event,
 <script type="text/javascript" src="GPWebClient.js" ></script>
 ```
 ```js
-var wc = tangojs.gp.getWebClient ( 17502 ) ;
-var event = new tangojs.gp.Event ( "CONFIG-CHANGED" ) ;
+var wc = gepard.getWebClient ( 17502 ) ;
+var event = new gepard.Event ( "CONFIG-CHANGED" ) ;
 event.setBody ( { "config-name" : "app.conf" } ) ;
 wc.fire ( event ) ;
 ```

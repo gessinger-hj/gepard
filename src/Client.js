@@ -42,6 +42,10 @@ var Client = function ( port, host )
   this._pendingAcquireSemaphoreList = [] ;
 } ;
 util.inherits ( Client, EventEmitter ) ;
+Client.prototype.toString = function()
+{
+  return "(Client)[connected=" + ( this.socket ? true : false ) + "]" ;
+};
 Client.prototype.holdsLocksOrSemaphores = function()
 {
   var k ;
