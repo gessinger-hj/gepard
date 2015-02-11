@@ -111,7 +111,7 @@ if ( require.main === module )
   var key = T.getProperty ( "name", "user:4711" ) ;
   var auto = T.getProperty ( "auto" ) ;
   var lock = new Lock ( key ) ;
-  lock.aquire ( function ( err, l )
+  lock.aquire ( function ( err )
   {
     console.log ( "" + this.toString() ) ;
     if ( auto )

@@ -449,7 +449,7 @@ Conn.prototype._lockResourceRequest = function ( e )
 	}
 	var lock = new Lock ( resourceId, this.getClient() ) ;
 	this._locks[resourceId] = lock ;
-  lock.aquire ( function ( err, l )
+  lock.aquire ( function ( err )
   {
     e.setType ( "lockResourceResult" ) ;
   	if ( err )
@@ -458,7 +458,7 @@ Conn.prototype._lockResourceRequest = function ( e )
   	}
   	else
   	{
-	  	e.body.isLockOwner = l.isOwner() ;
+	  	e.body.isLockOwner = this.isOwner() ;
   	}
   	if ( ! e.body.isLockOwner )
   	{
@@ -502,7 +502,7 @@ Conn.prototype._aquireSemaphoreRequest = function ( e )
 	}
 	var sem = new Semaphore ( resourceId, this.getClient() ) ;
 	this._semaphores[resourceId] = sem ;
-  sem.aquire ( function ( err, l )
+  sem.aquire ( function ( err )
   {
     e.setType ( "aquireSemaphoreResult" ) ;
   	if ( err )
@@ -511,7 +511,7 @@ Conn.prototype._aquireSemaphoreRequest = function ( e )
   	}
   	else
   	{
-	  	e.body.isSemaphoreOwner = l.isOwner() ;
+	  	e.body.isSemaphoreOwner = this.isOwner() ;
   	}
   	thiz.send ( e ) ;
   } ) ;

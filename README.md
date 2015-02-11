@@ -46,6 +46,11 @@ The appropriate command is:
 ```bash
 node_modules/.bin/gp.broker
 ```
+or if you want to start the web-socket-proxy too:
+```bash
+node_modules/.bin/gp.broker.web
+```
+
 There is a separate program for administration purposes:
 ```bash
 node_modules/.bin/gp.info
@@ -69,9 +74,12 @@ All commands are in the directory: node_modules/.bin
 1.  __gp.listen --name=hello<br/>__
     start a listener for events named __hello__
 1.  __gp.emit --name=hello<br/>__
-    emit an event with name __hello
+    emit an event with name __hello__
 1.  __gp.info<br/>__
     show basic information from the broker
+
+If you want to play with the web-client implementation use the appropriate files in:
+__node_modules/gepard/xmp/webclient__
 
 ## Configuration
 

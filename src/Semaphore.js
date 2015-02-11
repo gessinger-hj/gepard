@@ -95,7 +95,7 @@ if ( require.main === module )
       "Gepard example: Semaphore, aquire a given semaphore.\n"
     + "Usage: node Semaphore [options]\n"
     + "  Options are: -Dname=<semaphore-name>, default <semaphore-name>=user:10000\n"
-    + "               -Dname=<auto>, release semaphore imediately after getting owner.\n"
+    + "               -Dname=<auto>, release semaphore imediately after aquiring ownership owner.\n"
     ) ;
     process.exit() ;
   }
