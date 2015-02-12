@@ -13,18 +13,23 @@ if ( require.main === module )
   {
     // console.log ( exc ) ;
   }
-  var T    = require ( "../src/Tango" ) ;
-  var Log  = require ( "../src/LogFile" ) ;
-  var http = require ( 'http') ;
-  var fs   = require ( 'fs') ;
-  var Path = require ( 'path') ;
-  var url = require ( 'url' ) ;
+  var T      = require ( "../src/Tango" ) ;
+  var Log    = require ( "../src/LogFile" ) ;
+  var Gepard = require ( "../src/Gepard" ) ;
+  
+  var http   = require ( 'http') ;
+  var fs     = require ( 'fs') ;
+  var Path   = require ( 'path') ;
+  var url    = require ( 'url' ) ;
+  
+  var root   = process.cwd() ; //__dirname
+  root       = T.getProperty ( "root", root ) ;
+  root       = Path.resolve ( root ) ;
+  var port   = T.getInt ( "port", 8888 ) ;
+  var index  = T.getProperty ( "index", "index.html" ) ;
+  var logDir = Gepard.getLogDirectory() ;
 
-  var root  = process.cwd() ; //__dirname
-  root      = T.getProperty ( "root", root ) ;
-  var port  = T.getInt ( "port", 8888 ) ;
-  var index = T.getProperty ( "index", "index.html" ) ;
-
+  Log.init ( "level=info,Xedirect=3,file=%GEPARD_LOG%/%APPNAME%.log:max=1m:v=4") ;
   http.createServer ( function ( req, res )
   {
     var requestUrl  = url.parse ( req.url ) ;
@@ -52,8 +57,7 @@ if ( require.main === module )
     }
     try
     {
-// console.log ( "mime.lookUpType ( path )=" + mime.lookup ( path ) ) ;
-// console.log ( "path=" + path ) ;
+      Log.logln ( path ) ;
       if ( mime )
       {
         res.writeHead ( 200, { "Content-Type": mime.lookup ( path ) } ) ;
@@ -75,4 +79,5 @@ if ( require.main === module )
       Log.log ( exc ) ;
     }
   }).listen ( port )
+  console.log ( "Startet with\n  port=" + port + "\n  log=" + Log._fileName + "\n  root=" + root ) ;
 }

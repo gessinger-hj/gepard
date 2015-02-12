@@ -770,24 +770,24 @@ TangoClass.prototype.resolve = function ( src, map, delimiter )
 }
 
 var Tango = null ;
-if ( typeof tangojs === 'undefined' )
+
+if ( typeof org === 'undefined' ) org = {} ;
+if ( typeof org.gessinger === 'undefined' ) org.gessinger = {} ;
+if ( typeof org.gessinger.tangojs === 'undefined' ) org.gessinger.tangojs = {} ;
+
+if ( ! org.gessinger.tangojs.Tango )
 {
-  tangojs = {} ;
+  org.gessinger.tangojs.Tango = new TangoClass() ;
 }
-if ( ! tangojs.Tango )
-{
-  Tango = new TangoClass() ;
-  tangojs.Tango = Tango ;
-}
-// if ( ! util.Tango )
-// {
-//   util.Tango = new TangoClass() ;
-// }
-// var Tango = new TangoClass() ;
-// module.exports = util.Tango ;
-module.exports = tangojs.Tango ;
+module.exports = org.gessinger.tangojs.Tango ;
 if ( require.main === module )
 {
   var str = "%HOME%" ;
-  console.log ( tangojs.Tango.resolve ( str ) ) ;
+  console.log ( org.gessinger.tangojs.Tango.resolve ( str ) ) ;
+  org.gessinger.tangojs.Tango.__defineGetter__("XXXXX", function()
+      {
+        return org.gessinger.tangojs.Tango.jsClassName ;
+      });
+  console.log ( "org.gessinger.tangojs.Tango.XXXXX=" + org.gessinger.tangojs.Tango.XXXXX ) ;
+
 }

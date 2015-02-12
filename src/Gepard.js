@@ -56,18 +56,3 @@ Gepard.prototype.getLogDirectory = function()
 };
 
 module.exports = new Gepard() ;
-if ( require.main === module )
-{
-  var key = T.getProperty ( "key", "user:4711" ) ;
-  var auto = T.getProperty ( "auto" ) ;
-  var lock = new Lock ( key ) ;
-  lock.acquire ( function ( err, l )
-  {
-    console.log ( "err=" + err ) ;
-    console.log ( "l=" + l ) ;
-    if ( auto )
-    {
-      l.release() ;
-    }
-  } ) ;
-}

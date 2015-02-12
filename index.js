@@ -27,6 +27,24 @@ function collectFiles ( target, packageName, dir )
 			}
 		}
 		if ( a[i].indexOf ( ".js" ) !== a[i].length - 3 ) continue ;
+		if ( a[i] === "LogFile.js" )
+		{
+			/*
+			var cn = a[i].substring ( 0, a[i].length - 3 ) ;
+console.log ( "cn=" + cn ) ;
+			gepard[cn+"-INSTANCE"] = fname ;
+			gepard.__defineGetter__( "Log", function()
+      {
+				if ( gepard[cn+"-INSTANCE"] )
+				{
+console.log ( "fname=" + fname ) ;
+					gepard[cn+"-INSTANCE"] = require ( fname ) ;
+				}
+				return gepard[cn+"-INSTANCE"]
+			});
+			continue ;
+			*/
+		}
 		if ( fs.statSync ( fname ).isDirectory() ) continue ;
 		var res = require ( fname ) ;
 		if ( ! res )
