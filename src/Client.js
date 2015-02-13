@@ -98,7 +98,7 @@ Client.prototype.connect = function()
     var einfo = new Event ( "system", "client_info" ) ;
     einfo.body.hostname = os.hostname() ;
     einfo.body.connectionTime = new Date() ;
-    einfo.body.application = process.argv[1] ;
+    einfo.body.application = process.argv[1].replace ( /\\/g, "/" ) ;
     this.write ( einfo.serialize() ) ;
 
     var i ;

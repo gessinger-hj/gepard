@@ -210,7 +210,7 @@ Connection.prototype.addEventListener = function ( e )
     else
     {
       this._patternList.push ( str ) ;
-      str = str.replace ( /\./, "\\." ).replace ( /\*/, ".*" ) ;
+      str = str.replace ( /\./g, "\\." ).replace ( /\*/g, ".*" ) ;
       regexp = new RegExp ( str ) ;
       this._regexpList.push ( regexp ) ;
     }
@@ -508,7 +508,7 @@ Broker.prototype._handleSystemMessages = function ( socket, e )
     var app = conn.client_info.application ;
     if ( app )
     {
-      app = app.replace ( /\\/, "/" ) ;
+      app = app.replace ( /\\/g, "/" ) ;
       if ( app.indexOf ( '/' ) < 0 )
       {
         if ( app.lastIndexOf ( ".js" ) == app.length - 3 )
