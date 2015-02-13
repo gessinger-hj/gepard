@@ -41,9 +41,10 @@
     , "gp.broker.no.web" : "./bin/broker.no.web"
     , "gp.shutdown" : "./bin/shutdown"
     , "gp.info" : "./bin/info"
-    , "gp.listen" : "./xmp/Listener.js"
-    , "gp.emit" : "./xmp/Emitter.js"
+    , "gepard/gp.listen" : "./xmp/Listener.js"
+    , "gepard/gp.emit" : "./xmp/Emitter.js"
     , "gp.http.simple" : "./bin/http.simple"
-    , "gp/gp.sem" : "./src/Semaphore.js"
+    , "gepard/gp.sem" : "./src/Semaphore.js"
+    , "gepard/gp.lock" : "./src/Lock.js"
     }
 }
