@@ -38,7 +38,7 @@
     "bin": {
       "gp.admin" : "./src/Admin.js"
     , "gp.broker" : "./bin/broker"
-    , "gp.broker.web" : "./bin/broker.web"
+    , "gp.broker.no.web" : "./bin/broker.no.web"
     , "gp.shutdown" : "./bin/shutdown"
     , "gp.info" : "./bin/info"
     , "gp.listen" : "./xmp/Listener.js"
