@@ -1131,45 +1131,19 @@ File.prototype.renameTo = function ( newName )
   }
 };
 
-var Log = new LogFile() ;
+if ( typeof org === 'undefined' ) org = {} ;
+if ( typeof org.gessinger === 'undefined' ) org.gessinger = {} ;
+if ( typeof org.gessinger.tangojs === 'undefined' ) org.gessinger.tangojs = {} ;
 
-module.exports = Log ;
+if ( ! org.gessinger.tangojs.LogFile )
+{
+  org.gessinger.tangojs.LogFile = new LogFile() ;
+}
+module.exports = org.gessinger.tangojs.LogFile ;
 
 if ( require.main === module )
 {
-  // T.setProperty ( "tango.env", "level=info,redirect=3,file=%APPNAME%.log") ;
-  // Log.init() ;
-  // Log.init ( "appl=Log,level=debug,xfile=Log.log:max=100:v=10" ) ;
-  // var XX = function()
-  // {
-  //   var e = new Error ( "error --------------------");
-  //   throw e ;
-  // } ;
-  // try
-  // {
-  //   XX() ;
-  // }
-  // catch ( exc )
-  // {
-  // Log.log ( exc ) ;
-  // }
-
-  // var i = 0 ;
-  // Log.init ( "level=dbg,file=Log.log:max=1m:v=4" ) ;
   Log.init ( "level=notice,Xfile=Log-%DATE%.log" ) ;
-  // for ( i = 0 ; i < 10 ; i++ )
-  // {
-  // Log.logln ( "xxxxxxxxxxxxxxxxxxxxx") ;
-  // }
-
-//   var o =
-//   {
-//     error: function ( str ) { console.log ( "1-" + str ) ;}
-//   , warning: function ( str ) { console.log ( "2-" + str ) ;}
-//   , info: function ( str ) { console.log ( "3-" + str ) ;}
-//   , log: function ( str ) { console.log ( "4-" + str ) ;}
-//   } ;
-// Log.seLogger ( o ) ;
   Log.emergency ( "----------------" ) ;
   Log.alert ( "----------------" ) ;
   Log.critical ( "----------------" ) ;

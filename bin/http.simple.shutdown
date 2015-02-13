@@ -1,0 +1,10 @@
+#!/usr/bin/env node
+var spawn  = require('child_process').spawn ;
+var Path 	 = require ( "path" ) ;
+
+var args = [ Path.join ( __dirname, "../xmp/Emitter.js" )
+           , "--name=http.simple.shutdown"
+           ] ;
+var child = spawn('node', args ) ;
+child.unref();
+

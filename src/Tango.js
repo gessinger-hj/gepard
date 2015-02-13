@@ -780,14 +780,3 @@ if ( ! org.gessinger.tangojs.Tango )
   org.gessinger.tangojs.Tango = new TangoClass() ;
 }
 module.exports = org.gessinger.tangojs.Tango ;
-if ( require.main === module )
-{
-  var str = "%HOME%" ;
-  console.log ( org.gessinger.tangojs.Tango.resolve ( str ) ) ;
-  org.gessinger.tangojs.Tango.__defineGetter__("XXXXX", function()
-      {
-        return org.gessinger.tangojs.Tango.jsClassName ;
-      });
-  console.log ( "org.gessinger.tangojs.Tango.XXXXX=" + org.gessinger.tangojs.Tango.XXXXX ) ;
-
-}

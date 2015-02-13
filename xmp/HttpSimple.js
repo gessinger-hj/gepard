@@ -16,6 +16,7 @@ if ( require.main === module )
   var T      = require ( "../src/Tango" ) ;
   var Log    = require ( "../src/LogFile" ) ;
   var Gepard = require ( "../src/Gepard" ) ;
+  var Client = require ( "../src/Client" ) ;
   
   var http   = require ( 'http') ;
   var fs     = require ( 'fs') ;
@@ -50,7 +51,6 @@ if ( require.main === module )
     {
       Log.log ( exc.toString() ) ;
       console.log ( exc ) ;
-      // process.exit ( 1 ) ;
       return ;
     }
   }
@@ -58,9 +58,18 @@ if ( require.main === module )
   {
     Log.log ( exc.toString() ) ;
     console.log ( exc ) ;
-    // process.exit ( 1 ) ;
     return ;
   }
+  var client = new Client() ;
+  client.on ( "shutdown", function client_onshutdown()
+  {
+    process.exit ( 0 ) ;
+  }) ;
+  client.on ( "http.simple.shutdown", function http_simple_onshutdown()
+  {
+    process.exit ( 0 ) ;
+  }) ;
+
   try
   {
     http.createServer ( function ( req, res )

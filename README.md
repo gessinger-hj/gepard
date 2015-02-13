@@ -70,13 +70,13 @@ Here is the most loved "Hello World" example.
 All commands are in the directory: node_modules/.bin or node_modules/.bin/gepard
 
 1.  __gp.broker<br/>__
-    start the gepard broker with websocket proxy
+    Start the gepard broker with websocket proxy
 
 1.  __gp.shutdown<br/>__
-    stop the broker
+    Stop the broker
 
 1.  __gepard/gp.listen --name=hello<br/>__
-    start a listener for events named __hello__
+    Start a listener for events named __hello__
     <br/>
     If you want to listen to all events with name starting with hello use a wildcard:
     <br/>
@@ -86,9 +86,9 @@ All commands are in the directory: node_modules/.bin or node_modules/.bin/gepard
     emit an event with name __hello__
 
 1.  __gp.info<br/>__
-    show basic information from the broker
+    Show basic information from the broker
 
-If you want to play with the web-client implementation use the appropriate files in:
+1.  If you want to play with the web-client implementation use the appropriate files in:
     __node_modules/gepard/xmp/webclient__
 <br/>
 To simplyfy this the command
@@ -106,7 +106,14 @@ Options are:
 * --index=<index-file&gt;, default=index.html
 
 Start your browser and go to: __localhost:8888__
- 
+
+1.  __gp.http.simple.shutdown__<br/>
+    Stop the simple webserver.
+
+1.  __gp.http.simple.is.running__<br/>
+    Check if the simple webserver is running.
+
+
 
 ## Configuration
 
