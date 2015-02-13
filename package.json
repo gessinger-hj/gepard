@@ -44,5 +44,6 @@
     , "gp.listen" : "./xmp/Listener.js"
     , "gp.emit" : "./xmp/Emitter.js"
     , "gp.http.simple" : "./bin/http.simple"
+    , "gp/gp.sem" : "./src/Semaphore.js"
     }
 }

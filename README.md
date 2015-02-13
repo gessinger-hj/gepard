@@ -70,10 +70,17 @@ Here is the most loved "Hello World" example.
 All commands are in the directory: node_modules/.bin
 
 1.  __gp.broker<br/>__
-    start the gepard broker
+    start the gepard broker with websocket proxy
+
+1.  __gp.shutdown<br/>__
+    stop the broker
 
 1.  __gp.listen --name=hello<br/>__
     start a listener for events named __hello__
+    <br/>
+    If you want to listen to all events with name starting with hello use a wildcard:
+    <br/>
+    __gp.listen "--name=hello*"__
 
 1.  __gp.emit --name=hello<br/>__ [--body='{"City":"Frankfurt"}']
     emit an event with name __hello__
