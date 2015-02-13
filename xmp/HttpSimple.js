@@ -28,56 +28,94 @@ if ( require.main === module )
   var port   = T.getInt ( "port", 8888 ) ;
   var index  = T.getProperty ( "index", "index.html" ) ;
   var logDir = Gepard.getLogDirectory() ;
-
+  
   Log.init ( "level=info,Xedirect=3,file=%GEPARD_LOG%/%APPNAME%.log:max=1m:v=4") ;
-  http.createServer ( function ( req, res )
-  {
-    var requestUrl  = url.parse ( req.url ) ;
-    var urlPathName = decodeURIComponent ( requestUrl.pathname ) ;
 
-    var path = Path.join ( root, urlPathName ) ;
-    var isDir = false ;
+  try
+  {
+    var stat = fs.statSync ( root ) ;
+    if ( ! stat.isDirectory() )
+    {
+      throw new Error ( "Not a directory: " + root + "\nshutdown." ) ;
+    }
     try
     {
-      var stat = fs.statSync ( path ) ;
-      if ( stat.isFile() )
+      stat = fs.statSync ( Path.join ( root, index ) ) ;
+      if ( ! stat.isFile() )
       {
-      }
-      else
-      {
-        path = Path.join ( path, index ) ;
-        stat = fs.statSync ( path ) ;
+        throw new Error ( "Not a file: " + Path.join ( root, index ) + "\nshutdown." ) ;
       }
     }
     catch ( exc )
     {
-      res.writeHead ( 500 ) ;
-      res.end() ;
+      Log.log ( exc.toString() ) ;
+      console.log ( exc ) ;
+      // process.exit ( 1 ) ;
       return ;
     }
-    try
+  }
+  catch ( exc )
+  {
+    Log.log ( exc.toString() ) ;
+    console.log ( exc ) ;
+    // process.exit ( 1 ) ;
+    return ;
+  }
+  try
+  {
+    http.createServer ( function ( req, res )
     {
-      Log.logln ( path ) ;
-      if ( mime )
+      var requestUrl  = url.parse ( req.url ) ;
+      var urlPathName = decodeURIComponent ( requestUrl.pathname ) ;
+
+      var path = Path.join ( root, urlPathName ) ;
+      var isDir = false ;
+      try
       {
-        res.writeHead ( 200, { "Content-Type": mime.lookup ( path ) } ) ;
+        var stat = fs.statSync ( path ) ;
+        if ( stat.isFile() )
+        {
+        }
+        else
+        {
+          path = Path.join ( path, index ) ;
+          stat = fs.statSync ( path ) ;
+        }
       }
-      else
+      catch ( exc )
       {
-        res.writeHead ( 200 ) ;
-      }
-      var ins = fs.createReadStream ( path ) ;
-      ins.pipe ( res ) ;
-      ins.on ( "end", function onend_in()
-      {
+        res.writeHead ( 500 ) ;
         res.end() ;
-      });
-    }
-    catch ( exc )
-    {
-      res.end()
-      Log.log ( exc ) ;
-    }
-  }).listen ( port )
-  console.log ( "Startet with\n  port=" + port + "\n  log=" + Log._fileName + "\n  root=" + root ) ;
+        return ;
+      }
+      try
+      {
+        Log.logln ( path ) ;
+        if ( mime )
+        {
+          res.writeHead ( 200, { "Content-Type": mime.lookup ( path ) } ) ;
+        }
+        else
+        {
+          res.writeHead ( 200 ) ;
+        }
+        var ins = fs.createReadStream ( path ) ;
+        ins.pipe ( res ) ;
+        ins.on ( "end", function onend_in()
+        {
+          res.end() ;
+        });
+      }
+      catch ( exc )
+      {
+        res.end()
+        Log.log ( exc ) ;
+      }
+    }).listen ( port )
+    console.log ( "Startet with\n  port=" + port + "\n  log=" + Log._fileName + "\n  root=" + root ) ;
+  }
+  catch ( exc )
+  {
+    console.log ( exc ) ;
+  }
 }

@@ -11,7 +11,7 @@ var dir = Path.join ( logDir, "gp.broker.log" ) ;
 var out    = fs.openSync ( dir, 'w' ) ;
 var err    = fs.openSync ( dir, 'w' ) ;
 
- var child = spawn('node', [ Path.join ( __dirname, "../src/Broker" ), "--web" ], {
+ var child = spawn('node', [ Path.join ( __dirname, "../src/Broker" ) ], {
    detached: true,
    stdio: [ 'ignore', out, err ]
  });

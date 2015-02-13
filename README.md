@@ -71,15 +71,35 @@ All commands are in the directory: node_modules/.bin
 
 1.  __gp.broker<br/>__
     start the gepard broker
+
 1.  __gp.listen --name=hello<br/>__
     start a listener for events named __hello__
+
 1.  __gp.emit --name=hello<br/>__ [--body='{"City":"Frankfurt"}']
     emit an event with name __hello__
+
 1.  __gp.info<br/>__
     show basic information from the broker
 
 If you want to play with the web-client implementation use the appropriate files in:
-__node_modules/gepard/xmp/webclient__
+    __node_modules/gepard/xmp/webclient__
+<br/>
+To simplyfy this the command
+
+
+```bash
+gp.http.simple [options]
+```
+
+is supplied starting a simple js webserver detached.
+Options are:
+
+* --port=<port&gt;, default=8888
+* --root=<web-root&gt;, default=node_modules/gepard/xmp/webclient
+* --index=<index-file&gt;, default=index.html
+
+Start your browser and go to: __localhost:8888__
+ 
 
 ## Configuration
 
