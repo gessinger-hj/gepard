@@ -4,6 +4,35 @@
 
 if ( require.main === module )
 {
+  var T      = require ( "../src/Tango" ) ;
+  var Admin  = require ( "../src/Admin" ) ;
+  var client = null ;
+  var connect_to_boker = function()
+  {
+    new Admin().isRunning ( function admin_is_running ( state )
+    {
+      if ( ! state )
+      {
+        return ;
+      }
+      try
+      {
+        client = new Client() ;
+        client.on ( "shutdown", function client_onshutdown()
+        {
+          process.exit ( 0 ) ;
+        }) ;
+        client.on ( "http.simple.shutdown", function http_simple_onshutdown()
+        {
+          process.exit ( 0 ) ;
+        }) ;
+      }
+      catch ( exc )
+      {
+        console.log ( exc ) ;
+      }
+    });
+  }
   var mime = null ;
   try
   {
@@ -13,7 +42,6 @@ if ( require.main === module )
   {
     // console.log ( exc ) ;
   }
-  var T      = require ( "../src/Tango" ) ;
   var Log    = require ( "../src/LogFile" ) ;
   var Gepard = require ( "../src/Gepard" ) ;
   var Client = require ( "../src/Client" ) ;
@@ -60,15 +88,7 @@ if ( require.main === module )
     console.log ( exc ) ;
     return ;
   }
-  var client = new Client() ;
-  client.on ( "shutdown", function client_onshutdown()
-  {
-    process.exit ( 0 ) ;
-  }) ;
-  client.on ( "http.simple.shutdown", function http_simple_onshutdown()
-  {
-    process.exit ( 0 ) ;
-  }) ;
+  connect_to_boker() ;
 
   try
   {

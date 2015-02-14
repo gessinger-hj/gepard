@@ -1,3 +1,17 @@
 #!/usr/bin/env node
-new (require ( "../src/Admin" ))().shutdown() ;
+T = require ( "../src/Tango" ) ;
+
+if ( T.getProperty  ( "help" ) )
+{
+	console.log ( "Gepard shutdown" ) ;
+	console.log ( "Usage:\tgp.shutdown [ applicationName | application sid ]" ) ;
+	console.log ( "\tapplicationName or sid from gp.info" ) ;
+	return ;
+}
+var id = null ;
+if ( process.argv.length > 1 )
+{
+	id = process.argv[2] ;
+}
+new (require ( "../src/Admin" ))().shutdown(id) ;
 

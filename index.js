@@ -25,19 +25,21 @@ function collectFiles ( target, packageName, dir )
 				continue ;
 			}
 		}
+		var proxyFunction = function ( fullName )
+		{
+			return function getterFunction () { return require ( fullName ) ; }
+		};
 		if ( a[i].indexOf ( ".js" ) !== a[i].length - 3 ) continue ;
 		if ( fs.statSync ( fname ).isDirectory() ) continue ;
 
 		var cn = a[i].substring ( 0, a[i].length - 3 ) ;
-		var str = "x=function() { return require ( '" + fname + "' ) ; }" ;
-		var fn = eval ( str ) ;
+		var fn = proxyFunction ( fname ) ;
 		target.__defineGetter__( cn, fn ) ;
 	}
 	a.length = 0 ;
 }
 gepard.exists = function ( name )
 {
-	console.log ( this[name] ) ;
 	return this[name] !== "undefined" ;
 };
 

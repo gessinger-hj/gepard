@@ -127,6 +127,17 @@ Admin.prototype._execute = function ( action, what, callback )
 	}
 	this.socket.on ( 'error', function socket_on_error( data )
 	{
+		if ( action === "info" )
+		{
+			if ( what === "conn" )
+			{
+   			if ( callback )
+  			{
+  				callback.call ( null, null ) ;
+  				return ;
+  			}
+			}
+		}
     console.log ( "Not running on " + thiz.getHostPort() ) ;
 		// T.lwhere (  ) ;
 		// T.log ( data ) ;
@@ -266,12 +277,14 @@ Admin.prototype._execute = function ( action, what, callback )
 		    	}
 		    	else
 		    	{
-		    		T.log ( e ) ;
+		    		if ( e.isBad() ) T.log ( e.getStatus() ) ;
+		    		else             T.log ( e.getBody() ) ;
 		    	}
 		    }
 		    else
 		    {
-			    T.log ( e ) ;
+		    	if ( e.isBad() ) T.log ( e.getStatus() ) ;
+	    		else             T.log ( e.getBody() ) ;
 		    }
 		  }
 		}
@@ -300,9 +313,15 @@ Admin.prototype.getNumberOfApplications = function ( applicationName, callback )
 	this.info ( "conn", function lsconn ( list )
 	{
 		var n = 0 ;
-		if ( ! list || ! list.length )
+		if ( ! list )
 		{
-			callback.call ( null, n ) ;
+			callback.call ( null, -1 ) ;
+		  thiz.socket.end() ;
+			return ;
+		}
+		if ( ! list.length )
+		{
+			callback.call ( null, 0 ) ;
 		  thiz.socket.end() ;
 			return ;
 		}
@@ -329,22 +348,20 @@ if ( require.main === module )
 	if ( what )
 	{
 		console.log ( "Admin tool for Gepard" ) ;
-		console.log ( "Usage: node Admin.js [ options ]" ) ;
+		console.log ( "Usage: gp.info [options]" ) ;
 		console.log ( "Options are:" ) ;
-		console.log ( "  --help" ) ;
-		console.log ( "      display this text" ) ;
-		console.log ( "  -Dinfo[=<value>]" ) ;
-		console.log ( "      without <value>: display all available information from the broker" ) ;
-		console.log ( "      Allowed values are:" ) ;
-		console.log ( "        conn      list all connections" ) ;
-		console.log ( "        lock      list all locks" ) ;
-		console.log ( "        sem       list all semaphores" ) ;
-		console.log ( "        events    list all event-names listened to" ) ;
-		console.log ( "  -Dshutdown[=<connectin-id>]" ) ;
+		console.log ( "  --help \t display this text" ) ;
+		console.log ( "  --info \t display all available information from the broker" ) ;
+		console.log ( "  --conn   \t list all connections" ) ;
+		console.log ( "  --lock   \t list all locks" ) ;
+		console.log ( "  --sem    \t list all semaphores" ) ;
+		console.log ( "  --events \t list all event-names listened to" ) ;
+		console.log ( "  --shutdown[=<connectin-id>]" ) ;
 		console.log ( "      without <connection-id>: send a shutdown event" ) ;
 		console.log ( "        to all clients and shutdown the broker." ) ;
 		console.log ( "      with <connection-id>: send a shutdown event" ) ;
 		console.log ( "        to the specified client and close the connection." ) ;
+		console.log ( "      <connection-id> is an applicationName or an sid shown with --info" ) ;
 		console.log ( "The form -D<name>[=<value> or --<name>[=<value>] are aquivalent." ) ;
 		return ;
 	}
@@ -387,6 +404,15 @@ console.log ( "n=" + n ) ;
 			return ;
 		});
 		return ;
+	}
+	var cmds  = [ "conn", "lock", "sem", "events" ] ;
+	for ( var i = 0 ; i < cmds.length ; i++ )
+	{
+		if ( T.getProperty ( cmds[i] ) )
+		{
+			ad.info ( cmds[i] ) ;
+			return ;
+		}
 	}
 	what = T.getProperty ( "info", "true" ) ;
 	if ( what )

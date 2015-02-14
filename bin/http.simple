@@ -1,41 +1,62 @@
 #!/usr/bin/env node
-var fs     = require('fs') ;
-var spawn  = require('child_process').spawn ;
-var Gepard = require ( "../src/Gepard" ) ;
-var T      = require ( "../src/Tango" ) ;
-var Path 	 = require ( "path" ) ;
 
-var logDir = Gepard.getLogDirectory() ;
+var T = require ( "../src/Tango" ) ;
+var Admin  = require ( "../src/Admin" ) ;
 
-var dir = Path.join ( logDir, "gp.http.simple.log" ) ;
-
-var root   = T.getProperty ( "root", Path.join ( __dirname, "../xmp/webclient" ) ) ;
-root       = Path.resolve ( root ) ;
-var port   = T.getInt ( "port" ) ;
-var index  = T.getProperty ( "index" ) ;
-
-var args = [] ;
-args.push ( Path.join ( __dirname, "../xmp/HttpSimple.js" ) ) ;
-if ( root ) args.push ( "--root=" + root ) ;
-if ( port ) args.push ( "--port=" + port ) ;
-if ( index ) args.push ( "--index=" + index ) ;
-
-if ( T.getBool ( "sync" ) )
+new Admin().getNumberOfApplications ( "HttpSimple", function getNumberOfApplications ( n )
 {
-	var child = spawn('node', args, {
-		detached: false,
-		stdio: [ 'ignore' ]
-	});
-	// child.unref();
-}
-else
-{
-	var out    = fs.openSync ( dir, 'w' ) ;
-	var err    = fs.openSync ( dir, 'w' ) ;
+  if ( n >= 1 )
+  {
+    console.log ( "HttpSimple is running" ) ;
+    return ;
+  }
+  if ( n < 0 )
+  {
+  }
+  execute() ;
+	return ;
+} ) ;
 
-	var child = spawn('node', args, {
-		detached: true,
-		stdio: [ 'ignore', out, err ]
-	});
-	child.unref();
+function execute()
+{
+	var fs     = require('fs') ;
+	var spawn  = require('child_process').spawn ;
+	var Gepard = require ( "../src/Gepard" ) ;
+	var T      = require ( "../src/Tango" ) ;
+	var Path 	 = require ( "path" ) ;
+
+	var logDir = Gepard.getLogDirectory() ;
+
+	var dir = Path.join ( logDir, "gp.http.simple.log" ) ;
+
+	var root   = T.getProperty ( "root", Path.join ( __dirname, "../xmp/webclient" ) ) ;
+	root       = Path.resolve ( root ) ;
+	var port   = T.getInt ( "port" ) ;
+	var index  = T.getProperty ( "index" ) ;
+
+	var args = [] ;
+	args.push ( Path.join ( __dirname, "../xmp/HttpSimple.js" ) ) ;
+	if ( root ) args.push ( "--root=" + root ) ;
+	if ( port ) args.push ( "--port=" + port ) ;
+	if ( index ) args.push ( "--index=" + index ) ;
+
+	if ( T.getBool ( "sync" ) )
+	{
+		var child = spawn('node', args, {
+			detached: false,
+			stdio: [ 'ignore' ]
+		});
+		// child.unref();
+	}
+	else
+	{
+		var out    = fs.openSync ( dir, 'w' ) ;
+		var err    = fs.openSync ( dir, 'w' ) ;
+
+		var child = spawn('node', args, {
+			detached: true,
+			stdio: [ 'ignore', out, err ]
+		});
+		child.unref();
+	}
 }
