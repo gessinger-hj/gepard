@@ -1,33 +1,34 @@
 # gepard
 General purpose communucation and synchronization layer for distributed applications / events, semaphores and messages
 
+
 <!-- MarkdownTOC -->
 
-- [Overview](#overview)
-  - [Install](#install)
-  - [Hello World](#hello-world)
-  - [Configuration](#configuration)
-  - [Use Cases](#use-cases)
-    - [Configuration Changes ( Events )](#configuration-changes--events-)
-    - [Concurrent editing of a Dataset ( Semaphores )](#concurrent-editing-of-a-dataset--semaphores-)
-    - [Synchronization of file processing ( Locks )](#synchronization-of-file-processing--locks-)
-  - [Examples Short](#examples-short)
-    - [Event listener](#event-listener)
-    - [Event Emitter](#event-emitter)
-      - [Locks](#locks)
-    - [Semaphores](#semaphores)
-    - [Request / result](#request--result)
-      - [Send request](#send-request)
-      - [Send result](#send-result)
-  - [Examples Long](#examples-long)
-    - [Event listener](#event-listener-1)
-      - [In Application](#in-application)
-      - [In Browser](#in-browser)
-    - [Event Emitter](#event-emitter-1)
-      - [In Application](#in-application-1)
-      - [In Browser](#in-browser-1)
-  - [Contributors](#contributors)
-  - [Features](#features)
+- [Overview][overview]
+  - [Install][install]
+  - [Getting Startet][getting-startet]
+  - [Configuration][configuration]
+  - [Use Cases][use-cases]
+    - [Configuration Changes ( Events )][configuration-changes--events-]
+    - [Concurrent editing of a Dataset ( Semaphores )][concurrent-editing-of-a-dataset--semaphores-]
+    - [Synchronization of file processing ( Locks )][synchronization-of-file-processing--locks-]
+  - [Examples Short][examples-short]
+    - [Event listener][event-listener]
+    - [Event Emitter][event-emitter]
+      - [Locks][locks]
+    - [Semaphores][semaphores]
+    - [Request / result][request--result]
+      - [Send request][send-request]
+      - [Send result][send-result]
+  - [Examples Long][examples-long]
+    - [Event listener][event-listener-1]
+      - [In Application][in-application]
+      - [In Browser][in-browser]
+    - [Event Emitter][event-emitter-1]
+      - [In Application][in-application-1]
+      - [In Browser][in-browser-1]
+  - [Contributors][contributors]
+  - [Features][features]
 
 <!-- /MarkdownTOC -->
 
@@ -64,7 +65,7 @@ node_modules/.bin/gp.admin [ --help ]
 
 npm install git+https://github.com/gessinger-hj/gepard
 
-## Hello World
+## Getting Startet
 Here is the most loved "Hello World" example.
 
 All commands are in the directory: node_modules/.bin or node_modules/.bin/gepard
