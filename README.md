@@ -4,31 +4,31 @@ General purpose communucation and synchronization layer for distributed applicat
 
 <!-- MarkdownTOC -->
 
-- [Overview][overview]
-  - [Install][install]
-  - [Getting Startet][getting-startet]
-  - [Configuration][configuration]
-  - [Use Cases][use-cases]
-    - [Configuration Changes ( Events )][configuration-changes--events-]
-    - [Concurrent editing of a Dataset ( Semaphores )][concurrent-editing-of-a-dataset--semaphores-]
-    - [Synchronization of file processing ( Locks )][synchronization-of-file-processing--locks-]
-  - [Examples Short][examples-short]
-    - [Event listener][event-listener]
-    - [Event Emitter][event-emitter]
-      - [Locks][locks]
-    - [Semaphores][semaphores]
-    - [Request / result][request--result]
-      - [Send request][send-request]
-      - [Send result][send-result]
-  - [Examples Long][examples-long]
-    - [Event listener][event-listener-1]
-      - [In Application][in-application]
-      - [In Browser][in-browser]
-    - [Event Emitter][event-emitter-1]
-      - [In Application][in-application-1]
-      - [In Browser][in-browser-1]
-  - [Contributors][contributors]
-  - [Features][features]
+- Overview
+  - Install
+  - Getting Startet
+  - Configuration
+  - Use Cases
+    - Configuration Changes ( Events )
+    - Concurrent editing of a Dataset ( Semaphores )
+    - Synchronization of file processing ( Locks )
+  - Examples Short
+    - Event listener
+    - Event Emitter
+      - Locks
+    - Semaphores
+    - Request / result
+      - Send request
+      - Send result
+  - Examples Long
+    - Event listener
+      - In Application
+      - In Browser
+    - Event Emitter
+      - In Application
+      - In Browser
+  - Contributors
+  - Features
 
 <!-- /MarkdownTOC -->
 
