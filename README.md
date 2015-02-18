@@ -1,5 +1,5 @@
 # gepard
-General purpose communucation and synchronization layer for distributed applications / events, semaphores and messages
+General purpose communication and synchronization layer for distributed applications / events, semaphores, locks and messages
 
 
 <!-- MarkdownTOC -->
