@@ -47,9 +47,12 @@ The appropriate command is:
 ```bash
 node_modules/.bin/gp.broker
 ```
-or if you want to start the web-socket-proxy too:
+This starts the Broker and the corresponding web-socket-proxy
+<br/>
+If you want to start the broker alone:
+
 ```bash
-node_modules/.bin/gp.broker.web
+node_modules/.bin/gp.broker.no.web
 ```
 
 There is a separate program for administration purposes:
@@ -62,6 +65,10 @@ node_modules/.bin/gp.admin [ --help ]
 ```
 
 ## Install
+
+npm install gepard
+
+or the newest stable but development version:
 
 npm install git+https://github.com/gessinger-hj/gepard
 
