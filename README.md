@@ -35,7 +35,7 @@ General purpose communication and synchronization layer for distributed applicat
 # Overview
 Gepard is a system consisting of a broker and connected clients.
 The communication is done via sockets or web-sockets.
-The sockets are always open so that any partner of a connection my be informed if this connection ended.
+The sockets are always open so that any partner of a connection may be informed if this connection ended.
 This is very useful in the area of semaphores and locks.
 
 Up to now a client is a standalone JavaScript program or a JavaScript app inside a browser.
