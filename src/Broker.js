@@ -251,6 +251,20 @@ var Broker = function ( port, ip )
   this._semaphoreOwner = {} ;
   this._pendingAcquireSemaphoreConnections = new MultiHash() ;
 
+  var os = require ( "os" ) ;
+  this.hostname = os.hostname() ;
+  this._networkAddresses = [] ;
+  var networkInterfaces = os.networkInterfaces() ;
+  for ( var kk in networkInterfaces )
+  {
+    var ll = networkInterfaces[kk]
+    for ( var ii = 0 ; ii < ll.length ; ii++ )
+    {
+      var oo = ll[ii] ;
+      this._networkAddresses.push ( oo["address"] ) ;
+    }
+  }
+
   this.server = net.createServer() ;
   this.server.on ( "error", function onerror ( p )
   {
@@ -264,6 +278,7 @@ var Broker = function ( port, ip )
   });
   this.server.on ( "connection", function server_on_connection ( socket )
   {
+    var i = 0 ;
     if ( thiz.closing )
     {
       socket.end() ;
@@ -346,6 +361,22 @@ var Broker = function ( port, ip )
 };
 util.inherits ( Broker, EventEmitter ) ;
 
+Broker.prototype.socketIsFrom_localhost = function ( socket )
+{
+  for ( i = 0 ; i < this._networkAddresses.length ; i++ )
+  {
+    var index = socket.remoteAddress.indexOf ( this._networkAddresses[i] ) ;
+    if ( index < 0 )
+    {
+      continue ;
+    }
+    if ( socket.remoteAddress.indexOf ( this._networkAddresses[i] ) === socket.remoteAddress.length - this._networkAddresses[i].length )
+    {
+      return true ;
+    }
+  }
+  return false ;
+};
 /**
  * Description
  * @method toString
@@ -453,6 +484,11 @@ Broker.prototype._handleSystemMessages = function ( socket, e )
   else
   if ( e.getType() === "shutdown" )
   {
+    if ( ! this.socketIsFrom_localhost ( socket ) )
+    {
+      socket.end() ;
+      return ;
+    }
     var shutdown_sid = e.body.shutdown_sid ;
     if ( shutdown_sid )
     {
