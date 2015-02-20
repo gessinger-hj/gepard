@@ -20,26 +20,35 @@ var counter = 0 ;
 var Client = function ( port, host )
 {
   EventEmitter.call ( this ) ;
-  this.port                        = port ;
-  if ( ! this.port ) this.port     = T.getProperty ( "gepard.port", "17501" ) ;
-  this.host                        = host ;
-  if ( ! this.host ) this.host     = T.getProperty ( "gepard.host" ) ;
-  this.socket                      = null ;
-  this.user                        = null ;
-  this.pendingEventList            = [] ;
-  this.pendingResultList           = {} ;
-  this.callbacks                   = {} ;
-  this.pendingEventListenerList    = [] ;
-  this.eventListenerFunctions      = new MultiHash() ;
-  this.listenerFunctionsList       = [] ;
-  this._pendingLockList            = [] ;
+  this.port                         = port ;
+  if ( ! this.port ) this.port      = T.getProperty ( "gepard.port", "17501" ) ;
+  this.host                         = host ;
+  if ( ! this.host ) this.host      = T.getProperty ( "gepard.host" ) ;
+  this.socket                       = null ;
+  this.user                         = null ;
+  this.pendingEventList             = [] ;
+  this.pendingResultList            = {} ;
+  this.callbacks                    = {} ;
+  this.pendingEventListenerList     = [] ;
+  this.eventListenerFunctions       = new MultiHash() ;
+  this.listenerFunctionsList        = [] ;
+  this._pendingLockList             = [] ;
   this._acquiredResources           = {} ;
-  this._ownedResources             = {} ;
-  this.alive                       = false ;
-  this.stopImediately              = false ;
+  this._ownedResources              = {} ;
+  this.alive                        = false ;
+  this.stopImediately               = false ;
   this._acquiredSemaphores          = {} ;
-  this._ownedSemaphores            = {} ;
+  this._ownedSemaphores             = {} ;
   this._pendingAcquireSemaphoreList = [] ;
+  this._application                 = process.argv[1] ;
+  if ( this._application )
+  {
+    this._application = this._application.replace ( /\\/g, "/" ) ;
+  }
+  else
+  {
+    this._application = "Unknown" ;
+  }
 } ;
 util.inherits ( Client, EventEmitter ) ;
 Client.prototype.toString = function()
@@ -98,7 +107,7 @@ Client.prototype.connect = function()
     var einfo = new Event ( "system", "client_info" ) ;
     einfo.body.hostname = os.hostname() ;
     einfo.body.connectionTime = new Date() ;
-    einfo.body.application = process.argv[1].replace ( /\\/g, "/" ) ;
+    einfo.body.application = thiz._application ;
     this.write ( einfo.serialize() ) ;
 
     var i ;
