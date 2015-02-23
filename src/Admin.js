@@ -348,7 +348,7 @@ if ( require.main === module )
 	if ( what )
 	{
 		console.log ( "Admin tool for Gepard" ) ;
-		console.log ( "Usage: gp.info [options]" ) ;
+		console.log ( "Usage: gp.info [Options] [Gepard-options]" ) ;
 		console.log ( "Options are:" ) ;
 		console.log ( "  --help \t display this text" ) ;
 		console.log ( "  --info \t display all available information from the broker" ) ;
@@ -363,6 +363,11 @@ if ( require.main === module )
 		console.log ( "        to the specified client and close the connection." ) ;
 		console.log ( "      <connection-id> is an applicationName or an sid shown with --info" ) ;
 		console.log ( "The form -D<name>[=<value> or --<name>[=<value>] are aquivalent." ) ;
+		console.log ( "Gepard-options are:" ) ;
+		console.log ( "  --gepard.port=<port> \t tcp connection port, default=17501" ) ;
+		console.log ( "      default is environment variable GEPARD_PORT or 17501" ) ;
+		console.log ( "  --gepard.host=<host> \t tcp connection host, default=localhost" ) ;
+		console.log ( "      default is environment variable GEPARD_HOST or localhost" ) ;
 		return ;
 	}
 	what = T.getProperty ( "shutdown" ) ;

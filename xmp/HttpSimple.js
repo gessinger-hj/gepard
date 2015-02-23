@@ -6,6 +6,24 @@ if ( require.main === module )
 {
   var T      = require ( "../src/Tango" ) ;
   var Admin  = require ( "../src/Admin" ) ;
+
+  var what = T.getProperty ( "help" ) ;
+  if ( what )
+  {
+    console.log ( "HttpSimple for Gepard" ) ;
+    console.log ( "Usage: gp.http.simple [Options] [Gepard-options]" ) ;
+    console.log ( "Options are:" ) ;
+    console.log ( "  --help \t display this text" ) ;
+    console.log ( "  --root \t root directory, default: gepard/xmp/webclient" ) ;
+    console.log ( "  --port \t http port, default: 8888" ) ;
+    console.log ( "  --index \t name of the index html file, default: index.html" ) ;
+    console.log ( "The form -D<name>[=<value> or --<name>[=<value>] are aquivalent." ) ;
+    console.log ( "Gepard-options are:" ) ;
+    console.log ( "  --gepard.port=<port> \t tcp connection port" ) ;
+    console.log ( "      default is environment variable GEPARD_PORT or 17501" ) ;
+    return ;
+  }
+
   var client = null ;
   var connect_to_boker = function()
   {

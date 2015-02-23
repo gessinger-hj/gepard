@@ -7,7 +7,7 @@ new Admin().getNumberOfApplications ( "HttpSimple", function getNumberOfApplicat
 {
   if ( n >= 1 )
   {
-    console.log ( "HttpSimple is running" ) ;
+    console.log ( "HttpSimple is already running" ) ;
     return ;
   }
   if ( n < 0 )
@@ -19,8 +19,8 @@ new Admin().getNumberOfApplications ( "HttpSimple", function getNumberOfApplicat
 
 function execute()
 {
-	var fs     = require('fs') ;
-	var spawn  = require('child_process').spawn ;
+	var fs     = require ( 'fs' ) ;
+	var spawn  = require ( 'child_process' ).spawn ;
 	var Gepard = require ( "../src/Gepard" ) ;
 	var T      = require ( "../src/Tango" ) ;
 	var Path 	 = require ( "path" ) ;
@@ -29,34 +29,25 @@ function execute()
 
 	var dir = Path.join ( logDir, "gp.http.simple.log" ) ;
 
-	var root   = T.getProperty ( "root", Path.join ( __dirname, "../xmp/webclient" ) ) ;
-	root       = Path.resolve ( root ) ;
-	var port   = T.getInt ( "port" ) ;
-	var index  = T.getProperty ( "index" ) ;
-
-	var args = [] ;
-	args.push ( Path.join ( __dirname, "../xmp/HttpSimple.js" ) ) ;
-	if ( root ) args.push ( "--root=" + root ) ;
-	if ( port ) args.push ( "--port=" + port ) ;
-	if ( index ) args.push ( "--index=" + index ) ;
-
-	if ( T.getBool ( "sync" ) )
+	var args = [ Path.join ( __dirname, "../xmp/HttpSimple.js" ) ] ;
+	for ( var i = 2 ; i < process.argv.length ; i++ )
 	{
-		var child = spawn('node', args, {
-			detached: false,
-			stdio: [ 'ignore' ]
-		});
-		// child.unref();
+		args.push ( process.argv[i] ) ;
 	}
-	else
+	if ( T.getProperty ( "help" ) )
 	{
-		var out    = fs.openSync ( dir, 'w' ) ;
-		var err    = fs.openSync ( dir, 'w' ) ;
-
-		var child = spawn('node', args, {
-			detached: true,
-			stdio: [ 'ignore', out, err ]
+		var child = spawn ( 'node', args ) ;
+		child.stdout.on('data', function (data) {
+	  	console.log(""+data);
 		});
-		child.unref();
+		return ;
 	}
+	var out    = fs.openSync ( dir, 'w' ) ;
+	var err    = fs.openSync ( dir, 'w' ) ;
+
+	var child = spawn ( 'node', args, {
+		detached: true,
+		stdio: [ 'ignore', out, err ]
+	});
+	child.unref();
 }

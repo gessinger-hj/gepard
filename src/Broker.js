@@ -816,6 +816,21 @@ if ( require.main === module )
 {
   var Admin = require ( "./Admin" ) ;
   var Gepard = require ( "./Gepard" ) ;
+  var what = T.getProperty ( "help" ) ;
+  if ( what )
+  {
+    console.log ( "Broker for Gepard" ) ;
+    console.log ( "Usage: gp.broker [Options] [Gepard-options]" ) ;
+    console.log ( "Options are:" ) ;
+    console.log ( "  --help \t display this text" ) ;
+    console.log ( "  --web \t start also the WebSocketEventProxy" ) ;
+    console.log ( "The form -D<name>[=<value> or --<name>[=<value>] are aquivalent." ) ;
+    console.log ( "Gepard-options are:" ) ;
+    console.log ( "  --gepard.port=<port> \t tcp connection port" ) ;
+    console.log ( "      default is environment variable GEPARD_PORT or 17501" ) ;
+    return ;
+  }
+
   new Admin().isRunning ( function admin_is_running ( state )
   {
     if ( state )
