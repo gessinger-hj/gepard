@@ -57,6 +57,8 @@ gepard.Event.prototype =
 	    Date.prototype.toJSON = old ;
 	  }
 	},
+	_classNameToConstructorDone: false,
+	_classNameToConstructor: {},
 	/**
 	 * Description
 	 * @method deserialize
@@ -86,7 +88,19 @@ gepard.Event.prototype =
 	  if ( deepClassInspection ) gepard.Event.prototype.deepDeserializeClass ( obj ) ;
 	  if ( ! classNameToConstructor )
 	  {
-	  	classNameToConstructor = { "Event": gepard.Event } ;
+	  	if ( ! gepard.Event.prototype._classNameToConstructorDone )
+	  	{
+	  		gepard.Event.prototype._classNameToConstructorDone = true ;
+		  	if ( ! gepard.Event.prototype._classNameToConstructor["Event"] ) gepard.Event.prototype._classNameToConstructor["Event"] = gepard.Event ;
+				if ( ! gepard.Event.prototype._classNameToConstructor["User"] )
+				{
+					if ( typeof document === 'undefined' )
+			  	{
+						gepard.Event.prototype._classNameToConstructor.User = require ( "./User" ) ;
+			  	}
+				}
+	  	}
+		  classNameToConstructor = gepard.Event.prototype._classNameToConstructor ;
 	  }
 	  if ( obj.className && typeof obj.className === 'string' )
 	  {
