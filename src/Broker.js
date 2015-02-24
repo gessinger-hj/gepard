@@ -332,7 +332,18 @@ var Broker = function ( port, ip )
         }
         if ( m.charAt ( 0 ) === '{' )
         {
-          var e = Event.prototype.deserialize ( m ) ;
+          var e = null ;
+          try
+          {
+            var e = Event.prototype.deserialize ( m ) ;
+          }
+          catch ( exc )
+          {
+            Log.log ( exc ) ;
+            Log.log ( m ) ;
+            this.end() ;
+            return ;
+          }
           if ( ! e.body )
           {
             this._ejectSocket ( this ) ;

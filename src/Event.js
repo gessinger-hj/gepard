@@ -67,7 +67,7 @@ gepard.Event.prototype =
 	 */
 	deserialize: function ( serializedObject, classNameToConstructor, deepClassInspection )
 	{
-	  var that ;
+	  var that, f ;
 	  var obj = serializedObject ;
 	  if ( deepClassInspection !== false ) deepClassInspection = true ;
 	  if ( typeof serializedObject === 'string' )
@@ -545,8 +545,10 @@ else
 
 	if ( require.main === module )
 	{
-		var ne = new gepard.Event ( 'BC', "T" ) ;
-		var str = ne.serialize() ;
+		var e = new gepard.Event ( 'ALARM', "TEST" ) ;
+		var b = new Buffer ( "ABCDE" ) ;
+		e.getBody().binaryData = b ;
+		var str = e.serialize() ;
 		console.log ( "str=" + str ) ;
 		var o = gepard.Event.prototype.deserialize ( str ) ;
 		console.log ( o ) ;
