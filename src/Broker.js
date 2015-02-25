@@ -472,7 +472,7 @@ Broker.prototype._sendEventToClients = function ( socket, e )
     }
     if ( ! done )
     {
-      // Log.info ( "No listener found for " + e.getName() ) ;
+      Log.info ( "No listener found for " + e.getName() ) ;
     }
   }
 };

@@ -105,6 +105,7 @@ Client.prototype.connect = function()
   {
     thiz.alive = true ;
     var einfo = new Event ( "system", "client_info" ) ;
+    einfo.body.language = "JavaScript" ;
     einfo.body.hostname = os.hostname() ;
     einfo.body.connectionTime = new Date() ;
     einfo.body.application = thiz._application ;

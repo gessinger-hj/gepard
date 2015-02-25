@@ -13,6 +13,7 @@ var User = function ( id, key, pwd )
 	this.id        = id ;
 	this.key       = key ;
 	this._pwd      = pwd ;
+	this.rights = {} ;
 };
 /**
  * Description
@@ -24,10 +25,39 @@ User.prototype.toString = function()
 };
 /**
  * Description
- * @return MemberExpression
+ * @return id
  */
 User.prototype.getId = function (  )
 {
 	return this.id ;
 };
+/**
+ * Description
+ * @return key
+ */
+User.prototype.getKey = function (  )
+{
+	return this.key ;
+};
+/**
+ * Description
+ * @return key
+ */
+User.prototype.getRights = function (  )
+{
+	return this.rights ;
+};
+User.prototype.getRight = function ( name )
+{
+	return this.rights[name] ;
+};
+User.prototype.setKey = function ( key )
+{
+  this.key = key ;
+}
+User.prototype.addRight = function ( name, value )
+{
+  rights[name] = value ;
+}
+
 module.exports = User ;

@@ -18,7 +18,7 @@ public class User
     id = (String) muser.get ( "id" ) ;
     key = (String) muser.get ( "key" ) ;
     _pwd = (String) muser.get ( "_pwd" ) ;
-    Util.copy ( (Map<String,Object>)muser.get ( "rights" ), rights ) ;
+    Util.copyString ( (Map<String,Object>)muser.get ( "rights" ), rights ) ;
   }
   public User ( String id )
   {
@@ -57,5 +57,9 @@ public class User
   public void addRight ( String name, String value )
   {
     rights.put ( name, value ) ;
+  }
+  public String getRight ( String name )
+  {
+    return rights.get ( name ) ;
   }
 }

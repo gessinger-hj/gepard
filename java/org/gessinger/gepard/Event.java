@@ -20,17 +20,16 @@ public class Event
   String type = "" ;
   User user = null ;
   
-  JsonObject control = new JsonObject() ;
-  JsonObject body = new JsonObject() ;
+  HashMap<String,Object> control = new HashMap<String,Object>() ;
+  HashMap<String,Object> body = new HashMap<String,Object>() ;
   Event ( HashMap map )
   {
-System.out.println ( Util.toString ( map ) ) ;
     setName ( (String) map.get ( "name" ) ) ;
     setType ( (String) map.get ( "type" ) ) ;
     Map<String,Object> mcontrol = (Map<String,Object>) map.get ( "control" ) ;
     Map<String,Object> mbody = (Map<String,Object>) map.get ( "body" ) ;
-    Util.deepCopy ( mcontrol, control ) ;
-    Util.deepCopy ( mbody, body ) ;
+    Util.copy ( mcontrol, control ) ;
+    Util.copy ( mbody, body ) ;
     Map<String,Object> muser = (Map<String,Object>) map.get ( "user" ) ;
     if ( muser != null )
     {
@@ -45,11 +44,11 @@ System.out.println ( Util.toString ( map ) ) ;
   {
     this ( name, type, null ) ;
   }
-  public Event ( String name, String type, JsonObject body )
+  public Event ( String name, String type, HashMap<String,Object> body )
   {
     this.name = name ;
     this.type = type ;
-    this.control.addProperty ( "createdAt", "" + new Date() ) ;
+    this.control.put ( "createdAt", "" + new Date() ) ;
     if ( body != null )
     {
       this.body = body ;
@@ -80,63 +79,63 @@ System.out.println ( Util.toString ( map ) ) ;
   }
   public String getCreatedAt()
   {
-    return this.control.getAsJsonPrimitive ( "createdAt" ).toString() ;
+    return this.control.get ( "createdAt" ).toString() ;
   }
   public void setIsResult()
   {
-    this.control.addProperty ( "_isResult", true ) ;
+    this.control.put ( "_isResult", true ) ;
   }
   public boolean isResult()
   {
-    return (this.control.getAsJsonPrimitive ( "_isResult" )+"").equals ( "true" ) ;
+    return (this.control.get ( "_isResult" )+"").equals ( "true" ) ;
   }
   public void setResultRequested()
   {
-    this.control.addProperty ( "_isResultRequested", true ) ;
+    this.control.put ( "_isResultRequested", true ) ;
   }
   public boolean isResultRequested()
   {
-    return (this.control.getAsJsonPrimitive ( "_isResultRequested" )+"").equals ( "true" ) ;
+    return (this.control.get ( "_isResultRequested" )+"").equals ( "true" ) ;
   }
   public void setFailureInfoRequested()
   {
-    this.control.addProperty ( "_isFailureInfoRequested", true ) ;
+    this.control.put ( "_isFailureInfoRequested", true ) ;
   }
   public boolean isFailureInfoRequested()
   {
-    return (this.control.getAsJsonPrimitive ( "_isFailureInfoRequested" )+"").equals ( "true" ) ;
+    return (this.control.get ( "_isFailureInfoRequested" )+"").equals ( "true" ) ;
   }
   public void setIsBroadcast()
   {
-    this.control.addProperty ( "_isBroadcast", true ) ;
+    this.control.put ( "_isBroadcast", true ) ;
   }
   public boolean isBroadcast()
   {
-    return (this.control.getAsJsonPrimitive ( "_isBroadcast" )+"").equals ( "true" ) ;
+    return (this.control.get ( "_isBroadcast" )+"").equals ( "true" ) ;
   }
   public String getSourceIdentifier()
   {
-    return "" + this.control.getAsJsonPrimitive ( "sourceIdentifier" ) ;
+    return "" + this.control.get ( "sourceIdentifier" ) ;
   }
   public void setSourceIdentifier ( String sourceIdentifier )
   {
-    this.control.addProperty ( "sourceIdentifier", sourceIdentifier ) ;
+    this.control.put ( "sourceIdentifier", sourceIdentifier ) ;
   }
   public String getProxyIdentifier()
   {
-    return "" + this.control.getAsJsonPrimitive ( "proxyIdentifier" ) ;
+    return "" + this.control.get ( "proxyIdentifier" ) ;
   }
   public void setProxyIdentifier ( String proxyIdentifier )
   {
-    this.control.addProperty ( "proxyIdentifier", proxyIdentifier ) ;
+    this.control.put ( "proxyIdentifier", proxyIdentifier ) ;
   }
   public String getWebIdentifier()
   {
-    return "" + this.control.getAsJsonPrimitive ( "webIdentifier" ) ;
+    return "" + this.control.get ( "webIdentifier" ) ;
   }
   public void setWebIdentifier ( String webIdentifier )
   {
-    this.control.addProperty ( "webIdentifier", webIdentifier ) ;
+    this.control.put ( "webIdentifier", webIdentifier ) ;
   }
   public String getName()
   {
@@ -154,14 +153,14 @@ System.out.println ( Util.toString ( map ) ) ;
   {
     this.type = type != null ? type : "" ;
   }
-  public JsonObject getBody()
+  public HashMap<String,Object> getBody()
   {
     return this.body ;
   }
-  public void setBody ( JsonObject body )
+  public void setBody ( HashMap<String,Object> body )
   {
     if ( body != null ) this.body = body ;
-    else this.body = new JsonObject() ;
+    else this.body = new HashMap<String,Object>() ;
   }
   public User getUser()
   {
@@ -171,41 +170,41 @@ System.out.println ( Util.toString ( map ) ) ;
   {
     this.user = u ;
   }
-  public JsonObject getControl()
+  public HashMap<String,Object> getControl()
   {
     return this.control ;
   }
   public void setUniqueId ( String uid )
   {
-    if ( ! this.control.has ( "uniqueId" ) )
+    if ( ! this.control.containsKey ( "uniqueId" ) )
     {
-      this.control.addProperty ( "uniqueId", uid ) ;
+      this.control.put ( "uniqueId", uid ) ;
     }
   }
   public String getUniqueId()
   {
-    return "" + this.control.getAsJsonPrimitive ( "uniqueId" ) ;
+    return "" + this.control.get ( "uniqueId" ) ;
   }
   public boolean isBad()
   {
     if ( this.control == null ) return false ;
-    if ( ! this.control.has ( "status" ) ) return false ;
-    JsonObject status = this.control.getAsJsonObject ( "status" ) ;
+    if ( ! this.control.containsKey ( "status" ) ) return false ;
+    HashMap<String,Object> status = (HashMap<String,Object>)this.control.get ( "status" ) ;
     if ( status == null ) return false ;
-    if ( ! status.has ( "code" ) ) return false ;
-    return ! (status.getAsJsonPrimitive ( "code" )+"").equals ( "0" ) ;
+    if ( ! status.containsKey ( "code" ) ) return false ;
+    return ! (status.get ( "code" )+"").equals ( "0" ) ;
   }
-  public JsonObject getStatus()
+  public HashMap<String,Object> getStatus()
   {
     if ( this.control == null ) return null ;
-    return this.control.getAsJsonObject ( "status" ) ;
+    return (HashMap<String,Object>)this.control.get ( "status" ) ;
   }
   public String getStatusReason()
   {
     if ( this.control == null ) return "" ;
-    if ( ! this.control.has ( "status" ) ) return "" ;
-    JsonObject status = this.control.getAsJsonObject ( "status" ) ;
+    if ( ! this.control.containsKey ( "status" ) ) return "" ;
+    HashMap<String,Object> status = (HashMap<String,Object>)this.control.get ( "status" ) ;
     if ( status == null ) return "" ;
-    return "" + status.getAsJsonPrimitive ( "reason" ) ;
+    return "" + status.get ( "reason" ) ;
   }
 }
