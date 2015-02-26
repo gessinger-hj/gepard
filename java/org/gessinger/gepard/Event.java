@@ -97,7 +97,7 @@ public class Event
   {
     return (this.control.get ( "_isResultRequested" )+"").equals ( "true" ) ;
   }
-  public void setFailureInfoRequested()
+  void setFailureInfoRequested()
   {
     this.control.put ( "_isFailureInfoRequested", true ) ;
   }

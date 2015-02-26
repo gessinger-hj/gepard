@@ -12,6 +12,7 @@ if ( require.main === module )
       "Gepard Examples: Emitter, emit a given event.\n"
     + "Usage: node Emitter [-Dname=<event-name>], default <event-name>=ALARM\n"
     + "                    [-Dbody=<json-string>], example: {\"City\":\"Frankfurt\"}"
+    + "                    [-Drequest]"
     ) ;
     process.exit() ;
   }
@@ -30,12 +31,23 @@ if ( require.main === module )
 
   var c = new Client() ;
 
+  if ( T.getProperty ( "request" ) )
+  {
+    name += ":request" ;
+    c.request ( name,
+    {
+      result: function ( e )
+      {
+        console.log ( e ) ;
+        this.end() ;
+      }
+    });
+    return ;
+  }
   if ( body )
   {
     body = JSON.parse ( body ) ;
     var e = new Event ( name, body ) ;
-    // or e = new Event ( name ) ;
-    // e.setBody ( body )
     c.fire ( e,
     {
       write: function()

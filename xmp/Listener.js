@@ -10,7 +10,9 @@ if ( require.main === module )
 	{
 		console.log (
 		  "Gepard Examples: Listener, listen to a given event.\n"
-		+ "Usage: node Listener [-Dname=<event-name>], default <event-name>=ALARM"
+		+ "Usage: node Listener [Options]\n"
+		+ "Options: -Dname=<event-name>, default <event-name>=ALARM\n"
+		+ "         -Drequest"
 		) ;
 		process.exit() ;
 	}
@@ -24,14 +26,27 @@ if ( require.main === module )
     }
   });
 
-
 	var name = T.getProperty ( "name", "ALARM" ) ;
 	var c = new Client() ;
-	console.log ( "Listen for events with name=" + name ) ;
-	c.on ( name, function(e)
+	if ( T.getProperty ( "request" ) )
+  {
+    name += ":request" ;
+		console.log ( "Listen for events with name=" + name ) ;
+		c.on ( name, function(e)
+		{
+		  console.log ( e ) ;
+		  e.body.result = "This is a result" ;
+		  this.sendResult ( e ) ;
+		});
+	}
+	else
 	{
-	  console.log ( e ) ;
-	});
+		console.log ( "Listen for events with name=" + name ) ;
+		c.on ( name, function(e)
+		{
+		  console.log ( e ) ;
+		});
+	}
 	c.on('end', function()
 	{
 	  console.log('socket disconnected');

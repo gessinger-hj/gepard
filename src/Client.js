@@ -490,12 +490,12 @@ Client.prototype._fireEvent = function ( params, callback, opts )
     }
   }
   var socketExists = !! this.socket ;
-  var s = this.getSocket() ;
   if ( this.pendingEventList.length || ! socketExists )
   {
     ctx.e = e ;
     this.pendingEventList.push ( ctx ) ;
   }
+  var s = this.getSocket() ;
   if ( ! this.pendingEventList.length )
   {
     counter++ ;

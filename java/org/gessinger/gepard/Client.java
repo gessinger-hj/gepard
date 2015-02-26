@@ -2,6 +2,7 @@ package org.gessinger.gepard ;
 
 import java.util.HashMap ;
 import java.util.List ;
+import java.util.Hashtable ;
 import java.io.* ;
 import java.net.* ;
 
@@ -21,6 +22,7 @@ public class Client
 	int localPort           = 0 ;
   MultiMap<String,EventListener> eventListenerFunctions = new MultiMap<String,EventListener>() ;
   SyncedQueue<Event> _Q = new SyncedQueue<Event>() ;
+  HashMap<String,EventCallback> callbacks = new HashMap<String,EventCallback>() ;
 
 	public Client()
 	{
@@ -77,43 +79,67 @@ public class Client
 
 		return _out ;
 	}
-	public void fire ( Event e )
-	throws IOException
-	{
-		emit ( e ) ;
-	}
 	public void emit ( String name )
 	throws IOException
 	{
-		emit ( name, null ) ;
+		emit ( name, null, null ) ;
 	}
 	public void emit ( String name, String type )
 	throws IOException
 	{
-		emit ( new Event ( name, type ) ) ;
+		emit ( name, type, null ) ;
+	}
+	public void emit ( String name, String type, EventCallback ecb )
+	throws IOException
+	{
+		emit ( new Event ( name, type ), ecb ) ;
 	}
 	public void emit ( Event e )
 	throws IOException
 	{
+		emit ( e, null ) ;
+	}
+	public void emit ( Event e, EventCallback ecb )
+	throws IOException
+	{
+		boolean hasCallbacks = false ;
+		if ( ecb instanceof FailureCallback )
+		{
+			hasCallbacks = true ;
+    	e.setFailureInfoRequested() ;
+		}
+		if ( ecb instanceof ResultCallback )
+		{
+			hasCallbacks = true ;
+    	e.setResultRequested() ;
+		}
+		if ( ! hasCallbacks && ( ecb instanceof ErrorCallback ) )
+		{
+			hasCallbacks = true ;
+    	e.setResultRequested() ;
+		}
 		_send ( e ) ;
+		if ( hasCallbacks )
+		{
+			callbacks.put ( e.getUniqueId(), ecb ) ;
+		}
 	}
 	void _send ( Event e )
 	throws IOException
 	{
 		synchronized ( _lock1 )
 		{
-			String t = e.toJSON() ;
 			getWriter() ;
+	    counter++ ;
+	    String uid = hostname + "_" + localPort + "-" + counter ;
+  	  e.setUniqueId ( uid ) ;
+			String t = e.toJSON() ;
 	    _out.write ( t, 0, t.length() ) ;
 	    _out.flush() ;
 		}
 	}
 	public void close (  )
 	{
-if ( true )
-{
-	return ;
-}
 		if ( socket != null )
 		{
 			try
@@ -140,6 +166,17 @@ if ( true )
 		_out   = null ;
 	}
   String _LOCK = "LOCK" ;
+  // if ( typeof eventName === "string"
+  //    && (  eventName === "shutdown"
+  //       || eventName === "end"
+  //       || eventName === "error"
+  //       )
+  //    )
+  // {
+  //   EventEmitter.prototype.on.apply ( this, arguments ) ;
+  //   return ;
+  // }
+
 	public void on ( String eventName, EventListener el )
 	throws IOException
 	{
@@ -152,13 +189,23 @@ if ( true )
     counter++ ;
     String uid = hostname + "_" + localPort + "-" + counter ;
     e.setUniqueId ( uid ) ;
-System.out.println ( e );
-    // synchronized ( "_LOCK" )
+    synchronized ( "_LOCK" )
     {
 	    eventListenerFunctions.put ( eventName, el ) ;
     }
     _send ( e ) ;
 	}
+	Hashtable<String,Event> toBeSentBack = new Hashtable<String,Event>() ;
+	public void sendResult ( Event e )
+	throws Exception
+	{
+	  if ( ! e.isResultRequested() || ! toBeSentBack.containsKey ( e.getUniqueId() ) )
+  	{
+    	throw new Exception ( "No result requested for:\n" + e ) ;
+    }
+  	e.setIsResult() ;
+    _send ( e ) ;
+  }
   class Runner implements Runnable
   {
     Runner ()
@@ -172,7 +219,7 @@ System.out.println ( e );
 		    {
 			    String t = readNextJSON() ;
 			    Event e = Event.fromJSON ( t ) ;
-			    // synchronized ( "_LOCK" )
+			    synchronized ( "_LOCK" )
 			    {
 			    	if ( e.getName().equals ( "system" ) )
 			    	{
@@ -182,15 +229,63 @@ System.out.println ( e );
 			    		}
 			    		continue ;
 			    	}
-			    	else
+			    	if ( e.isBad() )
 			    	{
+							if ( e.isResult() )
+							{
+								EventCallback ecb = callbacks.get ( e.getUniqueId() ) ;
+								if ( ecb == null )
+								{
+									System.err.println ( "No callback found for:\n" + e ) ;
+									continue ;
+								}
+								callbacks.remove ( e.getUniqueId() ) ;
+								if ( e.isFailureInfoRequested() && ( ecb instanceof FailureCallback ) )
+								{
+									((FailureCallback)ecb).failure ( e ) ;
+								}
+								else
+								if ( ecb instanceof ErrorCallback )
+								{
+									((ErrorCallback)ecb).error ( e ) ;
+								}
+								else
+								if ( ecb instanceof ResultCallback )
+								{
+									((ResultCallback)ecb).result ( e ) ;
+								}
+							}
+							continue ;
 			    	}
+						if ( e.isResult() )
+						{
+							EventCallback ecb = callbacks.get ( e.getUniqueId() ) ;
+							if ( ecb == null )
+							{
+								System.err.println ( "No callback found for:\n" + ecb ) ;
+								continue ;
+							}
+							if ( ecb instanceof ResultCallback )
+							{
+								((ResultCallback)ecb).result ( e ) ;
+							}
+							continue ;
+						}
 						List<EventListener> list = eventListenerFunctions.get ( e.getName() ) ;
 						if ( list != null )
 						{
 							for ( EventListener l : list )
 							{
-								l.event ( e ) ;
+								if ( e.isResultRequested() )
+								{
+									toBeSentBack.put ( e.getUniqueId(), e ) ;
+									l.event ( e ) ;
+									break ;
+								}
+								else
+								{
+									l.event ( e ) ;
+								}
 							}
 						}
 					}
