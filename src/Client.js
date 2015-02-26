@@ -489,8 +489,9 @@ Client.prototype._fireEvent = function ( params, callback, opts )
       throw new Error ( "Missing callback for FailureInfo" ) ;
     }
   }
+  var socketExists = !! this.socket ;
   var s = this.getSocket() ;
-  if ( this.pendingEventList.length )
+  if ( this.pendingEventList.length || ! socketExists )
   {
     ctx.e = e ;
     this.pendingEventList.push ( ctx ) ;

@@ -2,28 +2,32 @@ package org.gessinger.gepard ;
 
 import java.util.* ;
 
-public class MultiMap<K,V> extends HashMap
+public class MultiMap<K,V>
 {
-  public MultiMap() { super() ; }
+	HashMap<K,List<V>> map = null ;
+  public MultiMap()
+  {
+		map = new HashMap<K,List<V>>() ;
+  }
   public MultiMap ( int initialCapacity )
   {
-    super ( initialCapacity ) ;
+		map = new HashMap<K,List<V>> ( initialCapacity ) ;
   }
   public MultiMap ( int initialCapacity, float loadFactor )
   {
-    super ( initialCapacity, loadFactor ) ;
+		map = new HashMap<K,List<V>> ( initialCapacity, loadFactor ) ;
   }
   public List<V> get ( K key )
   {
-    return (List<V>)super.get ( key ) ;
+    return map.get ( key ) ;
   }
   public List<V> put ( K key, V value )
   {
-    List<V> list = (List<V>)super.get ( key ) ;
+    List<V> list = map.get ( key ) ;
     if ( list == null )
     {
       list = new ArrayList<V>() ;
-      super.put ( key, list ) ;
+      map.put ( key, list ) ;
     }
     list.add ( value ) ;
     return list ;
@@ -31,13 +35,13 @@ public class MultiMap<K,V> extends HashMap
   public V remove ( K key, V value )
   {
     V rc = null ;
-    List<V> list = (List<V>)get ( key ) ;
+    List<V> list = map.get ( key ) ;
     if ( list == null ) return rc ;
     int index = list.indexOf ( value ) ;
     rc = list.remove ( index ) ;
     if ( list.isEmpty() )
     {
-      super.remove ( key ) ;
+      map.remove ( key ) ;
     }
     return rc ;
   }
@@ -46,7 +50,7 @@ public class MultiMap<K,V> extends HashMap
     ArrayList<K> toBeRemoved = new ArrayList<K>() ;
     for ( K key : keySet() )
     {
-      List<V> list = (List<V>)get ( key ) ;
+      List<V> list = map.get ( key ) ;
       list.remove ( value ) ;
       if ( list.isEmpty() )
       {
@@ -55,19 +59,19 @@ public class MultiMap<K,V> extends HashMap
     }
     for ( K key : toBeRemoved )
     {
-      super.remove ( key ) ;
+      map.remove ( key ) ;
     }
   }
   public Set<K> keySet()
   {
-    return (Set<K>) super.keySet() ;
+    return map.keySet() ;
   }
   public void clear()
   {
-    for ( Object k : keySet() )
+    for ( K k : keySet() )
     {
-      ((List)get ( k )).clear() ;
+      map.get ( k ).clear() ;
     }
-    super.clear() ;
+    map.clear() ;
   }
 }

@@ -152,6 +152,7 @@ if ( true )
     counter++ ;
     String uid = hostname + "_" + localPort + "-" + counter ;
     e.setUniqueId ( uid ) ;
+System.out.println ( e );
     // synchronized ( "_LOCK" )
     {
 	    eventListenerFunctions.put ( eventName, el ) ;
