@@ -269,12 +269,12 @@ var Broker = function ( port, ip )
   this.server.on ( "error", function onerror ( p )
   {
     Log.error ( p ) ;
-    this.emit ( "error" ) ;
+    thiz.emit ( "error" ) ;
   });
   this.server.on ( "close", function onclose ( p )
   {
     Log.info ( p ) ;
-    this.emit ( "close" ) ;
+    thiz.emit ( "close" ) ;
   });
   this.server.on ( "connection", function server_on_connection ( socket )
   {

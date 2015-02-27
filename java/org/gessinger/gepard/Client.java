@@ -20,10 +20,31 @@ public class Client
 	String _lock1           = "_lock1" ;
 	String hostname         = "" ;
 	int localPort           = 0 ;
+	boolean closing = false ;
   MultiMap<String,EventListener> eventListenerFunctions = new MultiMap<String,EventListener>() ;
   SyncedQueue<Event> _Q = new SyncedQueue<Event>() ;
   HashMap<String,EventCallback> callbacks = new HashMap<String,EventCallback>() ;
+  
+  static Hashtable<String,Client> _Instances = new Hashtable<String,Client>() ;
 
+  static Client getInstance()
+  {
+  	return getInstance ( -1, null ) ;
+  }
+  static Client getInstance ( int port )
+  {
+  	return getInstance ( port, null ) ;
+  }
+  static Client getInstance ( int port, String host )
+  {
+  	Client c = _Instances.get ( "" + host + ":" + port ) ;
+  	if ( c != null )
+  	{
+  		return c ;
+  	}
+  	c = new Client ( port, host ) ;
+  	return c ;
+  }
 	public Client()
 	{
 		this ( -1, null ) ;
@@ -54,29 +75,43 @@ public class Client
 			 , IOException
 	{
 		if ( _out != null ) return _out ;
-    socket = new Socket ( host, port ) ;
-    OutputStream out = socket.getOutputStream() ;
-    _out = new OutputStreamWriter ( out, "utf-8" ) ;
-    InputStream in = socket.getInputStream() ;
-    _in = new InputStreamReader ( in, "utf-8" ) ;
+		try
+		{
+	    socket = new Socket ( host, port ) ;
+	    OutputStream out = socket.getOutputStream() ;
+	    _out = new OutputStreamWriter ( out, "utf-8" ) ;
+	    InputStream in = socket.getInputStream() ;
+	    _in = new InputStreamReader ( in, "utf-8" ) ;
 
-    localPort = socket.getLocalPort() ;
+	    localPort = socket.getLocalPort() ;
 
-    Runner r = new Runner() ;
-    new Thread ( r ).start() ;
+	    Runner r = new Runner() ;
+	    new Thread ( r ).start() ;
 
-    Event e = new Event ( "system", "client_info" ) ;
-    HashMap<String,Object> body = e.getBody() ;
+	    Event e = new Event ( "system", "client_info" ) ;
+	    HashMap<String,Object> body = e.getBody() ;
 
-    body.put ( "language", "Java" ) ;
-    body.put ( "hostname", hostname ) ;
-    body.put ( "connectionTime", Util.getISODateTime() ) ;
-    body.put ( "application", Util.getMainClassName() ) ;
+	    body.put ( "language", "Java" ) ;
+	    body.put ( "hostname", hostname ) ;
+	    body.put ( "connectionTime", Util.getISODateTime() ) ;
+	    body.put ( "application", Util.getMainClassName() ) ;
 
-		String t = e.toJSON() ;
-    _out.write ( t, 0, t.length() ) ;
-    _out.flush() ;
+			String t = e.toJSON() ;
+	    _out.write ( t, 0, t.length() ) ;
+	    _out.flush() ;
 
+	  	_Instances.put ( "" + this.host + ":" + this.port, this ) ;
+		}
+		catch ( UnsupportedEncodingException exc )
+		{
+	  	_emit ( "error", exc.getMessage() ) ;
+			throw exc ;
+		}
+		catch ( IOException exc )
+		{
+	  	_emit ( "error", exc.getMessage() ) ;
+			throw exc ;
+		}
 		return _out ;
 	}
 	public void emit ( String name )
@@ -127,15 +162,23 @@ public class Client
 	void _send ( Event e )
 	throws IOException
 	{
-		synchronized ( _lock1 )
+		try
 		{
-			getWriter() ;
-	    counter++ ;
-	    String uid = hostname + "_" + localPort + "-" + counter ;
-  	  e.setUniqueId ( uid ) ;
-			String t = e.toJSON() ;
-	    _out.write ( t, 0, t.length() ) ;
-	    _out.flush() ;
+			synchronized ( _lock1 )
+			{
+				getWriter() ;
+		    counter++ ;
+		    String uid = hostname + "_" + localPort + "-" + counter ;
+	  	  e.setUniqueId ( uid ) ;
+				String t = e.toJSON() ;
+		    _out.write ( t, 0, t.length() ) ;
+		    _out.flush() ;
+			}
+		}
+		catch ( IOException exc )
+		{
+	  	_emit ( "error", null ) ;
+			throw exc ;
 		}
 	}
 	public void close (  )
@@ -144,6 +187,7 @@ public class Client
 		{
 			try
 			{
+				closing = true ;
 				socket.setSoLinger ( true, 0 ) ;
 				if ( _out != null )
 				{
@@ -161,22 +205,45 @@ public class Client
 				System.err.println ( Util.toString ( exc ) ) ;
 			}
 		}
+		infoCallbacks.clear() ;
+		eventListenerFunctions.clear() ;
+  	_Instances.remove ( "" + this.host + ":" + this.port ) ;
 		socket = null ;
 		_in    = null ;
 		_out   = null ;
+  	_emit ( "close", null ) ;
 	}
   String _LOCK = "LOCK" ;
-  // if ( typeof eventName === "string"
-  //    && (  eventName === "shutdown"
-  //       || eventName === "end"
-  //       || eventName === "error"
-  //       )
-  //    )
-  // {
-  //   EventEmitter.prototype.on.apply ( this, arguments ) ;
-  //   return ;
-  // }
-
+  MultiMap<String,InfoCallback> infoCallbacks = new MultiMap<String,InfoCallback>() ;
+  public void onShutdown ( InfoCallback icb )
+  {
+  	infoCallbacks.put ( "shutdown", icb ) ;
+  }
+  public void onClose ( InfoCallback icb )
+  {
+  	infoCallbacks.put ( "close", icb ) ;
+  }
+  public void onError ( InfoCallback icb )
+  {
+  	infoCallbacks.put ( "error", icb ) ;
+  }
+  void _emit ( String eventName, String reason )
+  {
+  	if ( ! infoCallbacks.containsKey ( eventName ) ) return ;
+  	List<InfoCallback> list = infoCallbacks.get ( eventName ) ;
+  	for ( InfoCallback icb : list )
+  	{
+  		try
+  		{
+  			Event e = new Event ( eventName, reason ) ;
+  			icb.info ( this, e ) ;
+  		}
+  		catch ( Exception exc )
+  		{
+  			System.err.println ( Util.toString ( exc ) ) ;
+  		}
+  	}
+  }
 	public void on ( String eventName, EventListener el )
 	throws IOException
 	{
@@ -218,6 +285,10 @@ public class Client
 		    while ( true )
 		    {
 			    String t = readNextJSON() ;
+			    if ( t == null )
+			    {
+			    	break ;
+			    }
 			    Event e = Event.fromJSON ( t ) ;
 			    synchronized ( "_LOCK" )
 			    {
@@ -225,7 +296,8 @@ public class Client
 			    	{
 			    		if ( e.getType().equals ( "shutdown" ) )
 			    		{
-			    			System.exit ( 0 ) ;
+	  						_emit ( "shutdown", null ) ;
+	  						break ;
 			    		}
 			    		continue ;
 			    	}
@@ -301,46 +373,54 @@ public class Client
 	private synchronized String readNextJSON (  )
 	throws IOException
 	{
-    StringBuilder sb = new StringBuilder() ;
-    int k = 0 ;
-    boolean lastWasBackslash = false ;
-    char q = 0 ;
-    int pcounter = 0 ;
-    while ( ( k = _in.read() ) >= 0 )
-    {
-    	char c = (char)(k&0xFFFF) ;
-	    sb.append ( c ) ;
-	    if ( c == '"' || c == '\'' )
+	  StringBuilder sb = new StringBuilder() ;
+		try
+		{
+	    int k = 0 ;
+	    boolean lastWasBackslash = false ;
+	    char q = 0 ;
+	    int pcounter = 0 ;
+	    while ( ( k = _in.read() ) >= 0 )
 	    {
-	      q = c ;
-		    while ( ( k = _in.read() ) >= 0 )
+	    	char c = (char)(k&0xFFFF) ;
+		    sb.append ( c ) ;
+		    if ( c == '"' || c == '\'' )
 		    {
-		    	c = (char)(k&0xFFFF) ;
-	       	sb.append ( c ) ;
-	        if ( c == q )
-	        {
-	          if ( lastWasBackslash )
-	          {
-	            continue ;
-	          }
-	          break ;
-	        }
-	      }
-	    }
-	    if ( c == '{' )
-	    {
-	      pcounter++ ;
-	      continue ;
-	    }
-	    if ( c == '}' )
-	    {
-	      pcounter-- ;
-	      if ( pcounter == 0 )
-	      {
-	      	break ;
-	      }
-	    }
-	  }
+		      q = c ;
+			    while ( ( k = _in.read() ) >= 0 )
+			    {
+			    	c = (char)(k&0xFFFF) ;
+		       	sb.append ( c ) ;
+		        if ( c == q )
+		        {
+		          if ( lastWasBackslash )
+		          {
+		            continue ;
+		          }
+		          break ;
+		        }
+		      }
+		    }
+		    if ( c == '{' )
+		    {
+		      pcounter++ ;
+		      continue ;
+		    }
+		    if ( c == '}' )
+		    {
+		      pcounter-- ;
+		      if ( pcounter == 0 )
+		      {
+		      	break ;
+		      }
+		    }
+		  }
+		}
+		catch ( IOException exc )
+		{
+			if ( closing ) return null ;
+			throw exc ;
+		}
     return sb.toString() ;
 	}
 }

@@ -57,6 +57,8 @@ gepard.Event.prototype =
 	    Date.prototype.toJSON = old ;
 	  }
 	},
+	_classNameToConstructorDone: false,
+	_classNameToConstructor: {},
 	/**
 	 * Description
 	 * @method deserialize
@@ -67,7 +69,7 @@ gepard.Event.prototype =
 	 */
 	deserialize: function ( serializedObject, classNameToConstructor, deepClassInspection )
 	{
-	  var that ;
+	  var that, f ;
 	  var obj = serializedObject ;
 	  if ( deepClassInspection !== false ) deepClassInspection = true ;
 	  if ( typeof serializedObject === 'string' )
@@ -83,10 +85,27 @@ gepard.Event.prototype =
 				throw exc ;
 			}
 	  }
-	  if ( deepClassInspection ) gepard.Event.prototype.deepDeserializeClass ( obj ) ;
+	  if ( deepClassInspection )
+	  {
+		  if ( typeof document === 'undefined' )
+		  {
+		  	module.exports.prototype.deepDeserializeClass ( obj ) ;
+		  }
+		  else
+		  {
+		  	gepard.Event.prototype.deepDeserializeClass ( obj ) ;
+		  }
+	  }
 	  if ( ! classNameToConstructor )
 	  {
-	  	classNameToConstructor = { "Event": gepard.Event } ;
+		  if ( typeof document === 'undefined' )
+		  {
+		  	classNameToConstructor = module.exports.prototype._classNameToConstructor ;
+		  }
+		  else
+		  {
+		  	classNameToConstructor = gepard.Event.prototype._classNameToConstructor ;
+		  }
 	  }
 	  if ( obj.className && typeof obj.className === 'string' )
 	  {
@@ -448,6 +467,10 @@ gepard.Event.prototype =
 	 */
 	setBody: function ( data )
 	{
+		if ( typeof data !== 'object' )
+		{
+			throw new Error ( "Event.setBody(): Argument must be an object." ) ;
+		}
 		if ( data ) this.body = data ;
 	},
 	/**
@@ -538,17 +561,23 @@ if ( typeof document !== 'undefined' )
 {
 	gepard.serialize = gepard.Event.prototype.serialize ;
 	gepard.deserialize = gepard.Event.prototype.deserialize ;
+ 	gepard.Event.prototype._classNameToConstructor["Event"] = gepard.Event ;
+	gepard.Event.prototype._classNameToConstructor.User = gepard.User ;
 }
 else
 {
 	module.exports = gepard.Event ;
-
+ 	gepard.Event.prototype._classNameToConstructor["Event"] = gepard.Event ;
+	gepard.Event.prototype._classNameToConstructor.User = require ( "./User" ) ;
 	if ( require.main === module )
 	{
-		var ne = new gepard.Event ( 'BC', "T" ) ;
-		var str = ne.serialize() ;
+		var e = new gepard.Event ( 'ALARM', "TEST" ) ;
+		var b = new Buffer ( "ABCDE" ) ;
+		e.getBody().binaryData = b ;
+		var str = e.serialize() ;
 		console.log ( "str=" + str ) ;
 		var o = gepard.Event.prototype.deserialize ( str ) ;
 		console.log ( o ) ;
 	}
+	gepard = undefined ;
 }

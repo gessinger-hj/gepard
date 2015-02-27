@@ -24,35 +24,38 @@ if ( require.main === module )
       console.log ( "Not running on " + this.getHostPort() ) ;
       process.exit ( 1 ) ;
     }
+    execute() ;
   });
-
-	var name = T.getProperty ( "name", "ALARM" ) ;
-	var c = new Client() ;
-	if ( T.getProperty ( "request" ) )
-  {
-    name += ":request" ;
-		console.log ( "Listen for events with name=" + name ) ;
-		c.on ( name, function(e)
+	function execute()
+	{
+		var name = T.getProperty ( "name", "ALARM" ) ;
+		var c = new Client() ;
+		if ( T.getProperty ( "request" ) )
+	  {
+	    name += ":request" ;
+			console.log ( "Listen for events with name=" + name ) ;
+			c.on ( name, function(e)
+			{
+			  console.log ( e ) ;
+			  e.body.result = "This is a result" ;
+			  this.sendResult ( e ) ;
+			});
+		}
+		else
 		{
-		  console.log ( e ) ;
-		  e.body.result = "This is a result" ;
-		  this.sendResult ( e ) ;
+			console.log ( "Listen for events with name=" + name ) ;
+			c.on ( name, function(e)
+			{
+			  console.log ( e ) ;
+			});
+		}
+		c.on('end', function()
+		{
+		  console.log('socket disconnected');
+		});
+		c.on('shutdown', function()
+		{
+		  console.log('broker shut down');
 		});
 	}
-	else
-	{
-		console.log ( "Listen for events with name=" + name ) ;
-		c.on ( name, function(e)
-		{
-		  console.log ( e ) ;
-		});
-	}
-	c.on('end', function()
-	{
-	  console.log('socket disconnected');
-	});
-	c.on('shutdown', function()
-	{
-	  console.log('broker shut down');
-	});
 }

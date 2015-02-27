@@ -74,4 +74,8 @@ public class MultiMap<K,V>
     }
     map.clear() ;
   }
+  public boolean containsKey ( K key )
+  {
+    return map.containsKey ( key ) ;
+  }
 }

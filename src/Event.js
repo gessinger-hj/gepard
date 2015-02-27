@@ -85,22 +85,27 @@ gepard.Event.prototype =
 				throw exc ;
 			}
 	  }
-	  if ( deepClassInspection ) gepard.Event.prototype.deepDeserializeClass ( obj ) ;
+	  if ( deepClassInspection )
+	  {
+		  if ( typeof document === 'undefined' )
+		  {
+		  	module.exports.prototype.deepDeserializeClass ( obj ) ;
+		  }
+		  else
+		  {
+		  	gepard.Event.prototype.deepDeserializeClass ( obj ) ;
+		  }
+	  }
 	  if ( ! classNameToConstructor )
 	  {
-	  	if ( ! gepard.Event.prototype._classNameToConstructorDone )
-	  	{
-	  		gepard.Event.prototype._classNameToConstructorDone = true ;
-		  	if ( ! gepard.Event.prototype._classNameToConstructor["Event"] ) gepard.Event.prototype._classNameToConstructor["Event"] = gepard.Event ;
-				if ( ! gepard.Event.prototype._classNameToConstructor["User"] )
-				{
-					if ( typeof document === 'undefined' )
-			  	{
-						gepard.Event.prototype._classNameToConstructor.User = require ( "./User" ) ;
-			  	}
-				}
-	  	}
-		  classNameToConstructor = gepard.Event.prototype._classNameToConstructor ;
+		  if ( typeof document === 'undefined' )
+		  {
+		  	classNameToConstructor = module.exports.prototype._classNameToConstructor ;
+		  }
+		  else
+		  {
+		  	classNameToConstructor = gepard.Event.prototype._classNameToConstructor ;
+		  }
 	  }
 	  if ( obj.className && typeof obj.className === 'string' )
 	  {
@@ -556,11 +561,14 @@ if ( typeof document !== 'undefined' )
 {
 	gepard.serialize = gepard.Event.prototype.serialize ;
 	gepard.deserialize = gepard.Event.prototype.deserialize ;
+ 	gepard.Event.prototype._classNameToConstructor["Event"] = gepard.Event ;
+	gepard.Event.prototype._classNameToConstructor.User = gepard.User ;
 }
 else
 {
 	module.exports = gepard.Event ;
-
+ 	gepard.Event.prototype._classNameToConstructor["Event"] = gepard.Event ;
+	gepard.Event.prototype._classNameToConstructor.User = require ( "./User" ) ;
 	if ( require.main === module )
 	{
 		var e = new gepard.Event ( 'ALARM', "TEST" ) ;
@@ -571,4 +579,5 @@ else
 		var o = gepard.Event.prototype.deserialize ( str ) ;
 		console.log ( o ) ;
 	}
+	gepard = undefined ;
 }
