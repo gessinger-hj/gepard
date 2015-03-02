@@ -22,20 +22,24 @@ public class Client
 	int localPort           = 0 ;
 	boolean closing = false ;
   MultiMap<String,EventListener> eventListenerFunctions = new MultiMap<String,EventListener>() ;
-  SyncedQueue<Event> _Q = new SyncedQueue<Event>() ;
   HashMap<String,EventCallback> callbacks = new HashMap<String,EventCallback>() ;
+
+  HashMap<String,Semaphore> semaphores = new HashMap<String,Semaphore>() ;
+  NamedQueue<Event> _NQ_semaphoreEvents = new NamedQueue<Event>() ;
+  HashMap<String,Lock> locks = new HashMap<String,Lock>() ;
+  NamedQueue<Event> _NQ_lockEvents = new NamedQueue<Event>() ;
   
   static Hashtable<String,Client> _Instances = new Hashtable<String,Client>() ;
 
-  static Client getInstance()
+  static public Client getInstance()
   {
   	return getInstance ( -1, null ) ;
   }
-  static Client getInstance ( int port )
+  static public Client getInstance ( int port )
   {
   	return getInstance ( port, null ) ;
   }
-  static Client getInstance ( int port, String host )
+  static public Client getInstance ( int port, String host )
   {
   	Client c = _Instances.get ( "" + host + ":" + port ) ;
   	if ( c != null )
@@ -85,9 +89,6 @@ public class Client
 
 	    localPort = socket.getLocalPort() ;
 
-	    Runner r = new Runner() ;
-	    new Thread ( r ).start() ;
-
 	    Event e = new Event ( "system", "client_info" ) ;
 	    HashMap<String,Object> body = e.getBody() ;
 
@@ -100,6 +101,19 @@ public class Client
 	    _out.write ( t, 0, t.length() ) ;
 	    _out.flush() ;
 
+	    Runner r = new Runner ( _in ) ;
+	    new Thread ( r ).start() ;
+	    try
+	    {
+		    synchronized ( r )
+		    {
+		    	r.wait ( 10000 ) ;
+		    }
+	    }
+	    catch ( Exception exc )
+	    {
+	    	System.out.println ( Util.toString ( exc ) ) ;
+	    }
 	  	_Instances.put ( "" + this.host + ":" + this.port, this ) ;
 		}
 		catch ( UnsupportedEncodingException exc )
@@ -123,6 +137,11 @@ public class Client
 	throws IOException
 	{
 		emit ( name, type, null ) ;
+	}
+	public void emit ( String name, EventCallback ecb )
+	throws IOException
+	{
+		emit ( new Event ( name, null ), ecb ) ;
 	}
 	public void emit ( String name, String type, EventCallback ecb )
 	throws IOException
@@ -275,21 +294,29 @@ public class Client
   }
   class Runner implements Runnable
   {
-    Runner ()
+  	InputStreamReader in = null ;
+    Runner ( InputStreamReader in )
     {
+    	this.in = in ;
     }
     public void run()
     {
       try
       {
+ 		    synchronized ( this )
+		    {
+		    	this.notify() ;
+		    }
+
 		    while ( true )
 		    {
-			    String t = readNextJSON() ;
+			    String t = readNextJSON ( in ) ;
 			    if ( t == null )
 			    {
 			    	break ;
 			    }
 			    Event e = Event.fromJSON ( t ) ;
+
 			    synchronized ( "_LOCK" )
 			    {
 			    	if ( e.getName().equals ( "system" ) )
@@ -299,6 +326,28 @@ public class Client
 	  						_emit ( "shutdown", null ) ;
 	  						break ;
 			    		}
+		          if ( e.getType().equals ( "acquireSemaphoreResult" ) )
+		          {
+		          	HashMap<String,Object> body = e.getBody() ;
+								String resourceId = (String) body.get ( "resourceId" ) ;
+								_NQ_semaphoreEvents._returnObj ( resourceId, e ) ;
+		            continue ;
+		          }
+		          if ( e.getType().equals ( "releaseSemaphoreResult" ) )
+		          {
+		            continue ;
+		          }
+		          if ( e.getType().equals ( "lockResourceResult" ) )
+		          {
+		          	HashMap<String,Object> body = e.getBody() ;
+								String resourceId = (String) body.get ( "resourceId" ) ;
+								_NQ_lockEvents._returnObj ( resourceId, e ) ;
+		            continue ;
+		          }
+		          if ( e.getType().equals ( "unlockResourceResult" ) )
+		          {
+		            continue ;
+		          }
 			    		continue ;
 			    	}
 			    	if ( e.isBad() )
@@ -370,7 +419,7 @@ public class Client
     }
   }
 
-	private synchronized String readNextJSON (  )
+	private synchronized String readNextJSON ( InputStreamReader in )
 	throws IOException
 	{
 	  StringBuilder sb = new StringBuilder() ;
@@ -380,14 +429,14 @@ public class Client
 	    boolean lastWasBackslash = false ;
 	    char q = 0 ;
 	    int pcounter = 0 ;
-	    while ( ( k = _in.read() ) >= 0 )
+	    while ( ( k = in.read() ) >= 0 )
 	    {
 	    	char c = (char)(k&0xFFFF) ;
 		    sb.append ( c ) ;
 		    if ( c == '"' || c == '\'' )
 		    {
 		      q = c ;
-			    while ( ( k = _in.read() ) >= 0 )
+			    while ( ( k = in.read() ) >= 0 )
 			    {
 			    	c = (char)(k&0xFFFF) ;
 		       	sb.append ( c ) ;
@@ -422,5 +471,81 @@ public class Client
 			throw exc ;
 		}
     return sb.toString() ;
+	}
+	void acquireSemaphore ( Semaphore sem )
+	throws IOException
+	{
+		if ( semaphores.containsKey ( sem.resourceId ) )
+		{
+			Semaphore s = semaphores.get ( sem.resourceId ) ;
+			if ( s.isOwner() )
+			{
+		    System.out.println ( Util.toString ( "Client.acquireSemaphore: already owner of resourceId=" + sem.resourceId ) ) ;
+			}
+			else
+			{
+		    System.out.println ( Util.toString ( "Client.acquireSemaphore: already waiting for ownership owner of resourceId=" + sem.resourceId ) ) ;
+			}
+    	return ;
+		}
+		semaphores.put ( sem.resourceId, sem ) ;
+		Event e = new Event ( "system", "acquireSemaphoreRequest" ) ;
+		HashMap<String,Object> body = e.getBody() ;
+  	body.put ( "resourceId", sem.resourceId ) ;
+  	_send ( e ) ;
+		e = _NQ_semaphoreEvents.get ( sem.resourceId ) ;
+   	body = e.getBody() ;
+		String resourceId = (String) body.get ( "resourceId" ) ;
+		sem = semaphores.get ( resourceId ) ;
+		sem._isOwner = true ;
+		sem.scb.acquired ( e ) ;
+	}
+	void releaseSemaphore ( Semaphore sem )
+	throws IOException
+	{
+		if ( ! semaphores.containsKey ( sem.resourceId ) )
+		{
+	    System.out.println ( Util.toString ( "release semaphore: not owner of resourceId=" + sem.resourceId ) ) ;
+    	return ;
+		}
+		Event e = new Event ( "system", "releaseSemaphoreRequest" ) ;
+		HashMap<String,Object> body = e.getBody() ;
+  	body.put ( "resourceId", sem.resourceId ) ;
+		semaphores.remove ( sem.resourceId ) ;
+  	_send ( e ) ;
+		_NQ_semaphoreEvents.remove ( sem.resourceId ) ;
+	}
+	void acquireLock ( Lock lock )
+	throws IOException
+	{
+		if ( locks.containsKey ( lock.resourceId ) )
+		{
+	    System.out.println ( Util.toString ( "acquire lock: already owner of resourceId=" + lock.resourceId ) ) ;
+    	return ;
+		}
+		locks.put ( lock.resourceId, lock ) ;
+		Event e = new Event ( "system", "lockResourceRequest" ) ;
+		HashMap<String,Object> body = e.getBody() ;
+  	body.put ( "resourceId", lock.resourceId ) ;
+  	_send ( e ) ;
+		e = _NQ_lockEvents.get ( lock.resourceId ) ;
+   	body = e.getBody() ;
+		String resourceId = (String) body.get ( "resourceId" ) ;
+		lock = locks.get ( resourceId ) ;
+		lock._isOwner = (Boolean) body.get ( "isLockOwner" ) ;
+	}
+	void releaseLock ( Lock lock )
+	throws IOException
+	{
+		if ( ! locks.containsKey ( lock.resourceId ) )
+		{
+	    System.out.println ( Util.toString ( "release lock: not owner of resourceId=" + lock.resourceId ) ) ;
+    	return ;
+		}
+		Event e = new Event ( "system", "unlockResourceRequest" ) ;
+		HashMap<String,Object> body = e.getBody() ;
+  	body.put ( "resourceId", lock.resourceId ) ;
+		locks.remove ( lock.resourceId ) ;
+  	_send ( e ) ;
 	}
 }
