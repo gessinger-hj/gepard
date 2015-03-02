@@ -121,8 +121,8 @@ WebSocketEventProxy.prototype._create = function()
 		Log.info ( 'web connects' ) ;
 		socket.on ( "text", function ( message )
 		{
-			var ne = Event.prototype.deserialize ( message ) ;
-			ne.setProxyIdentifier ( socket.key ) ;
+			var e = Event.prototype.deserialize ( message ) ;
+			e.setProxyIdentifier ( socket.key ) ;
 			var conn = thiz._sockets[this.key] ;
 			if ( ! conn )
 			{
@@ -144,13 +144,17 @@ WebSocketEventProxy.prototype._create = function()
 					thiz.closeAllWebsockets() ;
 				});
 			}
-			if ( ne.getName() === 'system' )
+			if ( e.getName() === 'system' )
 			{
-				thiz.handleSystemMessages ( conn, ne ) ;
+				thiz.handleSystemMessages ( conn, e ) ;
 			}
 			else
 			{
-				thiz.client.fire ( ne
+				if ( ! e.isResultRequested() )
+				{
+					e.control.__ignore_result_function_as_result_indicator__ = true ;
+				}
+				thiz.client.fire ( e
 	      , { 
 /**
   * Description

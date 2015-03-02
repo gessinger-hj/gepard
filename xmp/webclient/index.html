@@ -83,13 +83,14 @@ Xmp.initialize = function()
 };
 Xmp.sendEvent = function ( name )
 {
-    this.wc.fire ( name,
-    { error:function error_callback(e)
-      {
-        Console.log ( "Error" ) ;
-        Console.log ( e.getStatus().reason ) ;
-      }
-    } ) ;
+    this.wc.fire ( name ) ;
+    // this.wc.fire ( name,
+    // { error:function error_callback(e)
+    //   {
+    //     Console.log ( "Error" ) ;
+    //     Console.log ( e.getStatus().reason ) ;
+    //   }
+    // } ) ;
 };
 Xmp.lockResource = function ( name )
 {

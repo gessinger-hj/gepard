@@ -453,7 +453,14 @@ Client.prototype._fireEvent = function ( params, callback, opts )
     if ( typeof callback === 'object' )
     {
       ctx.result = callback.result ;
-      if ( ctx.result ) e.setResultRequested() ;
+      if ( e.control.__ignore_result_function_as_result_indicator__ === true  )
+      {
+      }
+      else
+      {
+        if ( ctx.result ) e.setResultRequested() ;
+      }
+      delete e.control["__ignore_result_function_as_result_indicator__" ] ;
       ctx.failure = callback.failure ;
       if ( ctx.failure ) e.setFailureInfoRequested() ;
       ctx.error = callback.error ;

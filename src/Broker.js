@@ -335,7 +335,7 @@ var Broker = function ( port, ip )
           var e = null ;
           try
           {
-            var e = Event.prototype.deserialize ( m ) ;
+            e = Event.prototype.deserialize ( m ) ;
           }
           catch ( exc )
           {
