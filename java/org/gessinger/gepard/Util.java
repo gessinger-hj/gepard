@@ -771,5 +771,49 @@ final public class Util
   {
     return _ISODateFormat.format ( date ) ;
   }
-
+  public static LI LineInfo = null ;
+  static
+  {
+    Util o = new Util() ;
+    LineInfo = o.getLI() ;
+  }
+  private LI getLI()
+  {
+    return new LI() ;
+  }
+  public class LI
+  {
+    String _lastInvisibleClassName = null ;
+    public void setLastInvisibleClassName ( String lastInvisibleClassName )
+    {
+      _lastInvisibleClassName = lastInvisibleClassName ;
+    }
+    public String toString()
+    {
+      Exception exc = new Exception() ;
+      StackTraceElement[] ste = exc.getStackTrace() ;
+      String cn = "" ;
+      int n = 0 ;
+      for ( ; n < ste.length ; n++ )
+      {
+        cn = ste[n].getClassName() ;
+        if ( cn.indexOf ( "Util" ) >= 0 ) continue ;
+        if ( cn.indexOf ( "java" ) < 0 ) break ;
+      }
+      if ( n >= ste.length ) return "" ;
+      if ( _lastInvisibleClassName != null )
+      {
+        for ( ; n < ste.length ; n++ )
+        {
+          cn = ste[n].getClassName() ;
+          if ( cn.indexOf ( _lastInvisibleClassName ) >= 0 ) { n++ ; break ; }
+        }
+      }
+      if ( n >= ste.length ) return "" ;
+      String fn = ste[n].getFileName() ;
+      String mn = ste[n].getMethodName() ;
+      int ln = ste[n].getLineNumber() ;
+      return cn + "." + mn + "(" + fn + ":" + ln + ")" ;
+    }
+  }
 }

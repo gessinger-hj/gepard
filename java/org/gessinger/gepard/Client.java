@@ -1,8 +1,6 @@
 package org.gessinger.gepard ;
 
-import java.util.HashMap ;
-import java.util.List ;
-import java.util.Hashtable ;
+import java.util.* ;
 import java.io.* ;
 import java.net.* ;
 
@@ -330,7 +328,16 @@ public class Client
 		          {
 		          	HashMap<String,Object> body = e.getBody() ;
 								String resourceId = (String) body.get ( "resourceId" ) ;
-								_NQ_semaphoreEvents._returnObj ( resourceId, e ) ;
+								Semaphore sem = semaphores.get ( resourceId ) ;
+								if ( sem.hasCallback() )
+								{
+									sem._isOwner = true ;
+									sem.scb.acquired ( e ) ;
+								}
+								else
+								{
+									_NQ_semaphoreEvents._returnObj ( resourceId, e ) ;
+								}
 		            continue ;
 		          }
 		          if ( e.getType().equals ( "releaseSemaphoreResult" ) )
@@ -472,6 +479,19 @@ public class Client
 		}
     return sb.toString() ;
 	}
+	class TT extends TimerTask
+	{
+		Semaphore sem = null ;
+		TT ( Semaphore sem )
+		{
+			this.sem = sem ;
+		}
+	  @Override
+	  public void run()
+	  {
+	    _NQ_semaphoreEvents.remove ( sem.resourceId ) ;
+	  }
+	}
 	void acquireSemaphore ( Semaphore sem )
 	throws IOException
 	{
@@ -493,12 +513,20 @@ public class Client
 		HashMap<String,Object> body = e.getBody() ;
   	body.put ( "resourceId", sem.resourceId ) ;
   	_send ( e ) ;
-		e = _NQ_semaphoreEvents.get ( sem.resourceId ) ;
-   	body = e.getBody() ;
-		String resourceId = (String) body.get ( "resourceId" ) ;
-		sem = semaphores.get ( resourceId ) ;
-		sem._isOwner = true ;
-		sem.scb.acquired ( e ) ;
+  	if ( ! sem.hasCallback() )
+  	{
+  		if ( sem.timeoutMillis > 10 )
+  		{
+  			Timer timer = new Timer() ;
+				timer.schedule ( new TT ( sem ), sem.timeoutMillis ) ;
+  		}
+				e = _NQ_semaphoreEvents.get ( sem.resourceId ) ;
+System.out.println ( e ) ;
+		   	body = e.getBody() ;
+				String resourceId = (String) body.get ( "resourceId" ) ;
+				sem = semaphores.get ( resourceId ) ;
+				sem._isOwner = true ;
+  	}
 	}
 	void releaseSemaphore ( Semaphore sem )
 	throws IOException

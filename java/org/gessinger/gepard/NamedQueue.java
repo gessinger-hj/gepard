@@ -148,6 +148,7 @@ public class NamedQueue<T>
   }
   synchronized public void remove ( String name )
   {
+System.out.println ( Util.LineInfo ) ;
     // _ReturnedObjects.put ( name, o ) ;
     // this.notifyAll() ;
   }
