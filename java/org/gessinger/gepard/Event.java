@@ -19,7 +19,7 @@ public class Event
   String name = "" ;
   String type = "" ;
   User user = null ;
-  
+  transient Client _Client = null ;
   HashMap<String,Object> control = new HashMap<String,Object>() ;
   HashMap<String,Object> body = new HashMap<String,Object>() ;
   Event ( HashMap map )
@@ -199,12 +199,58 @@ public class Event
     if ( this.control == null ) return null ;
     return (HashMap<String,Object>)this.control.get ( "status" ) ;
   }
+  public boolean hasStatus()
+  {
+    if ( this.control == null ) return false ;
+    if ( ! this.control.containsKey ( "status" ) ) return false ;
+    return true ;
+  }
   public String getStatusReason()
   {
-    if ( this.control == null ) return "" ;
-    if ( ! this.control.containsKey ( "status" ) ) return "" ;
+    if ( ! hasStatus() ) return "" ;
     HashMap<String,Object> status = (HashMap<String,Object>)this.control.get ( "status" ) ;
-    if ( status == null ) return "" ;
     return "" + status.get ( "reason" ) ;
+  }
+  public String getStatusName()
+  {
+    if ( ! hasStatus() ) return "" ;
+    HashMap<String,Object> status = (HashMap<String,Object>)this.control.get ( "status" ) ;
+    return "" + status.get ( "name" ) ;
+  }
+  public int getStatusCode()
+  {
+    if ( ! hasStatus() ) return 0 ;
+    HashMap<String,Object> status = (HashMap<String,Object>)this.control.get ( "status" ) ;
+    try
+    {
+      return Integer.parseInt ( "" + status.get ( "reason" ) ) ;
+    }
+    catch ( Exception exc )
+    {
+    }
+    return 0 ;
+  }
+  public Object getBodyValue ( String name )
+  {
+    return this.body.get ( name ) ;
+  }
+  public void putBodyValue ( String name, Object obj )
+  {
+    this.body.put ( name, obj ) ;
+  }
+  public String getBodyString ( String name )
+  {
+    return (String) this.body.get ( name ) ;
+  }
+  public void sendBack()
+  throws Exception
+  {
+    if ( _Client == null )
+    {
+      throw new Exception ( "Not a result." ) ;
+    }
+    Client c = _Client ;
+    _Client = null ;
+    c.sendResult ( this ) ;
   }
 }

@@ -4,11 +4,12 @@ import java.util.*;
 
 public class NamedQueue<T>
 {
-  private int _Counter = 0 ;
-  private Random _Random = new Random() ;
+  private int _Counter                             = 0 ;
+  private Random _Random                           = new Random() ;
   private Vector<Variable<String,T>> _NamedObjects = new Vector<Variable<String,T>>() ;
-  private Hashtable<String,T> _ReturnedObjects = new Hashtable<String,T>() ;
-  private boolean _AwakeAll = false ;
+  private Hashtable<String,String> _WaitingNames   = new Hashtable<String,String>() ;
+  private Hashtable<String,T> _ReturnedObjects     = new Hashtable<String,T>() ;
+  private boolean _AwakeAll                        = false ;
 
   public NamedQueue()
   {
@@ -37,6 +38,7 @@ public class NamedQueue<T>
   }
   synchronized public T get ( String name, long timeoutMillis )
   {
+    _WaitingNames.put ( name, "" ) ;
     T o = null;
     if ( timeoutMillis < 0 ) timeoutMillis = 0 ;
 
@@ -53,6 +55,7 @@ public class NamedQueue<T>
       o = _ReturnedObjects.get ( name ) ;
       if ( o != null )
       {
+        _WaitingNames.remove ( name ) ;
         _ReturnedObjects.remove ( name ) ;
         return o ;
       }
@@ -120,6 +123,10 @@ public class NamedQueue<T>
     _AwakeAll = true ;
     this.notifyAll() ;
   }
+  public synchronized boolean isWaiting ( String name )
+  {
+    return _WaitingNames.containsKey ( name ) ;
+  }
   public synchronized int numberOfNamedObjects()
   {
     return _NamedObjects.size() ;
@@ -145,11 +152,5 @@ public class NamedQueue<T>
   {
     _ReturnedObjects.put ( name, o ) ;
     this.notifyAll() ;
-  }
-  synchronized public void remove ( String name )
-  {
-System.out.println ( Util.LineInfo ) ;
-    // _ReturnedObjects.put ( name, o ) ;
-    // this.notifyAll() ;
   }
 }

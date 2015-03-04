@@ -1,36 +1,32 @@
-import com.google.gson.* ;
+package org.gessinger.gepard.xmp ;
 import org.gessinger.gepard.* ;
 
-public class Requester
+public class Emitter
 {
   static public void main ( String[] args )
   {
     Util.argsToProperties ( args ) ;
     try
     {
-      Requester j = new Requester() ;
+      Emitter j = new Emitter() ;
     }
     catch ( Exception exc )
     {
       exc.printStackTrace() ;
     }
   }
-  Requester()
+  Emitter()
   throws Exception
   {
-    final Client client = Client.getInstance() ;
+    Client client = Client.getInstance() ;
     String name = Util.getProperty ( "name", "ALARM" ) ;
-    name += ":request" ;
-
-    System.out.println ( "Request data for name=" + name ) ;
-
-    client.emit ( name, new ResultCallback()
+    client.emit ( name, new FailureCallback()
     {
-      public void result ( Event e )
+      public void failure ( Event e )
       {
         System.out.println ( e ) ;
       }
-    }) ;
+    } ) ;
     Thread.sleep ( 1000 ) ;
     client.close() ;
   }

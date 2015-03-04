@@ -555,6 +555,13 @@ gepard.Event.prototype =
 		if ( ! this.control ) return ;
 		if ( ! this.control.status ) return ;
 		return this.control.status.reason ;
+	},
+	sendBack: function()
+	{
+		var c = this._Client ;
+		this._Client = null ;
+		delete this._Client ;
+		c.sendResult ( this ) ;
 	}
 };
 if ( typeof document !== 'undefined' )

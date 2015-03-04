@@ -77,23 +77,23 @@ Here is the most loved "Hello World" example.
 
 All commands are in the directory: node_modules/.bin or node_modules/.bin/gepard
 
-1.  __gp.broker<br/>__
+1.  __node_modules/.bin/gp.broker<br/>__
     Start the gepard broker with websocket proxy
 
-1.  __gp.shutdown<br/>__
+1.  __node_modules/.bin/gp.shutdown<br/>__
     Stop the broker
 
-1.  __gepard/gp.listen --name=hello<br/>__
+1.  __node_modules/.bin/gepard/gp.listen --name=hello<br/>__
     Start a listener for events named __hello__
     <br/>
     If you want to listen to all events with name starting with hello use a wildcard:
     <br/>
-    __gp.listen "--name=hello*"__
+    __node_modules/.bin/gp.listen "--name=hello*"__
 
-1.  __gepard/gp.emit --name=hello<br/>__ [--body='{"City":"Frankfurt"}']
+1.  __node_modules/.bin/gepard/gp.emit --name=hello<br/>__ [--body='{"City":"Frankfurt"}']
     emit an event with name __hello__
 
-1.  __gp.info<br/>__
+1.  __node_modules/.bin/gp.info<br/>__
     Show basic information from the broker
 
 1.  If you want to play with the web-client implementation use the appropriate files in:
@@ -476,7 +476,8 @@ wc.fire ( event ) ;
 ## Features
 * High performance
 * Minimal configuration with
-  - GEPARD_PORT
-	- [GEPARD_HOST]
-* All client features like event listener, event emitter, semaphores, locks and messages
+  - __GEPARD_PORT__ 
+	- __GEPARD_HOST__
+* All JavaScript client features like event listener, event emitter, semaphores, locks and messages
 	are available in any web-browser apps.
+* All client features are also available for Java

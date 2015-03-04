@@ -2,14 +2,15 @@
 
 if ( require.main === module )
 {
+	var T      = require ( "../src/Tango" ) ;
 	var Client = require ( "../src/Client" ) ;
   var Admin  = require ( "../src/Admin" ) ;
 
 	if ( T.getProperty ( "help" ) )
 	{
 		console.log (
-		  "Gepard Examples: Listener, listen to a given event.\n"
-		+ "Usage: node Listener [Options]\n"
+		  "Gepard Examples: Responder, respond to a request to a given event.\n"
+		+ "Usage: node Responder [Options]\n"
 		+ "Options: -Dname=<event-name>, default <event-name>=ALARM\n"
 		) ;
 		process.exit() ;
@@ -26,12 +27,17 @@ if ( require.main === module )
   });
 	function execute()
 	{
-		var name = "ALARM" ;
+		var name = "getFileList" ;
 		var c = new Client() ;
-		console.log ( "Listen for events with name=" + name ) ;
+		console.log ( "Listen for requests with name=" + name ) ;
 		c.on ( name, function(e)
 		{
-		  console.log ( e ) ;
+      var fileList = [ "a.js", "b.js", "c.js" ] ;
+      console.log ( "Request in" ) ;
+      console.log ( "File list out:" ) ;
+      console.log ( fileList ) ;
+		  e.body.file_list = fileList ;
+		  e.sendBack() ;
 		});
 		c.on('end', function()
 		{

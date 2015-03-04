@@ -323,7 +323,16 @@ Client.prototype.connect = function()
             found = true ;
             for  ( k = 0 ; k < callbackList.length ; k++ )
             {
-              callbackList[k].call ( thiz, e ) ;
+              if ( e.isResultRequested() )
+              {
+                e._Client = thiz ;
+                callbackList[k].call ( thiz, e ) ;
+                break ;
+              }
+              else
+              {
+                callbackList[k].call ( thiz, e ) ;
+              }
             }
           }
           for ( k = 0 ; k < thiz.listenerFunctionsList.length ; k++ )
@@ -334,7 +343,16 @@ Client.prototype.connect = function()
             {
               if ( ! list[j].test ( e.getName() ) ) continue ;
               found = true ;
-              thiz.listenerFunctionsList[k].call ( thiz, e ) ;
+              if ( e.isResultRequested() )
+              {
+                e._Client = thiz ;
+                thiz.listenerFunctionsList[k].call ( thiz, e ) ;
+                break ;
+              }
+              else
+              {
+                thiz.listenerFunctionsList[k].call ( thiz, e ) ;
+              }
             }
           }
           if ( ! found )
@@ -878,6 +896,7 @@ Client.prototype.sendResult = function ( message )
     return ;
   }
   message.setIsResult() ;
+  delete message["_Client"] ;
   this.send ( message ) ;
 };
 /**

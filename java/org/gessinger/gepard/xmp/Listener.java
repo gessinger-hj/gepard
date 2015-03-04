@@ -1,4 +1,4 @@
-import com.google.gson.* ;
+package org.gessinger.gepard.xmp ;
 import org.gessinger.gepard.* ;
 
 public class Listener

@@ -2,31 +2,6 @@ package org.gessinger.gepard ;
 import java.io.IOException ;
 public class Lock
 {
-  static public void main ( String[] args )
-  {
-    Util.argsToProperties ( args ) ;
-    try
-    {
-      Lock lock = new Lock ( "user:4711" ) ;
-      lock.acquire() ;
-
-      if ( lock.isOwner() )
-      {
-        System.out.println ( lock ) ;
-        Thread.sleep ( 5000 ) ;
-        lock.release() ;
-      }
-      else
-      {
-        System.out.println ( lock ) ;
-      }
-      // client.close() ;
-    }
-    catch ( Exception exc )
-    {
-      exc.printStackTrace() ;
-    }
-  }
   Client client = null ;
   String resourceId = "" ;
   boolean _isOwner = false ;

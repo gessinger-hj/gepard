@@ -141,7 +141,17 @@ public class Client
 	{
 		emit ( new Event ( name, null ), ecb ) ;
 	}
+	public void request ( String name, ResultCallback ecb )
+	throws IOException
+	{
+		emit ( new Event ( name, null ), ecb ) ;
+	}
 	public void emit ( String name, String type, EventCallback ecb )
+	throws IOException
+	{
+		emit ( new Event ( name, type ), ecb ) ;
+	}
+	public void result ( String name, String type, ResultCallback ecb )
 	throws IOException
 	{
 		emit ( new Event ( name, type ), ecb ) ;
@@ -150,6 +160,11 @@ public class Client
 	throws IOException
 	{
 		emit ( e, null ) ;
+	}
+	public void request ( Event e, ResultCallback ecb )
+	throws IOException
+	{
+		emit ( e, ecb ) ;
 	}
 	public void emit ( Event e, EventCallback ecb )
 	throws IOException
@@ -287,6 +302,7 @@ public class Client
   	{
     	throw new Exception ( "No result requested for:\n" + e ) ;
     }
+		e._Client = null ;
   	e.setIsResult() ;
     _send ( e ) ;
   }
@@ -336,7 +352,17 @@ public class Client
 								}
 								else
 								{
-									_NQ_semaphoreEvents._returnObj ( resourceId, e ) ;
+									synchronized ( _NQ_semaphoreEvents )
+									{
+										if ( _NQ_semaphoreEvents.isWaiting ( sem.resourceId ) )
+										{
+											_NQ_semaphoreEvents._returnObj ( resourceId, e ) ;
+										}
+										else
+										{
+											sem.release() ;
+										}
+									}
 								}
 		            continue ;
 		          }
@@ -348,7 +374,10 @@ public class Client
 		          {
 		          	HashMap<String,Object> body = e.getBody() ;
 								String resourceId = (String) body.get ( "resourceId" ) ;
-								_NQ_lockEvents._returnObj ( resourceId, e ) ;
+						  	synchronized ( _NQ_lockEvents )
+						  	{
+									_NQ_lockEvents._returnObj ( resourceId, e ) ;
+								}
 		            continue ;
 		          }
 		          if ( e.getType().equals ( "unlockResourceResult" ) )
@@ -407,6 +436,7 @@ public class Client
 								if ( e.isResultRequested() )
 								{
 									toBeSentBack.put ( e.getUniqueId(), e ) ;
+									e._Client = Client.this ;
 									l.event ( e ) ;
 									break ;
 								}
@@ -489,7 +519,27 @@ public class Client
 	  @Override
 	  public void run()
 	  {
-	    _NQ_semaphoreEvents.remove ( sem.resourceId ) ;
+			synchronized ( _NQ_semaphoreEvents )
+			{
+				if ( _NQ_semaphoreEvents.isWaiting ( sem.resourceId ) )
+				{
+					try
+					{
+						sem.release() ;
+					}
+					catch ( Exception exc )
+					{
+						System.out.println ( Util.toString ( exc ) ) ; ;
+					}
+					semaphores.remove ( sem.resourceId ) ;
+					Event e = new Event ( "system", "acquireSemaphoreResult" ) ;
+					HashMap<String,Object> body = e.getBody() ;
+					body.put ( "resourceId", sem.resourceId ) ;
+					body.put ( "isSemaphoreOwner", false ) ;
+					sem.timeoutMillis = 0 ;
+					_NQ_semaphoreEvents._returnObj ( sem.resourceId, e ) ;
+				}
+	  	}
 	  }
 	}
 	void acquireSemaphore ( Semaphore sem )
@@ -517,15 +567,22 @@ public class Client
   	{
   		if ( sem.timeoutMillis > 10 )
   		{
-  			Timer timer = new Timer() ;
-				timer.schedule ( new TT ( sem ), sem.timeoutMillis ) ;
+  			sem._Timer = new Timer() ;
+				sem._Timer.schedule ( new TT ( sem ), sem.timeoutMillis ) ;
   		}
+			synchronized ( _NQ_semaphoreEvents )
+			{
 				e = _NQ_semaphoreEvents.get ( sem.resourceId ) ;
-System.out.println ( e ) ;
-		   	body = e.getBody() ;
-				String resourceId = (String) body.get ( "resourceId" ) ;
-				sem = semaphores.get ( resourceId ) ;
-				sem._isOwner = true ;
+			}
+			if ( sem._Timer != null )
+			{
+				sem._Timer.cancel() ;
+				sem._Timer.purge() ;
+				sem._Timer = null ;
+			}
+	   	body = e.getBody() ;
+			String resourceId = (String) body.get ( "resourceId" ) ;
+			sem._isOwner = (Boolean) body.get ( "isSemaphoreOwner" ) ;
   	}
 	}
 	void releaseSemaphore ( Semaphore sem )
@@ -533,7 +590,7 @@ System.out.println ( e ) ;
 	{
 		if ( ! semaphores.containsKey ( sem.resourceId ) )
 		{
-	    System.out.println ( Util.toString ( "release semaphore: not owner of resourceId=" + sem.resourceId ) ) ;
+	    System.out.println ( "release semaphore: not owner of resourceId=" + sem.resourceId ) ;
     	return ;
 		}
 		Event e = new Event ( "system", "releaseSemaphoreRequest" ) ;
@@ -541,14 +598,13 @@ System.out.println ( e ) ;
   	body.put ( "resourceId", sem.resourceId ) ;
 		semaphores.remove ( sem.resourceId ) ;
   	_send ( e ) ;
-		_NQ_semaphoreEvents.remove ( sem.resourceId ) ;
 	}
 	void acquireLock ( Lock lock )
 	throws IOException
 	{
 		if ( locks.containsKey ( lock.resourceId ) )
 		{
-	    System.out.println ( Util.toString ( "acquire lock: already owner of resourceId=" + lock.resourceId ) ) ;
+	    System.out.println ( "acquire lock: already owner of resourceId=" + lock.resourceId ) ;
     	return ;
 		}
 		locks.put ( lock.resourceId, lock ) ;
@@ -556,7 +612,10 @@ System.out.println ( e ) ;
 		HashMap<String,Object> body = e.getBody() ;
   	body.put ( "resourceId", lock.resourceId ) ;
   	_send ( e ) ;
-		e = _NQ_lockEvents.get ( lock.resourceId ) ;
+  	synchronized ( _NQ_lockEvents )
+  	{
+			e = _NQ_lockEvents.get ( lock.resourceId ) ;
+  	}
    	body = e.getBody() ;
 		String resourceId = (String) body.get ( "resourceId" ) ;
 		lock = locks.get ( resourceId ) ;
@@ -573,7 +632,6 @@ System.out.println ( e ) ;
 		Event e = new Event ( "system", "unlockResourceRequest" ) ;
 		HashMap<String,Object> body = e.getBody() ;
   	body.put ( "resourceId", lock.resourceId ) ;
-		locks.remove ( lock.resourceId ) ;
   	_send ( e ) ;
 	}
 }
