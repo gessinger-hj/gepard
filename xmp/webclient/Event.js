@@ -467,6 +467,7 @@ gepard.Event.prototype =
 	 */
 	setBody: function ( data )
 	{
+		if ( ! data ) return ;
 		if ( typeof data !== 'object' )
 		{
 			throw new Error ( "Event.setBody(): Argument must be an object." ) ;
@@ -555,6 +556,13 @@ gepard.Event.prototype =
 		if ( ! this.control ) return ;
 		if ( ! this.control.status ) return ;
 		return this.control.status.reason ;
+	},
+	sendBack: function()
+	{
+		var c = this._Client ;
+		this._Client = null ;
+		delete this._Client ;
+		c.sendResult ( this ) ;
 	}
 };
 if ( typeof document !== 'undefined' )

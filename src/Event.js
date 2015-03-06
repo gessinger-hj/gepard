@@ -467,6 +467,7 @@ gepard.Event.prototype =
 	 */
 	setBody: function ( data )
 	{
+		if ( ! data ) return ;
 		if ( typeof data !== 'object' )
 		{
 			throw new Error ( "Event.setBody(): Argument must be an object." ) ;

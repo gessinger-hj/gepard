@@ -117,7 +117,7 @@ Client.prototype.connect = function()
       for ( i = 0 ; i < thiz.pendingEventList.length ; i++ )
       {
         counter++ ;
-        var uid = os.hostname() + "_" + thiz.socket.localPort + "_" + counter ;
+        var uid = os.hostname() + "_" + thiz.socket.localPort + "_" + new Date().getTime() + "_" + counter ;
         var ctx = thiz.pendingEventList[i] ;
         var e = ctx.e ;
         var resultCallback = ctx.resultCallback ;
@@ -136,7 +136,7 @@ Client.prototype.connect = function()
       for ( i = 0 ; i < thiz.pendingEventListenerList.length ; i++ )
       {
         counter++ ;
-        var uid = os.hostname() + "_" + this.localPort + "-" + counter ;
+        var uid = os.hostname() + "_" + this.localPort + "_" + new Date().getTime() + "_" + counter ;
         var ctx = thiz.pendingEventListenerList[i] ;
         ctx.e.setUniqueId ( uid ) ;
         this.write ( ctx.e.serialize() ) ;
@@ -148,7 +148,7 @@ Client.prototype.connect = function()
       for ( i = 0 ; i < thiz._pendingLockList.length ; i++ )
       {
         counter++ ;
-        var uid = os.hostname() + "_" + this.localPort + "-" + counter ;
+        var uid = os.hostname() + "_" + this.localPort + "_" + new Date().getTime() + "_" + counter ;
         var ctx = thiz._pendingLockList[i] ;
         ctx.e.setUniqueId ( uid ) ;
         this.write ( ctx.e.serialize() ) ;
@@ -161,7 +161,7 @@ Client.prototype.connect = function()
       for ( i = 0 ; i < thiz._pendingAcquireSemaphoreList.length ; i++ )
       {
         counter++ ;
-        var uid = os.hostname() + "_" + this.localPort + "-" + counter ;
+        var uid = os.hostname() + "_" + this.localPort + "_" + new Date().getTime() + "_" + counter ;
         var ctx = thiz._pendingAcquireSemaphoreList[i] ;
         ctx.e.setUniqueId ( uid ) ;
         this.write ( ctx.e.serialize() ) ;
@@ -524,7 +524,7 @@ Client.prototype._fireEvent = function ( params, callback, opts )
   if ( ! this.pendingEventList.length )
   {
     counter++ ;
-    var uid = os.hostname() + "_" + this.socket.localPort + "-" + counter ;
+    var uid = os.hostname() + "_" + this.socket.localPort + "_" + new Date().getTime() + "_" + counter ;
     e.setUniqueId ( uid ) ;
 
     this.callbacks[uid] = ctx ;
@@ -624,7 +624,7 @@ Client.prototype.addEventListener = function ( eventNameList, callback )
   if ( ! this.pendingEventListenerList.length )
   {
     counter++ ;
-    var uid = os.hostname() + "_" + this.localPort + "-" + counter ;
+    var uid = os.hostname() + "_" + this.localPort + "_" + new Date().getTime() + "_" + counter ;
     e.setUniqueId ( uid ) ;
     var thiz = this ;
     this.send ( e ) ;
@@ -758,7 +758,7 @@ Client.prototype.lockResource = function ( resourceId, callback )
   if ( ! this._pendingLockList.length )
   {
     counter++ ;
-    var uid = os.hostname() + "_" + this.socket.localPort + "-" + counter ;
+    var uid = os.hostname() + "_" + this.socket.localPort + "_" + new Date().getTime() + "_" + counter ;
     e.setUniqueId ( uid ) ;
     this._acquiredResources[resourceId] = ctx;
     this.send ( e ) ;
@@ -788,7 +788,7 @@ Client.prototype.unlockResource = function ( resourceId )
   e.body.resourceId = resourceId ;
   var s = this.getSocket() ;
   counter++ ;
-  var uid = os.hostname() + "_" + this.socket.localPort + "-" + counter ;
+  var uid = os.hostname() + "_" + this.socket.localPort + "_" + new Date().getTime() + "_" + counter ;
   e.setUniqueId ( uid ) ;
   delete this._ownedResources[resourceId] ;
   this.send ( e ) ;
@@ -834,7 +834,7 @@ Client.prototype.acquireSemaphore = function ( resourceId, callback )
   if ( ! this._pendingAcquireSemaphoreList.length )
   {
     counter++ ;
-    var uid = os.hostname() + "_" + this.socket.localPort + "-" + counter ;
+    var uid = os.hostname() + "_" + this.socket.localPort + "_" + new Date().getTime() + "_" + counter ;
     e.setUniqueId ( uid ) ;
     this._acquiredSemaphores[resourceId] = ctx;
     this.send ( e ) ;
@@ -865,7 +865,7 @@ Client.prototype.releaseSemaphore = function ( resourceId )
   e.body.resourceId = resourceId ;
   var s = this.getSocket() ;
   counter++ ;
-  var uid = os.hostname() + "_" + this.socket.localPort + "-" + counter ;
+  var uid = os.hostname() + "_" + this.socket.localPort + "_" + new Date().getTime() + "_" + counter ;
   e.setUniqueId ( uid ) ;
   delete this._ownedSemaphores[resourceId] ;
   this.send ( e ) ;
