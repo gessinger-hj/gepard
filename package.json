@@ -46,7 +46,7 @@
     , "gp.http.simple" : "./bin/http.simple"
     , "gp.http.simple.is.running" : "./bin/http.simple.is.running"
     , "gp.http.simple.shutdown" : "./bin/http.simple.shutdown"
-    , "gepard/gp.sem" : "./src/Semaphore.js"
-    , "gepard/gp.lock" : "./src/Lock.js"
+    , "gepard/gp.sem" : "./xmp/AsyncSemaphore.js"
+    , "gepard/gp.lock" : "./xmp/Locker.js"
     }
 }

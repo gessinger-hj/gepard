@@ -5,17 +5,19 @@ General purpose communication and synchronization layer for distributed applicat
 <!-- MarkdownTOC -->
 
 - [Overview](#overview)
-  - [Install](#install)
-  - [Getting Startet](#getting-startet)
-  - [Configuration](#configuration)
-  - [Use Cases](#use-cases)
-    - [Configuration Changes ( Events )](#configuration-changes--events-)
-    - [Concurrent editing of a Dataset ( Semaphores )](#concurrent-editing-of-a-dataset--semaphores-)
-    - [Synchronization of file processing ( Locks )](#synchronization-of-file-processing--locks-)
+- [What is new](#what-is-new)
+- [Install](#install)
+- [Getting Startet](#getting-startet)
+- [Configuration](#configuration)
+- [Use Cases](#use-cases)
+  - [Configuration Changes ( Events )](#configuration-changes--events-)
+  - [Concurrent editing of a Dataset ( Semaphores )](#concurrent-editing-of-a-dataset--semaphores-)
+  - [Synchronization of file processing ( Locks )](#synchronization-of-file-processing--locks-)
+- [Examples](#examples)
   - [Examples Short](#examples-short)
     - [Event listener](#event-listener)
     - [Event Emitter](#event-emitter)
-      - [Locks](#locks)
+    - [Locks](#locks)
     - [Semaphores](#semaphores)
     - [Request / result](#request--result)
       - [Send request](#send-request)
@@ -37,6 +39,8 @@ Gepard is a system consisting of a broker and connected clients.
 The communication is done via sockets or web-sockets.
 The sockets are always open so that any partner of a connection may be informed if this connection ended.
 This is very useful in the area of semaphores and locks.
+<br/>
+A client uses only one socket for interactions with the broker. Thus a program needs only 1 client for all features.
 
 Up to now a client is a standalone JavaScript program or a JavaScript app inside a browser.
 In the next step clients for other languages like Java, Python etc are planned.
@@ -63,37 +67,49 @@ or
 ```bash
 node_modules/.bin/gp.admin [ --help ]
 ```
+# What is new
 
-## Install
+Java bindings for all features:
 
-npm install gepard
+* emit event
+* listen to events
+* request / result ( messages )
+* semaphores
+* locks
+
+With this it is very easy to communicate or synchronize between JavaScript programs or webapps in a browser with a Java server or Java program.
+
+# Install
+
+__npm install gepard__
 
 or the newest stable but development version:
 
 npm install git+https://github.com/gessinger-hj/gepard
 
-## Getting Startet
-Here is the most loved "Hello World" example.
+# Getting Startet
 
-All commands are in the directory: node_modules/.bin or node_modules/.bin/gepard
+Here are some kind of "Hello World" examples.
 
-1.  __node_modules/.bin/gp.broker<br/>__
+All commands are in the directory: __node_modules/.bin__ or __node_modules/.bin/gepard__
+
+1.  __gp.broker<br/>__
     Start the gepard broker with websocket proxy
 
-1.  __node_modules/.bin/gp.shutdown<br/>__
+1.  __gp.shutdown<br/>__
     Stop the broker
 
-1.  __node_modules/.bin/gepard/gp.listen --name=hello<br/>__
+1.  __gepard/gp.listen --name=hello<br/>__
     Start a listener for events named __hello__
     <br/>
     If you want to listen to all events with name starting with hello use a wildcard:
     <br/>
-    __node_modules/.bin/gp.listen "--name=hello*"__
+    __gp.listen "--name=hello*"__
 
-1.  __node_modules/.bin/gepard/gp.emit --name=hello<br/>__ [--body='{"City":"Frankfurt"}']
+1.  __gepard/gp.emit --name=hello<br/>__ [--body='{"City":"Frankfurt"}']
     emit an event with name __hello__
 
-1.  __node_modules/.bin/gp.info<br/>__
+1.  __gp.info<br/>__
     Show basic information from the broker
 
 1.  If you want to play with the web-client implementation use the appropriate files in:
@@ -123,7 +139,7 @@ Start your browser and go to: __localhost:8888__
 
 
 
-## Configuration
+# Configuration
 
 The communication is based on sockets. Thus only the port and optional the host must be specified to use Gepard.
 The defaults are:
@@ -147,9 +163,9 @@ supplying these items
 	- export ( or set ) GEPARD_HOST=<host&gt;
 	- export ( or set ) GEPARD_LOG=<log-dir&gt;
 
-## Use Cases
+# Use Cases
 
-### Configuration Changes ( Events )
+## Configuration Changes ( Events )
 
 Suppose you have 1 program that changes configuration-entries in a database-table.
 After the new entries are committed the program sends an event with:
@@ -165,7 +181,7 @@ All clients including web-clients setup a listener for example with
 client.on ( "CONFIG-CHANGE", function callback(e) {} ) ;
 ```
 
-### Concurrent editing of a Dataset ( Semaphores )
+## Concurrent editing of a Dataset ( Semaphores )
 Two user with their web browser want to edit the same user-data in a database.
 In this case a Semaphore is very useful.
 
@@ -186,7 +202,7 @@ this.sem.acquire ( function sem_callback ( err )
 }) ;
 ```
 
-### Synchronization of file processing ( Locks )
+## Synchronization of file processing ( Locks )
 
 Suppose ther are many files in a directory waiting to be processed.
 <br/>
@@ -221,6 +237,10 @@ for ( var i = 0 ; i < array.length ; i++ )
 
 ```
 
+# Examples
+
+Ready to use examles for JavaScript are located in __.../gepard/xmp__
+
 ## Examples Short
 
 ### Event listener
@@ -229,7 +249,7 @@ Application
 
 ```js
   var gepard = require ( "gepard" ) ;
-  var c = new gepard.Client() ;
+  var client = new gepard.Client() ;
 ```
 Browser
 
@@ -237,14 +257,34 @@ Browser
   var client = gepard.getWebClient ( 17502 ) ;
 ```
 
+
 Code
 
 ```js
-c.on ( "ALARM", function event_listener_callback(e)
+client.on ( "ALARM", function event_listener_callback(e)
 {
   console.log ( e.toString() ) ;
 });
 ```
+
+Java
+
+```java
+Client client = Client.getInstance() ;
+
+client.on ( "ALARM", new EventListener()
+{
+  public void event ( Event e )
+  {
+    System.out.println ( e ) ;
+  }
+} ) ;
+```
+
+Details in:
+
+* JavaScript: gepard/xmp/Listener.js
+* Java: gepard/java/org.gessinger/gepard/xmp/Listener.java
 
 ### Event Emitter
 
@@ -270,7 +310,20 @@ var client = gepard.getWebClient ( 17502 ) ;
 client.fire ( "CONFIG-CHANGED" ) ;
 ```
 
-#### Locks
+Java
+
+```java
+Client client = Client.getInstance() ;
+client.emit ( "ALARM" ) ;
+client.close() ;
+```
+
+Details in:
+
+* JavaScript: gepard/xmp/Emitter.js
+* Java: gepard/java/org.gessinger/gepard/xmp/Emitter.java
+
+### Locks
 
 Application
 
@@ -282,7 +335,7 @@ Browser
 
 ```js
 gepard.port = 17502 ;
-  var lock = new gepard.Lock ( "user:4711" ) ;
+var lock = new gepard.Lock ( "user:4711" ) ;
 ```
 Code
 
@@ -299,6 +352,23 @@ lock.acquire ( function ( err )
   }
 } ) ;
 ```
+
+Java
+
+```java
+Lock lock = new Lock ( "user:4711" ) ;
+lock.acquire() ;
+if ( lock.isOwner() )
+{
+  .........
+  lock.release() ;
+}
+```
+
+Details in:
+
+* JavaScript: gepard/xmp/Locker.js
+* Java: gepard/java/org.gessinger/gepard/xmp/Locker.java
 
 ### Semaphores
 
@@ -321,16 +391,52 @@ Code
 sem.acquire ( function ( err )
 {
   console.log ( this.toString() ) ;
-  console.log ( "Is owner: " + this.isOwner() ) ;
 
     .....................
 
   this.release() ;
 } ) ;
 ```
+
+Java
+
+Asynchronous
+
+```java
+final Semaphore sem = new Semaphore ( "user:10000" ) ;
+sem.acquire ( new SemaphoreCallback()
+{
+  public void acquired ( Event e )
+  {
+    System.out.println ( sem ) ;
+    .....................
+    sem.release() ;
+  }
+}) ;
+```
+
+or synchronous
+
+```java
+
+final Semaphore sem = new Semaphore ( "user:10000" ) ;
+sem.acquire(5000) ;
+
+if ( sem.isOwner() ) // if not timeout occured
+{
+    .....................
+  sem.release() ;
+}
+```
+
+Details in:
+
+* JavaScript: gepard/xmp/AsyncSemaphore.js
+* Java: gepard/java/org.gessinger/gepard/xmp/AsyncSemaphore.java
+
 ### Request / result
 
-##### Send request
+#### Send request
 
 Application:
 
@@ -346,7 +452,7 @@ Browser:
 Code:
 
 ```js
-client().request ( "getList"
+client().request ( "getFileList"
 , function result(e)
   {
     console.log ( e.getBody().list ) ;
@@ -354,7 +460,35 @@ client().request ( "getList"
   });
 ```
 
-##### Send result
+Java
+
+```java
+final Client client = Client.getInstance() ;
+client.request ( "getFileList", new ResultCallback()
+{
+  public void result ( Event e )
+  {
+    if ( e.isBad() )
+    {
+      System.out.println ( "e.getStatusReason()=" + e.getStatusReason() ) ;
+    }
+    else
+    {
+      List<String> list = (List<String>) e.getBodyValue ( "file_list" ) ;
+      System.out.println ( Util.toString ( list ) ) ;
+    }
+    client.close() ;
+  }
+}) ;
+
+```
+
+Details in:
+
+* JavaScript: gepard/xmp/Requester.js
+* Java: gepard/java/org.gessinger/gepard/xmp/Requester.java
+
+#### Send result
 
 Application:
 
@@ -370,13 +504,33 @@ Browser:
 Code:
 
 ```js
-var list = [ "one", "two", "three" ] ;
-client.on ( "getList", function ( e )
+var list = [ "one.js", "two.js", "three.js" ] ;
+client.on ( "getFileList", function ( e )
 {
   e.getBody().list = list ;
-  this.sendResult ( e ) ;
+  e.sendBack() ;
 });
 ```
+
+Java
+
+```java
+final Client client = Client.getInstance() ;
+client.on ( name, new EventListener()
+{
+  public void event ( Event e )
+  {
+    String[] fileList = new String[] { "a.java", "b.java", "c.java" } ;
+    e.putBodyValue ( "file_list", fileList ) ;
+    e.sendBack() ;
+  }
+} ) ;
+```
+
+Details in:
+
+* JavaScript: gepard/xmp/Responder.js
+* Java: gepard/java/org.gessinger/gepard/xmp/Responder.java
 
 ## Examples Long
 
