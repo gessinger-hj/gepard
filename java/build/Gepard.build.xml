@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Gepard" default="Gepard">
+  <target name="Gepard" depends=".properties, compile"/>
+  <target name=".properties" >
+    <property name="jar.file" value="Gepard.jar" />
+    <property name="source.files" value="org/gessinger/gepard/**/*.java" />
+    <property name="main.class" value="org.gessinger.gepard.xmp.Emitter" />
+    <property name="class.files" value="org/gessinger/gepard/**/*.class" />
+  </target>
+  <import file="compile.build.xml" />
+</project>
