@@ -79,6 +79,16 @@ Java bindings for all features:
 
 With this it is very easy to communicate or synchronize between JavaScript programs or webapps in a browser with a Java server or Java program.
 
+The conversion from JSON to Java and vica versa is done with the Gson Google library for Java.
+
+If you need special serialization / deserialization you may set the appropriate Gson instance in the Event-class statically with the method Event.setGson() ;
+
+The Event-class may convert the json to map Java's byte[]-array to NodeJS's Buffer and vica versa.
+This can be set statically by Event.mapByteArrayToJavaScriptBuffer ( boolean state ).
+The default is true.
+
+
+
 # Install
 
 __npm install gepard__
@@ -99,14 +109,14 @@ All commands are in the directory: __node_modules/.bin__ or __node_modules/.bin/
 1.  __gp.shutdown<br/>__
     Stop the broker
 
-1.  __gepard/gp.listen --name=hello<br/>__
+1.  __gp.listen --name=hello<br/>__
     Start a listener for events named __hello__
     <br/>
     If you want to listen to all events with name starting with hello use a wildcard:
     <br/>
     __gp.listen "--name=hello*"__
 
-1.  __gepard/gp.emit --name=hello<br/>__ [--body='{"City":"Frankfurt"}']
+1.  __gp.emit --name=hello<br/>__ [--body='{"City":"Frankfurt"}']
     emit an event with name __hello__
 
 1.  __gp.info<br/>__

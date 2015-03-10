@@ -13,12 +13,8 @@ public class User
   String key       = null ;
   String _pwd      = null ;
   HashMap<String,String> rights = new HashMap<String,String>() ;
-  public User ( Map<String,Object> muser )
+  private User ()
   {
-    id = (String) muser.get ( "id" ) ;
-    key = (String) muser.get ( "key" ) ;
-    _pwd = (String) muser.get ( "_pwd" ) ;
-    Util.copyString ( (Map<String,Object>)muser.get ( "rights" ), rights ) ;
   }
   public User ( String id )
   {

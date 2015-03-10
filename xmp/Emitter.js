@@ -33,6 +33,7 @@ if ( require.main === module )
   if ( body )
   {
     body = JSON.parse ( body ) ;
+    body.binary = new Buffer ( [ 64, 65, 66, 67 ] ) ;
     var e = new Event ( name, body ) ;
     c.fire ( e,
     {

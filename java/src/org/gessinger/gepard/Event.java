@@ -8,11 +8,27 @@ import com.google.gson.* ;
 
 public class Event
 {
+  static Gson _gson = new Gson() ;
+  static boolean _mapByteArrayToJavaScriptBuffer = true ;
+  static void mapByteArrayToJavaScriptBuffer ( boolean state )
+  {
+    _mapByteArrayToJavaScriptBuffer = state ;
+  }
+  static public void setGson ( Gson gson )
+  {
+    if ( gson != null )
+    {
+      _gson = gson ;
+    }
+  }
+
   public static Event fromJSON ( String json )
   {
-    Gson gson = new Gson() ;
-    HashMap map = gson.fromJson ( json, HashMap.class ) ;
-    Event e = new Event ( map ) ;
+    Event e = (Event) _gson.fromJson ( json, Event.class ) ;
+    if ( _mapByteArrayToJavaScriptBuffer )
+    {
+      Util.convertNodeJSTypedBufferToArray ( e ) ;
+    }
     return e ;
   }
   String className = "Event" ;
@@ -22,19 +38,8 @@ public class Event
   transient Client _Client = null ;
   HashMap<String,Object> control = new HashMap<String,Object>() ;
   HashMap<String,Object> body = new HashMap<String,Object>() ;
-  Event ( HashMap map )
+  private Event()
   {
-    setName ( (String) map.get ( "name" ) ) ;
-    setType ( (String) map.get ( "type" ) ) ;
-    Map<String,Object> mcontrol = (Map<String,Object>) map.get ( "control" ) ;
-    Map<String,Object> mbody = (Map<String,Object>) map.get ( "body" ) ;
-    Util.copy ( mcontrol, control ) ;
-    Util.copy ( mbody, body ) ;
-    Map<String,Object> muser = (Map<String,Object>) map.get ( "user" ) ;
-    if ( muser != null )
-    {
-      user = new User ( muser ) ;
-    }
   }
   public Event ( String name )
   {
@@ -56,24 +61,33 @@ public class Event
   }
   public String toString()
   {
-    return "(" + this.className + ")["
+    String s = ""
+    + "(" + this.className + ")["
     +  "name=" + this.name
     + ",type=" + this.type
     + "]\n"
-    // + ( this.user ? "[user=" + this.user + "]" : "" )
-    // + "[control=" + this.toFullString ( this.control ) + "]\n"
-    // + "[body=" + this.toFullString ( this.body ) + "]"
-    + "user:\n"
-    + Util.toString ( user )
-    + "\ncontrol:\n"
-    + Util.toString ( control )
-    + "\nbody:\n"
-    + Util.toString ( body )
     ;
+    if ( user != null )
+    {
+      s += "user:\n" + user.toString() ;
+    }
+    if ( control != null )
+    {
+      s += "\ncontrol:\n" + Util.toString ( control ) ;
+    }
+    if ( body != null )
+    {
+      s += "\nbody:\n" + Util.toString ( body ) ;
+    }
+    return s ;
   }
   public String toJSON()
   {
     Gson gson = new Gson() ;
+    if ( _mapByteArrayToJavaScriptBuffer )
+    {
+      Util.convertByteArrayToNodeJSTypedBuffer ( this ) ;
+    }
     String json = gson.toJson ( this ) ;
     return json ;
   }

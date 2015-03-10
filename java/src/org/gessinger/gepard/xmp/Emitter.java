@@ -1,6 +1,6 @@
 package org.gessinger.gepard.xmp ;
 import org.gessinger.gepard.* ;
-
+import java.util.HashMap ;
 public class Emitter
 {
   static public void main ( String[] args )
@@ -20,7 +20,11 @@ public class Emitter
   {
     Client client = Client.getInstance() ;
     String name = Util.getProperty ( "name", "ALARM" ) ;
-    client.emit ( name, new FailureCallback()
+
+    Event e = new Event ( name ) ;
+    HashMap<String,Object> body = e.getBody() ;
+    body.put ( "BINARY", new byte[] { 11, 12, 13 } ) ;
+    client.emit ( e, new FailureCallback()
     {
       public void failure ( Event e )
       {

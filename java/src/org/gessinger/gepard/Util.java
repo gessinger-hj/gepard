@@ -32,63 +32,71 @@ final public class Util
     }
     return className ;
   }
-
-  static void copy ( Map<String,Object> source, JsonObject target )
+  static void convertByteArrayToNodeJSTypedBuffer ( Event e )
   {
-    if ( source == null )
-    {
-      return ;
-    }
+    if ( e.body == null ) return ;
+    convertByteArrayToNodeJSTypedBuffer ( e.body ) ;
+  }
+  static void convertByteArrayToNodeJSTypedBuffer ( Map<String,Object> source )
+  {
     for ( String key : source.keySet() )
     {
       Object o = source.get ( key ) ;
-      if ( o instanceof String ) target.addProperty ( key, (String) o ) ;
-      else
-      if ( o instanceof Number ) target.addProperty ( key, (Number) o ) ;
-      else
-      if ( o instanceof Boolean ) target.addProperty ( key, (Boolean) o ) ;
-      else
-      if ( o instanceof Character ) target.addProperty ( key, (Character) o ) ;
-      else
-      if ( o instanceof Map )
+      if ( o instanceof byte[] )
       {
-        JsonObject jo = new JsonObject() ;
-        target.add ( key, jo ) ;
-        copy ( (Map) o, jo ) ;
+        Map<String,Object> map = new HashMap<String,Object>() ;
+        map.put ( "type", "Buffer" ) ;
+        map.put ( "data", o ) ;
+        source.put ( key, map ) ;
       }
     }
   }
-  static void copy ( Map<String,Object> source, Map<String,Object> target )
+  static void convertNodeJSTypedBufferToArray ( Event e )
   {
-    if ( source == null )
-    {
-      return ;
-    }
+    if ( e.body == null ) return ;
+    convertNodeJSTypedBufferToArray ( e.body ) ;
+  }
+  static void convertNodeJSTypedBufferToArray ( Map<String,Object> source )
+  {
     for ( String key : source.keySet() )
     {
       Object o = source.get ( key ) ;
       if ( o instanceof Map )
       {
-        HashMap<String,Object> map = new HashMap<String,Object>() ;
-        target.put ( key, map ) ;
-        copy ( (Map) o, map ) ;
+        Map<String,Object> map = (Map<String,Object>) o ;
+        Object otype = map.get ( "type" ) ;
+        Object odata = map.get ( "data" ) ;
+        Object ovalue = map.get ( "value" ) ;
+        if ( odata == null )
+        {
+          odata  = ovalue ;
+        }
+        if ( map.size() == 2 && otype != null && odata != null ) // JavaScript, Gson: "value"
+        {
+          if ( "Buffer".equals ( otype ) && ( odata instanceof List ) )
+          {
+            List l = (List) odata ;
+            byte[] b = new byte[l.size()] ;
+            source.put ( key, b ) ;
+            int n = 0 ;
+            for ( Object oo : l )
+            {
+              if ( oo instanceof Integer )
+              {
+                Integer i = (Integer) oo ;
+                b[n++] = i.byteValue() ;
+              }  
+              if ( oo instanceof Double )
+              {
+                Double d = (Double) oo ;
+                b[n++] = d.byteValue() ;
+              }  
+            }
+            continue ;
+          }
+        }
+        convertNodeJSTypedBufferToArray ( map ) ;
         continue ;
-      }
-      target.put ( key, o ) ;
-    }
-  }
-  static void copyString ( Map<String,Object> source, Map<String,String> target )
-  {
-    if ( source == null )
-    {
-      return ;
-    }
-    for ( String key : source.keySet() )
-    {
-      Object o = source.get ( key ) ;
-      if ( o instanceof String )
-      {
-        target.put ( key, (String)o ) ;
       }
     }
   }
