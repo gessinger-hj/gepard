@@ -40,10 +40,25 @@ The communication is done via sockets or web-sockets.
 The sockets are always open so that any partner of a connection may be informed if this connection ended.
 This is very useful in the area of semaphores and locks.
 <br/>
-A client uses only one socket for interactions with the broker. Thus a program needs only 1 client for all features.
+A client uses only one socket for all interactions with the broker. Thus a program needs only 1 client for all features.
+In order to use only 1 Client instance it is suggested to use the static method
 
-Up to now a client is a standalone JavaScript program or a JavaScript app inside a browser.
-In the next step clients for other languages like Java, Python etc are planned.
+* JavaScript: 
+
+```js
+gepard = require  ( "gepard" )  :
+var client = gepard.getClient ( [ port [, host ] ] ) ;
+```
+
+* Java:
+
+```java
+Client client = Client.getInstance ( [ port [, host ] ] ) ;
+
+```
+
+Up to now a client is a standalone JavaScript program, a JavaScript app inside a browser or a Java programm.
+In the next step clients for other languages like Python, Php etc are planned.
 
 The broker can be instantiated from a JavaScript program but the most common and simplest way to use it is to start it detached as a daemon.
 
@@ -86,7 +101,6 @@ If you need special serialization / deserialization you may set the appropriate 
 The Event-class may convert the json to map Java's byte[]-array to NodeJS's Buffer and vica versa.
 This can be set statically by Event.mapByteArrayToJavaScriptBuffer ( boolean state ).
 The default is true.
-
 
 
 # Install
