@@ -38,6 +38,7 @@ var Connection = function ( broker, socket )
   this._regexpList                            = [] ;
   this._ownedSemaphoresRecourceIdList         = [] ;
   this._pendingAcquireSemaphoreRecourceIdList = [] ;
+  this._numberOfPendingRequests                       = 0 ;
 };
 /**
  * Description
@@ -246,7 +247,6 @@ var Broker = function ( port, ip )
   this.closing = false ;
   var thiz = this ;
   var conn ;
-  this._multiplexerList = [] ;
   this._lockOwner = {} ;
   this._semaphoreOwner = {} ;
   this._pendingAcquireSemaphoreConnections = new MultiHash() ;
@@ -308,6 +308,7 @@ var Broker = function ( port, ip )
       var regexp ;
       var name ;
       var list ;
+      var sourceConnection ;
 
       if ( ! this.partialMessage ) this.partialMessage = "" ;
       mm = this.partialMessage + mm ;
@@ -346,11 +347,13 @@ var Broker = function ( port, ip )
           }
           if ( ! e.body )
           {
-            this._ejectSocket ( this ) ;
+            thiz._ejectSocket ( this ) ;
             continue ;
           }
           if ( e.isResult() )
           {
+            sourceConnection = thiz._connections[this.sid] ;
+            sourceConnection._numberOfPendingRequests-- ;
             sid = e.getSourceIdentifier() ;
             conn = thiz._connections[sid] ;
             if ( conn )
@@ -399,6 +402,30 @@ Broker.prototype.toString = function()
 };
 /**
  * Description
+ * @method _sendMessageToClient
+ * @param {} socket
+ * @param {} e
+ * @return 
+ */
+Broker.prototype._sendMessageToClient = function ( e )
+{
+  var socketList = this._eventNameToSockets.get ( e.getName() ) ;
+  var str = e.serialize() ;
+  var socket, i ;
+  for ( i = 0 ; i < socketList.length ; i++ )
+  {
+    socket = socketList[i] ;
+    conn = this._connections[socket.sid] ;
+    // if ( conn._numberOfPendingRequests === 0 )
+    {
+      conn._numberOfPendingRequests++ ;
+      socket.write ( str ) ;
+      break ;
+    }
+  }
+};
+/**
+ * Description
  * @method _sendEventToClients
  * @param {} socket
  * @param {} e
@@ -411,41 +438,40 @@ Broker.prototype._sendEventToClients = function ( socket, e )
   e.setSourceIdentifier ( socket.sid ) ;
   var str = e.serialize() ;
   var socketList = this._eventNameToSockets.get ( name ) ;
+  var s, conn ;
   if ( socketList )
   {
     found = true ;
-    for ( i = 0 ; i < socketList.length ; i++ )
+    if ( e.isResultRequested() && ! e.isBroadcast() )
     {
-      socketList[i].write ( str ) ;
+      this._sendMessageToClient ( e ) ;
+    }
+    else
+    {
+      for ( i = 0 ; i < socketList.length ; i++ )
+      {
+        socketList[i].write ( str ) ;
+      }
+    }
+    return ;
+  }
+  for ( i = 0 ; i < this._connectionList.length ; i++ )
+  {
+    list = this._connectionList[i]._regexpList ;
+    if ( ! list ) continue ;
+    for ( j = 0 ; j < list.length ; j++ )
+    {
+      if ( ! list[j].test ( name ) ) continue ;
+      found = true ;
+      this._connectionList[i].socket.write ( str ) ;
       if ( e.isResultRequested() && ! e.isBroadcast() )
       {
         break ;
       }
     }
-  }
-  if ( found && e.isResultRequested() && ! e.isBroadcast() )
-  {
-  }
-  else
-  {
-    for ( i = 0 ; i < this._connectionList.length ; i++ )
+    if ( found && e.isResultRequested() && ! e.isBroadcast() )
     {
-      list = this._connectionList[i]._regexpList ;
-      if ( ! list ) continue ;
-      for ( j = 0 ; j < list.length ; j++ )
-      {
-        if ( ! list[j].test ( name ) ) continue ;
-        found = true ;
-        this._connectionList[i].socket.write ( str ) ;
-        if ( e.isResultRequested() && ! e.isBroadcast() )
-        {
-          break ;
-        }
-      }
-      if ( found && e.isResultRequested() && ! e.isBroadcast() )
-      {
-        break ;
-      }
+      break ;
     }
   }
   if ( ! found )
@@ -458,22 +484,7 @@ Broker.prototype._sendEventToClients = function ( socket, e )
       socket.write ( e.serialize() ) ;
       return ;
     }
-    done = false ;
-    str = null ;
-    for ( i = 0 ; i < this._multiplexerList.length ; i++ )
-    {
-      if ( socket === this._multiplexerList[i] ) continue ;
-      if ( ! str )
-      {
-        str = e.serialize() ;
-      }
-      done = true ;
-      this._multiplexerList[i].write ( str ) ;
-    }
-    if ( ! done )
-    {
-      Log.info ( "No listener found for " + e.getName() ) ;
-    }
+    Log.info ( "No listener found for " + e.getName() ) ;
   }
 };
 /**
@@ -488,9 +499,7 @@ Broker.prototype._handleSystemMessages = function ( socket, e )
   var conn, i, found ;
   if ( e.getType() === "addMultiplexer" )
   {
-    this._multiplexerList.push ( socket ) ;
-    conn = this._connections[socket.sid] ;
-    conn.isMultiplexer = true ;
+    return ;
   }
   else
   if ( e.getType() === "shutdown" )
@@ -735,8 +744,6 @@ Broker.prototype._ejectSocket = function ( socket ) // TODO semaphore
   if ( ! sid ) return ;
   var conn = this._connections[sid] ;
   if ( ! conn ) return ;
-
-  this._multiplexerList.remove ( socket ) ;
 
   if ( conn.eventNameList )
   {

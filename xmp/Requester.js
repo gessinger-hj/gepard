@@ -9,8 +9,8 @@ if ( require.main === module )
   if ( T.getProperty ( "help" ) )
   {
     console.log (
-      "Gepard Examples: Emitter, emit a given event.\n"
-    + "Usage: node Emitter [-Dname=<event-name>], default <event-name>=ALARM\n"
+      "Gepard Examples: Requester, request a result for the message with name 'getFileList'.\n"
+    + "Usage: node Requester\n"
     ) ;
     process.exit() ;
   }
@@ -28,19 +28,16 @@ if ( require.main === module )
 
   var c = new Client() ;
 
-  c.request ( name,
+  c.request ( name, function ( e )
   {
-    result: function ( e )
+    if ( e.isBad() )
     {
-      if ( e.isBad() )
-      {
-        console.log ( e ) ;
-      }
-      else
-      {
-        console.log ( e.getBody().file_list ) ;
-      }
-      this.end() ;
+      console.log ( e.getStatusReason() ) ;
     }
+    else
+    {
+      console.log ( e.getBody().file_list ) ;
+    }
+    this.end() ;
   });
 }

@@ -9,9 +9,8 @@ if ( require.main === module )
 	if ( T.getProperty ( "help" ) )
 	{
 		console.log (
-		  "Gepard Examples: Responder, respond to a request to a given event.\n"
-		+ "Usage: node Responder [Options]\n"
-		+ "Options: -Dname=<event-name>, default <event-name>=ALARM\n"
+		  "Gepard Examples: Responder, respond to a request to with the name 'getFileList'.\n"
+		+ "Usage: node Responder\n"
 		) ;
 		process.exit() ;
 	}
@@ -25,14 +24,30 @@ if ( require.main === module )
     }
     execute() ;
   });
+  var n = 0 ;
 	function execute()
 	{
 		var name = "getFileList" ;
 		var c = new Client() ;
 		console.log ( "Listen for requests with name=" + name ) ;
+    var fileList = [ "a.js", "b.js", "c.js" ] ;
 		c.on ( name, function(e)
 		{
-      var fileList = [ "a.js", "b.js", "c.js" ] ;
+			n++ ;
+			if ( n >= 2 )
+			{
+        var inter = setInterval ( function intervalFunction()
+        {
+		      console.log ( "Request in" ) ;
+		      console.log ( "DELAYED File list out:" ) ;
+		      console.log ( fileList ) ;
+				  e.body.file_list = fileList ;
+				  e.sendBack() ;
+				  clearInterval ( inter ) ;
+        }
+        , 5000 ) ;
+        return ;
+			}
       console.log ( "Request in" ) ;
       console.log ( "File list out:" ) ;
       console.log ( fileList ) ;

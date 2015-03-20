@@ -431,6 +431,14 @@ Client.prototype.request = function ( params, callback )
  */
 Client.prototype.broadcast = function ( params, callback )
 {
+  if ( typeof callback === 'function' )
+  {
+    callback = { result: callback } ;
+  }
+  if ( typeof callback.result !== 'function' )
+  {
+    throw new Error ( "Missing result function.")
+  }
   this._fireEvent ( params, callback, { isBroadcast:true } ) ;
 };
 /**
@@ -446,6 +454,7 @@ Client.prototype.fireEvent = function ( params, callback )
 };
 Client.prototype._fireEvent = function ( params, callback, opts )
 {
+  if ( ! opts ) opts = {} ;
   var e = null, user ;
   if ( params instanceof Event )
   {
@@ -483,7 +492,7 @@ Client.prototype._fireEvent = function ( params, callback, opts )
       if ( ctx.failure ) e.setFailureInfoRequested() ;
       ctx.error = callback.error ;
       ctx.write = callback.write ;
-      if ( opts && opts.isBroadcast )
+      if ( opts.isBroadcast )
       {
         e.setIsBroadcast() ;
       }
@@ -491,7 +500,7 @@ Client.prototype._fireEvent = function ( params, callback, opts )
     else
     if ( typeof callback === 'function' )
     {
-      if ( opts && opts.isBroadcast )
+      if ( opts.isBroadcast )
       {
         ctx.result = callback ;
         e.setIsBroadcast() ;
