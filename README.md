@@ -554,6 +554,7 @@ client.on ( name, new EventListener()
 Details in:
 
 * JavaScript: [gepard/xmp/Responder.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/Responder.js)
+* JavaScript: [gepard/xmp/Responder.js](Responder.js)
 * Java: gepard/java/org.gessinger/gepard/xmp/Responder.java
 
 ## Examples Long
