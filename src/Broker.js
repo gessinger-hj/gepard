@@ -38,7 +38,8 @@ var Connection = function ( broker, socket )
   this._regexpList                            = [] ;
   this._ownedSemaphoresRecourceIdList         = [] ;
   this._pendingAcquireSemaphoreRecourceIdList = [] ;
-  this._numberOfPendingRequests                       = 0 ;
+  this._numberOfPendingRequests               = 0 ;
+  this._messageUidsToBeProcessed = [] ;
 };
 /**
  * Description
@@ -227,6 +228,18 @@ Connection.prototype.addEventListener = function ( e )
   e.control.status = { code:0, name:"ack" } ;
   this.write ( e ) ;
 };
+Connection.prototype.setCurrentlyProcessedMessageUid = function ( uid )
+{
+  this._currentlyProcessedMessageUid = uid ;
+};
+Connection.prototype.getCurrentlyProcessedMessageUid = function()
+{
+  return this._currentlyProcessedMessageUid ;
+};
+Connection.prototype.getNextMessageUidToBeProcessed = function()
+{
+  return this._messageUidsToBeProcessed.shift() ;
+};
 
 /**
  * @constructor
@@ -239,22 +252,24 @@ Connection.prototype.addEventListener = function ( e )
 var Broker = function ( port, ip )
 {
   EventEmitter.call ( this ) ;
-  this._connections = {} ;
-  this._eventNameToSockets = new MultiHash() ;
-  this._connectionList = [] ;
-  this.port = port ;
-  this.ip = ip ;
-  this.closing = false ;
-  var thiz = this ;
+  this._connections                        = {} ;
+  this._eventNameToSockets                 = new MultiHash() ;
+  this._connectionList                     = [] ;
+  this.port                                = port ;
+  this.ip                                  = ip ;
+  this.closing                             = false ;
+  var thiz                                 = this ;
   var conn ;
-  this._lockOwner = {} ;
-  this._semaphoreOwner = {} ;
+  this._lockOwner                          = {} ;
+  this._semaphoreOwner                     = {} ;
   this._pendingAcquireSemaphoreConnections = new MultiHash() ;
-
-  var os = require ( "os" ) ;
-  this.hostname = os.hostname() ;
-  this._networkAddresses = [] ;
-  var networkInterfaces = os.networkInterfaces() ;
+  
+  var os                                   = require ( "os" ) ;
+  this.hostname                            = os.hostname() ;
+  this._networkAddresses                   = [] ;
+  var networkInterfaces                    = os.networkInterfaces() ;
+  this._messagesToBeProcessed              = {} ;
+  this.server                              = net.createServer() ;
   for ( var kk in networkInterfaces )
   {
     var ll = networkInterfaces[kk]
@@ -264,8 +279,6 @@ var Broker = function ( port, ip )
       this._networkAddresses.push ( oo["address"] ) ;
     }
   }
-
-  this.server = net.createServer() ;
   this.server.on ( "error", function onerror ( p )
   {
     Log.error ( p ) ;
@@ -308,7 +321,9 @@ var Broker = function ( port, ip )
       var regexp ;
       var name ;
       var list ;
-      var sourceConnection ;
+      var requesterConnection ;
+      var responderConnection ;
+      var uid ;
 
       if ( ! this.partialMessage ) this.partialMessage = "" ;
       mm = this.partialMessage + mm ;
@@ -352,13 +367,33 @@ var Broker = function ( port, ip )
           }
           if ( e.isResult() )
           {
-            sourceConnection = thiz._connections[this.sid] ;
-            sourceConnection._numberOfPendingRequests-- ;
-            sid = e.getSourceIdentifier() ;
-            conn = thiz._connections[sid] ;
-            if ( conn )
+            responderConnection = thiz._connections[this.sid] ;
+            responderConnection._numberOfPendingRequests-- ;
+            sid                 = e.getSourceIdentifier() ;
+            uid                 = e.getUniqueId() ;
+            requesterConnection = thiz._connections[sid] ;
+
+            for ( i = 0 ; i < thiz._connectionList.length  ; i++ )
             {
-              conn.write ( e ) ;
+              thiz._connectionList[i]._messageUidsToBeProcessed.remove ( uid ) ;
+            }
+            delete thiz._messagesToBeProcessed[uid] ;
+            responderConnection.setCurrentlyProcessedMessageUid ( "" ) ;
+            if ( requesterConnection )
+            {
+              requesterConnection.write ( e ) ;
+              uid = responderConnection.getNextMessageUidToBeProcessed() ;
+              if ( uid )
+              {
+                e  = thiz._messagesToBeProcessed[uid] ;
+                responderConnection.write ( e ) ;
+                responderConnection._numberOfPendingRequests++ ;
+                responderConnection.setCurrentlyProcessedMessageUid ( uid ) ;
+              }
+            }
+            else
+            {
+              Log.log ( "Requester not found for result:\n" + e.toString() ) ;
             }
             continue ;
           }
@@ -407,20 +442,26 @@ Broker.prototype.toString = function()
  * @param {} e
  * @return 
  */
-Broker.prototype._sendMessageToClient = function ( e )
+Broker.prototype._sendMessageToClient = function ( e, socketList )
 {
-  var socketList = this._eventNameToSockets.get ( e.getName() ) ;
-  var str = e.serialize() ;
-  var socket, i ;
+  var socket, i, messageSent       = false ;
+  var uid                          = e.getUniqueId() ;
+  this._messagesToBeProcessed[uid] = e ;
+  var str                          = e.serialize() ;
   for ( i = 0 ; i < socketList.length ; i++ )
   {
     socket = socketList[i] ;
-    conn = this._connections[socket.sid] ;
-    // if ( conn._numberOfPendingRequests === 0 )
+    conn   = this._connections[socket.sid] ;
+    conn._messageUidsToBeProcessed.push ( uid ) ;
+    if ( ! messageSent )
     {
-      conn._numberOfPendingRequests++ ;
-      socket.write ( str ) ;
-      break ;
+      if ( conn._numberOfPendingRequests === 0 )
+      {
+        socket.write ( str ) ;
+        conn._numberOfPendingRequests++ ;
+        conn.setCurrentlyProcessedMessageUid ( uid ) ;
+        messageSent = true ;
+      }
     }
   }
 };
@@ -444,7 +485,7 @@ Broker.prototype._sendEventToClients = function ( socket, e )
     found = true ;
     if ( e.isResultRequested() && ! e.isBroadcast() )
     {
-      this._sendMessageToClient ( e ) ;
+      this._sendMessageToClient ( e, socketList ) ;
     }
     else
     {
@@ -744,6 +785,32 @@ Broker.prototype._ejectSocket = function ( socket ) // TODO semaphore
   if ( ! sid ) return ;
   var conn = this._connections[sid] ;
   if ( ! conn ) return ;
+
+  var uid  = conn.getCurrentlyProcessedMessageUid() ;
+  if ( uid )
+  {
+    conn.setCurrentlyProcessedMessageUid ( "" ) ;
+    var requesterMessage    = this._messagesToBeProcessed[uid] ;
+    var requester_sid       = requesterMessage.getSourceIdentifier() ;
+    var requesterConnection = this._connections[requester_sid] ;
+
+    delete this._messagesToBeProcessed[uid] ;
+
+    for ( i = 0 ; i < this._connectionList.length  ; i++ )
+    {
+      this._connectionList[i]._messageUidsToBeProcessed.remove ( uid ) ;
+    }
+    if ( requesterConnection )
+    {
+      requesterMessage.setIsResult() ;
+      requesterMessage.control.status = { code:1, name:"warning", reason:"responder died unexpectedly." } ;
+      requesterConnection.write ( requesterMessage ) ;
+    }
+    else
+    {
+      Log.log ( "Requester not found for result:\n" + requesterMessage.toString() ) ;
+    }
+  }
 
   if ( conn.eventNameList )
   {
