@@ -307,8 +307,8 @@ client.on ( "ALARM", new EventListener()
 
 Details in:
 
-* JavaScript: gepard/xmp/Listener.js
-* Java: gepard/java/org.gessinger/gepard/xmp/Listener.java
+* JavaScript: [gepard/xmp/Listener.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/Listener.js)
+* Java: [gepard/java/org.gessinger/gepard/xmp/Listener.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/Listener.java)
 
 ### Event Emitter
 
@@ -344,8 +344,8 @@ client.close() ;
 
 Details in:
 
-* JavaScript: gepard/xmp/Emitter.js
-* Java: gepard/java/org.gessinger/gepard/xmp/Emitter.java
+* JavaScript: [gepard/xmp/Emitter.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/Emitter.js)
+* Java: [gepard/java/org.gessinger/gepard/xmp/Emitter.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/Emitter.java)
 
 ### Locks
 
@@ -391,8 +391,8 @@ if ( lock.isOwner() )
 
 Details in:
 
-* JavaScript: gepard/xmp/Locker.js
-* Java: gepard/java/org.gessinger/gepard/xmp/Locker.java
+* JavaScript: [gepard/xmp/Locker.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/Locker.js)
+* Java: [gepard/java/org.gessinger/gepard/xmp/Locker.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/Locker.java)
 
 ### Semaphores
 
@@ -455,8 +455,8 @@ if ( sem.isOwner() ) // if not timeout occured
 
 Details in:
 
-* JavaScript: gepard/xmp/AsyncSemaphore.js
-* Java: gepard/java/org.gessinger/gepard/xmp/AsyncSemaphore.java
+* JavaScript: [gepard/xmp/AsyncSemaphore.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/AsyncSemaphore.js)
+* Java: [gepard/java/org.gessinger/gepard/xmp/AsyncSemaphore.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/AsyncSemaphore.java)
 
 ### Request / result
 
@@ -509,8 +509,8 @@ client.request ( "getFileList", new ResultCallback()
 
 Details in:
 
-* JavaScript: gepard/xmp/Requester.js
-* Java: gepard/java/org.gessinger/gepard/xmp/Requester.java
+* JavaScript: [gepard/xmp/Requester.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/Requester.js)
+* Java: [gepard/java/org.gessinger/gepard/xmp/Requester.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/Requester.java)
 
 #### Send result
 
@@ -554,8 +554,7 @@ client.on ( name, new EventListener()
 Details in:
 
 * JavaScript: [gepard/xmp/Responder.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/Responder.js)
-* JavaScript: [gepard/xmp/Responder.js](Responder.js)
-* Java: gepard/java/org.gessinger/gepard/xmp/Responder.java
+* Java: [gepard/java/org.gessinger/gepard/xmp/Responder.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/Responder.java)
 
 ## Examples Long
 
