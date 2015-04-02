@@ -273,7 +273,7 @@ Application
 
 ```js
   var gepard = require ( "gepard" ) ;
-  var client = new gepard.Client() ;
+  var client = gepard.getClient() ;
 ```
 Browser
 
@@ -316,7 +316,7 @@ Application
 
 ```js
 var gepard = require ( "gepard" ) ;
-var client = new gepard.Client() ;
+var client = gepard.getClient() ;
 client.fire ( "ALARM",
 {
   var thiz = this ;
@@ -466,7 +466,7 @@ Application:
 
 ```js
   var gepard = require ( "gepard" ) ;
-  var client = new gepard.Client()
+  var client = gepard.getClient() ;
 ```
 Browser:
 
@@ -518,7 +518,7 @@ Application:
 
 ```js
   var gepard = require ( "gepard" ) ;
-  var client = new gepard.Client()
+  var client = gepard.getClient() ;
 ```
 Browser:
 
@@ -564,8 +564,7 @@ Details in:
 
 ```js
 var gepard = require ( "gepard" ) ;
-
-var c = new gepard.Client() ;
+var c = gepard.getClient() ;
 
 var eventName = "ALARM" ;
 var c = new Client() ;
@@ -619,8 +618,7 @@ c.on('shutdown', function()
 
 ```js
 var gepard  = require ( "gepard" ) ;
-
-var c = new gepard.Client() ;
+var c = gepard.getClient() ;
 
 var event = new gepard.Event ( "CONFIG-CHANGED" ) ;
 event.setBody ( { "config-name" : "app.conf" } ) ;
