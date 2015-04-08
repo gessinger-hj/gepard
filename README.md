@@ -8,6 +8,9 @@ General purpose communication and synchronization layer for distributed applicat
 - [What is new](#what-is-new)
 - [Install](#install)
 - [Getting Startet](#getting-startet)
+  - [Base](#base)
+  - [JavaScript](#javascript)
+  - [Java](#java)
 - [Configuration](#configuration)
 - [Use Cases](#use-cases)
   - [Configuration Changes ( Events )](#configuration-changes--events-)
@@ -29,6 +32,7 @@ General purpose communication and synchronization layer for distributed applicat
     - [Event Emitter](#event-emitter-1)
       - [In Application](#in-application-1)
       - [In Browser](#in-browser-1)
+- [Found a bug? Help us fix it...](#found-a-bug-help-us-fix-it)
   - [Contributors](#contributors)
   - [Features](#features)
 
@@ -117,11 +121,21 @@ Here are some kind of "Hello World" examples.
 
 All commands are in the directory: __node_modules/.bin__ or __node_modules/.bin/gepard__
 
+Up to now the JavaScript and the Java classes are implemented.
+<br/>
+The examples show the nice and easy interaction between programs written in these different languages.
+
+## Base
 1.  __gp.broker<br/>__
     Start the gepard broker with websocket proxy
 
 1.  __gp.shutdown<br/>__
     Stop the broker
+
+1.  __gp.info<br/>__
+    Show basic information from the broker
+
+## JavaScript
 
 1.  __gp.listen --name=hello<br/>__
     Start a listener for events named __hello__
@@ -132,9 +146,6 @@ All commands are in the directory: __node_modules/.bin__ or __node_modules/.bin/
 
 1.  __gp.emit --name=hello<br/>__ [--body='{"City":"Frankfurt"}']
     emit an event with name __hello__
-
-1.  __gp.info<br/>__
-    Show basic information from the broker
 
 1.  If you want to play with the web-client implementation use the appropriate files in:
     __node_modules/gepard/xmp/webclient__
@@ -161,7 +172,30 @@ Start your browser and go to: __localhost:8888__
 1.  __gp.http.simple.is.running__<br/>
     Check if the simple webserver is running.
 
+## Java
 
+In order to try the examples goto node_modules/gepard/java.
+All examples are included in lib/Gepard.jar.
+With the following command all examples can be executed:
+
+```bash
+java [-D<name>=<value>] -cp lib/Gepard.jar:lib/gson-2.3.1.jar org/gessinger/gepard/xmp/Listener
+```
+
+__Listener__ may be replaced by:
+
+* Listener
+* Emitter
+* Requester
+* Responder
+* Locker
+* AsyncSemaphore
+* BlockingSemaphore
+
+The class-version in the existing Gepard.jar is 1.8, so you need to hava java 1.8 installed.
+There is an ant file to build your own jar.
+
+Options, e.g. for the event-name must be set in the common Java format: -Dname=hello
 
 # Configuration
 
@@ -643,7 +677,22 @@ var event = new gepard.Event ( "CONFIG-CHANGED" ) ;
 event.setBody ( { "config-name" : "app.conf" } ) ;
 wc.fire ( event ) ;
 ```
+# Found a bug? Help us fix it...
 
+We are trying our best to keep Gepard as free of bugs as possible, but if you find a problem that looks like a bug to you please follow these steps to help us fix it...
+
+* Update Gepard and make sure that your problem also appears with the latest version of Gepard.
+
+* Goto the [issue tracker](https://github.com/gessinger-hj/gepard/issues) to see if your problem has been reported already.
+  If there is no existing bug report, feel free to create a new one. If there is an existing report, but you can give additional information,
+  please add your data to this existing issue. If the existing issue report has already been closed,
+  please only re-open it or comment on it if the same (or a closely related issue) re-appears,
+  i.e., there is a high chance that the very same bug has re-appeared. Otherwise, create a new issue report.
+
+* Whenever you create a new issue report in our issue tracker, please make sure to include as much information as possible like
+  exceptions with text and stack trace or other log informations.
+  <br/>
+  Having all the required information saves a lot of work.
 
 ## Contributors
 - Hans-Jürgen Gessinger
