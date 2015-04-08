@@ -6,6 +6,8 @@ General purpose communication and synchronization layer for distributed applicat
 
 - [Overview](#overview)
 - [What is new](#what-is-new)
+  - [Perfect load balanced message handling.](#perfect-load-balanced-message-handling)
+  - [Java bindings for all features:](#java-bindings-for-all-features)
 - [Install](#install)
 - [Getting Startet](#getting-startet)
   - [Base](#base)
@@ -88,7 +90,22 @@ node_modules/.bin/gp.admin [ --help ]
 ```
 # What is new
 
-Java bindings for all features:
+## Perfect load balanced message handling.
+
+The use-case for request/respond is enhanced to a perfect load balancing.
+<br/>
+Suppose there are __n__ message-listeners offering the same service-name ( event-name )
+<br/>
+__m__ messages come in to the broker with __m__ = __n + 1__
+<br/>
+The following is done:
+
+1.  the first __n__ messages are sent to the __n__ free listener for processing the request.
+1.  the __m-th__ message is stored inside the broker waiting for any of the listeners sending back the response.
+1.  after receiving the first message-response from any listener the waiting __m-th + 1__ message is sent to the now free listener.
+
+
+## Java bindings for all features:
 
 * emit event
 * listen to events
