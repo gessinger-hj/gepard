@@ -144,8 +144,14 @@ The examples show the nice and easy interaction between programs written in thes
     <br/>
     __gp.listen "--name=hello*"__
 
-1.  __gp.emit --name=hello<br/>__ [--body='{"City":"Frankfurt"}']
+1.  __gp.emit --name=hello__ [--body='{"City":"Frankfurt"}']
     emit an event with name __hello__
+
+1.  __gepard/gp.sem__
+    Acquire a semaphore
+
+1.  __gepard/gp.lock__
+    Acquire a lock
 
 1.  If you want to play with the web-client implementation use the appropriate files in:
     __node_modules/gepard/xmp/webclient__
