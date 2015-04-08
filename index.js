@@ -18,27 +18,27 @@ gepard.getClient = function ( port, host )
 	{
 		host = gepard.getProperty ( "gepard.host" ) ;
 	}
- 	var c = _Instances["" + host + ":" + port] ;
-  if ( c )
-  {
-  	return c ;
-  }
-  c = new gepard.Client ( port, host ) ;
-  c.on ( "end", function onend()
-  {
-  	delete gepard._Instances["" + host + ":" + port] ;
-  } ) ;
-  c.on ( "shutdown", function onend()
-  {
-  	delete gepard._Instances["" + host + ":" + port] ;
-  } ) ;
-  c.on ( "error", function onend()
-  {
-  	delete gepard._Instances["" + host + ":" + port] ;
-  } ) ;
-  c._clientCounter = _clientCounter++ ;
-  _Instances["" + host + ":" + port] = c 
-  return c ;
+	var c = _Instances["" + host + ":" + port] ;
+	if ( c )
+	{
+		return c ;
+	}
+	c = new gepard.Client ( port, host ) ;
+	c.on ( "end", function onend()
+	{
+		delete gepard._Instances["" + host + ":" + port] ;
+	} ) ;
+	c.on ( "shutdown", function onend()
+	{
+		delete gepard._Instances["" + host + ":" + port] ;
+	} ) ;
+	c.on ( "error", function onend()
+	{
+		delete gepard._Instances["" + host + ":" + port] ;
+	} ) ;
+	c._clientCounter = _clientCounter++ ;
+	_Instances["" + host + ":" + port] = c 
+	return c ;
  }
 
 function collectFiles ( target, packageName, dir )
