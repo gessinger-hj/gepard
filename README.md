@@ -147,10 +147,10 @@ The examples show the nice and easy interaction between programs written in thes
 1.  __gp.emit --name=hello__ [--body='{"City":"Frankfurt"}']
     emit an event with name __hello__
 
-1.  __gepard/gp.sem__
+1.  __gp.sem__<br/>
     Acquire a semaphore
 
-1.  __gepard/gp.lock__
+1.  __gp.lock__<br/>
     Acquire a lock
 
 1.  If you want to play with the web-client implementation use the appropriate files in:
