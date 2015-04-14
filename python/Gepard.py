@@ -1,12 +1,20 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # from cStringIO import StringIO
-import StringIO
+try:
+	from io import StringIO
+except ImportError:
+	from cStringIO import StringIO
 # import BytesIO
 import json
 import inspect
 import time
 import datetime
+
+try:
+  basestring
+except NameError:
+  basestring = str
 
 class Event ( object ):
 	def __init__ (self,name,type=None,body=None):
@@ -24,7 +32,7 @@ class Event ( object ):
 		else:
 			raise ValueError ( "body must be None or a dict, not: " + str(body) + "(" + name.__class__.__name__ + ")" )
 		self.user = None
-		self.control = { "createdAt": datetime.datetime.now().replace(microsecond=0) } ;
+		self.control = { "createdAt": datetime.datetime.now() } #.replace(microsecond=0) }
 	def getName ( self ):
 		return self.name
 	def __str__(self):
@@ -36,11 +44,11 @@ class Event ( object ):
 
 e = Event ("ALARM")
 # binaryData = BytesIO(b"ABCDE")
-binaryData = bytearray(b"ABCDE")
-print binaryData
+binaryData = bytearray([1,2,3,4,5])
+print ( binaryData )
 e.body["binaryData"] = binaryData ;
-print datetime.datetime.now().replace(microsecond=0) #.isoformat()
-print e.control["createdAt"]
+print ( datetime.datetime.now().replace(microsecond=0) ) #.isoformat()
+print ( e.control["createdAt"] )
 
 def to_json(obj):
 	if isinstance ( obj, bytes ):
@@ -78,10 +86,10 @@ def from_json ( json_object ):
 	return json_object
 
 str = json.dumps ( e, default=to_json, indent=2 )
-print str
+print (str)
 
 obj = json.loads ( str, object_hook=from_json )
-print obj
+print (obj)
 # print inspect.getmembers ( e )
 # def convert_to_builtin_type(obj):
 #     print 'default(', repr(obj), ')'

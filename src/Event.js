@@ -1,5 +1,4 @@
 if ( typeof gepard === 'undefined' ) gepard = {} ;
-
 if ( !Array.isArray )
 {
   /**
