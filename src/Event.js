@@ -587,5 +587,5 @@ else
 		var o = gepard.Event.prototype.deserialize ( str ) ;
 		console.log ( o ) ;
 	}
-	gepard = undefined ;
+	// gepard = undefined ;
 }
