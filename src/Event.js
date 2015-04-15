@@ -1,4 +1,5 @@
 if ( typeof gepard === 'undefined' ) gepard = {} ;
+T = require ( "Tango" ) ;
 if ( !Array.isArray )
 {
   /**

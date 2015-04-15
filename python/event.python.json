@@ -1,0 +1,1 @@
+{"className": "Event", "body": {"binaryData": {"data": [1, 2, 3, 4, 5], "type": "Buffer"}}, "control": {"createdAt": {"type": "Date", "value": "2015-04-15T16:01:54.486028"}}, "type": null, "name": "ALARM2"}

@@ -41,8 +41,11 @@ class Event ( object ):
 		str.write(self.__class__.__name__)
 		str.write(")")
 		return str.getvalue()
+	def getCreatedAt(self):
+		return self.control["createdAt"]
 
-e = Event ("ALARM")
+
+e = Event ("ALARM2")
 # binaryData = BytesIO(b"ABCDE")
 binaryData = bytearray([1,2,3,4,5])
 print ( binaryData )
@@ -61,10 +64,10 @@ def to_json(obj):
 					 }
 	if isinstance ( obj, datetime.datetime ):
 		return { 'type': 'Date',
-						 'data': obj.isoformat()
+						 'value': obj.isoformat()
 					 }
 	if isinstance ( obj, Event ):
-		return { 'classname': obj.className
+		return { 'className': obj.className
 					 , 'name':obj.name
 					 , "type":obj.type
 					 , "body":obj.body
@@ -78,15 +81,19 @@ def from_json ( json_object ):
 			return time.strptime(json_object['data'])
 		if json_object['type'] == 'Date':
 			# return time.strptime(json_object['data'])
-			return json_object['data']
+			return json_object['value']
 		if json_object['type'] == 'bytes':
 			return bytearray(json_object['data'])
 		if json_object['type'] == 'Buffer':
 			return bytes(json_object['data'])
 	return json_object
 
-str = json.dumps ( e, default=to_json, indent=2 )
+str = json.dumps ( e, default=to_json ) #, indent=2 )
 print (str)
+
+text_file = open ("event.python.json", "w")
+text_file.write ( str )
+text_file.close()
 
 obj = json.loads ( str, object_hook=from_json )
 print (obj)
@@ -101,3 +108,4 @@ print (obj)
 #     return d
 
 # print json.dumps ( e )
+print e.getCreatedAt()
