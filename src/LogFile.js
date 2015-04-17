@@ -125,11 +125,27 @@ LogFile.prototype.init = function ( s )
   if ( this._isInitialized ) return ;
   this._isInitialized = true ;
   var appName = process.argv[1] ;
-  appName = appName.replace ( /\\/g, "/" ) ;
-  appName = appName.substring ( appName.lastIndexOf ( "/" ) + 1 ) ;
-  if ( appName.endsWith ( ".js" ) )
+  if ( ! appName )
   {
-    appName = appName.substring ( 0, appName.lastIndexOf ( "." ) ) ;
+    appName = process.argv[0] ;
+  }
+  if ( appName )
+  {
+    appName = appName.replace ( /\\/g, "/" ) ;
+    appName = appName.substring ( appName.lastIndexOf ( "/" ) + 1 ) ;
+    if ( appName.endsWith ( ".js" ) )
+    {
+      appName = appName.substring ( 0, appName.lastIndexOf ( "." ) ) ;
+    }
+    else
+    if ( appName.endsWith ( ".exe" ) )
+    {
+      appName = appName.substring ( 0, appName.lastIndexOf ( "." ) ) ;
+    }
+  }
+  else
+  {
+    appName = "NoName" ;
   }
   var tango_app_str = T.getProperty ( "tango_" + appName ) ;
   var tango_env_str = T.getProperty ( "tango.env" ) ;
