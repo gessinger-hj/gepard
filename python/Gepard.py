@@ -73,6 +73,7 @@ def to_json(obj):
 					 , "body":obj.body
 					 , "control":obj.control
 					 }
+					 
 	raise TypeError ( repr(obj) + ' is not JSON serializable' )
 
 def from_json ( json_object ):
