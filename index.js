@@ -26,15 +26,15 @@ gepard.getClient = function ( port, host )
 	c = new gepard.Client ( port, host ) ;
 	c.on ( "end", function onend()
 	{
-		delete gepard._Instances["" + host + ":" + port] ;
+		delete _Instances["" + host + ":" + port] ;
 	} ) ;
 	c.on ( "shutdown", function onend()
 	{
-		delete gepard._Instances["" + host + ":" + port] ;
+		delete _Instances["" + host + ":" + port] ;
 	} ) ;
 	c.on ( "error", function onend()
 	{
-		delete gepard._Instances["" + host + ":" + port] ;
+		delete _Instances["" + host + ":" + port] ;
 	} ) ;
 	c._clientCounter = _clientCounter++ ;
 	_Instances["" + host + ":" + port] = c 
