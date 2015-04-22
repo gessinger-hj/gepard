@@ -3,8 +3,7 @@ var fs = require ( "fs" ) ;
 
 var d = Path.join ( __dirname, "/src/" ) ;
 var gepard = require ( Path.join ( d, "./Tango" ) ) ;
-var _clientCounter = 1 ;
-var _Instances = {} ;
+gepard._Instances = {} ;
 
 gepard.getClient = function ( port, host )
 {
@@ -12,32 +11,32 @@ gepard.getClient = function ( port, host )
 	host = host ? host : undefined ;
 	if ( ! port )
 	{
-		port = gepard.getProperty ( "gepard.port", "17501" ) ;
+		port = this.getProperty ( "gepard.port", "17501" ) ;
 	}
 	if ( ! host )
 	{
-		host = gepard.getProperty ( "gepard.host" ) ;
+		host = this.getProperty ( "gepard.host" ) ;
 	}
-	var c = _Instances["" + host + ":" + port] ;
+	var c = this._Instances["" + host + ":" + port] ;
 	if ( c )
 	{
 		return c ;
 	}
-	c = new gepard.Client ( port, host ) ;
+	c = new this.Client ( port, host ) ;
+	var thiz = this ;
 	c.on ( "end", function onend()
 	{
-		delete _Instances["" + host + ":" + port] ;
+		delete thiz._Instances["" + host + ":" + port] ;
 	} ) ;
 	c.on ( "shutdown", function onend()
 	{
-		delete _Instances["" + host + ":" + port] ;
+		delete thiz._Instances["" + host + ":" + port] ;
 	} ) ;
 	c.on ( "error", function onend()
 	{
-		delete _Instances["" + host + ":" + port] ;
+		delete thiz._Instances["" + host + ":" + port] ;
 	} ) ;
-	c._clientCounter = _clientCounter++ ;
-	_Instances["" + host + ":" + port] = c 
+	this._Instances["" + host + ":" + port] = c 
 	return c ;
  }
 
