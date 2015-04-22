@@ -35,8 +35,10 @@ General purpose communication and synchronization layer for distributed applicat
       - [In Application](#in-application-1)
       - [In Browser](#in-browser-1)
 - [Found a bug? Help us fix it...](#found-a-bug-help-us-fix-it)
-  - [Contributors](#contributors)
-  - [Features](#features)
+- [https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md](#httpsgithubcomgessinger-hjgepardblobmasterchangelogmd)
+- [Contributors](#contributors)
+- [Features](#features)
+- [Changelog](#changelog)
 
 <!-- /MarkdownTOC -->
 
@@ -717,11 +719,14 @@ We are trying our best to keep Gepard as free of bugs as possible, but if you fi
   <br/>
   Having all the required information saves a lot of work.
 
-## Contributors
+#
+https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md
+
+# Contributors
 - Hans-Jürgen Gessinger
 - Paul Gessinger
 
-## Features
+# Features
 * High performance
 * Minimal configuration with
   - __GEPARD_PORT__ 
@@ -729,3 +734,6 @@ We are trying our best to keep Gepard as free of bugs as possible, but if you fi
 * All JavaScript client features like event listener, event emitter, semaphores, locks and messages
 	are available in any web-browser apps.
 * All client features are also available for Java
+
+# Changelog
+See [change log details](https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md)
