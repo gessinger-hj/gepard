@@ -1,5 +1,4 @@
 if ( typeof gepard === 'undefined' ) gepard = {} ;
-T = require ( "Tango" ) ;
 if ( !Array.isArray )
 {
   /**
@@ -11,6 +10,15 @@ if ( !Array.isArray )
   Array.isArray = function(arg) {
   	return arg && arg.constructor === Array ;
   };
+}
+var _isBrowser = true ;
+if ( typeof document !== 'undefined' && typeof module === 'undefined' && ! module.exports  ) // browser
+{
+	isBro = true ;
+}
+else
+{
+	_isBrowser = false ;
 }
 /**
  * Description
@@ -226,6 +234,11 @@ gepard.Event.prototype =
 			}
 		}
 		else this.body = {} ;
+		if ( ! _isBrowser )
+		{
+			var os = require ( "os" ) ;
+			this._setHostname  ( os.hostname() ) ;
+		}
 	},
 	/**
 	 * Description
@@ -563,9 +576,26 @@ gepard.Event.prototype =
 		this._Client = null ;
 		delete this._Client ;
 		c.sendResult ( this ) ;
+	},
+	_setHostname: function ( hostName )
+	{
+		if ( ! this.control.hostName )
+		{
+			this.control.hostname = hostName ;
+		}
+	},
+	/**
+	 * Description
+	 * @method _getHostname
+	 * @param {} hostName
+	 * @return {string} hostname
+	 */
+	getHostname: function()
+	{
+		return this.control.hostname ;
 	}
 };
-if ( typeof document !== 'undefined' )
+if ( typeof document !== 'undefined' && typeof module === 'undefined' && typeof process === 'undefined' && typeof process.argv === 'undefined' ) // browser
 {
 	gepard.serialize = gepard.Event.prototype.serialize ;
 	gepard.deserialize = gepard.Event.prototype.deserialize ;
@@ -577,6 +607,7 @@ else
 	module.exports = gepard.Event ;
  	gepard.Event.prototype._classNameToConstructor["Event"] = gepard.Event ;
 	gepard.Event.prototype._classNameToConstructor.User = require ( "./User" ) ;
+	var os = require ( "os" ) ;
 	if ( require.main === module )
 	{
 		var e = new gepard.Event ( 'ALARM', "TEST" ) ;

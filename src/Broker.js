@@ -4,13 +4,14 @@
  * [net description]
  * @type {[type]}
  */
-var net                 = require ( 'net' ) ;
-var util                = require ( 'util' ) ;
-var EventEmitter        = require ( "events" ).EventEmitter ;
-var Event               = require ( "./Event" ) ;
-var T                   = require ( "./Tango" ) ;
-var MultiHash           = require ( "./MultiHash" ) ;
-var Log                 = require ( "./LogFile" ) ;
+var net          = require ( 'net' ) ;
+var util         = require ( 'util' ) ;
+var EventEmitter = require ( "events" ).EventEmitter ;
+var Event        = require ( "./Event" ) ;
+var T            = require ( "./Tango" ) ;
+var MultiHash    = require ( "./MultiHash" ) ;
+var Log          = require ( "./LogFile" ) ;
+var os           = require ( "os" ) ;
 
 /**
  * Description
@@ -264,7 +265,6 @@ var Broker = function ( port, ip )
   this._semaphoreOwner                     = {} ;
   this._pendingAcquireSemaphoreConnections = new MultiHash() ;
   
-  var os                                   = require ( "os" ) ;
   this.hostname                            = os.hostname() ;
   this._networkAddresses                   = [] ;
   var networkInterfaces                    = os.networkInterfaces() ;
