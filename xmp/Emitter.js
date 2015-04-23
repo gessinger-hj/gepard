@@ -5,6 +5,7 @@ if ( require.main === module )
   var Event  = require ( "../src/Event" ) ;
   var Client = require ( "../src/Client" ) ;
   var Admin  = require ( "../src/Admin" ) ;
+  var User   = require ( "../src/User" ) ;
 
   if ( T.getProperty ( "help" ) )
   {
@@ -35,6 +36,10 @@ if ( require.main === module )
     body = JSON.parse ( body ) ;
     body.binary = new Buffer ( [ 64, 65, 66, 67 ] ) ;
     var e = new Event ( name, body ) ;
+    var u = new User ( "smith" ) ;
+    u.addRight ( "CAN_READ_FILES", "*.docx" ) ;
+    e.setUser ( u ) ;
+
     c.fire ( e,
     {
       write: function()

@@ -607,10 +607,13 @@ else
 	module.exports = gepard.Event ;
  	gepard.Event.prototype._classNameToConstructor["Event"] = gepard.Event ;
 	gepard.Event.prototype._classNameToConstructor.User = require ( "./User" ) ;
-	var os = require ( "os" ) ;
 	if ( require.main === module )
 	{
 		var e = new gepard.Event ( 'ALARM', "TEST" ) ;
+		var User = require ( "./User" ) ;
+		var u = new User ( "smith" ) ;
+		u.addRight ( "CAN_READ_FILES", "*.docx" ) ;
+		e.setUser ( u ) ;
 		var b = new Buffer ( "ABCDE" ) ;
 		e.getBody().binaryData = b ;
 		var str = e.serialize() ;
