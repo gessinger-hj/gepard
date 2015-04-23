@@ -611,7 +611,7 @@ else
 	{
 		var e = new gepard.Event ( 'ALARM', "TEST" ) ;
 		var User = require ( "./User" ) ;
-		var u = new User ( "smith" ) ;
+		var u = new User ( "smith", 4711, "secret" ) ;
 		u.addRight ( "CAN_READ_FILES", "*.docx" ) ;
 		e.setUser ( u ) ;
 		var b = new Buffer ( "ABCDE" ) ;

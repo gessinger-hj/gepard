@@ -1,11 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
-# from cStringIO import StringIO
 try:
 	from io import StringIO
 except ImportError:
 	from cStringIO import StringIO
-# import BytesIO
 import json
 import inspect
 import time
@@ -30,83 +28,104 @@ class Event ( object ):
 		elif isinstance ( body, dict ):
 			self.body = body
 		else:
-			raise ValueError ( "body must be None or a dict, not: " + str(body) + "(" + name.__class__.__name__ + ")" )
+			raise ValueError ( "body must be None or a dict, not: " + str(body) + "(" + body.__class__.__name__ + ")" )
 		self.user = None
 		self.control = { "createdAt": datetime.datetime.now() } #.replace(microsecond=0) }
-	def getName ( self ):
-		return self.name
 	def __str__(self):
-		str = StringIO()
-		str.write("(")
-		str.write(self.__class__.__name__)
-		str.write(")")
-		return str.getvalue()
+		s = StringIO()
+		s.write("(")
+		s.write(self.__class__.__name__)
+		s.write(")")
+		return s.getvalue()
 	def getCreatedAt(self):
 		return self.control["createdAt"]
+	def getName ( self ):
+		return self.name
+	def setUser ( self, user ):
+		self.user = user
+	@classmethod
+	def to_json(cls,obj):
+		if isinstance ( obj, bytes ):
+			return { 'type': 'bytes',
+							 'data': list(obj)
+						 }
+		if isinstance ( obj, bytearray ):
+			return { 'type': 'Buffer',
+							 'data': list(obj)
+						 }
+		if isinstance ( obj, datetime.datetime ):
+			return { 'type': 'Date',
+							 'value': obj.isoformat()
+						 }
+		if isinstance ( obj, Event ):
+			juser = None
+			if obj.user:
+				juser = obj.user.to_json()
+			return { 'className': obj.className
+						 , 'name':obj.name
+						 , "type":obj.type
+						 , "body":obj.body
+						 , "control":obj.control
+						 , "user":juser
+						 }
+		raise TypeError ( repr(obj) + ' is not JSON serializable' )
+	@classmethod
+	def from_json ( cls, obj ):
+		if 'type' in obj:
+			if obj['type'] == 'time.asctime':
+				return time.strptime(obj['data'])
+			if obj['type'] == 'Date':
+				return obj['value']
+			if obj['type'] == 'bytes':
+				return bytearray(obj['data'])
+			if obj['type'] == 'Buffer':
+				return bytes(obj['data'])
+		return obj
 
+class User ( object ):
+	def __init__ ( self, id, key=None, pwd=None, rights=None ):
+		self.className = "User" ;
+		self.id        = id ;
+		self.key       = key ;
+		self._pwd      = pwd ;
+		self.rights = {} ;
+		if rights == None:
+			self.rights = {}
+		elif isinstance ( rights, dict ):
+			self.rights = rights
+		else:
+			raise ValueError ( "rights must be None or a dict, not: " + str(rights) + "(" + rights.__class__.__name__ + ")" )
+	def to_json(self):
+		return { 'className': self.className
+					 , "id":self.id
+					 , "key":self.key
+					 , "_pwd":self._pwd
+					 , "rights":self.rights
+					 }
+	def addRight ( self, name, value ):
+		self.rights[name] = value
+	def getRight ( self, name ):
+		return self.rights[name]
 
 e = Event ("ALARM2")
 # binaryData = BytesIO(b"ABCDE")
 binaryData = bytearray([1,2,3,4,5])
 print ( binaryData )
 e.body["binaryData"] = binaryData ;
-print ( datetime.datetime.now().replace(microsecond=0) ) #.isoformat()
-print ( e.control["createdAt"] )
 
-def to_json(obj):
-	if isinstance ( obj, bytes ):
-		return { 'type': 'bytes',
-						 'data': list(obj)
-					 }
-	if isinstance ( obj, bytearray ):
-		return { 'type': 'Buffer',
-						 'data': list(obj)
-					 }
-	if isinstance ( obj, datetime.datetime ):
-		return { 'type': 'Date',
-						 'value': obj.isoformat()
-					 }
-	if isinstance ( obj, Event ):
-		return { 'className': obj.className
-					 , 'name':obj.name
-					 , "type":obj.type
-					 , "body":obj.body
-					 , "control":obj.control
-					 }
-					 
-	raise TypeError ( repr(obj) + ' is not JSON serializable' )
+u = User ( "john", 999, "SECRET" )
 
-def from_json ( json_object ):
-	if 'type' in json_object:
-		if json_object['type'] == 'time.asctime':
-			return time.strptime(json_object['data'])
-		if json_object['type'] == 'Date':
-			# return time.strptime(json_object['data'])
-			return json_object['value']
-		if json_object['type'] == 'bytes':
-			return bytearray(json_object['data'])
-		if json_object['type'] == 'Buffer':
-			return bytes(json_object['data'])
-	return json_object
+u.addRight ( "CAN_READ_FILES", "*.docx" ) ;
+e.setUser ( u ) ;
 
-str = json.dumps ( e, default=to_json ) #, indent=2 )
-print (str)
+s = json.dumps ( e, default=Event.to_json ) #, indent=2 )
+print ( "-------------------------------" )
+print (s)
 
 text_file = open ("event.python.json", "w")
-text_file.write ( str )
+text_file.write ( s )
 text_file.close()
 
-obj = json.loads ( str, object_hook=from_json )
+print ( "-------------------------------" )
+obj = json.loads ( s, object_hook=Event.from_json )
 print (obj)
-# print inspect.getmembers ( e )
-# def convert_to_builtin_type(obj):
-#     print 'default(', repr(obj), ')'
-#     # Convert objects to a dictionary of their representation
-#     d = { '__class__':obj.__class__.__name__, 
-#           '__module__':obj.__module__,
-#           }
-#     d.update(obj.__dict__)
-#     return d
-
-# print json.dumps ( e )
-print e.getCreatedAt()
