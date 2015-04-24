@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
 try:
-	from io import StringIO
-except ImportError:
 	from cStringIO import StringIO
+except ImportError:
+	from io import StringIO
 import json
 import inspect
 import time
 import datetime
-
+import socket
 try:
   basestring
 except NameError:
@@ -16,10 +16,26 @@ except NameError:
 
 class Event ( object ):
 	def __init__ (self,name,type=None,body=None):
+		self.name    = None
+		self.type    = None
+		self.user    = None
+		self.control = None
+		self.body    = None
+		if isinstance ( name, dict ):
+			hh = name
+			self.className = self.__class__.__name__ ;
+			self.name = hh["name"]
+			if 'user' in hh:
+				self.user = User ( hh["user"] ) ;
+			self.control = hh["control"]
+			self.body = hh["body"]
+			return
+
 		if not isinstance ( name, basestring):
 			raise ValueError ( "name must be a non empty string, not: " + str(name) + "(" + name.__class__.__name__ + ")" )
 		if type != None and not isinstance ( type, basestring):
 			raise ValueError ( "type must be None or a non empty string, not: " + str(type) + "(" + type.__class__.__name__ + ")" )
+
 		self.className = self.__class__.__name__ ;
 		self.name = name
 		self.type = type
@@ -30,12 +46,19 @@ class Event ( object ):
 		else:
 			raise ValueError ( "body must be None or a dict, not: " + str(body) + "(" + body.__class__.__name__ + ")" )
 		self.user = None
-		self.control = { "createdAt": datetime.datetime.now() } #.replace(microsecond=0) }
+		self.control = { "createdAt": datetime.datetime.now(), "hostname": socket.gethostname() }
+
 	def __str__(self):
 		s = StringIO()
 		s.write("(")
 		s.write(self.__class__.__name__)
 		s.write(")")
+		s.write("[name=" + self.name )
+		s.write(",type=" + str(self.type) )
+		s.write(",control=" + str(self.control) )
+		s.write(",user=" + str(self.user) )
+		s.write(",body=" + str(self.body) )
+		s.write("]")
 		return s.getvalue()
 	def getCreatedAt(self):
 		return self.control["createdAt"]
@@ -43,6 +66,11 @@ class Event ( object ):
 		return self.name
 	def setUser ( self, user ):
 		self.user = user
+	def getUser ( self ):
+		return self.user
+	def getHostname ( self ):
+		return self.control["hostname"] ;
+
 	@classmethod
 	def to_json(cls,obj):
 		if isinstance ( obj, bytes ):
@@ -84,6 +112,15 @@ class Event ( object ):
 
 class User ( object ):
 	def __init__ ( self, id, key=None, pwd=None, rights=None ):
+		if isinstance ( id, dict ):
+			hh = id
+			self.className = self.__class__.__name__ ;
+			self.id = hh["id"]
+			self.key = hh["key"]
+			self._pwd = hh["_pwd"]
+			self.rights = hh["rights"]
+			return
+
 		self.className = "User" ;
 		self.id        = id ;
 		self.key       = key ;
@@ -95,6 +132,19 @@ class User ( object ):
 			self.rights = rights
 		else:
 			raise ValueError ( "rights must be None or a dict, not: " + str(rights) + "(" + rights.__class__.__name__ + ")" )
+
+	def __str__(self):
+		s = StringIO()
+		s.write("(")
+		s.write(self.__class__.__name__)
+		s.write(")")
+		s.write("[id=" + self.id )
+		s.write(",_pwd=" + "******" )
+		s.write(",key=" + str(self.key) )
+		s.write(",rights=" + str(self.rights) )
+		s.write("]")
+		return s.getvalue()
+
 	def to_json(self):
 		return { 'className': self.className
 					 , "id":self.id
@@ -107,10 +157,10 @@ class User ( object ):
 	def getRight ( self, name ):
 		return self.rights[name]
 
+# ==========================================================================
 e = Event ("ALARM2")
 # binaryData = BytesIO(b"ABCDE")
 binaryData = bytearray([1,2,3,4,5])
-print ( binaryData )
 e.body["binaryData"] = binaryData ;
 
 u = User ( "john", 999, "SECRET" )
@@ -128,4 +178,10 @@ text_file.close()
 
 print ( "-------------------------------" )
 obj = json.loads ( s, object_hook=Event.from_json )
-print (obj)
+# print (obj)
+ee = Event ( obj )
+print ( "================================================" )
+# print ( ee )
+print ( ee.getUser() )
+
+# print	( ee.getUser() )
