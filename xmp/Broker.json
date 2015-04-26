@@ -1,0 +1,10 @@
+{
+	"accessibility": {
+		"whitelist": [
+			{ "name": "localhost"
+			, "events": [ "*" ]
+		}
+		]
+		"blacklist": 
+	}
+}
