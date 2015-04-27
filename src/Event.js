@@ -12,9 +12,9 @@ if ( !Array.isArray )
   };
 }
 var _isBrowser = true ;
-if ( typeof document !== 'undefined' && typeof module === 'undefined' && ! module.exports  ) // browser
+if ( typeof document !== 'undefined' && typeof module === 'undefined' ) // browser
 {
-	isBro = true ;
+	_isBrowser = true ;
 }
 else
 {

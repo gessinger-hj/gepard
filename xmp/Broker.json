@@ -1,10 +1,10 @@
 {
 	"accessibility": {
-		"whitelist": [
-			{ "name": "localhost"
-			, "events": [ "*" ]
+		"whitelist": {
+			"localhost": "events": [ "*" ]
+		},
+		"blacklist": {
+			"WENB0782": "events": [ "*" ]
 		}
-		]
-		"blacklist": 
 	}
 }

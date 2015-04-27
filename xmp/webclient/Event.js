@@ -1,5 +1,4 @@
 if ( typeof gepard === 'undefined' ) gepard = {} ;
-
 if ( !Array.isArray )
 {
   /**
@@ -11,6 +10,15 @@ if ( !Array.isArray )
   Array.isArray = function(arg) {
   	return arg && arg.constructor === Array ;
   };
+}
+var _isBrowser = true ;
+if ( typeof document !== 'undefined' && typeof module === 'undefined' && ! module.exports  ) // browser
+{
+	_isBrowser = true ;
+}
+else
+{
+	_isBrowser = false ;
 }
 /**
  * Description
@@ -226,6 +234,11 @@ gepard.Event.prototype =
 			}
 		}
 		else this.body = {} ;
+		if ( ! _isBrowser )
+		{
+			var os = require ( "os" ) ;
+			this._setHostname  ( os.hostname() ) ;
+		}
 	},
 	/**
 	 * Description
@@ -563,9 +576,26 @@ gepard.Event.prototype =
 		this._Client = null ;
 		delete this._Client ;
 		c.sendResult ( this ) ;
+	},
+	_setHostname: function ( hostName )
+	{
+		if ( ! this.control.hostName )
+		{
+			this.control.hostname = hostName ;
+		}
+	},
+	/**
+	 * Description
+	 * @method _getHostname
+	 * @param {} hostName
+	 * @return {string} hostname
+	 */
+	getHostname: function()
+	{
+		return this.control.hostname ;
 	}
 };
-if ( typeof document !== 'undefined' )
+if ( typeof document !== 'undefined' && typeof module === 'undefined' && typeof process === 'undefined' && typeof process.argv === 'undefined' ) // browser
 {
 	gepard.serialize = gepard.Event.prototype.serialize ;
 	gepard.deserialize = gepard.Event.prototype.deserialize ;
@@ -580,6 +610,10 @@ else
 	if ( require.main === module )
 	{
 		var e = new gepard.Event ( 'ALARM', "TEST" ) ;
+		var User = require ( "./User" ) ;
+		var u = new User ( "smith", 4711, "secret" ) ;
+		u.addRight ( "CAN_READ_FILES", "*.docx" ) ;
+		e.setUser ( u ) ;
 		var b = new Buffer ( "ABCDE" ) ;
 		e.getBody().binaryData = b ;
 		var str = e.serialize() ;
@@ -587,5 +621,5 @@ else
 		var o = gepard.Event.prototype.deserialize ( str ) ;
 		console.log ( o ) ;
 	}
-	gepard = undefined ;
+	// gepard = undefined ;
 }
