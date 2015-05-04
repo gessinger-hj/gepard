@@ -22,13 +22,13 @@ class Event ( object ):
 		self.control = None
 		self.body    = None
 		if isinstance ( name, dict ):
-			hh = name
+			obj = name
 			self.className = self.__class__.__name__ ;
-			self.name = hh["name"]
-			if 'user' in hh:
-				self.user = User ( hh["user"] ) ;
-			self.control = hh["control"]
-			self.body = hh["body"]
+			self.name = obj["name"]
+			if 'user' in obj:
+				self.user = User ( obj["user"] ) ;
+			self.control = obj["control"]
+			self.body = obj["body"]
 			return
 
 		if not isinstance ( name, basestring):
@@ -70,20 +70,38 @@ class Event ( object ):
 		return self.user
 	def getHostname ( self ):
 		return self.control["hostname"] ;
+	def putValue ( self, name, value ):
+		if not isinstance ( name, basestring):
+			raise ValueError ( "name must be a non empty string, not: " + str(name) + "(" + name.__class__.__name__ + ")" )
+		self.body[name] = value
+	def getValue ( self, name ):
+		if not isinstance ( name, basestring):
+			raise ValueError ( "name must be a non empty string, not: " + str(name) + "(" + name.__class__.__name__ + ")" )
+		return self.body[name]
 
-	@classmethod
-	def to_json(cls,obj):
+	def serialize(self):
+		s = json.dumps ( self, default=self.to_json )
+		return s
+
+	@staticmethod
+	def deserialize ( s ):
+		obj = json.loads ( s, object_hook=Event.from_json )
+		e = Event ( obj )
+		return e
+
+	@staticmethod
+	def to_json(obj):
 		if isinstance ( obj, bytes ):
-			return { 'type': 'bytes',
-							 'data': list(obj)
+			return { 'type': 'bytes'
+						 , 'data': list(obj)
 						 }
 		if isinstance ( obj, bytearray ):
-			return { 'type': 'Buffer',
-							 'data': list(obj)
+			return { 'type': 'Buffer'
+						 , 'data': list(obj)
 						 }
 		if isinstance ( obj, datetime.datetime ):
-			return { 'type': 'Date',
-							 'value': obj.isoformat()
+			return { 'type': 'Date'
+						 , 'value': obj.isoformat()
 						 }
 		if isinstance ( obj, Event ):
 			juser = None
@@ -97,8 +115,8 @@ class Event ( object ):
 						 , "user":juser
 						 }
 		raise TypeError ( repr(obj) + ' is not JSON serializable' )
-	@classmethod
-	def from_json ( cls, obj ):
+	@staticmethod
+	def from_json ( obj ):
 		if 'type' in obj:
 			if obj['type'] == 'time.asctime':
 				return time.strptime(obj['data'])
@@ -113,12 +131,12 @@ class Event ( object ):
 class User ( object ):
 	def __init__ ( self, id, key=None, pwd=None, rights=None ):
 		if isinstance ( id, dict ):
-			hh = id
+			obj = id
 			self.className = self.__class__.__name__ ;
-			self.id = hh["id"]
-			self.key = hh["key"]
-			self._pwd = hh["_pwd"]
-			self.rights = hh["rights"]
+			self.id = obj["id"]
+			self.key = obj["key"]
+			self._pwd = obj["_pwd"]
+			self.rights = obj["rights"]
 			return
 
 		self.className = "User" ;
@@ -156,32 +174,3 @@ class User ( object ):
 		self.rights[name] = value
 	def getRight ( self, name ):
 		return self.rights[name]
-
-# ==========================================================================
-e = Event ("ALARM2")
-# binaryData = BytesIO(b"ABCDE")
-binaryData = bytearray([1,2,3,4,5])
-e.body["binaryData"] = binaryData ;
-
-u = User ( "john", 999, "SECRET" )
-
-u.addRight ( "CAN_READ_FILES", "*.docx" ) ;
-e.setUser ( u ) ;
-
-s = json.dumps ( e, default=Event.to_json ) #, indent=2 )
-print ( "-------------------------------" )
-print (s)
-
-text_file = open ("event.python.json", "w")
-text_file.write ( s )
-text_file.close()
-
-print ( "-------------------------------" )
-obj = json.loads ( s, object_hook=Event.from_json )
-# print (obj)
-ee = Event ( obj )
-print ( "================================================" )
-# print ( ee )
-print ( ee.getUser() )
-
-# print	( ee.getUser() )
