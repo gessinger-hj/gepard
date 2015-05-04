@@ -12,7 +12,7 @@ if ( !Array.isArray )
   };
 }
 var _isBrowser = true ;
-if ( typeof document !== 'undefined' && typeof module === 'undefined' && ! module.exports  ) // browser
+if ( typeof document !== 'undefined' && typeof module === 'undefined' ) // browser
 {
 	_isBrowser = true ;
 }
@@ -595,7 +595,7 @@ gepard.Event.prototype =
 		return this.control.hostname ;
 	}
 };
-if ( typeof document !== 'undefined' && typeof module === 'undefined' && typeof process === 'undefined' && typeof process.argv === 'undefined' ) // browser
+if ( _isBrowser )
 {
 	gepard.serialize = gepard.Event.prototype.serialize ;
 	gepard.deserialize = gepard.Event.prototype.deserialize ;
