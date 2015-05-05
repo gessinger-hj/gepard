@@ -1,10 +1,12 @@
 {
 	"accessibility": {
 		"whitelist": {
-			"localhost": "events": [ "*" ]
+			"localhost": [ "*", "ALARM" ]
+		, "WENB0782": [ "ALARM" ]
+		, "*": [ "BLARM", "*XARM" ]
 		},
 		"blacklist": {
-			"WENB0782": "events": [ "*" ]
+			"WENB0782": [ "*" ]
 		}
 	}
 }

@@ -12,6 +12,7 @@ var T            = require ( "./Tango" ) ;
 var MultiHash    = require ( "./MultiHash" ) ;
 var Log          = require ( "./LogFile" ) ;
 var os           = require ( "os" ) ;
+var fs           = require ( "fs" ) ;
 
 /**
  * Description
@@ -894,7 +895,81 @@ Broker.prototype.listen = function ( port, callback )
   }
   this.server.listen ( this.port, callback ) ;
 };
+/**
+ * @method setConfig
+ * @param {object} configJson
+ * @return {void}
+ */
+Broker.prototype.setConfig = function ( obj )
+{
+  var key, host, patternList, nameMap, eventList, hostMap, i, s, pattern ;
+  var accessibility = obj.accessibility ;
+T.log ( obj ) ;
+  if ( accessibility )
+  {
+    this.whitelist = accessibility.whitelist ;
+    if ( this.whitelist )
+    {
+      this._whitelist_map = {} ;
+      for ( host in this.whitelist )
+      {
+        if ( host.indexOf ( "*" ) < 0 )
+        {
+          hostMap = {} ;
+          hostMap.patternList = [] ;
+          hostMap.nameMap = {} ;
 
+          this._whitelist_map[host] = hostMap ;
+          
+          eventList = this.whitelist[host] ;
+          for ( var i = 0 ; i < eventList.length ; i++ )
+          {
+            s = eventList[i] ;
+            if ( s.indexOf ( "*" ) < 0 )
+            {
+              hostMap.nameMap[s] = true ;
+            }
+            else
+            {
+              s = s.replace ( /\./g, "\\." ).replace ( /\*/g, ".*" ) ;
+              hostMap.patternList.push ( new RegExp ( s ) ) ;
+            }
+          }
+        }
+        else
+        {
+          hostMap = {} ;
+          hostMap.patternList = [] ;
+          hostMap.nameMap = {} ;
+          pattern = host.replace ( /\./g, "\\." ).replace ( /\*/g, ".*" ) ;
+          hostMap.regexp = new RegExp ( pattern ) ;
+          this._whitelist_patternList = [] ;
+          this._whitelist_patternList.push ( hostMap ) ;
+console.log ( "host=" + host ) ;
+
+          eventList = this.whitelist[host] ;
+T.log ( eventList ) ;
+          for ( var i = 0 ; i < eventList.length ; i++ )
+          {
+            s = eventList[i] ;
+            if ( s.indexOf ( "*" ) < 0 )
+            {
+              hostMap.nameMap[s] = true ;
+            }
+            else
+            {
+              s = s.replace ( /\./g, "\\." ).replace ( /\*/g, ".*" ) ;
+              hostMap.patternList.push ( new RegExp ( s ) ) ;
+            }
+          }
+        }
+      }
+    }
+    var blacklist = accessibility.blacklist ;
+T.log ( this._whitelist_map )
+T.log ( this._whitelist_patternList )
+  }
+};
 module.exports = Broker ;
 
 if ( require.main === module )
@@ -931,6 +1006,11 @@ if ( require.main === module )
     Log.init ( "level=info,Xedirect=3,file=%GEPARD_LOG%/%APPNAME%.log:max=1m:v=4") ;
 
     var b = new Broker() ;
+    if ( T.getProperty ( "conf" ) )
+    {
+      var str = fs.readFileSync ( T.getProperty ( "conf" ), 'utf8' ) ;
+      b.setConfig ( JSON.parse ( str ) ) ;
+    }
     b.listen() ;
     if ( T.getBool ( "web", false ) )
     {

@@ -466,7 +466,7 @@ gepard.Event.prototype =
 	/**
 	 * Description
 	 * @method getBody
-	 * @return MemberExpression
+	 * @return {object} body
 	 */
 	getBody: function()
 	{
@@ -475,7 +475,7 @@ gepard.Event.prototype =
 	/**
 	 * Description
 	 * @method setBody
-	 * @param {} data
+	 * @param {object} data
 	 * @return 
 	 */
 	setBody: function ( data )
@@ -486,6 +486,41 @@ gepard.Event.prototype =
 			throw new Error ( "Event.setBody(): Argument must be an object." ) ;
 		}
 		if ( data ) this.body = data ;
+	},
+	/**
+	 * Description
+	 * @method putValue
+	 * @param {string} name
+	 * @param {any} value
+	 * @return 
+	 */
+	putValue: function ( name, value )
+	{
+		if ( ! name )
+		if ( typeof name !== 'string' )
+		{
+			throw new Error ( "Event.putValue(): name must be a string." ) ;
+		}
+		if ( typeof value === 'undefined' )
+		{
+			throw new Error ( "Event.putValue(): Missing value." ) ;
+		}
+		this.body[name] = value ;
+	},
+	/**
+	 * Description
+	 * @method getValue
+	 * @param {string} name
+	 * @return {any} value
+	 */
+	getValue: function ( name )
+	{
+		if ( ! name )
+		if ( typeof name !== 'string' )
+		{
+			throw new Error ( "Event.getValue(): name must be a string." ) ;
+		}
+		return this.body[name] ;
 	},
 	/**
 	 * Description
