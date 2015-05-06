@@ -1,7 +1,7 @@
 {
 	"accessibility": {
 		"whitelist": {
-			"localhost": [ "*", "ALARM" ]
+			"XXlocalhost": [ "*", "ALARM" ]
 		, "WENB0782": [ "ALARM" ]
 		, "*": [ "BLARM", "*XARM" ]
 		},

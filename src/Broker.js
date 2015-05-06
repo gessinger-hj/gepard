@@ -13,6 +13,7 @@ var MultiHash    = require ( "./MultiHash" ) ;
 var Log          = require ( "./LogFile" ) ;
 var os           = require ( "os" ) ;
 var fs           = require ( "fs" ) ;
+var dns          = require ( "dns" ) ;
 
 /**
  * Description
@@ -325,7 +326,26 @@ var Broker = function ( port, ip )
       var requesterConnection ;
       var responderConnection ;
       var uid ;
-
+      var found_map ;
+//       if ( thiz._whitelist_map )
+//       {
+// console.log ( "this.remoteAddress=" + this.remoteAddress ) ;
+//         found_map = thiz._whitelist_map[this.remoteAddress]
+// T.log  ( found_map ) ;
+//         if ( !found_map && thiz.socketIsFrom_localhost )
+//         {
+//           found_map = thiz._whitelist_map["localhost"]
+// T.log  ( found_map ) ;
+//         }
+//         if ( ! found_map )
+//         {
+//           for ( var i = 0 ; i < thiz._whitelist_patternList.length ; i++ )
+//           {
+//             if ( ! thiz._whitelist_patternList[i].regexp.test ( this.remoteAddress ) ) continue ;
+// T.log ( thiz._whitelist_patternList[i].patternList ) ;
+//           }
+//         }
+//       }
       if ( ! this.partialMessage ) this.partialMessage = "" ;
       mm = this.partialMessage + mm ;
       this.partialMessage = "" ;
@@ -904,7 +924,7 @@ Broker.prototype.setConfig = function ( obj )
 {
   var key, host, patternList, nameMap, eventList, hostMap, i, s, pattern ;
   var accessibility = obj.accessibility ;
-T.log ( obj ) ;
+// T.log ( obj ) ;
   if ( accessibility )
   {
     this.whitelist = accessibility.whitelist ;
@@ -945,10 +965,10 @@ T.log ( obj ) ;
           hostMap.regexp = new RegExp ( pattern ) ;
           this._whitelist_patternList = [] ;
           this._whitelist_patternList.push ( hostMap ) ;
-console.log ( "host=" + host ) ;
+// console.log ( "host=" + host ) ;
 
           eventList = this.whitelist[host] ;
-T.log ( eventList ) ;
+// T.log ( eventList ) ;
           for ( var i = 0 ; i < eventList.length ; i++ )
           {
             s = eventList[i] ;
@@ -966,8 +986,8 @@ T.log ( eventList ) ;
       }
     }
     var blacklist = accessibility.blacklist ;
-T.log ( this._whitelist_map )
-T.log ( this._whitelist_patternList )
+// T.log ( this._whitelist_map )
+// T.log ( this._whitelist_patternList )
   }
 };
 module.exports = Broker ;
@@ -1006,11 +1026,11 @@ if ( require.main === module )
     Log.init ( "level=info,Xedirect=3,file=%GEPARD_LOG%/%APPNAME%.log:max=1m:v=4") ;
 
     var b = new Broker() ;
-    if ( T.getProperty ( "conf" ) )
-    {
-      var str = fs.readFileSync ( T.getProperty ( "conf" ), 'utf8' ) ;
-      b.setConfig ( JSON.parse ( str ) ) ;
-    }
+    // if ( T.getProperty ( "config" ) )
+    // {
+    //   var str = fs.readFileSync ( T.getProperty ( "config" ), 'utf8' ) ;
+    //   b.setConfig ( JSON.parse ( str ) ) ;
+    // }
     b.listen() ;
     if ( T.getBool ( "web", false ) )
     {
