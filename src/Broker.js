@@ -263,6 +263,7 @@ var Broker = function ( port, ip )
   this.closing                             = false ;
   var thiz                                 = this ;
   var conn ;
+  var allowed ;
   this._lockOwner                          = {} ;
   this._semaphoreOwner                     = {} ;
   this._pendingAcquireSemaphoreConnections = new MultiHash() ;
@@ -299,6 +300,27 @@ var Broker = function ( port, ip )
       socket.end() ;
       return ;
     }
+    if ( thiz._whitelist_map )
+    {
+      allowed = !!thiz._whitelist_map[socket.remoteAddress]
+      if ( ! allowed && thiz.socketIsFrom_localhost ( socket ) )
+      {
+        allowed = !!thiz._whitelist_map["localhost"]
+      }
+      for ( var i = 0 ; i < thiz._whitelist_patternList.length ; i++ )
+      {
+        if ( ! thiz._whitelist_patternList[i].regexp.test ( socket.remoteAddress ) ) continue ;
+        allowed = true ;
+      }
+      if ( ! allowed )
+      {
+        var e = new Event ( "system", "error" ) ;
+        e.control.status = { code:1, name:"error", reason:"access denied" } ;
+        socket.write ( e.serialize() ) ;
+        socket.end() ;
+        return ;
+      }
+    }
     conn = new Connection ( thiz, socket ) ;
     thiz._connections[conn.sid] = conn ;
     thiz._connectionList.push ( conn ) ;
@@ -329,21 +351,18 @@ var Broker = function ( port, ip )
       var found_map ;
 //       if ( thiz._whitelist_map )
 //       {
-// console.log ( "this.remoteAddress=" + this.remoteAddress ) ;
 //         found_map = thiz._whitelist_map[this.remoteAddress]
-// T.log  ( found_map ) ;
 //         if ( !found_map && thiz.socketIsFrom_localhost )
 //         {
 //           found_map = thiz._whitelist_map["localhost"]
+// T.lwhere (  ) ;
 // T.log  ( found_map ) ;
 //         }
-//         if ( ! found_map )
+//         for ( var i = 0 ; i < thiz._whitelist_patternList.length ; i++ )
 //         {
-//           for ( var i = 0 ; i < thiz._whitelist_patternList.length ; i++ )
-//           {
-//             if ( ! thiz._whitelist_patternList[i].regexp.test ( this.remoteAddress ) ) continue ;
-// T.log ( thiz._whitelist_patternList[i].patternList ) ;
-//           }
+//           if ( ! thiz._whitelist_patternList[i].regexp.test ( this.remoteAddress ) ) continue ;
+// T.lwhere (  ) ;
+// T.log ( thiz._whitelist_patternList[i] ) ;
 //         }
 //       }
       if ( ! this.partialMessage ) this.partialMessage = "" ;
@@ -924,7 +943,6 @@ Broker.prototype.setConfig = function ( obj )
 {
   var key, host, patternList, nameMap, eventList, hostMap, i, s, pattern ;
   var accessibility = obj.accessibility ;
-// T.log ( obj ) ;
   if ( accessibility )
   {
     this.whitelist = accessibility.whitelist ;
@@ -965,10 +983,7 @@ Broker.prototype.setConfig = function ( obj )
           hostMap.regexp = new RegExp ( pattern ) ;
           this._whitelist_patternList = [] ;
           this._whitelist_patternList.push ( hostMap ) ;
-// console.log ( "host=" + host ) ;
-
           eventList = this.whitelist[host] ;
-// T.log ( eventList ) ;
           for ( var i = 0 ; i < eventList.length ; i++ )
           {
             s = eventList[i] ;
@@ -986,8 +1001,6 @@ Broker.prototype.setConfig = function ( obj )
       }
     }
     var blacklist = accessibility.blacklist ;
-// T.log ( this._whitelist_map )
-// T.log ( this._whitelist_patternList )
   }
 };
 module.exports = Broker ;
@@ -1026,11 +1039,11 @@ if ( require.main === module )
     Log.init ( "level=info,Xedirect=3,file=%GEPARD_LOG%/%APPNAME%.log:max=1m:v=4") ;
 
     var b = new Broker() ;
-    // if ( T.getProperty ( "config" ) )
-    // {
-    //   var str = fs.readFileSync ( T.getProperty ( "config" ), 'utf8' ) ;
-    //   b.setConfig ( JSON.parse ( str ) ) ;
-    // }
+    if ( T.getProperty ( "config" ) )
+    {
+      var str = fs.readFileSync ( T.getProperty ( "config" ), 'utf8' ) ;
+      b.setConfig ( JSON.parse ( str ) ) ;
+    }
     b.listen() ;
     if ( T.getBool ( "web", false ) )
     {

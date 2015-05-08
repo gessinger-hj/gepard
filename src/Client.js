@@ -234,6 +234,11 @@ Client.prototype.connect = function()
           {
             uid = e.getUniqueId() ;
             ctx = thiz.callbacks[uid] ;
+            if ( !ctx )
+            {
+              console.log ( e ) ;
+              continue ;
+            }
             delete thiz.callbacks[uid] ;
             rcb = ctx.error ;
             if ( e.isFailureInfoRequested() )
