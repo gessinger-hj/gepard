@@ -243,7 +243,22 @@ Connection.prototype.getNextMessageUidToBeProcessed = function()
 {
   return this._messageUidsToBeProcessed.shift() ;
 };
-
+Connection.prototype.isLocalHost = function()
+{
+  for ( i = 0 ; i < this.broker._networkAddresses.length ; i++ )
+  {
+    var index = this.socket.remoteAddress.indexOf ( this.broker._networkAddresses[i] ) ;
+    if ( index < 0 )
+    {
+      continue ;
+    }
+    if ( this.socket.remoteAddress.indexOf ( this.broker._networkAddresses[i] ) === this.socket.remoteAddress.length - this.broker._networkAddresses[i].length )
+    {
+      return true ;
+    }
+  }
+  return false ;
+};
 /**
  * @constructor
  * @extends {EventEmitter}
@@ -300,28 +315,8 @@ var Broker = function ( port, ip )
       socket.end() ;
       return ;
     }
-    if ( thiz._whitelist_map )
-    {
-      allowed = !!thiz._whitelist_map[socket.remoteAddress]
-      if ( ! allowed && thiz.socketIsFrom_localhost ( socket ) )
-      {
-        allowed = !!thiz._whitelist_map["localhost"]
-      }
-      for ( var i = 0 ; i < thiz._whitelist_patternList.length ; i++ )
-      {
-        if ( ! thiz._whitelist_patternList[i].regexp.test ( socket.remoteAddress ) ) continue ;
-        allowed = true ;
-      }
-      if ( ! allowed )
-      {
-        var e = new Event ( "system", "error" ) ;
-        e.control.status = { code:1, name:"error", reason:"access denied" } ;
-        socket.write ( e.serialize() ) ;
-        socket.end() ;
-        return ;
-      }
-    }
     conn = new Connection ( thiz, socket ) ;
+    thiz._connectionHook.connect ( conn ) ;
     thiz._connections[conn.sid] = conn ;
     thiz._connectionList.push ( conn ) ;
     Log.info ( 'Socket connected' );
@@ -349,22 +344,6 @@ var Broker = function ( port, ip )
       var responderConnection ;
       var uid ;
       var found_map ;
-//       if ( thiz._whitelist_map )
-//       {
-//         found_map = thiz._whitelist_map[this.remoteAddress]
-//         if ( !found_map && thiz.socketIsFrom_localhost )
-//         {
-//           found_map = thiz._whitelist_map["localhost"]
-// T.lwhere (  ) ;
-// T.log  ( found_map ) ;
-//         }
-//         for ( var i = 0 ; i < thiz._whitelist_patternList.length ; i++ )
-//         {
-//           if ( ! thiz._whitelist_patternList[i].regexp.test ( this.remoteAddress ) ) continue ;
-// T.lwhere (  ) ;
-// T.log ( thiz._whitelist_patternList[i] ) ;
-//         }
-//       }
       if ( ! this.partialMessage ) this.partialMessage = "" ;
       mm = this.partialMessage + mm ;
       this.partialMessage = "" ;
@@ -405,6 +384,8 @@ var Broker = function ( port, ip )
             thiz._ejectSocket ( this ) ;
             continue ;
           }
+          conn = thiz._connections[this.sid] ;
+
           if ( e.isResult() )
           {
             responderConnection = thiz._connections[this.sid] ;
@@ -439,10 +420,10 @@ var Broker = function ( port, ip )
           }
           if ( e.getName() === 'system' )
           {
-            thiz._handleSystemMessages ( this, e ) ;
+            thiz._handleSystemMessages ( conn, e ) ;
             continue ;
           }
-          thiz._sendEventToClients ( socket, e ) ;
+          thiz._sendEventToClients ( conn, e ) ;
         }
       }
     });
@@ -450,22 +431,6 @@ var Broker = function ( port, ip )
 };
 util.inherits ( Broker, EventEmitter ) ;
 
-Broker.prototype.socketIsFrom_localhost = function ( socket )
-{
-  for ( i = 0 ; i < this._networkAddresses.length ; i++ )
-  {
-    var index = socket.remoteAddress.indexOf ( this._networkAddresses[i] ) ;
-    if ( index < 0 )
-    {
-      continue ;
-    }
-    if ( socket.remoteAddress.indexOf ( this._networkAddresses[i] ) === socket.remoteAddress.length - this._networkAddresses[i].length )
-    {
-      return true ;
-    }
-  }
-  return false ;
-};
 /**
  * Description
  * @method toString
@@ -512,14 +477,19 @@ Broker.prototype._sendMessageToClient = function ( e, socketList )
  * @param {} e
  * @return 
  */
-Broker.prototype._sendEventToClients = function ( socket, e )
+Broker.prototype._sendEventToClients = function ( conn, e )
 {
+  if ( ! this._connectionHook.sendEvent ( conn, e ) )
+  {
+    conn.socket.end() ;
+    return ;
+  }
   var i, found = false, done = false, str ;
   var name = e.getName() ;
-  e.setSourceIdentifier ( socket.sid ) ;
+  e.setSourceIdentifier ( conn.sid ) ;
   var str = e.serialize() ;
   var socketList = this._eventNameToSockets.get ( name ) ;
-  var s, conn ;
+  var s ;
   if ( socketList )
   {
     found = true ;
@@ -562,7 +532,7 @@ Broker.prototype._sendEventToClients = function ( socket, e )
       e.setIsResult() ;
       e.control.status = { code:1, name:"warning", reason:"No listener found for event: " + e.getName() } ;
       e.control.requestedName = e.getName() ;
-      socket.write ( e.serialize() ) ;
+      conn.write ( e ) ;
       return ;
     }
     Log.info ( "No listener found for " + e.getName() ) ;
@@ -575,9 +545,9 @@ Broker.prototype._sendEventToClients = function ( socket, e )
  * @param {} e
  * @return 
  */
-Broker.prototype._handleSystemMessages = function ( socket, e )
+Broker.prototype._handleSystemMessages = function ( conn, e )
 {
-  var conn, i, found ;
+  var i, found ;
   if ( e.getType() === "addMultiplexer" )
   {
     return ;
@@ -585,15 +555,14 @@ Broker.prototype._handleSystemMessages = function ( socket, e )
   else
   if ( e.getType() === "shutdown" )
   {
-    if ( ! this.socketIsFrom_localhost ( socket ) )
+    if ( ! this._connectionHook.shutdown ( conn ) )
     {
-      socket.end() ;
+      conn.socket.end() ;
       return ;
     }
     var shutdown_sid = e.body.shutdown_sid ;
     if ( shutdown_sid )
     {
-      conn = this._connections[socket.sid] ;
       var target_conn = this._connections[shutdown_sid] ;
       found = false ;
       if ( target_conn )
@@ -618,18 +587,18 @@ Broker.prototype._handleSystemMessages = function ( socket, e )
       if ( ! found )
       {
         e.control.status = { code:1, name:"error", reason:"no connection for sid=" + shutdown_sid } ;
-        socket.write ( e.serialize() ) ;
+        conn.write ( e ) ;
         return ;
       }
       e.control.status = { code:0, name:"ack" } ;
-      socket.write ( e.serialize() ) ;
+      conn.write ( e ) ;
       return ;
     }
     else
     {
       Log.notice ( 'server shutting down' ) ;
       e.control.status = { code:0, name:"ack" } ;
-      socket.write ( e.serialize() ) ;
+      conn.write ( e ) ;
       this._closeAllSockets() ;
       this.server.unref() ;
       Log.notice ( 'server shut down' ) ;
@@ -639,9 +608,8 @@ Broker.prototype._handleSystemMessages = function ( socket, e )
   else
   if ( e.getType() === "client_info" )
   {
-    conn = this._connections[socket.sid] ;
     conn.client_info = e.body ; e.body = {} ;
-    conn.client_info.sid = socket.sid ;
+    conn.client_info.sid = conn.sid ;
     var app = conn.client_info.application ;
     if ( app )
     {
@@ -668,25 +636,36 @@ Broker.prototype._handleSystemMessages = function ( socket, e )
   else
   if ( e.getType() === "getInfoRequest" )
   {
-    conn = new Connection ( this, socket )
+    if ( ! this._connectionHook.getInfoRequest ( conn ) )
+    {
+      conn.socket.end() ;
+      return ;
+    }
     conn.sendInfoResult ( e ) ;
   }
   else
   if ( e.getType() === "addEventListener" )
   {
-    conn = this._connections[socket.sid] ;
+    if ( ! this._connectionHook.addEventListener ( conn, e ) )
+    {
+      conn.socket.end() ;
+      return ;
+    }
     conn.addEventListener ( e ) ;
   }
   else
   if ( e.getType() === "removeEventListener" )
   {
-    conn = this._connections[socket.sid] ;
     conn.removeEventListener ( e ) ;
   }
   else
   if ( e.getType() === "lockResourceRequest" )
   {
-    conn = this._connections[socket.sid] ;
+    if ( ! this._connectionHook.lockResource ( conn, e ) )
+    {
+      conn.socket.end() ;
+      return ;
+    }
     var resourceId = e.body.resourceId ;
     if ( ! resourceId )
     {
@@ -709,7 +688,6 @@ Broker.prototype._handleSystemMessages = function ( socket, e )
   else
   if ( e.getType() === "unlockResourceRequest" )
   {
-    conn = this._connections[socket.sid] ;
     var resourceId = e.body.resourceId ;
     if ( ! resourceId )
     {
@@ -733,12 +711,17 @@ Broker.prototype._handleSystemMessages = function ( socket, e )
   else
   if ( e.getType() === "acquireSemaphoreRequest" )
   {
-    this._acquireSemaphoreRequest ( socket, e ) ;
+    if ( ! this._connectionHook.acquireSemaphore ( conn, e ) )
+    {
+      conn.socket.end() ;
+      return ;
+    }
+    this._acquireSemaphoreRequest ( conn.socket, e ) ;
   }
   else
   if ( e.getType() === "releaseSemaphoreRequest" )
   {
-    this._releaseSemaphoreRequest ( socket, e ) ;
+    this._releaseSemaphoreRequest ( conn.socket, e ) ;
   }
   else
   {
@@ -939,69 +922,89 @@ Broker.prototype.listen = function ( port, callback )
  * @param {object} configJson
  * @return {void}
  */
-Broker.prototype.setConfig = function ( obj )
+Broker.prototype.setConfig = function ( configuration )
 {
-  var key, host, patternList, nameMap, eventList, hostMap, i, s, pattern ;
-  var accessibility = obj.accessibility ;
-  if ( accessibility )
+  var fileName = null ;
+  if ( ! configuration )
   {
-    this.whitelist = accessibility.whitelist ;
-    if ( this.whitelist )
-    {
-      this._whitelist_map = {} ;
-      for ( host in this.whitelist )
-      {
-        if ( host.indexOf ( "*" ) < 0 )
-        {
-          hostMap = {} ;
-          hostMap.patternList = [] ;
-          hostMap.nameMap = {} ;
-
-          this._whitelist_map[host] = hostMap ;
-          
-          eventList = this.whitelist[host] ;
-          for ( var i = 0 ; i < eventList.length ; i++ )
-          {
-            s = eventList[i] ;
-            if ( s.indexOf ( "*" ) < 0 )
-            {
-              hostMap.nameMap[s] = true ;
-            }
-            else
-            {
-              s = s.replace ( /\./g, "\\." ).replace ( /\*/g, ".*" ) ;
-              hostMap.patternList.push ( new RegExp ( s ) ) ;
-            }
-          }
-        }
-        else
-        {
-          hostMap = {} ;
-          hostMap.patternList = [] ;
-          hostMap.nameMap = {} ;
-          pattern = host.replace ( /\./g, "\\." ).replace ( /\*/g, ".*" ) ;
-          hostMap.regexp = new RegExp ( pattern ) ;
-          this._whitelist_patternList = [] ;
-          this._whitelist_patternList.push ( hostMap ) ;
-          eventList = this.whitelist[host] ;
-          for ( var i = 0 ; i < eventList.length ; i++ )
-          {
-            s = eventList[i] ;
-            if ( s.indexOf ( "*" ) < 0 )
-            {
-              hostMap.nameMap[s] = true ;
-            }
-            else
-            {
-              s = s.replace ( /\./g, "\\." ).replace ( /\*/g, ".*" ) ;
-              hostMap.patternList.push ( new RegExp ( s ) ) ;
-            }
-          }
-        }
-      }
-    }
-    var blacklist = accessibility.blacklist ;
+    configuration = T.getProperty ( "config" )
   }
+  if ( typeof configuration === 'string' )
+  {
+    configuration = JSON.parse ( fs.readFileSync ( configuration, 'utf8' ) ) ;
+  }
+  if ( ! configuration )
+  {
+    configuration = { hook: "BrokerConnectionHook" } ;
+  }
+  if ( ! configuration.hook )
+  {
+    configuration.hook = "BrokerConnectionHook" ;
+  }
+  var hook = require ( configuration.hook ) ;
+  this._connectionHook = new hook() ;
+
+//   var key, host, patternList, nameMap, eventList, hostMap, i, s, pattern ;
+//   var accessibility = obj.accessibility ;
+//   if ( accessibility )
+//   {
+//     this.whitelist = accessibility.whitelist ;
+//     if ( this.whitelist )
+//     {
+//       this._whitelist_map = {} ;
+//       for ( host in this.whitelist )
+//       {
+//         if ( host.indexOf ( "*" ) < 0 )
+//         {
+//           hostMap = {} ;
+//           hostMap.patternList = [] ;
+//           hostMap.nameMap = {} ;
+
+//           this._whitelist_map[host] = hostMap ;
+          
+//           eventList = this.whitelist[host] ;
+//           for ( var i = 0 ; i < eventList.length ; i++ )
+//           {
+//             s = eventList[i] ;
+//             if ( s.indexOf ( "*" ) < 0 )
+//             {
+//               hostMap.nameMap[s] = true ;
+//             }
+//             else
+//             {
+//               s = s.replace ( /\./g, "\\." ).replace ( /\*/g, ".*" ) ;
+//               hostMap.patternList.push ( new RegExp ( s ) ) ;
+//             }
+//           }
+//         }
+//         else
+//         {
+//           hostMap = {} ;
+//           hostMap.patternList = [] ;
+//           hostMap.nameMap = {} ;
+//           pattern = host.replace ( /\./g, "\\." ).replace ( /\*/g, ".*" ) ;
+//           hostMap.regexp = new RegExp ( pattern ) ;
+//           this._whitelist_patternList = [] ;
+//           this._whitelist_patternList.push ( hostMap ) ;
+//           eventList = this.whitelist[host] ;
+//           for ( var i = 0 ; i < eventList.length ; i++ )
+//           {
+//             s = eventList[i] ;
+//             if ( s.indexOf ( "*" ) < 0 )
+//             {
+//               hostMap.nameMap[s] = true ;
+//             }
+//             else
+//             {
+//               s = s.replace ( /\./g, "\\." ).replace ( /\*/g, ".*" ) ;
+//               hostMap.patternList.push ( new RegExp ( s ) ) ;
+//             }
+//           }
+//         }
+//       }
+//     }
+//     var blacklist = accessibility.blacklist ;
+//   }
 };
 module.exports = Broker ;
 
@@ -1039,11 +1042,7 @@ if ( require.main === module )
     Log.init ( "level=info,Xedirect=3,file=%GEPARD_LOG%/%APPNAME%.log:max=1m:v=4") ;
 
     var b = new Broker() ;
-    if ( T.getProperty ( "config" ) )
-    {
-      var str = fs.readFileSync ( T.getProperty ( "config" ), 'utf8' ) ;
-      b.setConfig ( JSON.parse ( str ) ) ;
-    }
+    b.setConfig() ;
     b.listen() ;
     if ( T.getBool ( "web", false ) )
     {
