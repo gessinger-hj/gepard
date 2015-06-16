@@ -42,7 +42,8 @@ var Connection = function ( broker, socket )
   this._ownedSemaphoresRecourceIdList         = [] ;
   this._pendingAcquireSemaphoreRecourceIdList = [] ;
   this._numberOfPendingRequests               = 0 ;
-  this._messageUidsToBeProcessed = [] ;
+  this._messageUidsToBeProcessed              = [] ;
+  this._isLocalHost ;
 };
 /**
  * Description
@@ -245,6 +246,10 @@ Connection.prototype.getNextMessageUidToBeProcessed = function()
 };
 Connection.prototype.isLocalHost = function()
 {
+  if ( typeof this._isLocalHost === 'boolean' )
+  {
+    return this._isLocalHost ;
+  }
   for ( i = 0 ; i < this.broker._networkAddresses.length ; i++ )
   {
     var index = this.socket.remoteAddress.indexOf ( this.broker._networkAddresses[i] ) ;
@@ -254,10 +259,16 @@ Connection.prototype.isLocalHost = function()
     }
     if ( this.socket.remoteAddress.indexOf ( this.broker._networkAddresses[i] ) === this.socket.remoteAddress.length - this.broker._networkAddresses[i].length )
     {
-      return true ;
+      this._isLocalHost = true ;
+      return this._isLocalHost ;
     }
   }
-  return false ;
+  this._isLocalHost = false ;
+  return this._isLocalHost ;
+};
+Connection.prototype.getRemoteAddress = function()
+{
+  return this.socket ? this.socket.remoteAddress : "" ;
 };
 /**
  * @constructor
@@ -316,7 +327,11 @@ var Broker = function ( port, ip )
       return ;
     }
     conn = new Connection ( thiz, socket ) ;
-    thiz._connectionHook.connect ( conn ) ;
+    if ( ! thiz._connectionHook.connect ( conn ) )
+    {
+      socket.end() ;
+      return ;
+    }
     thiz._connections[conn.sid] = conn ;
     thiz._connectionList.push ( conn ) ;
     Log.info ( 'Socket connected' );
@@ -924,7 +939,7 @@ Broker.prototype.listen = function ( port, callback )
  */
 Broker.prototype.setConfig = function ( configuration )
 {
-  var fileName = null ;
+  var connectionHookIsFile = false ;
   if ( ! configuration )
   {
     configuration = T.getProperty ( "config" )
@@ -932,16 +947,24 @@ Broker.prototype.setConfig = function ( configuration )
   if ( typeof configuration === 'string' )
   {
     configuration = JSON.parse ( fs.readFileSync ( configuration, 'utf8' ) ) ;
+    if ( typeof configuration.connectionHook === 'string' )
+    {
+      configuration.connectionHook = configuration.connectionHook.replace ( /\\/g, "/" ) ;
+      if ( configuration.connectionHook.indexOf ( "/" ) !== 0 )
+      {
+        configuration.connectionHook = process.cwd() + "/" + configuration.connectionHook ;
+      }
+    }
   }
   if ( ! configuration )
   {
-    configuration = { hook: "BrokerConnectionHook" } ;
+    configuration = { connectionHook: "BrokerConnectionHook" } ;
   }
-  if ( ! configuration.hook )
+  if ( ! configuration.connectionHook )
   {
-    configuration.hook = "BrokerConnectionHook" ;
+    configuration.connectionHook = "BrokerConnectionHook" ;
   }
-  var hook = require ( configuration.hook ) ;
+  var hook = require ( configuration.connectionHook ) ;
   this._connectionHook = new hook() ;
 
 //   var key, host, patternList, nameMap, eventList, hostMap, i, s, pattern ;

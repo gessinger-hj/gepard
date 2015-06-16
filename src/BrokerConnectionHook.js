@@ -10,7 +10,7 @@ BrokerConnectionHook.prototype.toString = function()
 };
 BrokerConnectionHook.prototype.connect = function ( connection )
 {
-// console.log ( connection ) ;
+	return true ;
 };
 BrokerConnectionHook.prototype.shutdown = function ( connection )
 {
