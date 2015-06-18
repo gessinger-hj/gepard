@@ -15,6 +15,11 @@ var os           = require ( "os" ) ;
 var fs           = require ( "fs" ) ;
 var dns          = require ( "dns" ) ;
 
+if ( typeof Promise === 'undefined' ) // since node 0.12+
+{
+  Promise = require ( "promise" ) ;
+}
+
 /**
  * Description
  * @constructor Connection
@@ -53,6 +58,17 @@ var Connection = function ( broker, socket )
 Connection.prototype.toString = function()
 {
   return "(Connection)[client_info=" + util.inspect ( this.client_info, { showHidden: false, depth: null } ) + "]" ;
+};
+Connection.prototype.flush = function()
+{
+  this.broker                                        = null ;
+  this.socket                                        = null ;
+  this._lockedResourcesIdList.length                 = 0 ;
+  this._patternList.length                           = 0 ;
+  this._regexpList.length                            = 0 ;
+  this._ownedSemaphoresRecourceIdList.length         = 0 ;
+  this._pendingAcquireSemaphoreRecourceIdList.length = 0 ;
+  this._messageUidsToBeProcessed.length              = 0 ;
 };
 /**
  * Description
@@ -327,124 +343,171 @@ var Broker = function ( port, ip )
       return ;
     }
     conn = new Connection ( thiz, socket ) ;
-    if ( ! thiz._connectionHook.connect ( conn ) )
-    {
-      socket.end() ;
-      return ;
-    }
-    thiz._connections[conn.sid] = conn ;
-    thiz._connectionList.push ( conn ) ;
-    Log.info ( 'Socket connected' );
-    socket.on ( "error", thiz._ejectSocket.bind ( thiz, socket ) ) ;
-    socket.on ( 'close', thiz._ejectSocket.bind ( thiz, socket ) ) ;
-    socket.on ( 'end', thiz._ejectSocket.bind ( thiz, socket ) ) ;
-    socket.on ( "data", function socket_on_data ( chunk )
-    {
-      var mm = chunk.toString() ;
-      if ( thiz.closing )
-      {
-        return ;
-      }
-      var i, j, found ;
-      var eventNameList ;
-      var eOut ;
-      var str ;
-      var key ;
-      var sid ;
-      var index ;
-      var regexp ;
-      var name ;
-      var list ;
-      var requesterConnection ;
-      var responderConnection ;
-      var uid ;
-      var found_map ;
-      if ( ! this.partialMessage ) this.partialMessage = "" ;
-      mm = this.partialMessage + mm ;
-      this.partialMessage = "" ;
-      var result = T.splitJSONObjects ( mm ) ;
-      var messageList = result.list ;
-      var j = 0 ;
-      for ( j = 0 ; j < messageList.length ; j++ )
-      {
-        var m = messageList[j] ;
-        if ( m.length === 0 )
-        {
-          continue ;
-        }
-        if ( j === messageList.length - 1 )
-        {
-          if ( result.lastLineIsPartial )
-          {
-            this.partialMessage = m ;
-            break ;
-          }
-        }
-        if ( m.charAt ( 0 ) === '{' )
-        {
-          var e = null ;
-          try
-          {
-            e = Event.prototype.deserialize ( m ) ;
-          }
-          catch ( exc )
-          {
-            Log.log ( exc ) ;
-            Log.log ( m ) ;
-            this.end() ;
-            return ;
-          }
-          if ( ! e.body )
-          {
-            thiz._ejectSocket ( this ) ;
-            continue ;
-          }
-          conn = thiz._connections[this.sid] ;
-
-          if ( e.isResult() )
-          {
-            responderConnection = thiz._connections[this.sid] ;
-            responderConnection._numberOfPendingRequests-- ;
-            sid                 = e.getSourceIdentifier() ;
-            uid                 = e.getUniqueId() ;
-            requesterConnection = thiz._connections[sid] ;
-
-            for ( i = 0 ; i < thiz._connectionList.length  ; i++ )
-            {
-              thiz._connectionList[i]._messageUidsToBeProcessed.remove ( uid ) ;
-            }
-            delete thiz._messagesToBeProcessed[uid] ;
-            responderConnection.setCurrentlyProcessedMessageUid ( "" ) ;
-            if ( requesterConnection )
-            {
-              requesterConnection.write ( e ) ;
-              uid = responderConnection.getNextMessageUidToBeProcessed() ;
-              if ( uid )
-              {
-                e  = thiz._messagesToBeProcessed[uid] ;
-                responderConnection.write ( e ) ;
-                responderConnection._numberOfPendingRequests++ ;
-                responderConnection.setCurrentlyProcessedMessageUid ( uid ) ;
-              }
-            }
-            else
-            {
-              Log.log ( "Requester not found for result:\n" + e.toString() ) ;
-            }
-            continue ;
-          }
-          if ( e.getName() === 'system' )
-          {
-            thiz._handleSystemMessages ( conn, e ) ;
-            continue ;
-          }
-          thiz._sendEventToClients ( conn, e ) ;
-        }
-      }
-    });
+    thiz.validateAction ( thiz._connectionHook.connect, [ conn ], thiz._checkInConnection ) ;
   });
 };
+
 util.inherits ( Broker, EventEmitter ) ;
+
+Broker.prototype.validateAction = function ( hookFunctionToBeCalled, parray, actionFunction )
+{
+  var conn = parray[0] ;
+  var answer ;
+  try
+  {
+    answer = hookFunctionToBeCalled.apply ( this._connectionHook, parray ) ;
+  }
+  catch ( exc )
+  {
+    Log.log ( exc ) ;
+  }
+  if ( ! answer )
+  {
+    conn.socket.end() ;
+    conn.flush() ;
+    return ;
+  }
+  ///////////////////////
+  // this is a Promise //
+  ///////////////////////
+  var thiz = this ;
+  if ( typeof answer === 'object' && typeof answer.then === 'function' )
+  {
+    answer.then ( function success()
+    {
+      actionFunction.apply ( thiz, parray ) ;
+    }
+    , function fail ( err )
+    {
+      Log.error ( "" + err ) ;
+      conn.socket.end() ;
+      conn.flush() ;
+    }).catch ( function fcatch ( err )
+    {
+      Log.error ( err ) ;
+      conn.socket.end() ;
+      conn.flush() ;
+    });
+  }
+  else
+  {
+    actionFunction.apply ( this, parray ) ;
+  }
+};
+Broker.prototype._checkInConnection = function ( conn )
+{
+  this._connections[conn.sid] = conn ;
+  this._connectionList.push ( conn ) ;
+  Log.info ( 'Socket connected' );
+  conn.socket.on ( "error", this._ejectSocket.bind ( this, conn.socket ) ) ;
+  conn.socket.on ( 'close', this._ejectSocket.bind ( this, conn.socket ) ) ;
+  conn.socket.on ( 'end', this._ejectSocket.bind ( this, conn.socket ) ) ;
+  conn.socket.on ( "data", this._ondata.bind ( this, conn.socket ) ) ;
+};
+Broker.prototype._ondata = function ( socket, chunk )
+{
+  if ( this.closing )
+  {
+    return ;
+  }
+  var mm = chunk.toString() ;
+  var conn = this._connections[socket.sid] ;
+
+  var i, j, found ;
+  var eventNameList ;
+  var eOut ;
+  var str ;
+  var key ;
+  var sid ;
+  var index ;
+  var regexp ;
+  var name ;
+  var list ;
+  var requesterConnection ;
+  var responderConnection ;
+  var uid ;
+  if ( ! conn.partialMessage ) conn.partialMessage = "" ;
+  mm = conn.partialMessage + mm ;
+  conn.partialMessage = "" ;
+  var result = T.splitJSONObjects ( mm ) ;
+  var messageList = result.list ;
+  var j = 0 ;
+  for ( j = 0 ; j < messageList.length ; j++ )
+  {
+    var m = messageList[j] ;
+    if ( m.length === 0 )
+    {
+      continue ;
+    }
+    if ( j === messageList.length - 1 )
+    {
+      if ( result.lastLineIsPartial )
+      {
+        conn.partialMessage = m ;
+        break ;
+      }
+    }
+    if ( m.charAt ( 0 ) === '{' )
+    {
+      var e = null ;
+      try
+      {
+        e = Event.prototype.deserialize ( m ) ;
+      }
+      catch ( exc )
+      {
+        Log.log ( exc ) ;
+        Log.log ( m ) ;
+        socket.end() ;
+        return ;
+      }
+      if ( ! e.body )
+      {
+        this._ejectSocket ( socket ) ;
+        continue ;
+      }
+
+      if ( e.isResult() )
+      {
+        responderConnection = conn ;
+        responderConnection._numberOfPendingRequests-- ;
+        sid                 = e.getSourceIdentifier() ;
+        uid                 = e.getUniqueId() ;
+        requesterConnection = this._connections[sid] ;
+
+        for ( i = 0 ; i < this._connectionList.length  ; i++ )
+        {
+          this._connectionList[i]._messageUidsToBeProcessed.remove ( uid ) ;
+        }
+        delete this._messagesToBeProcessed[uid] ;
+        responderConnection.setCurrentlyProcessedMessageUid ( "" ) ;
+        if ( requesterConnection )
+        {
+          requesterConnection.write ( e ) ;
+          uid = responderConnection.getNextMessageUidToBeProcessed() ;
+          if ( uid )
+          {
+            e  = this._messagesToBeProcessed[uid] ;
+            responderConnection.write ( e ) ;
+            responderConnection._numberOfPendingRequests++ ;
+            responderConnection.setCurrentlyProcessedMessageUid ( uid ) ;
+          }
+        }
+        else
+        {
+          Log.log ( "Requester not found for result:\n" + e.toString() ) ;
+        }
+        continue ;
+      }
+      if ( e.getName() === 'system' )
+      {
+        this._handleSystemMessages ( conn, e ) ;
+        continue ;
+      }
+      this._sendEventToClients ( conn, e ) ;
+    }
+  }
+};
 
 /**
  * Description
@@ -570,55 +633,7 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
   else
   if ( e.getType() === "shutdown" )
   {
-    if ( ! this._connectionHook.shutdown ( conn ) )
-    {
-      conn.socket.end() ;
-      return ;
-    }
-    var shutdown_sid = e.body.shutdown_sid ;
-    if ( shutdown_sid )
-    {
-      var target_conn = this._connections[shutdown_sid] ;
-      found = false ;
-      if ( target_conn )
-      {
-        found = true ;
-        target_conn.write ( new Event ( "system", "shutdown" ) ) ;
-        target_conn.socket.end() ;
-      }
-      else
-      {
-        for ( i = 0 ; i < this._connectionList.length ; i++ )
-        {
-          if ( ! this._connectionList[i].client_info ) continue ;
-          if ( this._connectionList[i].client_info.applicationName === shutdown_sid )
-          {
-            found = true ;
-            this._connectionList[i].write ( new Event ( "system", "shutdown" ) ) ;
-            this._connectionList[i].socket.end() ;
-          }
-        }
-      }
-      if ( ! found )
-      {
-        e.control.status = { code:1, name:"error", reason:"no connection for sid=" + shutdown_sid } ;
-        conn.write ( e ) ;
-        return ;
-      }
-      e.control.status = { code:0, name:"ack" } ;
-      conn.write ( e ) ;
-      return ;
-    }
-    else
-    {
-      Log.notice ( 'server shutting down' ) ;
-      e.control.status = { code:0, name:"ack" } ;
-      conn.write ( e ) ;
-      this._closeAllSockets() ;
-      this.server.unref() ;
-      Log.notice ( 'server shut down' ) ;
-      this.emit ( "shutdown" ) ;
-    }
+    this.validateAction ( this._connectionHook.shutdown, [ conn, e ], this._shutdown ) ;
   }
   else
   if ( e.getType() === "client_info" )
@@ -744,6 +759,60 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
     Log.error ( e.toString() ) ;
   }
 };
+Broker.prototype._shutdown = function ( conn, e )
+{
+  var shutdown_sid = e.body.shutdown_sid ;
+  if ( shutdown_sid )
+  {
+    var target_conn = this._connections[shutdown_sid] ;
+    found = false ;
+    if ( target_conn )
+    {
+      found = true ;
+      target_conn.write ( new Event ( "system", "shutdown" ) ) ;
+      target_conn.socket.end() ;
+    }
+    else
+    {
+      for ( i = 0 ; i < this._connectionList.length ; i++ )
+      {
+        if ( ! this._connectionList[i].client_info ) continue ;
+        if ( this._connectionList[i].client_info.applicationName === shutdown_sid )
+        {
+          found = true ;
+          this._connectionList[i].write ( new Event ( "system", "shutdown" ) ) ;
+          this._connectionList[i].socket.end() ;
+        }
+      }
+    }
+    if ( ! found )
+    {
+      e.control.status = { code:1, name:"error", reason:"no connection for sid=" + shutdown_sid } ;
+      conn.write ( e ) ;
+      return ;
+    }
+    e.control.status = { code:0, name:"ack" } ;
+    conn.write ( e ) ;
+    return ;
+  }
+  else
+  {
+try
+{
+    Log.notice ( 'server shutting down' ) ;
+    e.control.status = { code:0, name:"ack" } ;
+    conn.write ( e ) ;
+    this._closeAllSockets() ;
+    this.server.unref() ;
+    Log.notice ( 'server shut down' ) ;
+    this.emit ( "shutdown" ) ;
+}
+catch ( exc )
+{
+  T.log ( exc ) ;
+}
+  }
+};
 Broker.prototype._acquireSemaphoreRequest = function ( socket, e )
 {
   var conn = this._connections[socket.sid] ;
@@ -816,7 +885,7 @@ Broker.prototype._releaseSemaphoreRequest = function ( socket, e )
  * @param {} socket
  * @return 
  */
-Broker.prototype._ejectSocket = function ( socket ) // TODO semaphore
+Broker.prototype._ejectSocket = function ( socket )
 {
   var i, rid ;
   var sid = socket.sid ;
@@ -966,68 +1035,6 @@ Broker.prototype.setConfig = function ( configuration )
   }
   var hook = require ( configuration.connectionHook ) ;
   this._connectionHook = new hook() ;
-
-//   var key, host, patternList, nameMap, eventList, hostMap, i, s, pattern ;
-//   var accessibility = obj.accessibility ;
-//   if ( accessibility )
-//   {
-//     this.whitelist = accessibility.whitelist ;
-//     if ( this.whitelist )
-//     {
-//       this._whitelist_map = {} ;
-//       for ( host in this.whitelist )
-//       {
-//         if ( host.indexOf ( "*" ) < 0 )
-//         {
-//           hostMap = {} ;
-//           hostMap.patternList = [] ;
-//           hostMap.nameMap = {} ;
-
-//           this._whitelist_map[host] = hostMap ;
-          
-//           eventList = this.whitelist[host] ;
-//           for ( var i = 0 ; i < eventList.length ; i++ )
-//           {
-//             s = eventList[i] ;
-//             if ( s.indexOf ( "*" ) < 0 )
-//             {
-//               hostMap.nameMap[s] = true ;
-//             }
-//             else
-//             {
-//               s = s.replace ( /\./g, "\\." ).replace ( /\*/g, ".*" ) ;
-//               hostMap.patternList.push ( new RegExp ( s ) ) ;
-//             }
-//           }
-//         }
-//         else
-//         {
-//           hostMap = {} ;
-//           hostMap.patternList = [] ;
-//           hostMap.nameMap = {} ;
-//           pattern = host.replace ( /\./g, "\\." ).replace ( /\*/g, ".*" ) ;
-//           hostMap.regexp = new RegExp ( pattern ) ;
-//           this._whitelist_patternList = [] ;
-//           this._whitelist_patternList.push ( hostMap ) ;
-//           eventList = this.whitelist[host] ;
-//           for ( var i = 0 ; i < eventList.length ; i++ )
-//           {
-//             s = eventList[i] ;
-//             if ( s.indexOf ( "*" ) < 0 )
-//             {
-//               hostMap.nameMap[s] = true ;
-//             }
-//             else
-//             {
-//               s = s.replace ( /\./g, "\\." ).replace ( /\*/g, ".*" ) ;
-//               hostMap.patternList.push ( new RegExp ( s ) ) ;
-//             }
-//           }
-//         }
-//       }
-//     }
-//     var blacklist = accessibility.blacklist ;
-//   }
 };
 module.exports = Broker ;
 
@@ -1074,6 +1081,7 @@ if ( require.main === module )
       wse.listen() ;
       b.on ( "shutdown", function onshutdown(e)
       {
+T.lwhere (  ) ;
         wse.shutdown() ;
         process.exit ( 0 ) ;
       });

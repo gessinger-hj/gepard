@@ -1,4 +1,10 @@
 var util         = require ( "util" ) ;
+var T            = require ( "./Tango" ) ;
+
+if ( typeof Promise === 'undefined' )
+{
+  Promise = require ( "promise" ) ;
+}
 
 var BrokerConnectionHook = function()
 {
@@ -10,14 +16,24 @@ BrokerConnectionHook.prototype.toString = function()
 };
 BrokerConnectionHook.prototype.connect = function ( connection )
 {
-	return true ;
-};
-BrokerConnectionHook.prototype.shutdown = function ( connection )
-{
-  if ( ! connection.isLocalHost() ) return false ;
   return true ;
 };
-BrokerConnectionHook.prototype.getInfoRequest = function ( connection )
+BrokerConnectionHook.prototype.shutdown = function ( connection, event )
+{
+  var p = new Promise ( function ( resolve, reject )
+  {
+    if ( ! connection.isLocalHost() )
+    {
+      reject() ;
+      return ;
+    }
+    resolve() ;
+  });
+  return p ;
+  // if ( ! connection.isLocalHost() ) return false ;
+  // return true ;
+};
+BrokerConnectionHook.prototype.getInfoRequest = function ( connection, event )
 {
   return true ;
 };
