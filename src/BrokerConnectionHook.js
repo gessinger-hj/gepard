@@ -20,6 +20,8 @@ BrokerConnectionHook.prototype.connect = function ( connection )
 };
 BrokerConnectionHook.prototype.shutdown = function ( connection, event )
 {
+  // if ( ! connection.isLocalHost() ) return false ;
+  // return true ;
   var p = new Promise ( function ( resolve, reject )
   {
     if ( ! connection.isLocalHost() )
@@ -30,26 +32,29 @@ BrokerConnectionHook.prototype.shutdown = function ( connection, event )
     resolve() ;
   });
   return p ;
-  // if ( ! connection.isLocalHost() ) return false ;
-  // return true ;
 };
 BrokerConnectionHook.prototype.getInfoRequest = function ( connection, event )
 {
-  return true ;
+  var p = new Promise ( function promis_getInfoRequest ( resolve, reject )
+  {
+    resolve() ;
+  });
+  return p ;
+  // return true ;
 };
-BrokerConnectionHook.prototype.addEventListener = function ( connection, event )
+BrokerConnectionHook.prototype.addEventListener = function ( connection, eventNameList )
 {
   return true ;
 };
-BrokerConnectionHook.prototype.sendEvent = function ( connection, event )
+BrokerConnectionHook.prototype.sendEvent = function ( connection, eventName )
 {
   return true ;
 };
-BrokerConnectionHook.prototype.lockResource = function ( connection, event )
+BrokerConnectionHook.prototype.lockResource = function ( connection, resourceId )
 {
   return true ;
 };
-BrokerConnectionHook.prototype.acquireSemaphore = function ( connection, event )
+BrokerConnectionHook.prototype.acquireSemaphore = function ( connection, resourceId )
 {
   return true ;
 };

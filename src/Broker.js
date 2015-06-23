@@ -131,11 +131,11 @@ Connection.prototype.write = function ( data )
 };
 /**
  * Description
- * @method sendInfoResult
+ * @method _sendInfoResult
  * @param {} e
  * @return 
  */
-Connection.prototype.sendInfoResult = function ( e )
+Connection.prototype._sendInfoResult = function ( e )
 {
   var i, first, str, key, conn, key2 ;
   e.setType ( "getInfoResult" ) ;
@@ -210,7 +210,7 @@ Connection.prototype.sendInfoResult = function ( e )
  * @param {} e
  * @return 
  */
-Connection.prototype.addEventListener = function ( e )
+Connection.prototype._addEventListener = function ( e )
 {
   var eventNameList = e.body.eventNameList ;
   if ( ! eventNameList || ! eventNameList.length )
@@ -248,15 +248,15 @@ Connection.prototype.addEventListener = function ( e )
   e.control.status = { code:0, name:"ack" } ;
   this.write ( e ) ;
 };
-Connection.prototype.setCurrentlyProcessedMessageUid = function ( uid )
+Connection.prototype._setCurrentlyProcessedMessageUid = function ( uid )
 {
   this._currentlyProcessedMessageUid = uid ;
 };
-Connection.prototype.getCurrentlyProcessedMessageUid = function()
+Connection.prototype._getCurrentlyProcessedMessageUid = function()
 {
   return this._currentlyProcessedMessageUid ;
 };
-Connection.prototype.getNextMessageUidToBeProcessed = function()
+Connection.prototype._getNextMessageUidToBeProcessed = function()
 {
   return this._messageUidsToBeProcessed.shift() ;
 };
@@ -343,13 +343,13 @@ var Broker = function ( port, ip )
       return ;
     }
     conn = new Connection ( thiz, socket ) ;
-    thiz.validateAction ( thiz._connectionHook.connect, [ conn ], thiz._checkInConnection ) ;
+    thiz.validateAction ( thiz._connectionHook.connect, [ conn ], thiz, thiz._checkInConnection, [ conn ] ) ;
   });
 };
 
 util.inherits ( Broker, EventEmitter ) ;
 
-Broker.prototype.validateAction = function ( hookFunctionToBeCalled, parray, actionFunction )
+Broker.prototype.validateAction = function ( hookFunctionToBeCalled, parray, this_of_actionFunction, actionFunction, parray_for_actionFunction )
 {
   var conn = parray[0] ;
   var answer ;
@@ -375,7 +375,7 @@ Broker.prototype.validateAction = function ( hookFunctionToBeCalled, parray, act
   {
     answer.then ( function success()
     {
-      actionFunction.apply ( thiz, parray ) ;
+      actionFunction.apply ( this_of_actionFunction, parray_for_actionFunction ) ;
     }
     , function fail ( err )
     {
@@ -391,7 +391,7 @@ Broker.prototype.validateAction = function ( hookFunctionToBeCalled, parray, act
   }
   else
   {
-    actionFunction.apply ( this, parray ) ;
+    actionFunction.apply ( this_of_actionFunction, parray_for_actionFunction ) ;
   }
 };
 Broker.prototype._checkInConnection = function ( conn )
@@ -480,17 +480,17 @@ Broker.prototype._ondata = function ( socket, chunk )
           this._connectionList[i]._messageUidsToBeProcessed.remove ( uid ) ;
         }
         delete this._messagesToBeProcessed[uid] ;
-        responderConnection.setCurrentlyProcessedMessageUid ( "" ) ;
+        responderConnection._setCurrentlyProcessedMessageUid ( "" ) ;
         if ( requesterConnection )
         {
           requesterConnection.write ( e ) ;
-          uid = responderConnection.getNextMessageUidToBeProcessed() ;
+          uid = responderConnection._getNextMessageUidToBeProcessed() ;
           if ( uid )
           {
             e  = this._messagesToBeProcessed[uid] ;
             responderConnection.write ( e ) ;
             responderConnection._numberOfPendingRequests++ ;
-            responderConnection.setCurrentlyProcessedMessageUid ( uid ) ;
+            responderConnection._setCurrentlyProcessedMessageUid ( uid ) ;
           }
         }
         else
@@ -504,7 +504,7 @@ Broker.prototype._ondata = function ( socket, chunk )
         this._handleSystemMessages ( conn, e ) ;
         continue ;
       }
-      this._sendEventToClients ( conn, e ) ;
+      this.validateAction ( this._connectionHook.sendEvent, [ conn, e.getName() ], this, this._sendEventToClients, [ conn, e ] ) ;
     }
   }
 };
@@ -542,7 +542,7 @@ Broker.prototype._sendMessageToClient = function ( e, socketList )
       {
         socket.write ( str ) ;
         conn._numberOfPendingRequests++ ;
-        conn.setCurrentlyProcessedMessageUid ( uid ) ;
+        conn._setCurrentlyProcessedMessageUid ( uid ) ;
         messageSent = true ;
       }
     }
@@ -557,11 +557,6 @@ Broker.prototype._sendMessageToClient = function ( e, socketList )
  */
 Broker.prototype._sendEventToClients = function ( conn, e )
 {
-  if ( ! this._connectionHook.sendEvent ( conn, e ) )
-  {
-    conn.socket.end() ;
-    return ;
-  }
   var i, found = false, done = false, str ;
   var name = e.getName() ;
   e.setSourceIdentifier ( conn.sid ) ;
@@ -633,7 +628,7 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
   else
   if ( e.getType() === "shutdown" )
   {
-    this.validateAction ( this._connectionHook.shutdown, [ conn, e ], this._shutdown ) ;
+    this.validateAction ( this._connectionHook.shutdown, [ conn, e ], this, this._shutdown, [ conn, e ] ) ;
   }
   else
   if ( e.getType() === "client_info" )
@@ -666,22 +661,14 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
   else
   if ( e.getType() === "getInfoRequest" )
   {
-    if ( ! this._connectionHook.getInfoRequest ( conn ) )
-    {
-      conn.socket.end() ;
-      return ;
-    }
-    conn.sendInfoResult ( e ) ;
+    this.validateAction ( this._connectionHook.getInfoRequest, [ conn, e ], conn, conn._sendInfoResult, [ e ] ) ;
+    return ;
   }
   else
   if ( e.getType() === "addEventListener" )
   {
-    if ( ! this._connectionHook.addEventListener ( conn, e ) )
-    {
-      conn.socket.end() ;
-      return ;
-    }
-    conn.addEventListener ( e ) ;
+    this.validateAction ( this._connectionHook.addEventListener, [ conn, e.body.eventNameList ], conn, conn._addEventListener, [ e ] ) ;
+    return ;
   }
   else
   if ( e.getType() === "removeEventListener" )
@@ -691,29 +678,8 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
   else
   if ( e.getType() === "lockResourceRequest" )
   {
-    if ( ! this._connectionHook.lockResource ( conn, e ) )
-    {
-      conn.socket.end() ;
-      return ;
-    }
-    var resourceId = e.body.resourceId ;
-    if ( ! resourceId )
-    {
-      this._ejectSocket ( socket ) ;
-      return ;
-    }
-    e.setType ( "lockResourceResult" ) ;
-    if ( this._lockOwner[resourceId] )
-    {
-      e.body.isLockOwner = false ;
-    }
-    else
-    {
-      this._lockOwner[resourceId] = conn ;
-      conn._lockedResourcesIdList.push ( resourceId ) ;
-      e.body.isLockOwner = true ;
-    }
-    conn.write ( e ) ;
+    this.validateAction ( this._connectionHook.lockResource, [ conn, e.body.resourceId ], this, this._lockResource, [ conn, e ] ) ;
+    return ;
   }
   else
   if ( e.getType() === "unlockResourceRequest" )
@@ -741,12 +707,8 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
   else
   if ( e.getType() === "acquireSemaphoreRequest" )
   {
-    if ( ! this._connectionHook.acquireSemaphore ( conn, e ) )
-    {
-      conn.socket.end() ;
-      return ;
-    }
-    this._acquireSemaphoreRequest ( conn.socket, e ) ;
+    this.validateAction ( this._connectionHook.acquireSemaphore, [ conn, e.body.resourceId ], this, this._acquireSemaphoreRequest, [ conn, e ] ) ;
+    return ;
   }
   else
   if ( e.getType() === "releaseSemaphoreRequest" )
@@ -758,6 +720,27 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
     Log.error ( "Invalid type: '" + e.getType() + "' for " + e.getName() ) ;
     Log.error ( e.toString() ) ;
   }
+};
+Broker.prototype._lockResource = function ( conn, e )
+{
+    var resourceId = e.body.resourceId ;
+    if ( ! resourceId )
+    {
+      this._ejectSocket ( conn.socket ) ;
+      return ;
+    }
+    e.setType ( "lockResourceResult" ) ;
+    if ( this._lockOwner[resourceId] )
+    {
+      e.body.isLockOwner = false ;
+    }
+    else
+    {
+      this._lockOwner[resourceId] = conn ;
+      conn._lockedResourcesIdList.push ( resourceId ) ;
+      e.body.isLockOwner = true ;
+    }
+    conn.write ( e ) ;
 };
 Broker.prototype._shutdown = function ( conn, e )
 {
@@ -813,13 +796,12 @@ catch ( exc )
 }
   }
 };
-Broker.prototype._acquireSemaphoreRequest = function ( socket, e )
+Broker.prototype._acquireSemaphoreRequest = function ( conn, e )
 {
-  var conn = this._connections[socket.sid] ;
   var resourceId = e.body.resourceId ;
   if ( ! resourceId )
   {
-    this._ejectSocket ( socket ) ;
+    this._ejectSocket ( conn.socket ) ;
     return ;
   }
   var currentSemaphoreOwner = this._semaphoreOwner[resourceId] ;
@@ -893,10 +875,10 @@ Broker.prototype._ejectSocket = function ( socket )
   var conn = this._connections[sid] ;
   if ( ! conn ) return ;
 
-  var uid  = conn.getCurrentlyProcessedMessageUid() ;
+  var uid  = conn._getCurrentlyProcessedMessageUid() ;
   if ( uid )
   {
-    conn.setCurrentlyProcessedMessageUid ( "" ) ;
+    conn._setCurrentlyProcessedMessageUid ( "" ) ;
     var requesterMessage    = this._messagesToBeProcessed[uid] ;
     var requester_sid       = requesterMessage.getSourceIdentifier() ;
     var requesterConnection = this._connections[requester_sid] ;
