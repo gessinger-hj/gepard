@@ -93,6 +93,7 @@ node_modules/.bin/gp.admin [ --help ]
 ```
 # What is new
 
+
 ## Controlling Connections and Actions with a Hook
 
 In order to control connections and actions a default hook class is provided:
