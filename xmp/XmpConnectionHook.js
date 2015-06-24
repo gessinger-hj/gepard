@@ -1,5 +1,5 @@
 var util = require ( "util" ) ;
-var ConnectionHook = require ( "gepard" ).ConnectionHook ;
+var ConnectionHook = require ( "../src/ConnectionHook" ) ;
 var XmpConnectionHook = function()
 {
 	XmpConnectionHook.super_.call ( this ) ;
