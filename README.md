@@ -156,6 +156,10 @@ If you prefer to start the broker from within your own JavaScript-program the co
   b.setConfig ( <config-object or path to config-json-file> ) ;
   b.listen() ;
 ```
+The parameter __connection__ in the above method-signatures is an internal used object with mainly the public useful methods:
+
+1.  connection.isLocalHost()
+1.  connection.getRemoteAddress()
 
 ## Perfect load balanced message handling.
 
