@@ -1,11 +1,12 @@
 # gepard
-General purpose communication and synchronization layer for distributed applications / events, semaphores, locks and messages
+General purpose communication and synchronization layer for distributed applications / events, semaphores, locks and messages for JavaScript and Java
 
 
 <!-- MarkdownTOC -->
 
 - [Overview](#overview)
 - [What is new](#what-is-new)
+  - [Controlling Connections and Actions with a Hook](#controlling-connections-and-actions-with-a-hook)
   - [Perfect load balanced message handling.](#perfect-load-balanced-message-handling)
   - [Java bindings for all features:](#java-bindings-for-all-features)
 - [Install](#install)
@@ -91,6 +92,70 @@ or
 node_modules/.bin/gp.admin [ --help ]
 ```
 # What is new
+
+## Controlling Connections and Actions with a Hook
+
+In order to control connections and actions a default hook class is provided:
+[ConnectionHook](https://github.com/gessinger-hj/gepard/blob/master/src/ConnectionHook.js)
+
+This class contains several methods which are called in appropriate cases:
+
+```js
+connect ( connection )
+shutdown ( connection, event )
+getInfoRequest ( connection, event )
+addEventListener ( connection, eventNameList )
+sendEvent ( connection, eventName )
+lockResource ( connection, resourceId )
+acquireSemaphore ( connection, resourceId )
+```
+Each of these methods must return an answer wether to allow or reject the corresponding action.
+<br/>
+The answer must be either a boolean value or a Thenable which means a Promise object of any kind.
+<br/>
+The default for shutdown is to return a __false__ value if the incoming connection is not from localhost.
+In all other cases the default returns a __true__
+<br/>
+The parameter can be used to test the allowance in a deeper way.
+<br/>
+For example using a Promise for shutdown enables an asynchronous check with help of a database configuration.
+<br/>
+To configure this hook a __subclass__ of __ConnectionHook__ must be implemented and defined as user-hook in an JSON configuration file:
+
+```json
+{
+  "connectionHook": "<path-to-javascript-code>/XmpConnectionHook"
+}
+```
+This hook file is __require'd__ with the start of the broker.
+<br/>
+In this case the command to start the broker is:
+<br/>
+__<pre>gp.broker --config=&lt;full-config-file-name&gt;</pre>__
+
+An example for a user defined hook is the [XmpConnectionHook.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/XmpConnectionHook.js) file:
+
+```js
+var util = require ( "util" ) ;
+var ConnectionHook = require ( "gepard" ).ConnectionHook ;
+var XmpConnectionHook = function()
+{
+  XmpConnectionHook.super_.call ( this ) ;
+};
+util.inherits ( XmpConnectionHook, ConnectionHook ) ;
+XmpConnectionHook.prototype.connect = function ( connection )
+{
+  console.log ( "connection.getRemoteAddress()=" + connection.getRemoteAddress() ) ;
+  return true ;
+};
+module.exports = XmpConnectionHook ;
+```
+If you prefer to start the broker from within your own JavaScript-program the configuration object can be set like:
+```js
+  var b = new Broker() ;
+  b.setConfig ( <config-object or path to config-json-file> ) ;
+  b.listen() ;
+```
 
 ## Perfect load balanced message handling.
 

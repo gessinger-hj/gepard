@@ -1,10 +1,10 @@
 var util = require ( "util" ) ;
-var BrokerConnectionHook = require ( "gepard" ).BrokerConnectionHook ;
+var ConnectionHook = require ( "gepard" ).ConnectionHook ;
 var XmpConnectionHook = function()
 {
 	XmpConnectionHook.super_.call ( this ) ;
 };
-util.inherits ( XmpConnectionHook, BrokerConnectionHook ) ;
+util.inherits ( XmpConnectionHook, ConnectionHook ) ;
 XmpConnectionHook.prototype.connect = function ( connection )
 {
 	console.log ( "connection.getRemoteAddress()=" + connection.getRemoteAddress() ) ;

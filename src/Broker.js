@@ -1009,11 +1009,11 @@ Broker.prototype.setConfig = function ( configuration )
   }
   if ( ! configuration )
   {
-    configuration = { connectionHook: "BrokerConnectionHook" } ;
+    configuration = { connectionHook: "ConnectionHook" } ;
   }
   if ( ! configuration.connectionHook )
   {
-    configuration.connectionHook = "BrokerConnectionHook" ;
+    configuration.connectionHook = "ConnectionHook" ;
   }
   var hook = require ( configuration.connectionHook ) ;
   this._connectionHook = new hook() ;
@@ -1063,7 +1063,6 @@ if ( require.main === module )
       wse.listen() ;
       b.on ( "shutdown", function onshutdown(e)
       {
-T.lwhere (  ) ;
         wse.shutdown() ;
         process.exit ( 0 ) ;
       });

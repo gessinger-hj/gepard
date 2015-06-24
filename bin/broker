@@ -19,7 +19,6 @@ new Admin().isRunning ( function admin_is_running ( state )
 function execute()
 {
 	var logDir = Gepard.getLogDirectory() ;
-
 	var dir = Path.join ( logDir, "gp.broker.log" ) ;
 
 	var args = [ Path.join ( __dirname, "../src/Broker" ), "--web" ] ;

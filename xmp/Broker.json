@@ -1,3 +1,3 @@
 {
-	"connectionHook": "XmpConnectionHook"
+	"connectionHook": "XmpConnectionHook.js"
 }
