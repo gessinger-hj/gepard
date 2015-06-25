@@ -29,9 +29,9 @@ if ( typeof Promise === 'undefined' ) // since node 0.12+
  */
 var Connection = function ( broker, socket )
 {
-  this.broker     = broker ;
-  this.socket     = socket ;
-  this.info       = "none" ;
+  this.broker      = broker ;
+  this.socket      = socket ;
+  this.client_info = "none" ;
   if ( ! this.socket.sid )
   {
     this.sid        = socket.remoteAddress + "_" + socket.remotePort ;
@@ -58,6 +58,10 @@ var Connection = function ( broker, socket )
 Connection.prototype.toString = function()
 {
   return "(Connection)[client_info=" + util.inspect ( this.client_info, { showHidden: false, depth: null } ) + "]" ;
+};
+Connection.prototype.getClientInfo = function()
+{
+  return this.client_info ;
 };
 Connection.prototype.flush = function()
 {
