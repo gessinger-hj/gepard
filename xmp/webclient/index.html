@@ -1,37 +1,40 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
 <html>
 <head>
-    <title>Gepard Examples</title>
-    <style type="text/css">
-        input#chat {
-            width: 410px
-        }
+<meta http-equiv='content-type' content='text/html; charset=utf-8' />
+<title>Gepard Examples</title>
+<style type="text/css">
+    input#chat {
+        width: 410px
+    }
 
-        #console-container {
-            width: 600px;
-        }
+    #console-container {
+        width: 600px;
+    }
 
-        #console {
-            border: 1px solid #CCCCCC;
-            border-right-color: #999999;
-            border-bottom-color: #999999;
-            height: 300px;
-            overflow-y: scroll;
-            padding: 5px;
-            width: 100%;
-        }
+    #console {
+        border: 1px solid #CCCCCC;
+        border-right-color: #999999;
+        border-bottom-color: #999999;
+        height: 300px;
+        overflow-y: scroll;
+        padding: 5px;
+        width: 100%;
+    }
 
-        #console p {
-            padding: 0;
-            margin: 0;
-        }
-    </style>
+    #console p {
+        padding: 0;
+        margin: 0;
+    }
+</style>
 <script type="text/javascript" src="User.js" ></script>
 <script type="text/javascript" src="Event.js" ></script>
 <script type="text/javascript" src="MultiHash.js" ></script>
 <script type="text/javascript" src="GPWebClient.js" ></script>
 <script type="text/javascript">
-var Console = {};
+var Console = {
+  eventName: null
+};
 Console.log = function ( message )
 {
     var p = document.createElement('div');
@@ -57,9 +60,9 @@ Console._log = function ( p )
     console.scrollTop = console.scrollHeight;
 };
 
-var Xmp = {};
+var App = {};
 
-Xmp.initialize = function()
+App.initialize = function()
 {
   this.port = 17502 ;
   var thiz = this ;
@@ -81,18 +84,11 @@ Xmp.initialize = function()
     console.log ( exc ) ;
   }
 };
-Xmp.sendEvent = function ( name )
+App.sendEvent = function ( name )
 {
     this.wc.fire ( name ) ;
-    // this.wc.fire ( name,
-    // { error:function error_callback(e)
-    //   {
-    //     Console.log ( "Error" ) ;
-    //     Console.log ( e.getStatus().reason ) ;
-    //   }
-    // } ) ;
 };
-Xmp.lockResource = function ( name )
+App.lockResource = function ( name )
 {
     this.lock = new gepard.Lock ( name ) ;
     this.lock.acquire ( function lock_callback ( err )
@@ -100,13 +96,13 @@ Xmp.lockResource = function ( name )
         Console.log ( "" + this ) ;
     }) ;
 };
-Xmp.unlockResource = function()
+App.unlockResource = function()
 {
     if ( ! this.lock ) return ;
     this.lock.release() ;
     this.lock = null ;
 };
-Xmp.semAcquire = function ( name )
+App.semAcquire = function ( name )
 {
     this.sem = new gepard.Semaphore ( name ) ;
     Console.log ( "Aquiring semaphore=" + name ) ;
@@ -115,14 +111,18 @@ Xmp.semAcquire = function ( name )
         Console.log ( "" + this ) ;
     }) ;
 };
-Xmp.semRelease = function()
+App.semRelease = function()
 {
     if ( ! this.sem ) return ;
     this.sem.release() ;
     this.sem = null ;
 };
-Xmp.on = function ( name )
+App.on = function ( name )
 {
+  if ( this.eventName )
+  {
+    this.removeEventListener ( this.eventName ) ;
+  }
   this.eventName = name ;
   var thiz = this ;
   Console.log ( "Listen to event: " + name ) ;
@@ -131,12 +131,14 @@ Xmp.on = function ( name )
     Console.log ( thiz.toFullString ( e ) ) ;
   }) ;
 }
-Xmp.removeEventListener = function()
+App.removeEventListener = function()
 {
-    if ( ! this.eventName ) return ;
-    this.wc.removeEventListener ( this.eventName ) ;
+  if ( ! this.eventName ) return ;
+  Console.log ( "remove listener for: " + this.eventName ) ;
+  this.wc.removeEventListener ( this.eventName ) ;
+  this.eventName = null ;
 };
-Xmp.toFullString = function ( text, indent )
+App.toFullString = function ( text, indent )
 {
   if ( ! indent ) indent = "" ;
   if ( Array.isArray ( text ) || ( typeof ( text ) == 'object' && text ) )
@@ -173,12 +175,15 @@ Xmp.toFullString = function ( text, indent )
 <body>
   <div>
     <table>
-      <tr><td>Send event:</td><td><button onclick='Xmp.sendEvent("ALARM")'>ALARM</button></td></tr>
-      <tr><td>Listen to:</td><td><button onclick='Xmp.on("ALARM")'>ALARM</button></td></tr>
-      <tr><td>Resource:</td><td><button onclick='Xmp.lockResource("user:4711")'>acquire "user:4711"</button></td></tr>
-      <tr><td></td><td><button onclick='Xmp.unlockResource()'>release "user:4711"</button></td></tr>
-      <tr><td>Semaphore:</td><td><button onclick='Xmp.semAcquire("user:10000")'>acquire "user:1000"</button></td></tr>
-      <tr><td></td><td><button onclick='Xmp.semRelease()'>release "user:1000"</button></td></tr>
+      <tr><td>Send event:</td><td><button onclick='App.sendEvent("ALARM")'>ALARM</button></td></tr>
+      <tr>
+        <td>ALARM</td><td><button onclick='App.on("ALARM")'>add listener</button></td>
+        <td><button onclick='App.removeEventListener()'>remove listener</button></td>
+      </tr>
+      <tr><td>Resource:</td><td><button onclick='App.lockResource("user:4711")'>acquire "user:4711"</button></td></tr>
+      <tr><td></td><td><button onclick='App.unlockResource()'>release "user:4711"</button></td></tr>
+      <tr><td>Semaphore:</td><td><button onclick='App.semAcquire("user:10000")'>acquire "user:1000"</button></td></tr>
+      <tr><td></td><td><button onclick='App.semRelease()'>release "user:1000"</button></td></tr>
     </table>
     <div id="console-container">
       <button style='float:right;' onclick='Console.clear()'>Clear console</button>
@@ -188,7 +193,7 @@ Xmp.toFullString = function ( text, indent )
 <script type="text/javascript">
 try
 {
-    Xmp.initialize();
+    App.initialize();
 }
 catch ( exc )
 {
