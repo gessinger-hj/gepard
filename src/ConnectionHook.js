@@ -10,6 +10,10 @@ var ConnectionHook = function()
 {
 	this.jsClassName = "ConnectionHook" ;
 };
+ConnectionHook.prototype.createPromise = function ( executor )
+{
+  return new Promise  ( executor ) ;
+};
 ConnectionHook.prototype.toString = function()
 {
 	return "(" + this.jsClassName + ")" ;
@@ -20,18 +24,11 @@ ConnectionHook.prototype.connect = function ( connection )
 };
 ConnectionHook.prototype.shutdown = function ( connection, event )
 {
-  // if ( ! connection.isLocalHost() ) return false ;
-  // return true ;
-  var p = new Promise ( function ( resolve, reject )
+  if ( ! connection.isLocalHost() )
   {
-    if ( ! connection.isLocalHost() )
-    {
-      reject() ;
-      return ;
-    }
-    resolve() ;
-  });
-  return p ;
+    return false ;
+  }
+  return true ;
 };
 ConnectionHook.prototype.getInfoRequest = function ( connection, event )
 {
