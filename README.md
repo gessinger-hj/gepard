@@ -161,6 +161,11 @@ The parameter __connection__ in the above method-signatures is an internal used 
 
 1.  connection.isLocalHost()
 1.  connection.getRemoteAddress()
+1.  connection.getHostName()
+1.  connection.getLanguage()
+1.  connection.getApplicationName()
+1.  connection.getApplication()
+1.  connection.getId()
 
 ## Perfect load balanced message handling.
 

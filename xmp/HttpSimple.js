@@ -69,9 +69,14 @@ if ( require.main === module )
   var Path   = require ( 'path') ;
   var url    = require ( 'url' ) ;
   
-  var root   = process.cwd() ; //__dirname
+  var root   = process.cwd() ;
   root       = T.getProperty ( "root", root ) ;
   root       = Path.resolve ( root ) ;
+
+  var jsroot   = Path.join ( root, "../../src" ) ;
+  jsroot       = T.getProperty ( "jsroot", jsroot ) ;
+  jsroot       = Path.resolve ( jsroot ) ;
+
   var port   = T.getInt ( "port", 8888 ) ;
   var index  = T.getProperty ( "index", "index.html" ) ;
   var logDir = Gepard.getLogDirectory() ;
@@ -114,8 +119,16 @@ if ( require.main === module )
     {
       var requestUrl  = url.parse ( req.url ) ;
       var urlPathName = decodeURIComponent ( requestUrl.pathname ) ;
+      var path ;
 
-      var path = Path.join ( root, urlPathName ) ;
+      if ( urlPathName.indexOf ( ".js" ) === urlPathName.length - 3 )
+      {
+        path = Path.join ( jsroot, urlPathName ) ;
+      }
+      else
+      {
+        path = Path.join ( root, urlPathName ) ;
+      }
       var isDir = false ;
       try
       {

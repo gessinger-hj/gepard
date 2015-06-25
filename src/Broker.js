@@ -31,7 +31,7 @@ var Connection = function ( broker, socket )
 {
   this.broker      = broker ;
   this.socket      = socket ;
-  this.client_info = "none" ;
+  this.client_info ;
   if ( ! this.socket.sid )
   {
     this.sid        = socket.remoteAddress + "_" + socket.remotePort ;
@@ -290,6 +290,11 @@ Connection.prototype.getRemoteAddress = function()
 {
   return this.socket ? this.socket.remoteAddress : "" ;
 };
+Connection.prototype.getHostName = function() { if ( ! this.client_info ) return "" ; return this.client_info.hostname ; } ;
+Connection.prototype.getLanguage = function() { if ( ! this.client_info ) return "" ; return this.client_info.language ; } ;
+Connection.prototype.getApplicationName = function() { if ( ! this.client_info ) return "" ; return this.client_info.applicationName ; } ;
+Connection.prototype.getApplication = function() { if ( ! this.client_info ) return "" ; return this.client_info.application ; } ;
+Connection.prototype.getId = function() { if ( ! this.client_info ) return "" ; return this.client_info.sid ; } ;
 /**
  * @constructor
  * @extends {EventEmitter}
@@ -561,7 +566,7 @@ Broker.prototype._sendMessageToClient = function ( e, socketList )
  */
 Broker.prototype._sendEventToClients = function ( conn, e )
 {
-  var i, found = false, done = false, str ;
+  var i, found = false, done = false, str, list ;
   var name = e.getName() ;
   e.setSourceIdentifier ( conn.sid ) ;
   var str = e.serialize() ;
