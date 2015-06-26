@@ -20,7 +20,7 @@ XmpConnectionHook.prototype.shutdown = function ( connection )
 {
   var p = this.createPromise ( function ( resolve, reject )
   {
-    if ( connection.isLocalHost() )
+    if ( ! connection.isLocalHost() )
     {
       reject() ;
       return ;
