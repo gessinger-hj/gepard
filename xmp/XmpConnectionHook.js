@@ -8,7 +8,6 @@ util.inherits ( XmpConnectionHook, ConnectionHook ) ;
 XmpConnectionHook.prototype.connect = function ( connection )
 {
 	console.log ( "connection.getRemoteAddress()=" + connection.getRemoteAddress() ) ;
-
 	return true ;
 };
 XmpConnectionHook.prototype.addEventListener = function ( connection, eventNameList )

@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-from Gepard import Event, User
+from Gepard import Event, User, Client
 
 import json
 
 # ==========================================================================
-e = Event ("ALARM2")
+e = Event ("ALARM")
 # binaryData = BytesIO(b"ABCDE")
 binaryData = bytearray([1,2,3,4,5])
 e.putValue ( "binaryData", binaryData ) ;

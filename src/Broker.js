@@ -14,6 +14,7 @@ var Log          = require ( "./LogFile" ) ;
 var os           = require ( "os" ) ;
 var fs           = require ( "fs" ) ;
 var dns          = require ( "dns" ) ;
+var Path         = require ( "path" ) ;
 
 if ( typeof Promise === 'undefined' ) // since node 0.12+
 {
@@ -470,12 +471,12 @@ Broker.prototype._ondata = function ( socket, chunk )
         socket.end() ;
         return ;
       }
+console.log ( e ) ;
       if ( ! e.body )
       {
         this._ejectSocket ( socket ) ;
         continue ;
       }
-
       if ( e.isResult() )
       {
         responderConnection = conn ;
@@ -654,12 +655,20 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
         {
           app = app.substring ( 0, app.length - 3 ) ;
         }
+        if ( app.lastIndexOf ( ".py" ) == app.length - 3 )
+        {
+          app = app.substring ( 0, app.length - 3 ) ;
+        }
         conn.client_info.applicationName = app ;
 
       }
       else
       {
         if ( app.lastIndexOf ( ".js" ) == app.length - 3 )
+        {
+          app = app.substring ( 0, app.length - 3 ) ;
+        }
+        if ( app.lastIndexOf ( ".py" ) == app.length - 3 )
         {
           app = app.substring ( 0, app.length - 3 ) ;
         }
@@ -1006,13 +1015,19 @@ Broker.prototype.setConfig = function ( configuration )
   }
   if ( typeof configuration === 'string' )
   {
+    var dir = process.cwd() ;
+    configuration = configuration.replace ( /\\/g, "/" ) ;
+    if ( configuration.indexOf ( "/" ) >= 0 )
+    {
+      dir = Path.dirname ( configuration ) ;
+    }
     configuration = JSON.parse ( fs.readFileSync ( configuration, 'utf8' ) ) ;
     if ( typeof configuration.connectionHook === 'string' )
     {
       configuration.connectionHook = configuration.connectionHook.replace ( /\\/g, "/" ) ;
       if ( configuration.connectionHook.indexOf ( "/" ) !== 0 )
       {
-        configuration.connectionHook = process.cwd() + "/" + configuration.connectionHook ;
+        configuration.connectionHook = dir + "/" + configuration.connectionHook ;
       }
     }
   }

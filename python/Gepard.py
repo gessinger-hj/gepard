@@ -9,18 +9,20 @@ import inspect
 import time
 import datetime
 import socket
+import sys
+
 try:
-  basestring
+	basestring
 except NameError:
-  basestring = str
+	basestring = str
 
 class Event ( object ):
 	def __init__ (self,name,type=None,body=None):
-		self.name    = None
-		self.type    = None
-		self.user    = None
+		self.name		= None
+		self.type		= None
+		self.user		= None
 		self.control = None
-		self.body    = None
+		self.body		= None
 		if isinstance ( name, dict ):
 			obj = name
 			self.className = self.__class__.__name__ ;
@@ -82,6 +84,8 @@ class Event ( object ):
 	def serialize(self):
 		s = json.dumps ( self, default=self.to_json )
 		return s
+	def setFailureInfoRequested(self):
+		self.control["_isFailureInfoRequested"] = True
 
 	@staticmethod
 	def deserialize ( s ):
@@ -140,9 +144,9 @@ class User ( object ):
 			return
 
 		self.className = "User" ;
-		self.id        = id ;
-		self.key       = key ;
-		self._pwd      = pwd ;
+		self.id				= id ;
+		self.key			 = key ;
+		self._pwd			= pwd ;
 		self.rights = {} ;
 		if rights == None:
 			self.rights = {}
@@ -174,3 +178,55 @@ class User ( object ):
 		self.rights[name] = value
 	def getRight ( self, name ):
 		return self.rights[name]
+
+import socket
+
+class Client:
+	'''demonstration class only - coded for clarity, not efficiency
+	'''
+
+	def __init__(self, port=None, host=None):
+		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		if port is None:
+			self.port = 17501
+		else:
+			self.port = port
+		if host is None:
+			self.host = "localhost"
+		else:
+			self.host = host
+	def connect(self):
+		self.sock.connect((self.host, self.port))
+
+		einfo = Event ( "system", "client_info" )
+		einfo.body["language"] = "python"
+		einfo.body["hostname"] = socket.gethostname()
+		einfo.body["connectionTime"] = datetime.datetime.now()
+		einfo.body["application"] = sys.argv[0]
+		self.send ( einfo.serialize() ) 
+
+	def send(self, msg):
+		totalsent = 0
+		msglen = len ( msg )
+		sent = self.sock.sendall(msg.encode())
+		'''
+		while totalsent < msglen:
+			sent = self.socket.send(msg[totalsent:])
+			if sent == 0:
+					raise RuntimeError("socket connection broken")
+			totalsent = totalsent + sent
+		'''
+	def receive(self):
+		chunks = []
+		bytes_recd = 0
+		n = 0
+		while bytes_recd < 100:
+			n = n + 1
+			print ( n )
+			chunk = self.sock.recv(1)
+			if chunk == '':
+				raise RuntimeError("socket connection broken")
+			chunks.append(chunk.decode())
+			print ( chunk.decode() )
+			bytes_recd = bytes_recd + len(chunk)
+		return ''.join(chunks)
