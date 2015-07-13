@@ -481,6 +481,7 @@ public class Client
 		        {
 		          if ( lastWasBackslash )
 		          {
+		          	lastWasBackslash = false ;
 		            continue ;
 		          }
 		          break ;
@@ -500,6 +501,7 @@ public class Client
 		      	break ;
 		      }
 		    }
+        if ( c == '\\' ) lastWasBackSlash = true ;
 		  }
 		}
 		catch ( IOException exc )

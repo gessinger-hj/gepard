@@ -4,12 +4,16 @@ try:
 	from cStringIO import StringIO
 except ImportError:
 	from io import StringIO
+
+from io import BytesIO
+
 import json
 import inspect
 import time
 import datetime
 import socket
 import sys
+import os
 
 try:
 	basestring
@@ -27,7 +31,7 @@ class Event ( object ):
 			obj = name
 			self.className = self.__class__.__name__ ;
 			self.name = obj["name"]
-			if 'user' in obj:
+			if 'user' in obj and obj["user"] != None:
 				self.user = User ( obj["user"] ) ;
 			self.control = obj["control"]
 			self.body = obj["body"]
@@ -55,10 +59,13 @@ class Event ( object ):
 		s.write("(")
 		s.write(self.__class__.__name__)
 		s.write(")")
-		s.write("[name=" + self.name )
-		s.write(",type=" + str(self.type) )
-		s.write(",control=" + str(self.control) )
-		s.write(",user=" + str(self.user) )
+		s.write("{ name: '" + self.name + "',\n" )
+		s.write("  type: '" + str(self.type) + "',\n" )
+		s.write("  control:\n" )
+		s.write("  " + str(self.control) )
+		# s.write(",user=" + str(self.user) )
+		if isinstance ( self.user, User ):
+			s.write(",user=" + str(self.user) )
 		s.write(",body=" + str(self.body) )
 		s.write("]")
 		return s.getvalue()
@@ -86,6 +93,14 @@ class Event ( object ):
 		return s
 	def setFailureInfoRequested(self):
 		self.control["_isFailureInfoRequested"] = True
+	def setUniqueId ( self, uid ):
+		if ( uid in self.control ):
+			return
+		self.control["uniqueId"] = uid ;
+	def getUniqueId ( self ):
+		if ( "uniqueId" in self.control ):
+			return self.control["uniqueId"]
+		return None
 
 	@staticmethod
 	def deserialize ( s ):
@@ -185,7 +200,9 @@ class Client:
 	'''demonstration class only - coded for clarity, not efficiency
 	'''
 
+	counter = 0 ;
 	def __init__(self, port=None, host=None):
+		self._event_callbacks = []
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		if port is None:
 			self.port = 17501
@@ -195,38 +212,84 @@ class Client:
 			self.host = "localhost"
 		else:
 			self.host = host
+
+	def createUniqueId(self):
+		self.counter = self.counter + 1
+		millis = round(time.time()*1000)
+		return socket.gethostname() + "_" + str(os.getpid()) + "_" + str(millis) + "_" + str(self.counter) ;
+
+	def on ( self, eventName, callback ):
+		self._event_callbacks.append ( callback )
+
 	def connect(self):
 		self.sock.connect((self.host, self.port))
 
-		einfo = Event ( "system", "client_info" )
-		einfo.body["language"] = "python"
-		einfo.body["hostname"] = socket.gethostname()
+		einfo                        = Event ( "system", "client_info" )
+		einfo.body["language"]       = "python"
+		einfo.body["hostname"]       = socket.gethostname()
 		einfo.body["connectionTime"] = datetime.datetime.now()
-		einfo.body["application"] = sys.argv[0]
+		einfo.body["application"]    = sys.argv[0]
 		self.send ( einfo.serialize() ) 
 
-	def send(self, msg):
-		totalsent = 0
-		msglen = len ( msg )
-		sent = self.sock.sendall(msg.encode())
-		'''
-		while totalsent < msglen:
-			sent = self.socket.send(msg[totalsent:])
-			if sent == 0:
-					raise RuntimeError("socket connection broken")
-			totalsent = totalsent + sent
-		'''
+	def send ( self, event ):
+		if isinstance ( event, Event ):
+			event.setUniqueId ( self.createUniqueId() )
+			self.sock.sendall ( event.serialize().encode ( "utf-8" ) )
+		else:
+			self.sock.sendall(event.encode("utf-8"))
+
+	def emit(self, event):
+		self.send ( event )
+
 	def receive(self):
-		chunks = []
 		bytes_recd = 0
-		n = 0
-		while bytes_recd < 100:
-			n = n + 1
-			print ( n )
-			chunk = self.sock.recv(1)
-			if chunk == '':
-				raise RuntimeError("socket connection broken")
-			chunks.append(chunk.decode())
-			print ( chunk.decode() )
-			bytes_recd = bytes_recd + len(chunk)
-		return ''.join(chunks)
+		bytes = BytesIO()
+		while bytes_recd < 383:
+			b = self.sock.recv(1)
+			if chunk == b'':
+				# raise RuntimeError("socket connection broken")
+				for fn in self._event_callbacks:
+					fn ( RuntimeError ( "socket connection broken" ), "socket closed" )
+				return ;
+			bytes.write ( b )
+			bytes_recd = bytes_recd + len(b)
+		result = bytes.getvalue().decode ( 'utf-8' )
+		return result
+
+	def readNextJSON(self):
+		uid = self.createUniqueId()
+		bytes = BytesIO()
+		k = 0
+		lastWasBackslash = False
+		q = 0
+		pcounter = 0
+		while True:
+			c = self.sock.recv(1)
+			if c == b'':
+				# raise RuntimeError("socket connection broken")
+				for fn in self._event_callbacks:
+					fn("socket closed",None)
+					return
+			bytes.write ( c )
+			if ( c == b'"' or c == b'\'' ):
+				q = c ;
+				while True:
+					c = self.sock.recv(1)
+					bytes.write ( c ) ;
+					if ( c == q ):
+						if ( lastWasBackslash ):
+							lastWasBackSlash = True ;
+							continue ;
+					break ;
+			if ( c == b'{' ):
+				pcounter = pcounter + 1
+				continue
+			if ( c == b'}' ):
+				pcounter = pcounter - 1
+				if ( pcounter == 0 ):
+					break
+			if ( c == b'\\' ):
+				lastWasBackSlash = True
+		s = bytes.getvalue().decode ( 'utf-8' )
+		e = Event.deserialize ( s )
+		return e ;
