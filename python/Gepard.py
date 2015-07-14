@@ -102,6 +102,19 @@ class Event ( object ):
 			return self.control["uniqueId"]
 		return None
 
+	def isBad ( self ):
+		if "control" not in self.__dict__: return False
+		if "status" not in self.control: return False
+		if "code" not in self.control["status"]: return False
+		return self.control["status"]["code"] != 0
+	def getStatus ( self ):
+		if "control" not in self.__dict__: return None
+		return this.control["status"]
+	def getStatusReason ( self ):
+		if "control" not in self.__dict__: return None
+		if "status" not in self.control: return None
+		return self.control["status"]["reason"]
+
 	@staticmethod
 	def deserialize ( s ):
 		obj = json.loads ( s, object_hook=Event.from_json )
@@ -221,9 +234,19 @@ class Client:
 	def on ( self, eventName, callback ):
 		self._event_callbacks.append ( callback )
 
-	def connect(self):
-		self.sock.connect((self.host, self.port))
+	def _emit ( self, name, err, value=None):
+		print	( "1 -------------")
+		for fn in self._event_callbacks:
+			print	( "2 -------------")
+			fn(err,value)
+		return
 
+	def connect(self):
+		try:
+			self.sock.connect((self.host, self.port))
+		except IOError as e:
+			self._emit ( "error", e )
+			raise
 		einfo                        = Event ( "system", "client_info" )
 		einfo.body["language"]       = "python"
 		einfo.body["hostname"]       = socket.gethostname()
@@ -266,10 +289,8 @@ class Client:
 		while True:
 			c = self.sock.recv(1)
 			if c == b'':
-				# raise RuntimeError("socket connection broken")
-				for fn in self._event_callbacks:
-					fn("socket closed",None)
-					return
+				# raise IOError("socket connection broken")
+				self._emit ( "error", IOError("socket connection broken") )
 			bytes.write ( c )
 			if ( c == b'"' or c == b'\'' ):
 				q = c ;
