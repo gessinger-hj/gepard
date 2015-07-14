@@ -4,3 +4,4 @@ doc
 /.project
 *.class
 *.tgz
+*.pyc
