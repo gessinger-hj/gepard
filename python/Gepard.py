@@ -14,6 +14,7 @@ import datetime
 import socket
 import sys
 import os
+import threading
 
 try:
 	basestring
@@ -33,6 +34,8 @@ class Event ( object ):
 			self.name = obj["name"]
 			if 'user' in obj and obj["user"] != None:
 				self.user = User ( obj["user"] ) ;
+			if 'type' in obj and obj["type"] != None:
+				self.type = obj["type"] ;
 			self.control = obj["control"]
 			self.body = obj["body"]
 			return
@@ -73,6 +76,8 @@ class Event ( object ):
 		return self.control["createdAt"]
 	def getName ( self ):
 		return self.name
+	def getType ( self ):
+		return self.type
 	def setUser ( self, user ):
 		self.user = user
 	def getUser ( self ):
@@ -207,7 +212,31 @@ class User ( object ):
 	def getRight ( self, name ):
 		return self.rights[name]
 
-import socket
+import socket, struct
+
+def worker(client):
+	while True:
+		try:
+			e = client.readNextJSON()
+			print ( e )
+			if e.getName() == 'system' and e.getType() != None and e.getType() == "shutdown":
+				client._emit ( "shutdown", None, None )
+				break
+		except Exception:
+			break
+    # Runner r = new Runner ( _in ) ;
+    # new Thread ( r ).start() ;
+    # try
+    # {
+	   #  synchronized ( r )
+	   #  {
+	   #  	r.wait ( 10000 ) ;
+	   #  }
+    # }
+    # catch ( Exception exc )
+    # {
+    # 	System.out.println ( Util.toString ( exc ) ) ;
+    # }
 
 class Client:
 	'''demonstration class only - coded for clarity, not efficiency
@@ -215,7 +244,8 @@ class Client:
 
 	counter = 0 ;
 	def __init__(self, port=None, host=None):
-		self._event_callbacks = []
+		self.infoCallbacks = MultiMap()
+		self.connected = False
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		if port is None:
 			self.port = 17501
@@ -225,44 +255,56 @@ class Client:
 			self.host = "localhost"
 		else:
 			self.host = host
+		self.closing = True ;
 
 	def createUniqueId(self):
 		self.counter = self.counter + 1
 		millis = round(time.time()*1000)
 		return socket.gethostname() + "_" + str(os.getpid()) + "_" + str(millis) + "_" + str(self.counter) ;
 
-	def on ( self, eventName, callback ):
-		self._event_callbacks.append ( callback )
+	def onShutdown ( self, callback ):
+		self.infoCallbacks.put ( "shutdown", callback )
+	def onClose ( self, callback ):
+		self.infoCallbacks.put ( "close", callback )
+	def onError ( self, callback ):
+		self.infoCallbacks.put ( "error", callback )
 
-	def _emit ( self, name, err, value=None):
-		print	( "1 -------------")
-		for fn in self._event_callbacks:
-			print	( "2 -------------")
+	# def on ( self, eventName, callback ):
+	# 	self.infoCallbacks.put ( eventName, callback )
+
+	def _emit ( self, event_name, err, value=None):
+		function_list = self.infoCallbacks.getList ( event_name )
+		for fn in function_list:
 			fn(err,value)
 		return
 
 	def connect(self):
+		if self.connected: return
 		try:
 			self.sock.connect((self.host, self.port))
+			self.connected = True
+			l_onoff = 1                                                                                                                                                           
+			l_linger = 0                                                                                                                                                          
+			self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,                                                                                                                     
+                 struct.pack('ii', l_onoff, l_linger))
 		except IOError as e:
+			self.connected = False
 			self._emit ( "error", e )
 			raise
-		einfo                        = Event ( "system", "client_info" )
-		einfo.body["language"]       = "python"
-		einfo.body["hostname"]       = socket.gethostname()
-		einfo.body["connectionTime"] = datetime.datetime.now()
-		einfo.body["application"]    = sys.argv[0]
-		self.send ( einfo.serialize() ) 
+		event                        = Event ( "system", "client_info" )
+		event.body["language"]       = "python"
+		event.body["hostname"]       = socket.gethostname()
+		event.body["connectionTime"] = datetime.datetime.now()
+		event.body["application"]    = sys.argv[0]
+		self._send ( event ) 
 
-	def send ( self, event ):
-		if isinstance ( event, Event ):
-			event.setUniqueId ( self.createUniqueId() )
-			self.sock.sendall ( event.serialize().encode ( "utf-8" ) )
-		else:
-			self.sock.sendall(event.encode("utf-8"))
+	def _send ( self, event ):
+		self.connect()
+		event.setUniqueId ( self.createUniqueId() )
+		self.sock.sendall ( event.serialize().encode ( "utf-8" ) )
 
 	def emit(self, event):
-		self.send ( event )
+		self._send ( event )
 
 	def receive(self):
 		bytes_recd = 0
@@ -270,14 +312,20 @@ class Client:
 		while bytes_recd < 383:
 			b = self.sock.recv(1)
 			if chunk == b'':
-				# raise RuntimeError("socket connection broken")
-				for fn in self._event_callbacks:
-					fn ( RuntimeError ( "socket connection broken" ), "socket closed" )
-				return ;
+				self.connected = False
+				exc = IOError ( "socket connection broken" )
+				self._emit ( "close", exc )
+				raise exc
 			bytes.write ( b )
 			bytes_recd = bytes_recd + len(b)
 		result = bytes.getvalue().decode ( 'utf-8' )
 		return result
+
+	def _startWorker ( self ):
+		t = threading.Thread(target=worker, args=(self,))
+		# t.setDaemon ( True )
+		t.start()
+		return
 
 	def readNextJSON(self):
 		uid = self.createUniqueId()
@@ -289,8 +337,10 @@ class Client:
 		while True:
 			c = self.sock.recv(1)
 			if c == b'':
-				# raise IOError("socket connection broken")
-				self._emit ( "error", IOError("socket connection broken") )
+				self.connected = False
+				exc = IOError ( "socket connection broken" )
+				self._emit ( "close", exc )
+				raise exc
 			bytes.write ( c )
 			if ( c == b'"' or c == b'\'' ):
 				q = c ;
@@ -314,3 +364,73 @@ class Client:
 		s = bytes.getvalue().decode ( 'utf-8' )
 		e = Event.deserialize ( s )
 		return e ;
+
+class MultiMap:
+	def __init__(self):
+		self._map = {}
+
+	def put(self,key,value):
+		if key in self._map:
+			list = self._map[key]
+			list.append ( value )
+		else:
+			list = []
+			self._map[key] = list
+			list.append ( value )
+
+	def getList ( self, key ):
+		if key in self._map:
+			return self._map[key]
+		return []
+
+	def __str__(self):
+		s = StringIO()
+		s.write("(")
+		s.write(self.__class__.__name__)
+		s.write(")")
+		first = True
+		for key in self._map:
+			if first:
+				s.write ( "\n" )
+			s.write ( key )
+			s.write ( "=" )
+			s.write ( "[" )
+			s.write ( "\n" )
+			for x in self._map[key]:
+				s.write ( "  " )
+				s.write ( str(x) )
+				s.write ( "\n" )
+			s.write ( "]" )
+		return s.getvalue()
+
+	def remove ( self, key, value=None ):
+		if value == None:
+			del self._map[key]
+			return
+		list = self.getList ( key )
+		# if list == None:
+		# 	return
+		if value in list: list.remove ( value )
+
+	def getKeys ( self ):
+		a = []
+		for k in self._map:
+			a.append ( k )
+		return a ;
+
+	def getKeysOf ( self, value ):
+		a = [] ;
+		for key in self._map:
+			list = self._map[key]
+			if value in list: a.append ( key )
+		return a ;
+
+
+	def removeByValue ( self, value ):
+		keyList = self.getKeys()
+		for k in keyList:
+			list = self._map[k]
+			if value in list: list.remove ( value )
+			if len(list) == 0:
+				del self._map[k]
+
