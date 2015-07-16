@@ -224,24 +224,8 @@ def worker(client):
 				break
 		except Exception:
 			break
-    # Runner r = new Runner ( _in ) ;
-    # new Thread ( r ).start() ;
-    # try
-    # {
-	   #  synchronized ( r )
-	   #  {
-	   #  	r.wait ( 10000 ) ;
-	   #  }
-    # }
-    # catch ( Exception exc )
-    # {
-    # 	System.out.println ( Util.toString ( exc ) ) ;
-    # }
 
 class Client:
-	'''demonstration class only - coded for clarity, not efficiency
-	'''
-
 	counter = 0 ;
 	def __init__(self, port=None, host=None):
 		self.infoCallbacks = MultiMap()
@@ -256,7 +240,10 @@ class Client:
 		else:
 			self.host = host
 		self.closing = True ;
+		self._workerIsDaemon = False
 
+	def setDaemon(self,status=True):
+		self._workerIsDaemon = status
 	def createUniqueId(self):
 		self.counter = self.counter + 1
 		millis = round(time.time()*1000)
@@ -303,7 +290,9 @@ class Client:
 		event.setUniqueId ( self.createUniqueId() )
 		self.sock.sendall ( event.serialize().encode ( "utf-8" ) )
 
-	def emit(self, event):
+	def emit(self, event, type=None):
+		if isinstance ( :
+			pass
 		self._send ( event )
 
 	def receive(self):
@@ -323,7 +312,7 @@ class Client:
 
 	def _startWorker ( self ):
 		t = threading.Thread(target=worker, args=(self,))
-		# t.setDaemon ( True )
+		t.setDaemon ( self._workerIsDaemon )
 		t.start()
 		return
 
@@ -424,7 +413,6 @@ class MultiMap:
 			list = self._map[key]
 			if value in list: a.append ( key )
 		return a ;
-
 
 	def removeByValue ( self, value ):
 		keyList = self.getKeys()
