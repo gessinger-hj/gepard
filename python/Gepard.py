@@ -274,6 +274,7 @@ class Client:
 			l_linger = 0                                                                                                                                                          
 			self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,                                                                                                                     
                  struct.pack('ii', l_onoff, l_linger))
+			self._startWorker()
 		except IOError as e:
 			self.connected = False
 			self._emit ( "error", e )
@@ -291,9 +292,10 @@ class Client:
 		self.sock.sendall ( event.serialize().encode ( "utf-8" ) )
 
 	def emit(self, event, type=None):
-		if isinstance ( :
-			pass
-		self._send ( event )
+		e = event
+		if isinstance ( event, str ):
+			e = Event ( event, type )
+		self._send ( e )
 
 	def receive(self):
 		bytes_recd = 0

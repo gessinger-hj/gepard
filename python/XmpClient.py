@@ -16,6 +16,9 @@ def on_shutdown ( err, success ):
 	print ( "shutdown called" )
 	print ( err )
 
+def failure ( event ):
+	print ( event )
+
 c.onClose ( on_close )
 c.onError ( on_error )
 c.onShutdown ( on_shutdown )
@@ -25,14 +28,15 @@ e = Event ("ALARM")
 binaryData = bytearray([1,2,3,4,5])
 e.putValue ( "binaryData", binaryData ) ;
 e.setFailureInfoRequested()
-c.emit ( e )
+c.emit ( e ) #, failure )
+# c.emit ( "ALARM" )
+# c._startWorker()
 # result = c.receive()
 # print ( result )
-e = c._startWorker()
 print ( __file__ )
 # if e.isBad():
 # 	print ( e.getStatusReason() )
 # else:
 # 	print ( e )
-# time.sleep(10000)
+time.sleep(10000)
 
