@@ -415,6 +415,7 @@ public class Client
 							}
 							continue ;
 			    	}
+			    	// TODO: status info requested.
 						if ( e.isResult() )
 						{
 							EventCallback ecb = callbacks.get ( e.getUniqueId() ) ;

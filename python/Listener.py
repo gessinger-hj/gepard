@@ -5,6 +5,13 @@ from Gepard import Event, User, Client
 import json
 import time
 import sys
+def __LINE__():
+        try:
+                raise Exception
+        except:
+                return sys.exc_info()[2].tb_frame.f_back.f_lineno
+def __FILE__():
+        return inspect.currentframe().f_code.co_filename
 # ==========================================================================
 
 c = Client()
@@ -26,22 +33,11 @@ c.onClose ( on_close )
 c.onError ( on_error )
 c.onShutdown ( on_shutdown )
 
-def on_ALARM ( event ):
-	print	( "----------------- on_ALARM ----------")
+def on_ABLARM ( event ):
+	print(__LINE__())
+	print	( "on_ABLARM" )
 	print ( event )
 
-# e = Event ("ALARM")
-# binaryData = BytesIO(b"ABCDE")
-# binaryData = bytearray([1,2,3,4,5])
-# e.putValue ( "binaryData", binaryData ) ;
-# c.emit ( e )
-# c.emit ( "ALARM", type="XXX", failure=failure )
-
-c.on ( ["ALARM", "BLARM"], on_ALARM )
-
-# def getFileList ( e ):
-# 	print ( "---------- callback for get getFileList" )
-# 	print ( e )
-
-# c.request ( "getFileList", getFileList )
+print ( "Listening for ALARM and BLARM" )
+c.on ( ["ALARM", "BLARM"], on_ABLARM )
 

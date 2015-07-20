@@ -93,13 +93,22 @@ class Event ( object ):
 	def getValue ( self, name ):
 		if not isinstance ( name, basestring):
 			raise ValueError ( "name must be a non empty string, not: " + str(name) + "(" + name.__class__.__name__ + ")" )
+		if name not in self.body:
+			return None
 		return self.body[name]
+	def getClient(self):
+		return self._Client
+	def sendBack(self):
+		c = self._Client
+		self._Client = None
+		del self._Client
+		c.sendResult ( self )
 
 	def serialize(self):
 		s = json.dumps ( self, default=self.toJSON )
 		return s
 	def setUniqueId ( self, uid ):
-		if ( uid in self.control ):
+		if "uniqueId" in self.control and self.control["uniqueId"] != None:
 			return
 		self.control["uniqueId"] = uid ;
 	def getUniqueId ( self ):
@@ -135,6 +144,11 @@ class Event ( object ):
 	def isFailureInfoRequested(self):
 		if "_isFailureInfoRequested" not in self.control: return False
 		return self.control["_isFailureInfoRequested"]
+	def setStatusInfoRequested(self):
+		self.control["_isStatusInfoRequested"] = True
+	def isStatusInfoRequested(self):
+		if "_isStatusInfoRequested" not in self.control: return False
+		return self.control["_isStatusInfoRequested"]
 
 
 	@staticmethod
@@ -290,6 +304,7 @@ class Client:
 		self._send ( e )
 
 	def _emit ( self, event_name, err, value=None):
+		if value == None: value = ""
 		function_list = self.infoCallbacks.get ( event_name )
 		for fn in function_list:
 			fn(err,value)
@@ -331,28 +346,45 @@ class Client:
 			raise ValueError ( "callback must be a function or a dict containing a key='result' for a function-value, not: " + str(callback) )
 		self.emit ( event, callback )
 
+	def sendResult(self,event):
+		if not event.isResultRequested():
+			print ( "No result requested" )
+			print ( event )
+			raise Exception ( "No result requested" )
+		event.setIsResult()
+		event._Client = None
+		del event._Client
+		self._send ( event )
+
 	def emit ( self, event, type=None, **kwargs ):
 		callback = None
 		e = event
 		map = kwargs
 		if isinstance ( event, str ):
 			if kwargs == None:
-				e = Event ( event )
+				e = Event ( event, type )
 			elif isinstance ( type, str ):
 				e = Event ( event, type )
 			elif isinstance ( type, dict ):
-				e = Event ( event )
 				map = type
+				e = Event ( event )
 			elif "type" in kwargs:
 				e = Event ( event, kwargs["type"] )
+			else:
+				e = Event ( event, type )
+		elif isinstance ( event, Event ):
+			if isinstance ( type, dict ):
+				map = type
 		if map != None:
 			callback = {}
 			for key in map:
 				if   key == "failure": e.setFailureInfoRequested()
+				elif key == "status" : e.setStatusInfoRequested()
 				elif key == "result" : e.setResultRequested()
 				elif key == "error"  : e.setResultRequested()
 				callback[key] = map.get ( key )
 		self._send ( e )
+		# print	( e )
 		if callback != None:
 			self.callbacks[e.getUniqueId()] = callback
 
@@ -375,7 +407,7 @@ class Client:
 		# eventListenerFunctions.clear() ;
   # 	_Instances.remove ( "" + this.host + ":" + this.port ) ;
 		self.sock = None
-		self._emit ( "close", null )
+		self._emit ( "close", None )
 
 	def readNextJSON(self):
 		uid = self.createUniqueId()
@@ -435,6 +467,8 @@ class Client:
 					del self.callbacks[e.getUniqueId()]
 					if e.isFailureInfoRequested() and "failure" in callback:
 						callback["failure"] ( e )
+					elif e.isStatusInfoRequested() and "status" in callback:
+						callback["status"] ( e )
 					elif "error" in callback:
 						callback["error"] ( e )
 					elif "result" in callback:
@@ -445,9 +479,19 @@ class Client:
 					if callback == None:
 						print ( "No callback found for:\n" + e )
 						continue
+					if e.isStatusInfoRequested() and "status" in callback:
+						callback["status"] ( e )
+						continue
 					del self.callbacks[e.getUniqueId()]
 					if "result" in callback:
-						callback["result"] ( e )
+						try:
+							e._Client = self
+							callback["result"] ( e )
+						except Exception as exc:
+							print (exc)
+						if "_Client" in e.__dict__:
+							e._Client = None
+							del e._Client
 					else:
 						print ( "No result callback found for:\n" + e )
 					continue
@@ -456,15 +500,16 @@ class Client:
 				found = False
 				for function in functionList:
 					found = True
-              # if ( e.isResultRequested() ) TODO:
-              # {
-              #   e._Client = thiz ;
-              #   callbackList[k].call ( thiz, e ) ;
-              #   break ;
-              # }
-              # else
-              # {
-					function ( e )
+					try:
+						e._Client = self
+						function ( e )
+					except Exception as exc:
+						print (exc)
+					if "_Client" in e.__dict__:
+						e._Client = None
+						del e._Client
+					if e.isResultRequested():
+						break
 				if not found:
 					print ( "listener function list for " + e.getName() + " not found." )
 					print ( e )

@@ -349,6 +349,14 @@ gepard.Event.prototype =
 	{
   	return this.control._isFailureInfoRequested ;
 	},
+	setStatusInfoRequested: function()
+	{
+  	this.control._isStatusInfoRequested = true ;
+	},
+	isStatusInfoRequested: function()
+	{
+  	return this.control._isStatusInfoRequested ;
+	},
 	/**
 	 * Description
 	 * @method setIsBroadcast

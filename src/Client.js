@@ -215,10 +215,15 @@ Client.prototype.connect = function()
           {
             delete thiz.callbacks[uid] ;
           }
-          var rcb = ctx.result ;
-          if ( rcb )
+          if ( ! ctx )
           {
-            rcb.call ( thiz, e ) ;
+            console.log ( "callback not found for uid=" + uid ) ;
+            console.log ( e ) ;
+            continue ;
+          }
+          if ( ctx.result )
+          {
+            ctx.result.call ( thiz, e ) ;
           }
           continue ;
         }
@@ -253,6 +258,23 @@ Client.prototype.connect = function()
               rcb.call ( thiz, e ) ;
             }
             continue ;
+          }
+          if ( e.isStatusInfoRequested() )
+          {
+            uid = e.getUniqueId() ;
+            ctx = thiz.callbacks[uid] ;
+            if ( !ctx )
+            {
+              console.log ( e ) ;
+              continue ;
+            }
+            delete thiz.callbacks[uid] ;
+            rcb = ctx.status ;
+            }
+            if ( rcb )
+            {
+              rcb.call ( thiz, e ) ;
+            }
           }
           ////////////////////////////
           // lock resource handling //
@@ -495,6 +517,7 @@ Client.prototype._emit = function ( params, callback, opts )
       delete e.control["__ignore_result_function_as_result_indicator__" ] ;
       ctx.failure = callback.failure ;
       if ( ctx.failure ) e.setFailureInfoRequested() ;
+      if ( ctx.status ) e.setStatusInfoRequested() ;
       ctx.error = callback.error ;
       ctx.write = callback.write ;
       if ( opts.isBroadcast )
@@ -509,6 +532,11 @@ Client.prototype._emit = function ( params, callback, opts )
       {
         ctx.result = callback ;
         e.setIsBroadcast() ;
+      }
+      else
+      if ( e.isStatusInfoRequested() )
+      {
+        ctx.status = callback ;
       }
       else
       if ( e.isFailureInfoRequested() )
@@ -526,6 +554,10 @@ Client.prototype._emit = function ( params, callback, opts )
     if ( e.isFailureInfoRequested() )
     {
       throw new Error ( "Missing callback for FailureInfo" ) ;
+    }
+    if ( e.isStatusInfoRequested() )
+    {
+      throw new Error ( "Missing callback for StatusInfo" ) ;
     }
   }
   var socketExists = !! this.socket ;

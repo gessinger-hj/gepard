@@ -587,6 +587,13 @@ Broker.prototype._sendEventToClients = function ( conn, e )
         socketList[i].write ( str ) ;
       }
     }
+    if ( e.isStatusInfoRequested() )
+    {
+      e.setIsResult() ;
+      e.control.status = { code:0, name:"success", reason:"Listener found for event: " + e.getName() } ;
+      e.control.requestedName = e.getName() ;
+      conn.write ( e ) ;
+    }
     return ;
   }
   for ( i = 0 ; i < this._connectionList.length ; i++ )
@@ -608,9 +615,17 @@ Broker.prototype._sendEventToClients = function ( conn, e )
       break ;
     }
   }
+  if ( found && e.isStatusInfoRequested() )
+  {
+    e.setIsResult() ;
+    e.control.status = { code:0, name:"success", reason:"Listener found for event: " + e.getName() } ;
+    e.control.requestedName = e.getName() ;
+    conn.write ( e ) ;
+    return ;
+  }
   if ( ! found )
   {
-    if ( e.isResultRequested() || e.isFailureInfoRequested() )
+    if ( e.isResultRequested() || e.isFailureInfoRequested() || e.isStatusInfoRequested() )
     {
       e.setIsResult() ;
       e.control.status = { code:1, name:"warning", reason:"No listener found for event: " + e.getName() } ;
