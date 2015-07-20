@@ -15,6 +15,8 @@ import socket
 import sys
 import os
 import threading
+import types
+import collections
 
 try:
 	basestring
@@ -94,10 +96,8 @@ class Event ( object ):
 		return self.body[name]
 
 	def serialize(self):
-		s = json.dumps ( self, default=self.to_json )
+		s = json.dumps ( self, default=self.toJSON )
 		return s
-	def setFailureInfoRequested(self):
-		self.control["_isFailureInfoRequested"] = True
 	def setUniqueId ( self, uid ):
 		if ( uid in self.control ):
 			return
@@ -114,20 +114,37 @@ class Event ( object ):
 		return self.control["status"]["code"] != 0
 	def getStatus ( self ):
 		if "control" not in self.__dict__: return None
-		return this.control["status"]
+		return self.control["status"]
 	def getStatusReason ( self ):
 		if "control" not in self.__dict__: return None
 		if "status" not in self.control: return None
 		return self.control["status"]["reason"]
 
+	def setIsResult ( self ):
+		self.control["_isResult"] = True
+	def isResult ( self ):
+		if "_isResult" not in self.control: return False
+		return self.control["_isResult"]
+	def setResultRequested ( self ):
+		self.control["_isResultRequested"] = True
+	def isResultRequested ( self ):
+		if "_isResultRequested" not in self.control: return False
+		return self.control["_isResultRequested"]
+	def setFailureInfoRequested(self):
+		self.control["_isFailureInfoRequested"] = True
+	def isFailureInfoRequested(self):
+		if "_isFailureInfoRequested" not in self.control: return False
+		return self.control["_isFailureInfoRequested"]
+
+
 	@staticmethod
 	def deserialize ( s ):
-		obj = json.loads ( s, object_hook=Event.from_json )
+		obj = json.loads ( s, object_hook=Event.fromJSON )
 		e = Event ( obj )
 		return e
 
 	@staticmethod
-	def to_json(obj):
+	def toJSON(obj):
 		if isinstance ( obj, bytes ):
 			return { 'type': 'bytes'
 						 , 'data': list(obj)
@@ -143,7 +160,7 @@ class Event ( object ):
 		if isinstance ( obj, Event ):
 			juser = None
 			if obj.user:
-				juser = obj.user.to_json()
+				juser = obj.user.toJSON()
 			return { 'className': obj.className
 						 , 'name':obj.name
 						 , "type":obj.type
@@ -153,7 +170,7 @@ class Event ( object ):
 						 }
 		raise TypeError ( repr(obj) + ' is not JSON serializable' )
 	@staticmethod
-	def from_json ( obj ):
+	def fromJSON ( obj ):
 		if 'type' in obj:
 			if obj['type'] == 'time.asctime':
 				return time.strptime(obj['data'])
@@ -200,7 +217,7 @@ class User ( object ):
 		s.write("]")
 		return s.getvalue()
 
-	def to_json(self):
+	def toJSON(self):
 		return { 'className': self.className
 					 , "id":self.id
 					 , "key":self.key
@@ -214,21 +231,11 @@ class User ( object ):
 
 import socket, struct
 
-def worker(client):
-	while True:
-		try:
-			e = client.readNextJSON()
-			print ( e )
-			if e.getName() == 'system' and e.getType() != None and e.getType() == "shutdown":
-				client._emit ( "shutdown", None, None )
-				break
-		except Exception:
-			break
-
 class Client:
 	counter = 0 ;
 	def __init__(self, port=None, host=None):
 		self.infoCallbacks = MultiMap()
+		self.eventListenerFunctions = MultiMap()
 		self.connected = False
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		if port is None:
@@ -239,8 +246,10 @@ class Client:
 			self.host = "localhost"
 		else:
 			self.host = host
-		self.closing = True ;
+		self.user = None
+		self.closing = False
 		self._workerIsDaemon = False
+		self.callbacks = {}
 
 	def setDaemon(self,status=True):
 		self._workerIsDaemon = status
@@ -256,11 +265,32 @@ class Client:
 	def onError ( self, callback ):
 		self.infoCallbacks.put ( "error", callback )
 
-	# def on ( self, eventName, callback ):
-	# 	self.infoCallbacks.put ( eventName, callback )
+	def on ( self, eventNameList, callback ):
+		if isinstance ( eventNameList, str ):
+			eventNameList = [ eventNameList ]
+		elif isinstance ( eventNameList, collections.Sequence ):
+			pass
+		else:
+			raise Exception ( "eventNameList must be a string or an array of strings." )
+		if len ( eventNameList ) == 0:
+			raise  Exception ( "eventNameList must not be empty." )
+
+		if not isinstance ( callback, types.FunctionType ):
+			raise Exception ( "callback must be a function, not:" + str ( callback ) )
+
+    # TDOO: synchronized ( "_LOCK" )
+		for n in eventNameList:
+			self.eventListenerFunctions.put ( n, callback )
+
+		e = Event ( "system", "addEventListener" )
+		if self.user != None:
+			e.setUser ( user )
+		e.body["eventNameList"] = eventNameList
+		e.setUniqueId ( self.createUniqueId() )
+		self._send ( e )
 
 	def _emit ( self, event_name, err, value=None):
-		function_list = self.infoCallbacks.getList ( event_name )
+		function_list = self.infoCallbacks.get ( event_name )
 		for fn in function_list:
 			fn(err,value)
 		return
@@ -291,32 +321,61 @@ class Client:
 		event.setUniqueId ( self.createUniqueId() )
 		self.sock.sendall ( event.serialize().encode ( "utf-8" ) )
 
-	def emit(self, event, type=None):
-		e = event
-		if isinstance ( event, str ):
-			e = Event ( event, type )
-		self._send ( e )
+	def request ( self, event, callback ):
+		if isinstance ( callback, types.FunctionType ):
+			callback = { "result": callback }
+		elif isinstance ( callback, dict ):
+			if callback.get ( "result" ) == None or not isinstance ( callback.result, types.FunctionType ):
+				raise ValueError ( "callback must be a function or a dict containing a key='result' for a function-value, not: " + str(callback) )
+		else:
+			raise ValueError ( "callback must be a function or a dict containing a key='result' for a function-value, not: " + str(callback) )
+		self.emit ( event, callback )
 
-	def receive(self):
-		bytes_recd = 0
-		bytes = BytesIO()
-		while bytes_recd < 383:
-			b = self.sock.recv(1)
-			if chunk == b'':
-				self.connected = False
-				exc = IOError ( "socket connection broken" )
-				self._emit ( "close", exc )
-				raise exc
-			bytes.write ( b )
-			bytes_recd = bytes_recd + len(b)
-		result = bytes.getvalue().decode ( 'utf-8' )
-		return result
+	def emit ( self, event, type=None, **kwargs ):
+		callback = None
+		e = event
+		map = kwargs
+		if isinstance ( event, str ):
+			if kwargs == None:
+				e = Event ( event )
+			elif isinstance ( type, str ):
+				e = Event ( event, type )
+			elif isinstance ( type, dict ):
+				e = Event ( event )
+				map = type
+			elif "type" in kwargs:
+				e = Event ( event, kwargs["type"] )
+		if map != None:
+			callback = {}
+			for key in map:
+				if   key == "failure": e.setFailureInfoRequested()
+				elif key == "result" : e.setResultRequested()
+				elif key == "error"  : e.setResultRequested()
+				callback[key] = map.get ( key )
+		self._send ( e )
+		if callback != None:
+			self.callbacks[e.getUniqueId()] = callback
 
 	def _startWorker ( self ):
-		t = threading.Thread(target=worker, args=(self,))
+		t = threading.Thread(target=self._worker ) #, args=(self,))
 		t.setDaemon ( self._workerIsDaemon )
 		t.start()
 		return
+
+	def close ( self ):
+		if self.sock != None:
+			try:
+				self.closing = True
+				self.connected = False
+				self.sock.shutdown ( socket.SHUT_RDWR )
+				self.sock.close()
+			except Exception as exc:
+				print ( exc )
+		self.infoCallbacks.clear()
+		# eventListenerFunctions.clear() ;
+  # 	_Instances.remove ( "" + this.host + ":" + this.port ) ;
+		self.sock = None
+		self._emit ( "close", null )
 
 	def readNextJSON(self):
 		uid = self.createUniqueId()
@@ -354,7 +413,65 @@ class Client:
 				lastWasBackSlash = True
 		s = bytes.getvalue().decode ( 'utf-8' )
 		e = Event.deserialize ( s )
+		# print ( e )
 		return e ;
+
+	def _worker(self):
+		while True:
+			try:
+				e = self.readNextJSON()
+				# print ( e )
+				if e.getName() == 'system':
+					if e.getType() != None and e.getType() == "shutdown":
+						self._emit ( "shutdown", None, None )
+						break
+					continue
+				if e.isBad():
+					if e.isResult():
+						callback = self.callbacks.get ( e.getUniqueId() )
+						if callback == None:
+							print ( "No callback found for:\n" + e )
+							continue
+					del self.callbacks[e.getUniqueId()]
+					if e.isFailureInfoRequested() and "failure" in callback:
+						callback["failure"] ( e )
+					elif "error" in callback:
+						callback["error"] ( e )
+					elif "result" in callback:
+						callback["result"] ( e )
+					continue
+				if e.isResult():
+					callback = self.callbacks.get ( e.getUniqueId() )
+					if callback == None:
+						print ( "No callback found for:\n" + e )
+						continue
+					del self.callbacks[e.getUniqueId()]
+					if "result" in callback:
+						callback["result"] ( e )
+					else:
+						print ( "No result callback found for:\n" + e )
+					continue
+
+				functionList = self.eventListenerFunctions.get ( e.getName() )
+				found = False
+				for function in functionList:
+					found = True
+              # if ( e.isResultRequested() ) TODO:
+              # {
+              #   e._Client = thiz ;
+              #   callbackList[k].call ( thiz, e ) ;
+              #   break ;
+              # }
+              # else
+              # {
+					function ( e )
+				if not found:
+					print ( "listener function list for " + e.getName() + " not found." )
+					print ( e )
+					continue
+
+			except Exception:
+				break
 
 class MultiMap:
 	def __init__(self):
@@ -369,7 +486,7 @@ class MultiMap:
 			self._map[key] = list
 			list.append ( value )
 
-	def getList ( self, key ):
+	def get ( self, key ):
 		if key in self._map:
 			return self._map[key]
 		return []
@@ -398,7 +515,7 @@ class MultiMap:
 		if value == None:
 			del self._map[key]
 			return
-		list = self.getList ( key )
+		list = self.get ( key )
 		# if list == None:
 		# 	return
 		if value in list: list.remove ( value )
@@ -424,3 +541,9 @@ class MultiMap:
 			if len(list) == 0:
 				del self._map[k]
 
+	def clear(self):
+		keyList = self.getKeys()
+		for k in keyList:
+			list = self._map[k]
+			list[:] = []
+			del self._map[k]

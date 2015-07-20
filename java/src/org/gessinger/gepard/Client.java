@@ -276,6 +276,7 @@ public class Client
   		}
   	}
   }
+  // TODO: eventName as Array of String
 	public void on ( String eventName, EventListener el )
 	throws IOException
 	{

@@ -471,7 +471,7 @@ Broker.prototype._ondata = function ( socket, chunk )
         socket.end() ;
         return ;
       }
-console.log ( e ) ;
+//console.log ( e ) ;
       if ( ! e.body )
       {
         this._ejectSocket ( socket ) ;

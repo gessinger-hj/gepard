@@ -399,17 +399,6 @@ Client.prototype.getSocket = function()
 };
 /**
  * Description
- * @method fire
- * @param {} params
- * @param {} callback
- * @return 
- */
-Client.prototype.fire = function ( params, callback )
-{
-  this._fireEvent ( params, callback, null ) ;
-};
-/**
- * Description
  * @method request
  * @param {} params
  * @param {} callback
@@ -425,7 +414,7 @@ Client.prototype.request = function ( params, callback )
   {
     throw new Error ( "Missing result function.")
   }
-  this._fireEvent ( params, callback, { isBroadcast:false } ) ;
+  this._emit ( params, callback, { isBroadcast:false } ) ;
 };
 /**
  * Description
@@ -444,7 +433,18 @@ Client.prototype.broadcast = function ( params, callback )
   {
     throw new Error ( "Missing result function.")
   }
-  this._fireEvent ( params, callback, { isBroadcast:true } ) ;
+  this._emit ( params, callback, { isBroadcast:true } ) ;
+};
+/**
+ * Description
+ * @method fire
+ * @param {} params
+ * @param {} callback
+ * @return 
+ */
+Client.prototype.fire = function ( params, callback )
+{
+  this._emit ( params, callback, null ) ;
 };
 /**
  * Description
@@ -455,9 +455,9 @@ Client.prototype.broadcast = function ( params, callback )
  */
 Client.prototype.fireEvent = function ( params, callback )
 {
-  return this._fireEvent ( params, callback, null ) ;
+  return this._emit ( params, callback, null ) ;
 };
-Client.prototype._fireEvent = function ( params, callback, opts )
+Client.prototype._emit = function ( params, callback, opts )
 {
   if ( ! opts ) opts = {} ;
   var e = null, user ;
