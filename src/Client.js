@@ -227,6 +227,26 @@ Client.prototype.connect = function()
           }
           continue ;
         }
+        if ( e.isStatusInfo() )
+        {
+          uid = e.getUniqueId() ;
+          ctx = thiz.callbacks[uid] ;
+          if ( !ctx )
+          {
+            console.log ( e ) ;
+            continue ;
+          }
+          delete thiz.callbacks[uid] ;
+          if ( ctx.status )
+          {
+            ctx.status.call ( thiz, e ) ;
+          }
+          if ( ! thiz.alive )
+          {
+            break ;
+          }
+          continue ;
+        }
         if ( e.getName() === "system" )
         {
           if ( e.getType() === "shutdown" )
@@ -258,22 +278,6 @@ Client.prototype.connect = function()
               rcb.call ( thiz, e ) ;
             }
             continue ;
-          }
-          if ( e.isStatusInfoRequested() )
-          {
-            uid = e.getUniqueId() ;
-            ctx = thiz.callbacks[uid] ;
-            if ( !ctx )
-            {
-              console.log ( e ) ;
-              continue ;
-            }
-            delete thiz.callbacks[uid] ;
-            rcb = ctx.status ;
-            if ( rcb )
-            {
-              rcb.call ( thiz, e ) ;
-            }
           }
           ////////////////////////////
           // lock resource handling //
@@ -329,15 +333,11 @@ Client.prototype.connect = function()
             }
             delete thiz.callbacks[uid] ;
             rcb = ctx.error ;
-            if ( e.isFailureInfoRequested() || e.isStatusInfoRequested() )
+            if ( e.isFailureInfoRequested() )
             {
               if ( ctx.failure )
               {
                 rcb = ctx.failure ;
-              }
-              if ( ctx.status )
-              {
-                rcb = ctx.status ;
               }
             }
             if ( rcb )
@@ -520,6 +520,7 @@ Client.prototype._emit = function ( params, callback, opts )
       delete e.control["__ignore_result_function_as_result_indicator__" ] ;
       ctx.failure = callback.failure ;
       if ( ctx.failure ) e.setFailureInfoRequested() ;
+      ctx.status = callback.status ;
       if ( ctx.status ) e.setStatusInfoRequested() ;
       ctx.error = callback.error ;
       ctx.write = callback.write ;

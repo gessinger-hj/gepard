@@ -357,6 +357,14 @@ gepard.Event.prototype =
 	{
   	return this.control._isStatusInfoRequested ;
 	},
+	setIsStatusInfo: function()
+	{
+  	this.control._isStatusInfo = true ;
+	},
+	isStatusInfo: function()
+	{
+  	return this.control._isStatusInfo ;
+	},
 	/**
 	 * Description
 	 * @method setIsBroadcast

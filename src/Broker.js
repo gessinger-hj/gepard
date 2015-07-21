@@ -570,11 +570,12 @@ Broker.prototype._sendEventToClients = function ( conn, e )
   var i, found = false, done = false, str, list ;
   var name = e.getName() ;
   e.setSourceIdentifier ( conn.sid ) ;
+  var isStatusInfoRequested = e.isStatusInfoRequested() ;
+  e.control._isStatusInfoRequested = false ;
   var str = e.serialize() ;
+  e.control._isStatusInfoRequested = isStatusInfoRequested ;
   var socketList = this._eventNameToSockets.get ( name ) ;
   var s ;
-  var isStatusInfoRequested = e.isStatusInfoRequested() ;
-  e.control._isStatusInfoRequested = false
   if ( socketList )
   {
     found = true ;
@@ -589,9 +590,9 @@ Broker.prototype._sendEventToClients = function ( conn, e )
         socketList[i].write ( str ) ;
       }
     }
-    if ( isStatusInfoRequested() )
+    if ( isStatusInfoRequested )
     {
-      e.setIsResult() ;
+      e.setIsStatusInfo() ;
       e.control.status = { code:0, name:"success", reason:"Listener found for event: " + e.getName() } ;
       e.control.requestedName = e.getName() ;
       conn.write ( e ) ;
@@ -619,7 +620,7 @@ Broker.prototype._sendEventToClients = function ( conn, e )
   }
   if ( found && isStatusInfoRequested )
   {
-    e.setIsResult() ;
+    e.setIsStatusInfo() ;
     e.control.status = { code:0, name:"success", reason:"Listener found for event: " + e.getName() } ;
     e.control.requestedName = e.getName() ;
     conn.write ( e ) ;
@@ -629,7 +630,14 @@ Broker.prototype._sendEventToClients = function ( conn, e )
   {
     if ( e.isResultRequested() || e.isFailureInfoRequested() || isStatusInfoRequested )
     {
-      e.setIsResult() ;
+      if ( isStatusInfoRequested )
+      {
+        e.setIsStatusInfo() ;
+      }
+      else
+      {
+        e.setIsResult() ;
+      }
       e.control.status = { code:1, name:"warning", reason:"No listener found for event: " + e.getName() } ;
       e.control.requestedName = e.getName() ;
       conn.write ( e ) ;

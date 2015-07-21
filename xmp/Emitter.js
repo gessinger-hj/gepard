@@ -52,9 +52,13 @@ if ( require.main === module )
   {
     c.fire ( name,
     {
-      write: function()
+      status: function(event)
       {
         this.end() ;
+      },
+      write: function()
+      {
+        // this.end() ;
       }
     });
   }
