@@ -28,7 +28,8 @@ public class Listener
     });
     String name = Util.getProperty ( "name", "ALARM" ) ;
     System.out.println ( "Listen for events with name=" + name ) ;
-    client.on ( name, new EventListener()
+    // client.on ( name, new EventListener()
+    client.on ( new String[] { "ALARM", "BLARM" }, new EventListener()
     {
       public void event ( Event e )
       {

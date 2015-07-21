@@ -1,5 +1,14 @@
+## 1.2.4 (2015-07-19)
+- implement Java client.on() with array of strings as event-names of interest.
+	public void on ( String[] eventNameList, EventListener el )
+	
+## 1.2.4 (2015-07-21)
+- implement client.emit(), client.on(), client.request(), client.sendBack()
+- create python classes for gepard: Event, User, Client, MultiMap
+
 ## 1.2.3 (2015-06-25)
-- Enable connection hooks for different actions with boolean values or Promises
+- Enable connection hooks for different actions with boolean values or Promises.
+
 ## 1.2.2 (2015-04-22)
 Bugfixes:
 - fix an invalid reference in index.js causing an exception in client callbacks if Broker is down.

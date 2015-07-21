@@ -289,9 +289,30 @@ public class Client
     counter++ ;
     String uid = hostname + "_" + localPort + "-" + counter ;
     e.setUniqueId ( uid ) ;
-    synchronized ( "_LOCK" )
+    synchronized ( _LOCK )
     {
 	    eventListenerFunctions.put ( eventName, el ) ;
+    }
+    _send ( e ) ;
+	}
+	public void on ( String[] eventNameList, EventListener el )
+	throws IOException
+	{
+		Event e = new Event ( "system", "addEventListener" ) ;
+	  if ( user != null )
+	  {
+	    e.setUser ( user ) ;
+	  }
+	  e.body.put ( "eventNameList", eventNameList ) ;
+    counter++ ;
+    String uid = hostname + "_" + localPort + "-" + counter ;
+    e.setUniqueId ( uid ) ;
+    synchronized ( _LOCK )
+    {
+    	for ( String name : eventNameList )
+    	{
+		    eventListenerFunctions.put ( name, el ) ;
+    	}
     }
     _send ( e ) ;
 	}
@@ -332,7 +353,7 @@ public class Client
 			    }
 			    Event e = Event.fromJSON ( t ) ;
 
-			    synchronized ( "_LOCK" )
+			    synchronized ( _LOCK )
 			    {
 			    	if ( e.getName().equals ( "system" ) )
 			    	{
@@ -465,7 +486,6 @@ public class Client
 		try
 		{
 	    int k = 0 ;
-	    boolean lastWasBackslash = false ;
 	    char q = 0 ;
 	    int pcounter = 0 ;
 	    while ( ( k = in.read() ) >= 0 )
@@ -474,6 +494,7 @@ public class Client
 		    sb.append ( c ) ;
 		    if ( c == '"' || c == '\'' )
 		    {
+	    		boolean lastWasBackslash = false ;
 		      q = c ;
 			    while ( ( k = in.read() ) >= 0 )
 			    {
@@ -488,6 +509,7 @@ public class Client
 		          }
 		          break ;
 		        }
+		        lastWasBackslash = c == '\\' ;
 		      }
 		    }
 		    if ( c == '{' )
@@ -503,7 +525,6 @@ public class Client
 		      	break ;
 		      }
 		    }
-        if ( c == '\\' ) lastWasBackSlash = true ;
 		  }
 		}
 		catch ( IOException exc )

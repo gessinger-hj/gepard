@@ -270,7 +270,6 @@ Client.prototype.connect = function()
             }
             delete thiz.callbacks[uid] ;
             rcb = ctx.status ;
-            }
             if ( rcb )
             {
               rcb.call ( thiz, e ) ;
@@ -330,11 +329,15 @@ Client.prototype.connect = function()
             }
             delete thiz.callbacks[uid] ;
             rcb = ctx.error ;
-            if ( e.isFailureInfoRequested() )
+            if ( e.isFailureInfoRequested() || e.isStatusInfoRequested() )
             {
               if ( ctx.failure )
               {
                 rcb = ctx.failure ;
+              }
+              if ( ctx.status )
+              {
+                rcb = ctx.status ;
               }
             }
             if ( rcb )
