@@ -621,6 +621,12 @@ gepard.Event.prototype =
 		if ( ! this.control.status ) return ;
 		return this.control.status.reason ;
 	},
+	getStatusName: function()
+	{
+		if ( ! this.control ) return ;
+		if ( ! this.control.status ) return ;
+		return this.control.status.name ;
+	},
 	sendBack: function()
 	{
 		var c = this._Client ;

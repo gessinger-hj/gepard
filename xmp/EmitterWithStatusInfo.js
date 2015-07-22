@@ -10,9 +10,8 @@ if ( require.main === module )
   if ( T.getProperty ( "help" ) )
   {
     console.log (
-      "Gepard Examples: Emitter, emit a given event.\n"
-    + "Usage: node Emitter [-Dname=<event-name>], default <event-name>=ALARM\n"
-    + "                    [-Dbody=<json-string>], example: {\"City\":\"Frankfurt\"}"
+      "Gepard Examples: EmitterWithStatusInfo, emit a given event and request staus failure or success.\n"
+    + "Usage: node Emitter [-Dname=<event-name>], default <event-name>=ALARM"
     ) ;
     process.exit() ;
   }
@@ -31,31 +30,20 @@ if ( require.main === module )
 
   var c = new Client() ;
 
-  if ( body )
+  c.fire ( name,
   {
-    body = JSON.parse ( body ) ;
-    body.binary = new Buffer ( [ 64, 65, 66, 67 ] ) ;
-    var e = new Event ( name, body ) ;
-    var u = new User ( "smith" ) ;
-    u.addRight ( "CAN_READ_FILES", "*.docx" ) ;
-    e.setUser ( u ) ;
-
-    c.fire ( e,
+    status: function(event)
     {
-      write: function()
+      console.log ( "status=" + event.getStatusName() ) ;
+      if ( event.isBad() )
       {
-        this.end() ;
+        console.log ( event.getStatusReason() ) ;
       }
-    });
-  }
-  else
-  {
-    c.fire ( name,
-    {
-      write: function() // The event is sent -> end connection and exit
+      else
       {
-        this.end() ;
+        console.log ( event.getStatusReason() ) ;
       }
-    });
-  }
+      this.end() ;
+    }
+  });
 }

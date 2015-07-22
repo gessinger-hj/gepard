@@ -119,6 +119,18 @@ public class Event
   {
     return (this.control.get ( "_isFailureInfoRequested" )+"").equals ( "true" ) ;
   }
+  void setStatusInfoRequested()
+  {
+    this.control.put ( "_isStatusInfoRequested", true ) ;
+  }
+  public boolean isStatusInfoRequested()
+  {
+    return (this.control.get ( "_isStatusInfoRequested" )+"").equals ( "true" ) ;
+  }
+  public boolean isStatusInfo()
+  {
+    return (this.control.get ( "_isStatusInfo" )+"").equals ( "true" ) ;
+  }
   public void setIsBroadcast()
   {
     this.control.put ( "_isBroadcast", true ) ;
@@ -203,15 +215,15 @@ public class Event
   {
     if ( this.control == null ) return false ;
     if ( ! this.control.containsKey ( "status" ) ) return false ;
-    HashMap<String,Object> status = (HashMap<String,Object>)this.control.get ( "status" ) ;
+    Map<String,Object> status = (Map<String,Object>)this.control.get ( "status" ) ;
     if ( status == null ) return false ;
     if ( ! status.containsKey ( "code" ) ) return false ;
     return ! (status.get ( "code" )+"").equals ( "0" ) ;
   }
-  public HashMap<String,Object> getStatus()
+  public Map<String,Object> getStatus()
   {
     if ( this.control == null ) return null ;
-    return (HashMap<String,Object>)this.control.get ( "status" ) ;
+    return (Map<String,Object>)this.control.get ( "status" ) ;
   }
   public boolean hasStatus()
   {
@@ -222,19 +234,19 @@ public class Event
   public String getStatusReason()
   {
     if ( ! hasStatus() ) return "" ;
-    HashMap<String,Object> status = (HashMap<String,Object>)this.control.get ( "status" ) ;
+    Map<String,Object> status = (Map<String,Object>)this.control.get ( "status" ) ;
     return "" + status.get ( "reason" ) ;
   }
   public String getStatusName()
   {
     if ( ! hasStatus() ) return "" ;
-    HashMap<String,Object> status = (HashMap<String,Object>)this.control.get ( "status" ) ;
+    Map<String,Object> status = (Map<String,Object>)this.control.get ( "status" ) ;
     return "" + status.get ( "name" ) ;
   }
   public int getStatusCode()
   {
     if ( ! hasStatus() ) return 0 ;
-    HashMap<String,Object> status = (HashMap<String,Object>)this.control.get ( "status" ) ;
+    Map<String,Object> status = (Map<String,Object>)this.control.get ( "status" ) ;
     try
     {
       return Integer.parseInt ( "" + status.get ( "reason" ) ) ;

@@ -571,7 +571,7 @@ Broker.prototype._sendEventToClients = function ( conn, e )
   var name = e.getName() ;
   e.setSourceIdentifier ( conn.sid ) ;
   var isStatusInfoRequested = e.isStatusInfoRequested() ;
-  e.control._isStatusInfoRequested = false ;
+  e.control._isStatusInfoRequested = undefined ;
   var str = e.serialize() ;
   e.control._isStatusInfoRequested = isStatusInfoRequested ;
   var socketList = this._eventNameToSockets.get ( name ) ;

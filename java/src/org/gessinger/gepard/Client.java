@@ -170,6 +170,11 @@ public class Client
 	throws IOException
 	{
 		boolean hasCallbacks = false ;
+		if ( ecb instanceof StatusCallback )
+		{
+			hasCallbacks = true ;
+    	e.setStatusInfoRequested() ;
+		}
 		if ( ecb instanceof FailureCallback )
 		{
 			hasCallbacks = true ;
@@ -407,6 +412,21 @@ public class Client
 		            continue ;
 		          }
 			    		continue ;
+			    	}
+			    	if ( e.isStatusInfo() )
+			    	{
+							EventCallback ecb = callbacks.get ( e.getUniqueId() ) ;
+							if ( ecb == null )
+							{
+								System.err.println ( "No callback found for:\n" + e ) ;
+								continue ;
+							}
+							callbacks.remove ( e.getUniqueId() ) ;
+							if ( ecb instanceof StatusCallback )
+							{
+								((StatusCallback)ecb).status ( e ) ;
+							}
+							continue ;
 			    	}
 			    	if ( e.isBad() )
 			    	{

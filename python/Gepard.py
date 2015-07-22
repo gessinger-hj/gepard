@@ -128,6 +128,10 @@ class Event ( object ):
 		if "control" not in self.__dict__: return None
 		if "status" not in self.control: return None
 		return self.control["status"]["reason"]
+	def getStatusName ( self ):
+		if "control" not in self.__dict__: return None
+		if "status" not in self.control: return None
+		return self.control["status"]["name"]
 
 	def setIsResult ( self ):
 		self.control["_isResult"] = True
@@ -149,7 +153,9 @@ class Event ( object ):
 	def isStatusInfoRequested(self):
 		if "_isStatusInfoRequested" not in self.control: return False
 		return self.control["_isStatusInfoRequested"]
-
+	def isStatusInfo(self):
+		if "_isStatusInfo" not in self.control: return False
+		return self.control["_isStatusInfo"]
 
 	@staticmethod
 	def deserialize ( s ):
@@ -458,6 +464,15 @@ class Client:
 						self._emit ( "shutdown", None, None )
 						break
 					continue
+				if e.isStatusInfo():
+					callback = self.callbacks.get ( e.getUniqueId() )
+					if callback == None:
+						print ( "No callback found for:\n" + e )
+						continue
+					if "status" in callback:
+						del self.callbacks[e.getUniqueId()]
+						callback["status"] ( e )
+					continue
 				if e.isBad():
 					if e.isResult():
 						callback = self.callbacks.get ( e.getUniqueId() )
@@ -467,8 +482,6 @@ class Client:
 					del self.callbacks[e.getUniqueId()]
 					if e.isFailureInfoRequested() and "failure" in callback:
 						callback["failure"] ( e )
-					elif e.isStatusInfoRequested() and "status" in callback:
-						callback["status"] ( e )
 					elif "error" in callback:
 						callback["error"] ( e )
 					elif "result" in callback:
@@ -478,9 +491,6 @@ class Client:
 					callback = self.callbacks.get ( e.getUniqueId() )
 					if callback == None:
 						print ( "No callback found for:\n" + e )
-						continue
-					if e.isStatusInfoRequested() and "status" in callback:
-						callback["status"] ( e )
 						continue
 					del self.callbacks[e.getUniqueId()]
 					if "result" in callback:

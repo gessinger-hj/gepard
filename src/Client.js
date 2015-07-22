@@ -236,9 +236,9 @@ Client.prototype.connect = function()
             console.log ( e ) ;
             continue ;
           }
-          delete thiz.callbacks[uid] ;
           if ( ctx.status )
           {
+            delete thiz.callbacks[uid] ;
             ctx.status.call ( thiz, e ) ;
           }
           if ( ! thiz.alive )

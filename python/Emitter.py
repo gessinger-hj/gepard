@@ -15,9 +15,11 @@ def on_shutdown ( err, info ):
 	print ( err )
 
 def failure ( event ):
+	print ( "status=" + event.getStatusName() )
 	print ( event.getStatusReason() )
 	event.getClient().close()
 def status ( event ):
+	print ( "status=" + event.getStatusName() )
 	print ( event.getStatusReason() )
 	event.getClient().close()
 

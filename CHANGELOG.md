@@ -1,11 +1,16 @@
-## 1.2.4 (2015-07-19)
-- implement Java client.on() with array of strings as event-names of interest.
-	public void on ( String[] eventNameList, EventListener el )
-	
+## 1.2.4 (2015-07-22)
+- fix a class mismatch in Event.java
+	com.google.gson.internal.LinkedTreeMap cannot be cast to java.util.HashMap
+- implement new status info for emit: broker returns success or failure
+
 ## 1.2.4 (2015-07-21)
 - implement client.emit(), client.on(), client.request(), client.sendBack()
 - create python classes for gepard: Event, User, Client, MultiMap
 
+## 1.2.4 (2015-07-19)
+- implement Java client.on() with array of strings as event-names of interest.
+	public void on ( String[] eventNameList, EventListener el )
+	
 ## 1.2.3 (2015-06-25)
 - Enable connection hooks for different actions with boolean values or Promises.
 
