@@ -45,7 +45,14 @@ public class MultiMap<K,V>
     }
     return rc ;
   }
-  public void remove ( V value )
+  public void remove ( K key )
+  {
+    List<V> list = map.get ( key ) ;
+    if ( list == null ) return ;
+    list.clear() ;
+    return ;
+  }
+  public void removeValue ( V value )
   {
     ArrayList<K> toBeRemoved = new ArrayList<K>() ;
     for ( K key : keySet() )
@@ -61,6 +68,19 @@ public class MultiMap<K,V>
     {
       map.remove ( key ) ;
     }
+  }
+  public List<K> getKeysOf ( V value )
+  {
+    ArrayList<K> keys = new ArrayList<K>() ;
+    for ( K key : keySet() )
+    {
+      List<V> list = map.get ( key ) ;
+      if ( list.indexOf ( value ) >= 0 )
+      {
+        keys.add ( key ) ;
+      }
+    }
+    return keys ;
   }
   public Set<K> keySet()
   {

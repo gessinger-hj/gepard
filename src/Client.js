@@ -703,6 +703,16 @@ Client.prototype.on = function ( eventName, callback )
 };
 /**
  * Description
+ * @method remove
+ * @param {} eventNameOrFunction
+ * @return 
+ */
+Client.prototype.remove = function ( eventNameOrFunction )
+{
+  this.removeEventListener ( eventNameOrFunction ) ;
+};
+/**
+ * Description
  * @method removeEventListener
  * @param {} eventNameOrFunction
  * @return 

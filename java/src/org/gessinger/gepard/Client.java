@@ -88,7 +88,7 @@ public class Client
 	    localPort = socket.getLocalPort() ;
 
 	    Event e = new Event ( "system", "client_info" ) ;
-	    HashMap<String,Object> body = e.getBody() ;
+	    Map<String,Object> body = e.getBody() ;
 
 	    body.put ( "language", "Java" ) ;
 	    body.put ( "hostname", hostname ) ;
@@ -286,10 +286,7 @@ public class Client
 	throws IOException
 	{
 		Event e = new Event ( "system", "addEventListener" ) ;
-	  if ( user != null )
-	  {
-	    e.setUser ( user ) ;
-	  }
+    e.setUser ( user ) ;
 	  e.body.put ( "eventNameList", new String[] { eventName } ) ;
     counter++ ;
     String uid = hostname + "_" + localPort + "-" + counter ;
@@ -304,10 +301,7 @@ public class Client
 	throws IOException
 	{
 		Event e = new Event ( "system", "addEventListener" ) ;
-	  if ( user != null )
-	  {
-	    e.setUser ( user ) ;
-	  }
+    e.setUser ( user ) ;
 	  e.body.put ( "eventNameList", eventNameList ) ;
     counter++ ;
     String uid = hostname + "_" + localPort + "-" + counter ;
@@ -321,6 +315,74 @@ public class Client
     }
     _send ( e ) ;
 	}
+
+	public void remove ( String name )
+	throws IOException
+	{
+		removeEventListener ( new String[] { name } ) ;
+	}
+	public void remove ( String[] nameList )
+	throws IOException
+	{
+		removeEventListener ( nameList ) ;
+	}
+	public void removeEventListener ( String name )
+	throws IOException
+	{
+		removeEventListener ( new String[] { name } ) ;
+	}
+	public void removeEventListener ( String[] nameList )
+	throws IOException
+	{
+		for ( String name : nameList )
+		{
+			eventListenerFunctions.remove ( name ) ;
+		}
+    Event e = new Event ( "system", "removeEventListener" ) ;
+    e.setUser ( this.user ) ;
+	  e.body.put ( "eventNameList", nameList ) ;
+    counter++ ;
+    String uid = hostname + "_" + localPort + "-" + counter ;
+    e.setUniqueId ( uid ) ;
+    _send ( e ) ;
+	}
+	public void remove ( EventListener el )
+	throws IOException
+	{
+		removeEventListener ( new EventListener[] { el } ) ;
+	}
+	public void remove ( EventListener[] elList )
+	throws IOException
+	{
+		removeEventListener ( elList ) ;
+	}
+	public void removeEventListener ( EventListener el )
+	throws IOException
+	{
+		removeEventListener ( new EventListener[] { el } ) ;
+	}
+	public void removeEventListener ( EventListener[] elList )
+	throws IOException
+	{
+		ArrayList<String> nameList = new ArrayList<String>() ; 
+		for ( EventListener el : elList )
+		{
+      List<String> keys = eventListenerFunctions.getKeysOf ( el ) ;
+      for ( String name : keys )
+      {
+      	nameList.add ( name ) ;
+      }
+      eventListenerFunctions.removeValue ( el ) ;
+		}
+		String[] nameArray = nameList.toArray(new String[0]);
+    Event e = new Event ( "system", "removeEventListener" ) ;
+    e.setUser ( this.user ) ;
+	  e.body.put ( "eventNameList", nameArray ) ;
+    counter++ ;
+    String uid = hostname + "_" + localPort + "-" + counter ;
+    e.setUniqueId ( uid ) ;
+    _send ( e ) ;
+  }
 	Hashtable<String,Event> toBeSentBack = new Hashtable<String,Event>() ;
 	public void sendResult ( Event e )
 	throws Exception
@@ -369,7 +431,7 @@ public class Client
 			    		}
 		          if ( e.getType().equals ( "acquireSemaphoreResult" ) )
 		          {
-		          	HashMap<String,Object> body = e.getBody() ;
+		          	Map<String,Object> body = e.getBody() ;
 								String resourceId = (String) body.get ( "resourceId" ) ;
 								Semaphore sem = semaphores.get ( resourceId ) ;
 								if ( sem.hasCallback() )
@@ -399,7 +461,7 @@ public class Client
 		          }
 		          if ( e.getType().equals ( "lockResourceResult" ) )
 		          {
-		          	HashMap<String,Object> body = e.getBody() ;
+		          	Map<String,Object> body = e.getBody() ;
 								String resourceId = (String) body.get ( "resourceId" ) ;
 						  	synchronized ( _NQ_lockEvents )
 						  	{
@@ -474,19 +536,28 @@ public class Client
 						List<EventListener> list = eventListenerFunctions.get ( e.getName() ) ;
 						if ( list != null )
 						{
-							for ( EventListener l : list )
+							List<EventListener> clonedList = new ArrayList(list) ;
+							try
 							{
-								if ( e.isResultRequested() )
+								for ( EventListener l : clonedList )
 								{
-									toBeSentBack.put ( e.getUniqueId(), e ) ;
-									e._Client = Client.this ;
-									l.event ( e ) ;
-									break ;
+									if ( e.isResultRequested() )
+									{
+										toBeSentBack.put ( e.getUniqueId(), e ) ;
+										e._Client = Client.this ;
+										l.event ( e ) ;
+										break ;
+									}
+									else
+									{
+										l.event ( e ) ;
+									}
 								}
-								else
-								{
-									l.event ( e ) ;
-								}
+							}
+							catch ( Exception exc )
+							{
+								clonedList.clear() ;
+								throw exc ;
 							}
 						}
 					}
@@ -578,7 +649,7 @@ public class Client
 					}
 					semaphores.remove ( sem.resourceId ) ;
 					Event e = new Event ( "system", "acquireSemaphoreResult" ) ;
-					HashMap<String,Object> body = e.getBody() ;
+					Map<String,Object> body = e.getBody() ;
 					body.put ( "resourceId", sem.resourceId ) ;
 					body.put ( "isSemaphoreOwner", false ) ;
 					sem.timeoutMillis = 0 ;
@@ -605,7 +676,7 @@ public class Client
 		}
 		semaphores.put ( sem.resourceId, sem ) ;
 		Event e = new Event ( "system", "acquireSemaphoreRequest" ) ;
-		HashMap<String,Object> body = e.getBody() ;
+		Map<String,Object> body = e.getBody() ;
   	body.put ( "resourceId", sem.resourceId ) ;
   	_send ( e ) ;
   	if ( ! sem.hasCallback() )
@@ -639,7 +710,7 @@ public class Client
     	return ;
 		}
 		Event e = new Event ( "system", "releaseSemaphoreRequest" ) ;
-		HashMap<String,Object> body = e.getBody() ;
+		Map<String,Object> body = e.getBody() ;
   	body.put ( "resourceId", sem.resourceId ) ;
 		semaphores.remove ( sem.resourceId ) ;
   	_send ( e ) ;
@@ -654,7 +725,7 @@ public class Client
 		}
 		locks.put ( lock.resourceId, lock ) ;
 		Event e = new Event ( "system", "lockResourceRequest" ) ;
-		HashMap<String,Object> body = e.getBody() ;
+		Map<String,Object> body = e.getBody() ;
   	body.put ( "resourceId", lock.resourceId ) ;
   	_send ( e ) ;
   	synchronized ( _NQ_lockEvents )
@@ -675,7 +746,7 @@ public class Client
     	return ;
 		}
 		Event e = new Event ( "system", "unlockResourceRequest" ) ;
-		HashMap<String,Object> body = e.getBody() ;
+		Map<String,Object> body = e.getBody() ;
   	body.put ( "resourceId", lock.resourceId ) ;
   	_send ( e ) ;
 	}

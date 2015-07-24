@@ -179,7 +179,7 @@ public class Event
   {
     this.type = type != null ? type : "" ;
   }
-  public HashMap<String,Object> getBody()
+  public Map<String,Object> getBody()
   {
     return this.body ;
   }
@@ -194,6 +194,7 @@ public class Event
   }
   public void setUser ( User u )
   {
+    if ( u == null ) return ;
     this.user = u ;
   }
   public HashMap<String,Object> getControl()
@@ -256,9 +257,17 @@ public class Event
     }
     return 0 ;
   }
+  public Object getValue ( String name )
+  {
+    return this.body.get ( name ) ;
+  }
   public Object getBodyValue ( String name )
   {
     return this.body.get ( name ) ;
+  }
+  public void putValue ( String name, Object obj )
+  {
+    this.body.put ( name, obj ) ;
   }
   public void putBodyValue ( String name, Object obj )
   {

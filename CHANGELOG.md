@@ -1,4 +1,8 @@
 ## 1.2.4 (2015-07-22)
+- implement removeEventListener() in Java and Python
+- implement the shorter remove() in all flavours
+
+## 1.2.4 (2015-07-22)
 - fix a class mismatch in Event.java
 	com.google.gson.internal.LinkedTreeMap cannot be cast to java.util.HashMap
 - implement new status info for emit: broker returns success or failure

@@ -309,6 +309,37 @@ class Client:
 		e.setUniqueId ( self.createUniqueId() )
 		self._send ( e )
 
+	def remove ( self, eventNameOrFunction ):
+		self.removeEventListener ( eventNameOrFunction )
+	def removeEventListener ( self, eventNameOrFunction ):
+		if isinstance ( eventNameOrFunction, str ):
+			eventNameOrFunction = [ eventNameOrFunction ] ;
+		elif isinstance ( eventNameOrFunction, types.FunctionType ):
+			eventNameOrFunction = [ eventNameOrFunction ] ;
+
+		if isinstance ( eventNameOrFunction[0], str ):
+			for name in eventNameOrFunction:
+				self.eventListenerFunctions.remove ( name )
+			e = Event ( "system", "removeEventListener" )
+			if self.user != None:
+				e.setUser ( user )
+			e.body["eventNameList"] = eventNameOrFunction
+			e.setUniqueId ( self.createUniqueId() )
+			self._send ( e )
+		elif isinstance ( eventNameOrFunction[0], types.FunctionType ):
+			nameList = []
+			for el in eventNameOrFunction:
+				keys = self.eventListenerFunctions.getKeysOf ( el )
+				for name in keys:
+					nameList.append ( name )
+					self.eventListenerFunctions.removeValue ( el )
+			e = Event ( "system", "removeEventListener" )
+			if self.user != None:
+				e.setUser ( user )
+			e.body["eventNameList"] = nameList
+			e.setUniqueId ( self.createUniqueId() )
+			self._send ( e )
+
 	def _emit ( self, event_name, err, value=None):
 		if value == None: value = ""
 		function_list = self.infoCallbacks.get ( event_name )
@@ -588,7 +619,7 @@ class MultiMap:
 			if value in list: a.append ( key )
 		return a ;
 
-	def removeByValue ( self, value ):
+	def removeValue ( self, value ):
 		keyList = self.getKeys()
 		for k in keyList:
 			list = self._map[k]

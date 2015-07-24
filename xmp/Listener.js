@@ -27,11 +27,15 @@ if ( require.main === module )
 	});
 	function execute()
 	{
-		var name = "ALARM" ;
+		var name = [ "ALARM", "BLARM" ] ;
 		var c = new Client() ;
 		console.log ( "Listen for events with name=" + name ) ;
 		c.on ( name, function(e)
 		{
+			if ( e.getName() === "BLARM" )
+			{
+				this.remove ( "BLARM" ) ;
+			}
 			console.log ( e ) ;
 		});
 		c.on('end', function()
