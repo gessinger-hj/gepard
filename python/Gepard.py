@@ -74,6 +74,8 @@ class Event ( object ):
 		s.write(",body=" + str(self.body) )
 		s.write("]")
 		return s.getvalue()
+	def getBody(self):
+		return self.body
 	def getCreatedAt(self):
 		return self.control["createdAt"]
 	def getName ( self ):
@@ -251,8 +253,20 @@ class User ( object ):
 
 import socket, struct
 
-class Client:
+class Client: # TODO: static class method getInstance ( port, host )
 	counter = 0 ;
+	_Instances = {}
+	@classmethod
+	def getInstance ( clazz, port=None, host=None ):
+		if host == None: host = "localhost"
+		key = str(port) + ":" + str(host)
+		client = clazz._Instances.get ( key )
+		if client != None:
+			return client
+		client = Client ( port, host )
+		clazz._Instances[key] = client
+		return client
+
 	def __init__(self, port=None, host=None):
 		self.infoCallbacks = MultiMap()
 		self.eventListenerFunctions = MultiMap()
@@ -270,6 +284,11 @@ class Client:
 		self.closing = False
 		self._workerIsDaemon = False
 		self.callbacks = {}
+
+		self.semaphores = {}
+		self._NQ_semaphoreEvents = NamedQueue()
+		self.locks = {}
+		self._NQ_lockEvents = NamedQueue()
 
 	def setDaemon(self,status=True):
 		self._workerIsDaemon = status
@@ -494,7 +513,15 @@ class Client:
 					if e.getType() != None and e.getType() == "shutdown":
 						self._emit ( "shutdown", None, None )
 						break
+					if e.getType() == "lockResourceResult":
+						body = e.getBody()
+						resourceId = body.get ( "resourceId" )
+						self._NQ_lockEvents._returnObj ( resourceId, e )
+						continue
+					if e.getType() == "unlockResourceResult":
+						continue
 					continue
+
 				if e.isStatusInfo():
 					callback = self.callbacks.get ( e.getUniqueId() )
 					if callback == None:
@@ -558,6 +585,55 @@ class Client:
 
 			except Exception:
 				break
+
+	def acquireLock ( self, lock ):
+		if lock.resourceId in self.locks:
+			print ( "acquire lock: already owner of resourceId=" + lock.resourceId )
+			return
+		self.locks[lock.resourceId] = lock
+		e = Event ( "system", "lockResourceRequest" )
+		body = e.getBody()
+		body["resourceId"] = lock.resourceId
+		e.setUniqueId ( self.createUniqueId() )
+		self._send ( e )
+		e = self._NQ_lockEvents.get ( lock.resourceId )
+		body = e.getBody()
+		resourceId = body.get ( "resourceId" )
+		lock = self.locks.get ( resourceId )
+		lock._isOwner = body.get ( "isLockOwner" )
+
+	def releaseLock ( self, lock ):
+		if lock.resourceId not in self.locks:
+			print ( "release lock: not owner of resourceId=" + lock.resourceId )
+			return
+		del self.locks[lock.resourceId]
+		e = Event ( "system", "unlockResourceRequest" ) ;
+		body = e.getBody() ;
+		body["resourceId"] = lock.resourceId ;
+		e.setUniqueId ( self.createUniqueId() )
+		self._send ( e ) ;
+
+class Lock:
+	def __init__ ( self, resourceId, port=None, host=None ):
+		self.resourceId = resourceId
+		self._isOwner = False
+		self.client = Client.getInstance ( port, host )
+	def getClient(self):
+		return self.client
+	def isOwner(self):
+		return self._isOwner
+	def acquire(self):
+		self.client.acquireLock ( self )
+	def release(self):
+		self.client.releaseLock ( self )
+	def __str__(self):
+		s = StringIO()
+		s.write("(")
+		s.write(self.__class__.__name__)
+		s.write(")[resourceId=")
+		s.write(self.resourceId)
+		s.write(",isOwner=" + str(self.isOwner()) + "]" )
+		return s.getvalue()
 
 class MultiMap:
 	def __init__(self):
@@ -633,3 +709,81 @@ class MultiMap:
 			list = self._map[k]
 			list[:] = []
 			del self._map[k]
+
+class NamedQueue:
+	def __init__(self):
+		self._Counter         = 0
+		self._NamedObjects    = []
+		self._WaitingNames    = {}
+		self._ReturnedObjects = {}
+		self._AwakeAll        = False
+		self._lock = threading.Lock()
+		self._condition = threading.Condition ( self._lock )
+
+	def put ( self, name, obj=None ):
+		v = None
+		if isinstance ( name, str ) and obj != None:
+			v = { "name":name, "obj":obj }
+		elif isinstance ( name, dict ):
+			obj = name
+			self._Counter = self._Counter + 1
+			name = "OID-" + str(self._Counter)
+			v = { "name":name, "obj":obj }
+
+		self._NamedObjects.append ( v )
+		self._condition.acquire() ;
+		self._condition.notify_all() ;
+		self._condition.release() ;
+		return name
+
+	def get ( self, name ):
+		self._condition.acquire()
+		self._WaitingNames[name] = "" ;
+		while True:
+			o = self._ReturnedObjects.get ( name )
+			if o == None:
+				self._condition.wait()
+			o = self._ReturnedObjects.get ( name )
+			if o != None:
+				del self._WaitingNames[name]
+				del self._ReturnedObjects[name]
+				self._condition.release()
+				return o
+			if self._AwakeAll:
+				self._condition.release()
+				return None
+
+	def _get ( self ):
+		self._condition.acquire()
+		while True:
+			if len ( self._NamedObjects ) == 0:
+				self._condition.wait()
+			if len ( self._NamedObjects ) > 0:
+				o = self._NamedObjects[0]
+				self._NamedObjects.remove ( o )
+				self._condition.release()
+				return o ;
+			if self._AwakeAll:
+				self._condition.release()
+				return None
+
+	def awakeAll ( self ):
+		self._AwakeAll = True
+		self._condition.awake_all()
+
+	def _returnObj ( self, name, obj=None ):
+		self._condition.acquire()
+		if isinstance ( name, dict ):
+			self._ReturnedObjects[name["name"]] = name["obj"]
+		else:
+			self._ReturnedObjects[name] = obj
+		self._condition.notify_all()
+		self._condition.release()
+
+	def probe ( self, name ):
+		self._condition.acquire()
+		o = self._ReturnedObjects.get ( name )
+		if o != None:
+			del self._ReturnedObjects[name]
+		return o
+

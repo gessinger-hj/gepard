@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-from Gepard import Event, User, Client
+from Gepard import Event, User, Client, Lock
+import time
 
 # ==========================================================================
 
@@ -15,18 +16,20 @@ def on_shutdown ( err, info ):
 	print ( "shutdown called" )
 	print ( err )
 
-def failure ( event ):
-	print ( "status=" + event.getStatusName() )
-	print ( event.getStatusReason() )
-	event.getClient().close()
-def status ( event ):
-	print ( "status=" + event.getStatusName() )
-	print ( event.getStatusReason() )
-	event.getClient().close()
-
 client.onClose ( on_close )
 client.onError ( on_error )
 client.onShutdown ( on_shutdown )
 
-client.emit ( "ALARM", status=status )
-# client.emit ( "ALARM", failure=failure )
+lock = Lock ( "user:4711" )
+lock.acquire()
+
+if lock.isOwner():
+	print ( lock )
+	print ( "Sleep for 10 seconds" )
+	time.sleep(10)
+	print ( "release" )
+	lock.release()
+else:
+	print ( lock )
+
+lock.getClient().close() ;

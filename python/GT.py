@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from Gepard import Event, User, Client, MultiMap
+from Gepard import Event, User, Client, MultiMap, NamedQueue
 
 import json
 import threading
@@ -13,37 +13,30 @@ except ImportError:
 
 # ==========================================================================
 
-def xxx():
-	return 2
-
-mm = MultiMap()
-mm.put ( "A", "11111" ) ;
-mm.put ( "B", "33333" ) ;
-mm.put ( "B", "4444444" ) ;
-mm.put ( "B", "11111" ) ;
-mm.put ( "A", "33333" ) ;
-print ( mm )
-print ( "--------------------------" )
-mm.remove ( "B", "4444444" ) 
-print ( "--------------------------" )
-print ( mm )
-mm.removeByValue ( "33333" )
-print ( "--------------------------" )
-print ( mm )
-mm.put ( "FUNC", xxx )
-print ( mm )
-l = mm.getKeysOf ( "11111" )
-print ( l )
-mm.removeByValue ( xxx )
-print ( mm )
+_NQ = NamedQueue() ;
 
 def worker():
 	"""thread worker function"""
 	while True:
-		print ( 'Worker' )
+		o = _NQ._get() ;
+		print ( o )
 		time.sleep(2)
+		_NQ._returnObj ( o )
 	return
+
 t = threading.Thread(target=worker)
 t.setDaemon ( True )
 t.start()
-t.join()
+
+_NQ.put ( "ID17", "OOOOOOOOOOOOOOOOOOOO" )
+_NQ.put ( "ID16", "OOOOOOOOOOOOOOOOOOOO" )
+_NQ.put ( "ID15", "OOOOOOOOOOOOOOOOOOOO" )
+_NQ.put ( "ID14", "OOOOOOOOOOOOOOOOOOOO" )
+ret = _NQ.get ( "ID14" )
+print ( "ret=" + ret )
+ret = _NQ.get ( "ID15" )
+print ( "ret=" + ret )
+ret = _NQ.get ( "ID16" )
+print ( "ret=" + ret )
+ret = _NQ.get ( "ID17" )
+print ( "ret=" + ret )

@@ -745,6 +745,7 @@ public class Client
 	    System.out.println ( Util.toString ( "release lock: not owner of resourceId=" + lock.resourceId ) ) ;
     	return ;
 		}
+		locks.remove ( lock.resourceId ) ;
 		Event e = new Event ( "system", "unlockResourceRequest" ) ;
 		Map<String,Object> body = e.getBody() ;
   	body.put ( "resourceId", lock.resourceId ) ;
