@@ -28,14 +28,19 @@ if ( require.main === module )
   function execute()
   {
     var key = T.getProperty ( "name", "user:4711" ) ;
-    var auto = T.getProperty ( "auto" ) ;
     var lock = new Lock ( key ) ;
     lock.acquire ( function ( err )
     {
       console.log ( "" + this.toString() ) ;
-      if ( auto )
+      if ( lock.isOwner() )
       {
-        this.release() ;
+        console.log ( "Sleep for 10 seconds" ) ;
+        setInterval ( function sleep ()
+        {
+          lock.release() ;
+          console.log ( "Lock released." ) ;
+          process.exit() ;
+        }, 10000 ) ;
       }
     } ) ;
   }

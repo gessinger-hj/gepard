@@ -253,7 +253,7 @@ class User ( object ):
 
 import socket, struct
 
-class Client: # TODO: static class method getInstance ( port, host )
+class Client:
 	counter = 0 ;
 	_Instances = {}
 	@classmethod
@@ -265,9 +265,11 @@ class Client: # TODO: static class method getInstance ( port, host )
 			return client
 		client = Client ( port, host )
 		clazz._Instances[key] = client
+		client._first = True
 		return client
 
 	def __init__(self, port=None, host=None):
+		self._first = False
 		self.infoCallbacks = MultiMap()
 		self.eventListenerFunctions = MultiMap()
 		self.connected = False
@@ -287,7 +289,7 @@ class Client: # TODO: static class method getInstance ( port, host )
 
 		self.semaphores = {}
 		self._NQ_semaphoreEvents = NamedQueue()
-		self.locks = {}
+		self._ownedResources = {}
 		self._NQ_lockEvents = NamedQueue()
 
 	def setDaemon(self,status=True):
@@ -513,6 +515,22 @@ class Client: # TODO: static class method getInstance ( port, host )
 					if e.getType() != None and e.getType() == "shutdown":
 						self._emit ( "shutdown", None, None )
 						break
+					if e.getType() == "acquireSemaphoreResult":
+						body = e.getBody()
+						resourceId = body.get ( "resourceId" ) ;
+						sem = self.semaphores.get ( resourceId ) ;
+						if sem.hasCallback():
+							sem._isSemaphoreOwner = True
+							sem.callback ( sem )
+						else:
+							if self._NQ_semaphoreEvents.isWaiting ( sem.resourceId ):
+								self._NQ_semaphoreEvents._returnObj ( resourceId, e )
+							else:
+								sem.release() ;
+						continue ;
+					if e.getType() == "releaseSemaphoreResult":
+						continue
+
 					if e.getType() == "lockResourceResult":
 						body = e.getBody()
 						resourceId = body.get ( "resourceId" )
@@ -587,10 +605,10 @@ class Client: # TODO: static class method getInstance ( port, host )
 				break
 
 	def acquireLock ( self, lock ):
-		if lock.resourceId in self.locks:
+		if lock.resourceId in self._ownedResources:
 			print ( "acquire lock: already owner of resourceId=" + lock.resourceId )
 			return
-		self.locks[lock.resourceId] = lock
+		self._ownedResources[lock.resourceId] = lock
 		e = Event ( "system", "lockResourceRequest" )
 		body = e.getBody()
 		body["resourceId"] = lock.resourceId
@@ -599,33 +617,124 @@ class Client: # TODO: static class method getInstance ( port, host )
 		e = self._NQ_lockEvents.get ( lock.resourceId )
 		body = e.getBody()
 		resourceId = body.get ( "resourceId" )
-		lock = self.locks.get ( resourceId )
-		lock._isOwner = body.get ( "isLockOwner" )
-
+		lock = self._ownedResources.get ( resourceId )
+		lock._isLockOwner = body.get ( "isLockOwner" )
 	def releaseLock ( self, lock ):
-		if lock.resourceId not in self.locks:
+		if lock.resourceId not in self._ownedResources:
 			print ( "release lock: not owner of resourceId=" + lock.resourceId )
 			return
-		del self.locks[lock.resourceId]
+		del self._ownedResources[lock.resourceId]
 		e = Event ( "system", "unlockResourceRequest" ) ;
 		body = e.getBody() ;
 		body["resourceId"] = lock.resourceId ;
 		e.setUniqueId ( self.createUniqueId() )
 		self._send ( e ) ;
 
+	def acquireSemaphore ( self, sem ):
+		if sem.resourceId in self.semaphores:
+			s = self.semaphores.get ( sem.resourceId )
+			if s.isOwner():
+				print ( "Client.acquireSemaphore: already owner of resourceId=" + sem.resourceId )
+			else:
+				print ( "Client.acquireSemaphore: already waiting for ownership owner of resourceId=" + sem.resourceId )
+			return
+
+		self.semaphores[sem.resourceId] = sem
+		e = Event ( "system", "acquireSemaphoreRequest" )
+		body = e.getBody()
+		body["resourceId"] = sem.resourceId
+		self._send ( e )
+		if not sem.hasCallback():
+			# if sem.timeoutMillis > 10: # TODO: sem with timeout
+			# 	sem._Timer = new Timer() ;
+			# 	sem._Timer.schedule ( new TT ( sem ), sem.timeoutMillis ) ;
+			e = self._NQ_semaphoreEvents.get ( sem.resourceId )
+			# if sem._Timer != None:
+			# 	sem._Timer.cancel() ;
+			# 	sem._Timer.purge() ;
+			# 	sem._Timer = null ;
+			body = e.getBody()
+			resourceId = body.get ( "resourceId" )
+			sem._isSemaphoreOwner = body.get ( "isSemaphoreOwner" )
+
+	def releaseSemaphore ( self, sem ):
+		if sem.resourceId not in self.semaphores:
+			print ( "release semaphore: not owner of resourceId=" + sem.resourceId )
+			return
+		e = Event ( "system", "releaseSemaphoreRequest" )
+		body = e.getBody() ;
+		body["resourceId"] = sem.resourceId
+		del self.semaphores[sem.resourceId]
+		self._send ( e ) ;
+
 class Lock:
 	def __init__ ( self, resourceId, port=None, host=None ):
 		self.resourceId = resourceId
-		self._isOwner = False
-		self.client = Client.getInstance ( port, host )
+		self._isLockOwner = False
+		if isinstance ( port, Client ):
+			self.client = port
+		else:
+			self.client = Client.getInstance ( port, host )
 	def getClient(self):
 		return self.client
 	def isOwner(self):
-		return self._isOwner
+		return self._isLockOwner
 	def acquire(self):
 		self.client.acquireLock ( self )
+		if not self.isOwner() and self.client._first:
+			self.client.close()
+			self.client = None
 	def release(self):
-		self.client.releaseLock ( self )
+		if self._isLockOwner:
+			self.client.releaseLock ( self )
+		if self.client._first:
+			self.client.close()
+			self.client = None
+	def __str__(self):
+		s = StringIO()
+		s.write("(")
+		s.write(self.__class__.__name__)
+		s.write(")[resourceId=")
+		s.write(self.resourceId)
+		s.write(",isOwner=" + str(self.isOwner()) + "]" )
+		return s.getvalue()
+
+class Semaphore:
+	def __init__ ( self, resourceId, port=None, host=None ):
+		self.resourceId = resourceId
+		self._isSemaphoreOwner = False
+		if isinstance ( port, Client ):
+			self.client = port
+		else:
+			self.client = Client.getInstance ( port, host )
+		self.callback = None
+		self.timeoutMillis = -1
+	def hasCallback(self):
+		return self.callback != None ;
+
+	def getClient(self):
+		return self.client
+	def isOwner(self):
+		return self._isSemaphoreOwner
+	def acquire(self, callback=None):
+		if callback == None:
+			self.callback = callback
+		elif isinstance ( callback, types.FunctionType ):
+			self.callback = callback
+		elif isinstance ( callback, numbers.Number ):
+			self.timeoutMillis = callback
+		self.client.acquireSemaphore ( self )
+		if self.hasCallback():
+			return
+		if not self.isOwner() and self.client._first:
+			self.client.close()
+			self.client = None
+	def release(self):
+		if self._isSemaphoreOwner:
+			self.client.releaseSemaphore ( self )
+		if self.client._first:
+			self.client.close()
+			self.client = None
 	def __str__(self):
 		s = StringIO()
 		s.write("(")
@@ -738,52 +847,87 @@ class NamedQueue:
 
 	def get ( self, name ):
 		self._condition.acquire()
-		self._WaitingNames[name] = "" ;
-		while True:
-			o = self._ReturnedObjects.get ( name )
-			if o == None:
-				self._condition.wait()
-			o = self._ReturnedObjects.get ( name )
-			if o != None:
-				del self._WaitingNames[name]
-				del self._ReturnedObjects[name]
-				self._condition.release()
-				return o
-			if self._AwakeAll:
-				self._condition.release()
-				return None
+		try:
+			self._WaitingNames[name] = "" ;
+			while True:
+				o = self._ReturnedObjects.get ( name )
+				if o == None:
+					self._condition.wait()
+				o = self._ReturnedObjects.get ( name )
+				if o != None:
+					del self._WaitingNames[name]
+					del self._ReturnedObjects[name]
+					return o
+				if self._AwakeAll:
+					return None
+		except Exception as e:
+			raise
+		finally:
+			self._condition.release()
 
 	def _get ( self ):
 		self._condition.acquire()
-		while True:
-			if len ( self._NamedObjects ) == 0:
-				self._condition.wait()
-			if len ( self._NamedObjects ) > 0:
-				o = self._NamedObjects[0]
-				self._NamedObjects.remove ( o )
-				self._condition.release()
-				return o ;
-			if self._AwakeAll:
-				self._condition.release()
-				return None
+		try:
+			while True:
+				if len ( self._NamedObjects ) == 0:
+					self._condition.wait()
+				if len ( self._NamedObjects ) > 0:
+					o = self._NamedObjects[0]
+					self._NamedObjects.remove ( o )
+					return o ;
+				if self._AwakeAll:
+					return None
+		except Exception as e:
+			raise
+		finally:
+			self._condition.release()
 
 	def awakeAll ( self ):
 		self._AwakeAll = True
-		self._condition.awake_all()
+		self._condition.acquire()
+		try:
+			self._condition.notify_all()
+		except Exception as e:
+			raise
+		finally:
+			self._condition.release()
 
 	def _returnObj ( self, name, obj=None ):
 		self._condition.acquire()
-		if isinstance ( name, dict ):
-			self._ReturnedObjects[name["name"]] = name["obj"]
-		else:
-			self._ReturnedObjects[name] = obj
-		self._condition.notify_all()
-		self._condition.release()
+		try:
+			if isinstance ( name, dict ):
+				self._ReturnedObjects[name["name"]] = name["obj"]
+			else:
+				self._ReturnedObjects[name] = obj
+			self._condition.notify_all()
+		except Exception as e:
+			raise
+		finally:
+			self._condition.release()
 
 	def probe ( self, name ):
 		self._condition.acquire()
-		o = self._ReturnedObjects.get ( name )
-		if o != None:
-			del self._ReturnedObjects[name]
-		return o
+		try:
+			o = self._ReturnedObjects.get ( name )
+			if o != None:
+				del self._ReturnedObjects[name]
+			return o
+		except Exception as e:
+			raise
+		finally:
+			self._condition.release()
 
+	def isWaiting ( self, name ):
+		return name in self._WaitingNames
+	# def numberOfNamedObjects()
+ #    return _NamedObjects.size() ;
+	# def numberOfReturnedObjects()
+ #    return _ReturnedObjects.size() ;
+
+def __LINE__():
+        try:
+                raise Exception
+        except:
+                return sys.exc_info()[2].tb_frame.f_back.f_lineno
+def __FILE__():
+        return inspect.currentframe().f_code.co_filename

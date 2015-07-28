@@ -4,7 +4,7 @@ public class Lock
 {
   Client client = null ;
   String resourceId = "" ;
-  boolean _isOwner = false ;
+  boolean _isLockOwner = false ;
   public Lock ( String resourceId )
   {
     this ( resourceId, -1, null ) ;
@@ -28,16 +28,24 @@ public class Lock
   }
   public boolean isOwner()
   {
-    return _isOwner ;
+    return _isLockOwner ;
   }
   public void acquire ()
   throws IOException
   {
     client.acquireLock ( this ) ;
+    if ( ! isOwner() && this.client._first )
+    {
+      client.close() ;
+    }
   }
   public void release()
   throws IOException
   {
     client.releaseLock ( this ) ;
+    if ( this.client._first )
+    {
+      client.close() ;
+    }
   }
 }

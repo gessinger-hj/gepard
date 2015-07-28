@@ -47,10 +47,6 @@ Lock.prototype.toString = function()
  */
 Lock.prototype.acquire = function ( callback )
 {
-  if ( ! this._client )
-  {
-    this._client = new Client ( this._port, this._host ) ;
-  }
   this._callback = callback ;
   this._client.lockResource ( this._resourceId, this._lockResourceCallback.bind ( this ) ) ;
 };

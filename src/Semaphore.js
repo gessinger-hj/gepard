@@ -46,10 +46,6 @@ Semaphore.prototype.toString = function()
  */
 Semaphore.prototype.acquire = function ( callback )
 {
-  if ( ! this._client )
-  {
-    this._client = new Client ( this._port, this._host ) ;
-  }
   this._callback = callback ;
   this._client.acquireSemaphore ( this._resourceId, this._acquireSemaphoreCallback.bind ( this ) ) ;
 };

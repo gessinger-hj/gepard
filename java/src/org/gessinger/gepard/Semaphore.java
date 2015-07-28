@@ -7,7 +7,7 @@ public class Semaphore
   Client client = null ;
   String resourceId = "" ;
   SemaphoreCallback scb = null ;
-  boolean _isOwner = false ;
+  boolean _isSemaphoreOwner = false ;
   long timeoutMillis = -1 ;
   Timer _Timer = null ;
   boolean hasCallback()
@@ -37,7 +37,7 @@ public class Semaphore
   }
   public boolean isOwner()
   {
-    return _isOwner ;
+    return _isSemaphoreOwner ;
   }
   public String getName()
   {

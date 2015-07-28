@@ -18,13 +18,14 @@ public class Client
 	String _lock1           = "_lock1" ;
 	String hostname         = "" ;
 	int localPort           = 0 ;
-	boolean closing = false ;
+	boolean closing         = false ;
+	boolean _first          = false ;
   MultiMap<String,EventListener> eventListenerFunctions = new MultiMap<String,EventListener>() ;
   HashMap<String,EventCallback> callbacks = new HashMap<String,EventCallback>() ;
 
   HashMap<String,Semaphore> semaphores = new HashMap<String,Semaphore>() ;
   NamedQueue<Event> _NQ_semaphoreEvents = new NamedQueue<Event>() ;
-  HashMap<String,Lock> locks = new HashMap<String,Lock>() ;
+  HashMap<String,Lock> _ownedResources = new HashMap<String,Lock>() ;
   NamedQueue<Event> _NQ_lockEvents = new NamedQueue<Event>() ;
   
   static Hashtable<String,Client> _Instances = new Hashtable<String,Client>() ;
@@ -42,9 +43,11 @@ public class Client
   	Client c = _Instances.get ( "" + host + ":" + port ) ;
   	if ( c != null )
   	{
+  		c._first = false ;
   		return c ;
   	}
   	c = new Client ( port, host ) ;
+  	c._first = true ;
   	return c ;
   }
 	public Client()
@@ -436,7 +439,7 @@ public class Client
 								Semaphore sem = semaphores.get ( resourceId ) ;
 								if ( sem.hasCallback() )
 								{
-									sem._isOwner = true ;
+									sem._isSemaphoreOwner = true ;
 									sem.scb.acquired ( e ) ;
 								}
 								else
@@ -698,7 +701,7 @@ public class Client
 			}
 	   	body = e.getBody() ;
 			String resourceId = (String) body.get ( "resourceId" ) ;
-			sem._isOwner = (Boolean) body.get ( "isSemaphoreOwner" ) ;
+			sem._isSemaphoreOwner = (Boolean) body.get ( "isSemaphoreOwner" ) ;
   	}
 	}
 	void releaseSemaphore ( Semaphore sem )
@@ -718,12 +721,12 @@ public class Client
 	void acquireLock ( Lock lock )
 	throws IOException
 	{
-		if ( locks.containsKey ( lock.resourceId ) )
+		if ( _ownedResources.containsKey ( lock.resourceId ) )
 		{
 	    System.out.println ( "acquire lock: already owner of resourceId=" + lock.resourceId ) ;
     	return ;
 		}
-		locks.put ( lock.resourceId, lock ) ;
+		_ownedResources.put ( lock.resourceId, lock ) ;
 		Event e = new Event ( "system", "lockResourceRequest" ) ;
 		Map<String,Object> body = e.getBody() ;
   	body.put ( "resourceId", lock.resourceId ) ;
@@ -734,18 +737,18 @@ public class Client
   	}
    	body = e.getBody() ;
 		String resourceId = (String) body.get ( "resourceId" ) ;
-		lock = locks.get ( resourceId ) ;
-		lock._isOwner = (Boolean) body.get ( "isLockOwner" ) ;
+		lock = _ownedResources.get ( resourceId ) ;
+		lock._isLockOwner = (Boolean) body.get ( "isLockOwner" ) ;
 	}
 	void releaseLock ( Lock lock )
 	throws IOException
 	{
-		if ( ! locks.containsKey ( lock.resourceId ) )
+		if ( ! _ownedResources.containsKey ( lock.resourceId ) )
 		{
 	    System.out.println ( Util.toString ( "release lock: not owner of resourceId=" + lock.resourceId ) ) ;
     	return ;
 		}
-		locks.remove ( lock.resourceId ) ;
+		_ownedResources.remove ( lock.resourceId ) ;
 		Event e = new Event ( "system", "unlockResourceRequest" ) ;
 		Map<String,Object> body = e.getBody() ;
   	body.put ( "resourceId", lock.resourceId ) ;
