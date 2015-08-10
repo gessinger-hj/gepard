@@ -1,11 +1,12 @@
 # gepard
-General purpose communication and synchronization layer for distributed applications / events, semaphores, locks and messages for JavaScript and Java
+General purpose communication and synchronization layer for distributed applications / events, semaphores, locks and messages for JavaScript, Java and Python
 
 
 <!-- MarkdownTOC -->
 
 - [Overview](#overview)
 - [What is new](#what-is-new)
+  - [Let's talk about Python](#lets-talk-about-python)
   - [Controlling Connections and Actions with a Hook](#controlling-connections-and-actions-with-a-hook)
   - [Perfect load balanced message handling.](#perfect-load-balanced-message-handling)
   - [Java bindings for all features:](#java-bindings-for-all-features)
@@ -66,8 +67,16 @@ Client client = Client.getInstance ( [ port [, host ] ] ) ;
 
 ```
 
-Up to now a client is a standalone JavaScript program, a JavaScript app inside a browser or a Java programm.
-In the next step clients for other languages like Python, Php etc are planned.
+* Python:
+
+```py
+import gepard
+client = gepard.Client.getInstance ( [ port [, host ] ] ) ;
+
+```
+
+Up to now a client is a standalone JavaScript program, a JavaScript app inside a browser, a Java program or a Python program.
+In the next step clients for other languages like Php etc are planned.
 
 The broker can be instantiated from a JavaScript program but the most common and simplest way to use it is to start it detached as a daemon.
 
@@ -93,6 +102,16 @@ node_modules/.bin/gp.admin [ --help ]
 ```
 # What is new
 
+## Let's talk about Python
+
+In this release a full featured Python client is included. The implementation is __pure generic Python code__.
+The features are:
+
+* emit event
+* listen to events
+* request / result ( messages )
+* semaphores ( synchronously / synchronously )
+* locks
 
 ## Controlling Connections and Actions with a Hook
 
@@ -335,6 +354,7 @@ client.fire ( "CONFIG-CHANGE" ) ;
 Several clients do their work based on these data.<br/>
 
 All clients including web-clients setup a listener for example with
+
 ```js
 client.on ( "CONFIG-CHANGE", function callback(e) {} ) ;
 ```
@@ -398,10 +418,26 @@ for ( var i = 0 ; i < array.length ; i++ )
 # Examples
 
 Ready to use examles for JavaScript are located in __.../gepard/xmp__
+<br/>
+Ready to use examles for Java are located in __.../gepard/gepard/java/org.gessinger/gepard/xmp__ and copiled in
+__.../gepard/java/lib/Gepard.jar__
+<br/>
+Ready to use examles for Python are located in __.../gepard/python/xmp__
 
 ## Examples Short
 
 ### Event listener
+
+Adding a event-listener with the __on()__ method may be done with a single event-name or a list of event-names.
+
+JavaScript: client.on ( "ALARM", callback ) or client.on ( [ "ALARM", "BLARM" ], callback )
+
+Java: client.on ( "ALARM", callback ) or client.on ( new String[] { "ALARM", "BLARM" }, callback )
+
+Python: client.on ( "ALARM", callback ) or client.on ( [ "ALARM", "BLARM" ], callback )
+
+The callback will be called with an Event object of the appropriate name ( e.getName() )
+
 
 Application
 
@@ -414,7 +450,6 @@ Browser
 ```js
   var client = gepard.getWebClient ( 17502 ) ;
 ```
-
 
 Code
 
@@ -439,10 +474,24 @@ client.on ( "ALARM", new EventListener()
 } ) ;
 ```
 
+Python
+
+```python
+import gepard
+client = gepard.Client.getInstance()
+
+def on_ALARM ( event ):
+  print ( "on_ALARM" )
+  print ( event )
+
+client.on ( "ALARM", on_ABLARM )
+```
+
 Details in:
 
 * JavaScript: [gepard/xmp/Listener.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/Listener.js)
 * Java: [gepard/java/org.gessinger/gepard/xmp/Listener.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/Listener.java)
+* Python: [gepard/python/xmp/Listener.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/Listener.py)
 
 ### Event Emitter
 
@@ -473,13 +522,23 @@ Java
 ```java
 Client client = Client.getInstance() ;
 client.emit ( "ALARM" ) ;
-client.close() ;
+```
+
+Python
+
+```python
+import gepard
+client = gepard.Client.getInstance()
+client.emit ( "ALARM" )
 ```
 
 Details in:
 
 * JavaScript: [gepard/xmp/Emitter.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/Emitter.js)
+* JavaScript: [gepard/xmp/EmitterWithStatusInfo.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/EmitterWithStatusInfo.js)
 * Java: [gepard/java/org.gessinger/gepard/xmp/Emitter.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/Emitter.java)
+* Java: [gepard/java/org.gessinger/gepard/xmp/EmitterWithStatusInfo.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/EmitterWithStatusInfo.java)
+* Python: [gepard/python/xmp/Emitter.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/Emitter.py)
 
 ### Locks
 
@@ -504,8 +563,6 @@ lock.acquire ( function ( err )
   if ( this.isOwner() )
   {
     .........
-    .........
-    .........
     this.release() ;
   }
 } ) ;
@@ -523,10 +580,26 @@ if ( lock.isOwner() )
 }
 ```
 
+Python
+
+```python
+import gepard
+
+lock = gepard.Lock ( "user:4711" )
+lock.acquire()
+
+if lock.isOwner():
+  ......................
+  lock.release()
+
+```
+
 Details in:
 
 * JavaScript: [gepard/xmp/Locker.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/Locker.js)
 * Java: [gepard/java/org.gessinger/gepard/xmp/Locker.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/Locker.java)
+* Python: [gepard/python/xmp/Locker.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/Locker.py)
+
 
 ### Semaphores
 
@@ -558,7 +631,7 @@ sem.acquire ( function ( err )
 
 Java
 
-Asynchronous
+Asynchronously
 
 ```java
 final Semaphore sem = new Semaphore ( "user:10000" ) ;
@@ -573,11 +646,12 @@ sem.acquire ( new SemaphoreCallback()
 }) ;
 ```
 
-or synchronous
+Synchronously
 
 ```java
 
 final Semaphore sem = new Semaphore ( "user:10000" ) ;
+// with or without a timeout
 sem.acquire(5000) ;
 
 if ( sem.isOwner() ) // if not timeout occured
@@ -587,10 +661,43 @@ if ( sem.isOwner() ) // if not timeout occured
 }
 ```
 
+Python
+
+Asynchronously
+
+```python
+import gepard
+
+def on_owner(sem):
+  ................
+  sem.release()
+
+sem = gepard.Semaphore ( "user:10000" )
+sem.acquire ( on_owner )
+```
+
+Synchronously
+
+```python
+
+import gepard
+
+sem = gepard.Semaphore ( name )
+
+sem.acquire ( 5 ) # with or without a timeout
+
+if sem.isOwner():
+  ...........
+  sem.release()
+```
+
 Details in:
 
 * JavaScript: [gepard/xmp/AsyncSemaphore.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/AsyncSemaphore.js)
 * Java: [gepard/java/org.gessinger/gepard/xmp/AsyncSemaphore.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/AsyncSemaphore.java)
+* Java: [gepard/java/org.gessinger/gepard/xmp/AsyncSemaphore.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/BlockingSemaphore.java)
+* Python: [gepard/python/xmp/AsyncSemaphore.js](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/AsyncSemaphore.js)
+* Python: [gepard/python/xmp/BlockingSemaphore.js](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/BlockingSemaphore.js)
 
 ### Request / result
 
@@ -641,10 +748,29 @@ client.request ( "getFileList", new ResultCallback()
 
 ```
 
+Python
+
+```python
+import gepard
+
+client = gepard.Client.getInstance()
+
+def getFileList ( e ):
+  if e.isBad():
+    print ( e.getStatusReason() )
+  else:
+    print ( e.getValue ( "file_list" ) )
+  e.getClient().close()
+
+client.request ( "getFileList", getFileList )
+
+```
+
 Details in:
 
 * JavaScript: [gepard/xmp/Requester.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/Requester.js)
 * Java: [gepard/java/org.gessinger/gepard/xmp/Requester.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/Requester.java)
+* Python: [gepard/python/xmp/Requester.js](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/Requester.js)
 
 #### Send result
 
@@ -685,10 +811,28 @@ client.on ( name, new EventListener()
 } ) ;
 ```
 
+Python
+
+```python
+import gepard
+client = gepard.Client.getInstance()
+
+fileList = [ "a.py", "b.py", "c.py" ] ;
+def on_getFileList ( event ):
+  print ( "Request in" ) ;
+  print ( "File list out:" ) ;
+  print ( fileList ) ;
+  event.body["file_list"] = fileList ;
+  event.sendBack() ;
+
+client.on ( "getFileList", on_getFileList )
+```
+
 Details in:
 
 * JavaScript: [gepard/xmp/Responder.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/Responder.js)
 * Java: [gepard/java/org.gessinger/gepard/xmp/Responder.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/Responder.java)
+* Python: [gepard/python/xmp/Responder.js](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/Responder.js)
 
 ## Examples Long
 

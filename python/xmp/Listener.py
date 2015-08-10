@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from Gepard import Event, User, Client
+from gepard import Event, User, Client
 
 import json
 import time
@@ -14,7 +14,7 @@ def __FILE__():
         return inspect.currentframe().f_code.co_filename
 # ==========================================================================
 
-c = Client()
+c = Client.getInstance()
 # c.setDaemon ( True )
 def on_close ( err, success ):
 	print ( err )

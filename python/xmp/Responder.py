@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-from Gepard import Event, Client
+from gepard import Event, Client
 
-client = Client()
+client = Client.getInstance()
 # client.setDaemon ( True )
 def on_close ( err, info ):
 	print ( err )

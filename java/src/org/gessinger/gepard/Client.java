@@ -689,10 +689,7 @@ public class Client
   			sem._Timer = new Timer() ;
 				sem._Timer.schedule ( new TT ( sem ), sem.timeoutMillis ) ;
   		}
-			synchronized ( _NQ_semaphoreEvents )
-			{
-				e = _NQ_semaphoreEvents.get ( sem.resourceId ) ;
-			}
+			e = _NQ_semaphoreEvents.get ( sem.resourceId ) ;
 			if ( sem._Timer != null )
 			{
 				sem._Timer.cancel() ;
@@ -731,10 +728,7 @@ public class Client
 		Map<String,Object> body = e.getBody() ;
   	body.put ( "resourceId", lock.resourceId ) ;
   	_send ( e ) ;
-  	synchronized ( _NQ_lockEvents )
-  	{
-			e = _NQ_lockEvents.get ( lock.resourceId ) ;
-  	}
+		e = _NQ_lockEvents.get ( lock.resourceId ) ;
    	body = e.getBody() ;
 		String resourceId = (String) body.get ( "resourceId" ) ;
 		lock = _ownedResources.get ( resourceId ) ;

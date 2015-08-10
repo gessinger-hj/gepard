@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-from Gepard import Client, Semaphore
-import time
+import time, sys
+sys.path.insert(0,"../")
+from gepard import Client, Semaphore
 
 # ==========================================================================
 
@@ -12,15 +13,21 @@ def on_error ( err, info ):
 
 client.onError ( on_error )
 
-def on_acquired(sem):
+name = "user:10000"
+
+print ( "Acquire semaphore=" + name )
+print ( "  blocking mode" )
+
+sem = Semaphore ( name, client )
+
+print ( "  acquire with timeout=5" )
+sem.acquire ( 5 )
+
+if sem.isOwner():
 	print ( sem )
 	print ( "Sleep for 10 seconds" )
 	time.sleep(10)
 	sem.release()
 	print ( "sem released." )
-
-print ( "Acquire semaphore=user:4711" )
-print ( "  asynchronous mode" )
-
-sem = Semaphore ( "user:4711" )
-sem.acquire ( on_acquired )
+else:
+	print ( sem )

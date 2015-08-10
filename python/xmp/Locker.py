@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from Gepard import Client, Semaphore
+from gepard import Client, Lock
 import time
 
 # ==========================================================================
@@ -12,17 +12,14 @@ def on_error ( err, info ):
 
 client.onError ( on_error )
 
-print ( "Acquire semaphore=user:4711" )
-print ( "  blocking mode" )
+lock = Lock ( "user:4711" )
+lock.acquire()
 
-sem = Semaphore ( "user:4711" )
-sem.acquire()
-
-if sem.isOwner():
-	print ( sem )
+if lock.isOwner():
+	print ( lock )
 	print ( "Sleep for 10 seconds" )
 	time.sleep(10)
-	sem.release()
-	print ( "sem released." )
+	lock.release()
+	print ( "Lock released." )
 else:
-	print ( sem )
+	print ( lock )

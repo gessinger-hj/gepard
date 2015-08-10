@@ -16,6 +16,7 @@ import sys
 import os
 import threading
 import types
+import numbers
 import collections
 
 try:
@@ -275,9 +276,26 @@ class Client:
 		self.connected = False
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		if port is None:
+			p = os.environ["GEPARD_PORT"]
+			if p != None:
+				if not p.isdigit():
+					raise Exception ( "Invalid GEPARD_PORT=" + p )
+				try:
+					port = int ( p )
+				except:
+					port = None
+					raise Exception ( "Invalid GEPARD_PORT=" + p )
+
+		if port is None:
 			self.port = 17501
 		else:
 			self.port = port
+
+		if host is None:
+			h = os.environ["GEPARD_HOST"]
+			if h != None:
+				host = h
+
 		if host is None:
 			self.host = "localhost"
 		else:
@@ -630,6 +648,21 @@ class Client:
 		e.setUniqueId ( self.createUniqueId() )
 		self._send ( e ) ;
 
+	def semaphoreTimeoutCallback(self,sem):
+		if self._NQ_semaphoreEvents.isWaiting ( sem.resourceId ):
+			try:
+				sem.release()
+				del self.semaphores[sem.resourceId]
+				e = Event ( "system", "acquireSemaphoreResult" )
+				body = e.getBody()
+				body["resourceId"] = sem.resourceId
+				body["isSemaphoreOwner"] = False
+				sem.timeoutSeconds = 0
+				sem.timeoutOccurs = True
+				self._NQ_semaphoreEvents._returnObj ( sem.resourceId, e )
+			except Exception as e:
+				print ( e )
+
 	def acquireSemaphore ( self, sem ):
 		if sem.resourceId in self.semaphores:
 			s = self.semaphores.get ( sem.resourceId )
@@ -645,14 +678,13 @@ class Client:
 		body["resourceId"] = sem.resourceId
 		self._send ( e )
 		if not sem.hasCallback():
-			# if sem.timeoutMillis > 10: # TODO: sem with timeout
-			# 	sem._Timer = new Timer() ;
-			# 	sem._Timer.schedule ( new TT ( sem ), sem.timeoutMillis ) ;
+			if sem.timeoutSeconds > 0:
+				sem._Timer = threading.Timer ( sem.timeoutSeconds, self.semaphoreTimeoutCallback, [ sem ] )
+				sem._Timer.start()
 			e = self._NQ_semaphoreEvents.get ( sem.resourceId )
-			# if sem._Timer != None:
-			# 	sem._Timer.cancel() ;
-			# 	sem._Timer.purge() ;
-			# 	sem._Timer = null ;
+			if sem._Timer != None:
+				sem._Timer.cancel() ;
+				sem._Timer = None ;
 			body = e.getBody()
 			resourceId = body.get ( "resourceId" )
 			sem._isSemaphoreOwner = body.get ( "isSemaphoreOwner" )
@@ -708,7 +740,9 @@ class Semaphore:
 		else:
 			self.client = Client.getInstance ( port, host )
 		self.callback = None
-		self.timeoutMillis = -1
+		self.timeoutSeconds = -1
+		self._Timer = None
+		self.timeoutOccurs = False
 	def hasCallback(self):
 		return self.callback != None ;
 
@@ -722,11 +756,11 @@ class Semaphore:
 		elif isinstance ( callback, types.FunctionType ):
 			self.callback = callback
 		elif isinstance ( callback, numbers.Number ):
-			self.timeoutMillis = callback
+			self.timeoutSeconds = callback
 		self.client.acquireSemaphore ( self )
 		if self.hasCallback():
 			return
-		if not self.isOwner() and self.client._first:
+		if not self.isOwner() and self.client != None and self.client._first:
 			self.client.close()
 			self.client = None
 	def release(self):
@@ -918,7 +952,11 @@ class NamedQueue:
 			self._condition.release()
 
 	def isWaiting ( self, name ):
-		return name in self._WaitingNames
+		self._condition.acquire()
+		try:
+			return name in self._WaitingNames
+		finally:
+			self._condition.release()
 	# def numberOfNamedObjects()
  #    return _NamedObjects.size() ;
 	# def numberOfReturnedObjects()

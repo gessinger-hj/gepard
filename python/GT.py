@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from Gepard import Event, User, Client, MultiMap, NamedQueue
+from gepard import Event, User, Client, MultiMap, NamedQueue
 
 import json
 import threading

@@ -1,1 +1,0 @@
-{"body": {"binaryData": {"type": "Buffer", "data": [1, 2, 3, 4, 5]}}, "control": {"createdAt": {"type": "Date", "value": "2015-07-10T15:34:47.048436"}, "hostname": "wevli077"}, "className": "Event", "name": "ALARM2", "type": null, "user": {"_pwd": "SECRET", "rights": {"CAN_READ_FILES": "*.docx"}, "key": 999, "className": "User", "id": "john"}}
