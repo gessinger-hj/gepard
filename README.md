@@ -697,8 +697,8 @@ Details in:
 * JavaScript: [gepard/xmp/AsyncSemaphore.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/AsyncSemaphore.js)
 * Java: [gepard/java/org.gessinger/gepard/xmp/AsyncSemaphore.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/AsyncSemaphore.java)
 * Java: [gepard/java/org.gessinger/gepard/xmp/AsyncSemaphore.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/BlockingSemaphore.java)
-* Python: [gepard/python/xmp/AsyncSemaphore.js](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/AsyncSemaphore.js)
-* Python: [gepard/python/xmp/BlockingSemaphore.js](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/BlockingSemaphore.js)
+* Python: [gepard/python/xmp/AsyncSemaphore.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/AsyncSemaphore.py)
+* Python: [gepard/python/xmp/BlockingSemaphore.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/BlockingSemaphore.py)
 
 ### Request / result
 
@@ -771,7 +771,7 @@ Details in:
 
 * JavaScript: [gepard/xmp/Requester.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/Requester.js)
 * Java: [gepard/java/org.gessinger/gepard/xmp/Requester.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/Requester.java)
-* Python: [gepard/python/xmp/Requester.js](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/Requester.js)
+* Python: [gepard/python/xmp/Requester.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/Requester.py)
 
 #### Send result
 
@@ -833,7 +833,7 @@ Details in:
 
 * JavaScript: [gepard/xmp/Responder.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/Responder.js)
 * Java: [gepard/java/org.gessinger/gepard/xmp/Responder.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/Responder.java)
-* Python: [gepard/python/xmp/Responder.js](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/Responder.js)
+* Python: [gepard/python/xmp/Responder.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/Responder.py)
 
 ## Examples Long
 
