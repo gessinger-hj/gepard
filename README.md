@@ -63,6 +63,7 @@ var client = gepard.getClient ( [ port [, host ] ] ) ;
 * Java:
 
 ```java
+import org.gessinger.gepard.Client ;
 Client client = Client.getInstance ( [ port [, host ] ] ) ;
 
 ```
@@ -463,6 +464,9 @@ client.on ( "ALARM", function event_listener_callback(e)
 Java
 
 ```java
+import org.gessinger.gepard.Client ;
+import org.gessinger.gepard.EventListener ;
+import org.gessinger.gepard.Event ;
 Client client = Client.getInstance() ;
 
 client.on ( "ALARM", new EventListener()
@@ -520,6 +524,7 @@ client.fire ( "CONFIG-CHANGED" ) ;
 Java
 
 ```java
+import org.gessinger.gepard.Client ;
 Client client = Client.getInstance() ;
 client.emit ( "ALARM" ) ;
 ```
@@ -572,6 +577,7 @@ lock.acquire ( function ( err )
 Java
 
 ```java
+import org.gessinger.gepard.Lock ;
 Lock lock = new Lock ( "user:4711" ) ;
 lock.acquire() ;
 if ( lock.isOwner() )
@@ -635,6 +641,8 @@ Java
 Asynchronously
 
 ```java
+import org.gessinger.gepard.Semaphore ;
+import org.gessinger.gepard.SemaphoreCallback ;
 final Semaphore sem = new Semaphore ( "user:10000" ) ;
 sem.acquire ( new SemaphoreCallback()
 {
@@ -650,7 +658,7 @@ sem.acquire ( new SemaphoreCallback()
 Synchronously
 
 ```java
-
+import org.gessinger.gepard.Semaphore ;
 final Semaphore sem = new Semaphore ( "user:10000" ) ;
 // with or without a timeout
 sem.acquire(5000) ;
@@ -729,6 +737,10 @@ client().request ( "getFileList"
 Java
 
 ```java
+import org.gessinger.gepard.Client ;
+import org.gessinger.gepard.ResultCallback ;
+import org.gessinger.gepard.Util ;
+import java.util.List ;
 final Client client = Client.getInstance() ;
 client.request ( "getFileList", new ResultCallback()
 {
@@ -800,6 +812,9 @@ client.on ( "getFileList", function ( e )
 Java
 
 ```java
+import org.gessinger.gepard.Client ;
+import org.gessinger.gepard.EventListener ;
+import org.gessinger.gepard.Event ;
 final Client client = Client.getInstance() ;
 client.on ( name, new EventListener()
 {
