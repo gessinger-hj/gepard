@@ -87,6 +87,10 @@ class Event ( object ):
 		self.user = user
 	def getUser ( self ):
 		return self.user
+	def setBody(self,body):
+		if not isinstance ( body, dict ):
+			raise ValueError ( "body must be a dict, not: " + str(body) )
+		self.body = body
 	def getHostname ( self ):
 		return self.control["hostname"] ;
 	def putValue ( self, name, value ):

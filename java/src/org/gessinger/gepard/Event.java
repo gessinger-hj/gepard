@@ -183,7 +183,7 @@ public class Event
   {
     return this.body ;
   }
-  public void setBody ( HashMap<String,Object> body )
+  public void setBody ( Map<String,Object> body )
   {
     if ( body != null ) this.body = body ;
     else this.body = new HashMap<String,Object>() ;

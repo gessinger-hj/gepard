@@ -311,6 +311,17 @@ gepard.WebClient.prototype.getSocket = function()
 };
 /**
  * Description
+ * @method emit
+ * @param {} params
+ * @param {} callback
+ * @return 
+ */
+gepard.WebClient.prototype.emit = function ( params, callback )
+{
+  this._fireEvent ( params, callback, null ) ;
+};
+/**
+ * Description
  * @method fire
  * @param {} params
  * @param {} callback

@@ -252,7 +252,7 @@ Client.prototype.connect = function()
           if ( e.getType() === "shutdown" )
           {
             thiz.end() ;
-            thiz.emit ( "shutdown" ) ;
+            thiz._private_emit ( "shutdown" ) ;
             return ;
           }
           if ( e.isBad() )
@@ -398,16 +398,20 @@ Client.prototype.connect = function()
   this.socket.on ( 'end', function socket_on_end()
   {
     thiz.alive = false ;
-    thiz.emit ( "end" ) ;
+    thiz._private_emit ( "end" ) ;
   });
   this.socket.on ( 'error', function socket_on_error ( e )
   {
     thiz.alive = false ;
-    thiz.emit ( "error", e ) ;
+    thiz._private_emit ( "error", e ) ;
   });
 } ;
 Client.prototype._writeCallback = function()
 {
+} ;
+Client.prototype._private_emit = function ( eventName )
+{
+  EventEmitter.prototype.emit.apply ( this, arguments ) ;
 } ;
 /**
  * Description
@@ -439,7 +443,7 @@ Client.prototype.request = function ( params, callback )
   {
     throw new Error ( "Missing result function.")
   }
-  this._emit ( params, callback, { isBroadcast:false } ) ;
+  this.emit ( params, callback, { isBroadcast:false } ) ;
 };
 /**
  * Description
@@ -458,7 +462,7 @@ Client.prototype.broadcast = function ( params, callback )
   {
     throw new Error ( "Missing result function.")
   }
-  this._emit ( params, callback, { isBroadcast:true } ) ;
+  this.emit ( params, callback, { isBroadcast:true } ) ;
 };
 /**
  * Description
@@ -469,7 +473,7 @@ Client.prototype.broadcast = function ( params, callback )
  */
 Client.prototype.fire = function ( params, callback )
 {
-  this._emit ( params, callback, null ) ;
+  this.emit ( params, callback, null ) ;
 };
 /**
  * Description
@@ -480,9 +484,9 @@ Client.prototype.fire = function ( params, callback )
  */
 Client.prototype.fireEvent = function ( params, callback )
 {
-  return this._emit ( params, callback, null ) ;
+  return this.emit ( params, callback, null ) ;
 };
-Client.prototype._emit = function ( params, callback, opts )
+Client.prototype.emit = function ( params, callback, opts )
 {
   if ( ! opts ) opts = {} ;
   var e = null, user ;

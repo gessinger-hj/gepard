@@ -1,3 +1,6 @@
+## 1.3.0 (2015-08-11)
+- full featured Python client
+
 ## 1.2.4 (2015-07-22)
 - implement removeEventListener() in Java and Python
 - implement the shorter remove() in all flavours

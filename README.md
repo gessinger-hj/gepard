@@ -349,7 +349,7 @@ Suppose you have 1 program that changes configuration-entries in a database-tabl
 After the new entries are committed the program sends an event with:
 
 ```js
-client.fire ( "CONFIG-CHANGE" ) ;
+client.emit ( "CONFIG-CHANGE" ) ;
 ```
 
 Several clients do their work based on these data.<br/>
@@ -504,7 +504,7 @@ Application
 ```js
 var gepard = require ( "gepard" ) ;
 var client = gepard.getClient() ;
-client.fire ( "ALARM",
+client.emit ( "ALARM",
 {
   var thiz = this ;
   write: function()
@@ -518,7 +518,7 @@ Browser
 
 ```js
 var client = gepard.getWebClient ( 17502 ) ;
-client.fire ( "CONFIG-CHANGED" ) ;
+client.emit ( "CONFIG-CHANGED" ) ;
 ```
 
 Java
@@ -916,7 +916,7 @@ var c = gepard.getClient() ;
 
 var event = new gepard.Event ( "CONFIG-CHANGED" ) ;
 event.setBody ( { "config-name" : "app.conf" } ) ;
-c.fire ( event,
+c.emit ( event,
 {
   write: function() // close connection after write
   {
@@ -935,7 +935,7 @@ c.fire ( event,
 var wc = gepard.getWebClient ( 17502 ) ;
 var event = new gepard.Event ( "CONFIG-CHANGED" ) ;
 event.setBody ( { "config-name" : "app.conf" } ) ;
-wc.fire ( event ) ;
+wc.emit ( event ) ;
 ```
 # Found a bug? Help us fix it...
 

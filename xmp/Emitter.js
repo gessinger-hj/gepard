@@ -24,38 +24,41 @@ if ( require.main === module )
       console.log ( "Not running on " + this.getHostPort() ) ;
       process.exit ( 1 ) ;
     }
+    execute() ;
   });
 
-  var name = T.getProperty ( "name", "ALARM" ) ;
-  var body = T.getProperty ( "body" ) ;
-
-  var c = new Client() ;
-
-  if ( body )
+  function execute()
   {
-    body = JSON.parse ( body ) ;
-    body.binary = new Buffer ( [ 64, 65, 66, 67 ] ) ;
-    var e = new Event ( name, body ) ;
-    var u = new User ( "smith" ) ;
-    u.addRight ( "CAN_READ_FILES", "*.docx" ) ;
-    e.setUser ( u ) ;
+    var name = T.getProperty ( "name", "ALARM" ) ;
+    var body = T.getProperty ( "body" ) ;
 
-    c.fire ( e,
+    var c = new Client() ;
+    if ( body )
     {
-      write: function()
+      body = JSON.parse ( body ) ;
+      body.binary = new Buffer ( [ 64, 65, 66, 67 ] ) ;
+      var e = new Event ( name, body ) ;
+      var u = new User ( "smith" ) ;
+      u.addRight ( "CAN_READ_FILES", "*.docx" ) ;
+      e.setUser ( u ) ;
+
+      c.fire ( e,
       {
-        this.end() ;
-      }
-    });
-  }
-  else
-  {
-    c.fire ( name,
+        write: function()
+        {
+          this.end() ;
+        }
+      });
+    }
+    else
     {
-      write: function() // The event is sent -> end connection and exit
+      c.fire ( name,
       {
-        this.end() ;
-      }
-    });
+        write: function() // The event is sent -> end connection and exit
+        {
+          this.end() ;
+        }
+      });
+    }
   }
 }
