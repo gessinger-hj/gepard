@@ -37,7 +37,6 @@ c.onError ( on_error )
 c.onShutdown ( on_shutdown )
 
 def on_ABLARM ( event ):
-	print(__LINE__())
 	print	( "on_ABLARM" )
 	print ( event )
 

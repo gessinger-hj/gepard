@@ -214,16 +214,16 @@ class User ( object ):
 		if isinstance ( id, dict ):
 			obj = id
 			self.className = self.__class__.__name__ ;
-			self.id = obj["id"]
-			self.key = obj["key"]
-			self._pwd = obj["_pwd"]
-			self.rights = obj["rights"]
+			self.id = obj.get("id")
+			self.key = obj.get("key")
+			self._pwd = obj.get("_pwd")
+			self.rights = obj.get("rights")
 			return
 
 		self.className = "User" ;
-		self.id				= id ;
-		self.key			 = key ;
-		self._pwd			= pwd ;
+		self.id        = id ;
+		self.key       = key ;
+		self._pwd      = pwd ;
 		self.rights = {} ;
 		if rights == None:
 			self.rights = {}
@@ -408,7 +408,8 @@ class Client:
 		event.body["language"]       = "python"
 		event.body["hostname"]       = socket.gethostname()
 		event.body["connectionTime"] = datetime.datetime.now()
-		event.body["application"]    = sys.argv[0]
+		event.body["application"]    = os.path.abspath(sys.argv[0])
+
 		self._send ( event ) 
 
 	def _send ( self, event ):

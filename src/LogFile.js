@@ -510,6 +510,10 @@ LogFile.prototype.openNewFile = function()
     }
   }
 };
+LogFile.prototype.getCurrentLogFileName = function()
+{
+  return "" + this._file ;
+};
 /**
  * Description
  */

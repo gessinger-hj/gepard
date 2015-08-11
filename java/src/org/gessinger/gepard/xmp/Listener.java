@@ -26,6 +26,13 @@ public class Listener
         System.out.println ( e ) ;
       }
     });
+    client.onClose ( new InfoCallback()
+    {
+      public void info ( Client c, Event e )
+      {
+        System.out.println ( e ) ;
+      }
+    });
     String name = Util.getProperty ( "name", "ALARM" ) ;
     System.out.println ( "Listen for events with name=" + name ) ;
     client.on ( name, new EventListener()

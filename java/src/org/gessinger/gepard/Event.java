@@ -37,7 +37,7 @@ public class Event
   User user = null ;
   transient Client _Client = null ;
   HashMap<String,Object> control = new HashMap<String,Object>() ;
-  HashMap<String,Object> body = new HashMap<String,Object>() ;
+  Map<String,Object> body = new HashMap<String,Object>() ;
   private Event()
   {
   }

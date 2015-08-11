@@ -39,10 +39,10 @@ if ( require.main === module )
       body.binary = new Buffer ( [ 64, 65, 66, 67 ] ) ;
       var e = new Event ( name, body ) ;
       var u = new User ( "smith" ) ;
-      u.addRight ( "CAN_READ_FILES", "*.docx" ) ;
+      // u.addRight ( "CAN_READ_FILES", "*.docx" ) ;
       e.setUser ( u ) ;
 
-      c.fire ( e,
+      c.emit ( e,
       {
         write: function()
         {
@@ -52,7 +52,7 @@ if ( require.main === module )
     }
     else
     {
-      c.fire ( name,
+      c.emit ( name,
       {
         write: function() // The event is sent -> end connection and exit
         {

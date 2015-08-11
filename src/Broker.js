@@ -35,7 +35,7 @@ var Connection = function ( broker, socket )
   this.client_info ;
   if ( ! this.socket.sid )
   {
-    this.sid        = socket.remoteAddress + "_" + socket.remotePort ;
+    this.sid        = socket.remoteAddress + "_" + socket.remotePort + "_" + new Date().getTime() ;
     this.socket.sid = this.sid ;
   }
   else
@@ -145,7 +145,7 @@ Connection.prototype._sendInfoResult = function ( e )
   var i, first, str, key, conn, key2 ;
   e.setType ( "getInfoResult" ) ;
   e.control.status = { code:0, name:"ack" } ;
-  e.body.log = { levelName: Log.getLevelName(), level:Log.getLevel() } ;
+  e.body.log = { levelName: Log.getLevelName(), level:Log.getLevel(), file: Log.getCurrentLogFileName() } ;
   e.body.currentEventNames = this.broker._eventNameToSockets.getKeys() ;
   for ( i = 0 ; i < this.broker._connectionList.length ; i++ )
   {

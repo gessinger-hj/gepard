@@ -61,7 +61,7 @@ gepard.User.prototype.setKey = function ( key )
 }
 gepard.User.prototype.addRight = function ( name, value )
 {
-  rights[name] = value ;
+  this.rights[name] = value ;
 }
 
 if ( typeof document === 'undefined' )

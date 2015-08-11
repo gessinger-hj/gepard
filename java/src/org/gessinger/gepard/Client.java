@@ -419,6 +419,7 @@ public class Client
 			    String t = readNextJSON ( in ) ;
 			    if ( t == null )
 			    {
+  					_emit ( "close", null ) ;
 			    	break ;
 			    }
 			    Event e = Event.fromJSON ( t ) ;
@@ -625,6 +626,10 @@ public class Client
 		{
 			if ( closing ) return null ;
 			throw exc ;
+		}
+		if ( sb.length() == 0 )
+		{
+			return null ;
 		}
     return sb.toString() ;
 	}
