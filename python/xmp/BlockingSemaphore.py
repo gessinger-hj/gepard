@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
-import time, sys
+import os, sys
+sys.path.insert ( 0, os.path.dirname(os.path.abspath(__file__) ) + "/../" )
+
+import time
 sys.path.insert(0,"../")
 from gepard import Client, Semaphore
 
