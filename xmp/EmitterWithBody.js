@@ -12,7 +12,6 @@ if ( require.main === module )
     console.log (
       "Gepard Examples: Emitter, emit a given event.\n"
     + "Usage: node Emitter [-Dname=<event-name>], default <event-name>=ALARM\n"
-    + "                    [-Dbody=<json-string>], example: '-Dbody={\"City\":\"Frankfurt\"}'"
     ) ;
     process.exit() ;
   }
@@ -30,29 +29,21 @@ if ( require.main === module )
   function execute()
   {
     var name = T.getProperty ( "name", "ALARM" ) ;
-    var body = T.getProperty ( "body" ) ;
 
     var c = new Client() ;
-    if ( body )
+    var e = new Event ( name ) ;
+    e.putValue ( "BINARY", new Buffer ( [ 64, 65, 66, 67 ] ) ) ;
+    e.putValue ( "DATE", new Date() ) ;
+    var u = new User ( "smith" ) ;
+    u.addRight ( "CAN_READ_FILES", "*.docx" ) ;
+    e.setUser ( u ) ;
+
+    c.emit ( e,
     {
-      body = JSON.parse ( body ) ;
-      c.emit ( e,
+      write: function()
       {
-        write: function()
-        {
-          this.end() ;
-        }
-      });
-    }
-    else
-    {
-      c.emit ( name,
-      {
-        write: function() // The event is sent -> end connection and exit
-        {
-          this.end() ;
-        }
-      });
-    }
+        this.end() ;
+      }
+    });
   }
 }

@@ -13,6 +13,18 @@ final public class Util
   private static PrintWriter _stdout = new PrintWriter ( System.out, true ) ;
   private static PrintWriter _out = _stdout ;
 
+  static SimpleDateFormat _DateFormatYYYYMMDDhhmmss
+                    = new SimpleDateFormat ( "yyyyMMddHHmmss", Locale.US ) ;
+  static SimpleDateFormat _DateFormatYYYYMMDD
+                    = new SimpleDateFormat ( "yyyyMMdd", Locale.US ) ;
+  static SimpleDateFormat _SoapDateFormat
+                    = new SimpleDateFormat ( "yyyy-MM-dd", Locale.US ) ;
+  static SimpleDateFormat _SoapDateTimeFormat
+                    = new SimpleDateFormat ( "yyyy-MM-dd'T'HH:mm:ss", Locale.US ) ;
+  static SimpleDateFormat _SoapDateTimeFormat2
+                    = new SimpleDateFormat ( "yyyy-MM-dd HH:mm:ss", Locale.US ) ;
+
+
   static HashMap<String,String> _globals = new HashMap<String,String>() ;
   private Util() {} ;
   static public String getMainClassName()
@@ -51,12 +63,12 @@ final public class Util
       }
     }
   }
-  static void convertNodeJSTypedBufferToArray ( Event e )
+  static void convertNodeJSTypedDataToJava ( Event e )
   {
     if ( e.body == null ) return ;
-    convertNodeJSTypedBufferToArray ( e.body ) ;
+    convertNodeJSTypedDataToJava ( e.body ) ;
   }
-  static void convertNodeJSTypedBufferToArray ( Map<String,Object> source )
+  static void convertNodeJSTypedDataToJava ( Map<String,Object> source )
   {
     for ( String key : source.keySet() )
     {
@@ -94,11 +106,118 @@ final public class Util
             }
             continue ;
           }
+          if ( "Date".equals ( otype ) && ( odata instanceof String ) )
+          {
+            String sdate = (String) odata ;
+            try
+            {
+              Date date = _parseDate ( sdate, true ) ;
+              source.put ( key, date ) ;
+            }
+            catch ( Exception exc )
+            {
+              System.err.println ( toString ( exc ) ) ;
+            }
+            continue ;
+          }
         }
-        convertNodeJSTypedBufferToArray ( map ) ;
+        convertNodeJSTypedDataToJava ( map ) ;
         continue ;
       }
     }
+  }
+  static Hashtable<String,SimpleDateFormat> _DateFormats = new Hashtable<String,SimpleDateFormat>() ;
+  static Date _parseDate ( String ymdOrSoap, boolean withTZ )
+  throws Exception
+  {
+    if ( ymdOrSoap.endsWith ( "Z" ) )
+    {
+      ymdOrSoap = ymdOrSoap.substring ( 0, ymdOrSoap.length() - 2 ) + "+00:00" ;
+    }
+    String adjustedString = ymdOrSoap ;
+    String format = null ;
+    String formatWithTZ = null ;
+    if (  ymdOrSoap.length() == 16 ) // yyyy-MM-dd+01:00     yyyy-MM-dd-01:00
+    {
+      if (  ymdOrSoap.charAt ( ymdOrSoap.length() - 6 ) == '+'
+         || ymdOrSoap.charAt ( ymdOrSoap.length() - 6 ) == '-'
+         )
+      {
+        format = "yyyy-MM-dd" ;
+        formatWithTZ = "yyyy-MM-ddZ" ;
+        adjustedString = ymdOrSoap.substring ( 0, ymdOrSoap.length() - 3 )
+                       + ymdOrSoap.substring ( ymdOrSoap.length() - 2 )
+                       ;
+        ymdOrSoap = ymdOrSoap.substring ( 0, ymdOrSoap.length() - 6 ) ;
+      }
+    }
+    if ( ymdOrSoap.indexOf ( ' ' ) > 0 )
+    {
+      ymdOrSoap = ymdOrSoap.replace ( ' ', 'T' ) ;
+      adjustedString = adjustedString.replace ( ' ', 'T' ) ;
+    }
+    if (  ymdOrSoap.length() > 10 )
+    {
+      if (  ymdOrSoap.charAt ( ymdOrSoap.length() - 6 ) == '+'
+         || ymdOrSoap.charAt ( ymdOrSoap.length() - 6 ) == '-'
+         )
+      {
+        format = "yyyy-MM-dd'T'HH:mm:ss" ;
+        formatWithTZ = "yyyy-MM-dd'T'HH:mm:ssZ" ;
+        if ( ymdOrSoap.indexOf ( '.' ) > 0 )
+        {
+          int posP = ymdOrSoap.indexOf ( '.' ) ;
+          int diff = ymdOrSoap.length() - 7 - posP ;
+          if ( diff == 1 ) formatWithTZ = "yyyy-MM-dd'T'HH:mm:ss.SZ" ;
+          else
+          if ( diff == 2 ) formatWithTZ = "yyyy-MM-dd'T'HH:mm:ss.SSZ" ;
+          else
+          if ( diff == 3 ) formatWithTZ = "yyyy-MM-dd'T'HH:mm:ss.SSSZ" ;
+        }
+        else
+        {
+          formatWithTZ = "yyyy-MM-dd'T'HH:mm:ssZ" ;
+        }
+        adjustedString = ymdOrSoap.substring ( 0, ymdOrSoap.length() - 3 )
+                       + ymdOrSoap.substring ( ymdOrSoap.length() - 2 )
+                       ;
+        ymdOrSoap = ymdOrSoap.substring ( 0, ymdOrSoap.length() - 6 ) ;
+      }
+    }
+    if ( withTZ && formatWithTZ != null )
+    {
+      SimpleDateFormat sdf = _DateFormats.get ( formatWithTZ ) ;
+      if ( sdf == null )
+      {
+        sdf = new SimpleDateFormat ( formatWithTZ, Locale.US ) ;
+        _DateFormats.put ( formatWithTZ, sdf ) ;
+      }
+      ParsePosition pos = new ParsePosition(0);
+      return sdf.parse ( adjustedString, pos ) ;
+    }
+    else
+    {
+      ParsePosition pos = new ParsePosition(0);
+      if ( ymdOrSoap.length() == 8 ) // YYYYMMDD
+        return _DateFormatYYYYMMDD.parse ( ymdOrSoap, pos ) ;
+      if ( ymdOrSoap.length() == 10 ) // yyyy-MM-dd
+        return _SoapDateFormat.parse ( ymdOrSoap, pos ) ;
+      if ( ymdOrSoap.length() == 14 ) // YYYYMMDDhhmmss
+        return _DateFormatYYYYMMDDhhmmss.parse ( ymdOrSoap, pos ) ;
+
+      if ( ymdOrSoap.indexOf ( '.' ) > 0 )
+        ymdOrSoap = ymdOrSoap.substring ( 0, ymdOrSoap.indexOf ( '.' )  ) ;
+
+      if ( ymdOrSoap.length() == 19 ) // yyyy-MM-dd'T'HH:mm:ss
+      {
+        if ( ymdOrSoap.indexOf ( 'T' ) > 0 )
+          return _SoapDateTimeFormat.parse ( ymdOrSoap, pos ) ;
+        else
+          return _SoapDateTimeFormat2.parse ( ymdOrSoap, pos ) ;
+      }
+    }
+    String s = "Invalid date format: " + ymdOrSoap ;
+    throw new Exception ( s);
   }
   public static void argsToProperties ( String[] args )
   {

@@ -27,7 +27,7 @@ public class Event
     Event e = (Event) _gson.fromJson ( json, Event.class ) ;
     if ( _mapByteArrayToJavaScriptBuffer )
     {
-      Util.convertNodeJSTypedBufferToArray ( e ) ;
+      Util.convertNodeJSTypedDataToJava ( e ) ;
     }
     return e ;
   }

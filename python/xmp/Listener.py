@@ -39,6 +39,8 @@ c.onShutdown ( on_shutdown )
 def on_ABLARM ( event ):
 	print	( "on_ABLARM" )
 	print ( event )
+	date = event.getValue ( "date" )
+	print ( date )
 
 print ( "Listening for ALARM and BLARM" )
 c.on ( ["ALARM", "BLARM"], on_ABLARM )

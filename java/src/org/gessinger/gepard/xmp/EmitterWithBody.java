@@ -1,36 +1,30 @@
 package org.gessinger.gepard.xmp ;
 import org.gessinger.gepard.* ;
-import java.util.Map ;
-public class EmitterWithStatusInfo
+import java.util.* ;
+public class EmitterWithBody
 {
   static public void main ( String[] args )
   {
     Util.argsToProperties ( args ) ;
     try
     {
-      EmitterWithStatusInfo j = new EmitterWithStatusInfo() ;
+      EmitterWithBody j = new EmitterWithBody() ;
     }
     catch ( Exception exc )
     {
       exc.printStackTrace() ;
     }
   }
-  EmitterWithStatusInfo()
+  EmitterWithBody()
   throws Exception
   {
     Client client = Client.getInstance() ;
     String name = Util.getProperty ( "name", "ALARM" ) ;
 
     Event e = new Event ( name ) ;
-    client.emit ( name, new StatusCallback()
-    {
-      public void status ( Event e )
-      {
-        System.out.println ( "status=" + e.getStatusName() ) ;
-        System.out.println ( e.getStatusReason() ) ;
-      }
-    } ) ;
-    Thread.sleep ( 1000 ) ;
+    e.putValue ( "BINARY", new byte[] { 11, 12, 13 } ) ;
+    e.putValue ( "DATE", new Date() ) ;
+    client.emit ( e ) ;
     client.close() ;
   }
 }

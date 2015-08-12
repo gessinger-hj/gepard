@@ -19,6 +19,13 @@ import types
 import numbers
 import collections
 
+dateutil_exists = False ;
+try:
+	import dateutil.parser
+	dateutil_exists = True ;
+except ImportError:
+	pass
+
 try:
 	basestring
 except NameError:
@@ -65,14 +72,13 @@ class Event ( object ):
 		s.write("(")
 		s.write(self.__class__.__name__)
 		s.write(")")
-		s.write("{ name: '" + self.name + "',\n" )
-		s.write("  type: '" + str(self.type) + "',\n" )
+		s.write("[name='" + self.name + ",type='" + str(self.type) + "']\n" )
 		s.write("  control:\n" )
 		s.write("  " + str(self.control) )
 		# s.write(",user=" + str(self.user) )
 		if isinstance ( self.user, User ):
-			s.write(",user=" + str(self.user) )
-		s.write(",body=" + str(self.body) )
+			s.write("\n  user:\n    " + str(self.user) )
+		s.write("\n  body:\n  " + str(self.body) )
 		s.write("]")
 		return s.getvalue()
 	def getBody(self):
@@ -173,7 +179,7 @@ class Event ( object ):
 	@staticmethod
 	def toJSON(obj):
 		if isinstance ( obj, bytes ):
-			return { 'type': 'bytes'
+			return { 'type': 'Buffer'
 						 , 'data': list(obj)
 						 }
 		if isinstance ( obj, bytearray ):
@@ -202,9 +208,11 @@ class Event ( object ):
 			if obj['type'] == 'time.asctime':
 				return time.strptime(obj['data'])
 			if obj['type'] == 'Date':
+				if dateutil_exists:
+					return dateutil.parser.parse(obj['value'])
 				return obj['value']
 			if obj['type'] == 'bytes':
-				return bytearray(obj['data'])
+				return bytes(obj['data'])
 			if obj['type'] == 'Buffer':
 				return bytes(obj['data'])
 		return obj
