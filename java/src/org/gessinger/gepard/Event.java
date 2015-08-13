@@ -54,6 +54,7 @@ public class Event
     this.name = name ;
     this.type = type ;
     this.control.put ( "createdAt", "" + new Date() ) ;
+    this.control.put ( "plang", "Java" ) ;
     if ( body != null )
     {
       this.body = body ;

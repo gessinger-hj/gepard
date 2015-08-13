@@ -65,7 +65,7 @@ class Event ( object ):
 		else:
 			raise ValueError ( "body must be None or a dict, not: " + str(body) + "(" + body.__class__.__name__ + ")" )
 		self.user = None
-		self.control = { "createdAt": datetime.datetime.now(), "hostname": socket.gethostname() }
+		self.control = { "createdAt": datetime.datetime.now(), "hostname": socket.gethostname(), "plang": "python" }
 
 	def __str__(self):
 		s = StringIO()

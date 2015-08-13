@@ -223,7 +223,7 @@ gepard.Event.prototype =
 		}
 		this.setType ( type ) ;
 		this.user = null ;
-		this.control = { createdAt: new Date() } ;
+		this.control = { createdAt: new Date(), plang: "JavaScript" } ;
 		if ( data )
 		{
 			if ( typeof data === 'object' ) this.body = data ;
