@@ -1,3 +1,7 @@
+## 1.3.0 (2015-08-13)
+- enable date and byte-array/bytes/Buffer objects to be transferred and reconstructed as generic objects of the receiver
+programming langauage.
+
 ## 1.3.0 (2015-08-11)
 - full featured Python client
 

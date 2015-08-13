@@ -53,7 +53,7 @@ public class Event
   {
     this.name = name ;
     this.type = type ;
-    this.control.put ( "createdAt", "" + new Date() ) ;
+    this.control.put ( "createdAt", new Date() ) ;
     this.control.put ( "plang", "Java" ) ;
     if ( body != null )
     {
@@ -87,14 +87,14 @@ public class Event
     Gson gson = new Gson() ;
     if ( _mapByteArrayToJavaScriptBuffer )
     {
-      Util.convertByteArrayToNodeJSTypedBuffer ( this ) ;
+      Util.convertJavaTypedDataToNodeJS ( this ) ;
     }
     String json = gson.toJson ( this ) ;
     return json ;
   }
-  public String getCreatedAt()
+  public Date getCreatedAt()
   {
-    return this.control.get ( "createdAt" ).toString() ;
+    return (Date) this.control.get ( "createdAt" ) ;
   }
   public void setIsResult()
   {

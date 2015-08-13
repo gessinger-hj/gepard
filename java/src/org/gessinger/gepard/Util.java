@@ -24,7 +24,6 @@ final public class Util
   static SimpleDateFormat _SoapDateTimeFormat2
                     = new SimpleDateFormat ( "yyyy-MM-dd HH:mm:ss", Locale.US ) ;
 
-
   static HashMap<String,String> _globals = new HashMap<String,String>() ;
   private Util() {} ;
   static public String getMainClassName()
@@ -44,12 +43,13 @@ final public class Util
     }
     return className ;
   }
-  static void convertByteArrayToNodeJSTypedBuffer ( Event e )
+  static void convertJavaTypedDataToNodeJS ( Event e )
   {
     if ( e.body == null ) return ;
-    convertByteArrayToNodeJSTypedBuffer ( e.body ) ;
+    convertJavaTypedDataToNodeJS ( e.control ) ;
+    convertJavaTypedDataToNodeJS ( e.body ) ;
   }
-  static void convertByteArrayToNodeJSTypedBuffer ( Map<String,Object> source )
+  static void convertJavaTypedDataToNodeJS ( Map<String,Object> source )
   {
     for ( String key : source.keySet() )
     {
@@ -61,11 +61,23 @@ final public class Util
         map.put ( "data", o ) ;
         source.put ( key, map ) ;
       }
+      else
+      if ( o instanceof Date )
+      {
+        Date date = (Date) o ;
+        Map<String,Object> map = new HashMap<String,Object>() ;
+        map.put ( "type", "Date" ) ;
+        String s = getISODateTime ( date ) ;
+        map.put ( "value", s ) ;
+
+        source.put ( key, map ) ;
+      }
     }
   }
   static void convertNodeJSTypedDataToJava ( Event e )
   {
     if ( e.body == null ) return ;
+    convertNodeJSTypedDataToJava ( e.control ) ;
     convertNodeJSTypedDataToJava ( e.body ) ;
   }
   static void convertNodeJSTypedDataToJava ( Map<String,Object> source )
@@ -880,8 +892,12 @@ final public class Util
   }
   public static SimpleDateFormat _ISODateFormat
                     = new SimpleDateFormat ( "yyyy-MM-dd", Locale.US ) ;
-  public static SimpleDateFormat _ISODateTimeFormat
-                    = new SimpleDateFormat ( "yyyy-MM-dd'T'HH:mm:ss", Locale.US ) ;
+  public static SimpleDateFormat _ISODateTimeFormat = null ;
+  static
+  {
+    _ISODateTimeFormat = new SimpleDateFormat ( "yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US ) ;
+    _ISODateTimeFormat.setTimeZone ( TimeZone.getTimeZone ( "UTC" ) ) ;
+  }
   static public String getISODateTime()
   {
     return getISODateTime ( new Date() ) ;

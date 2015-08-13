@@ -15,11 +15,14 @@ General purpose communication and synchronization layer for distributed applicat
   - [Base](#base)
   - [JavaScript](#javascript)
   - [Java](#java)
+  - [Python](#python)
 - [Configuration](#configuration)
 - [Use Cases](#use-cases)
   - [Configuration Changes ( Events )](#configuration-changes--events-)
   - [Concurrent editing of a Dataset ( Semaphores )](#concurrent-editing-of-a-dataset--semaphores-)
   - [Synchronization of file processing ( Locks )](#synchronization-of-file-processing--locks-)
+  - [A Nice Exotic Mixture of Pragramming Languages](#a-nice-exotic-mixture-of-pragramming-languages)
+- [The Event Body](#the-event-body)
 - [Examples](#examples)
   - [Examples Short](#examples-short)
     - [Event listener](#event-listener)
@@ -292,9 +295,23 @@ Start your browser and go to: __localhost:8888__
 1.  __gp.http.simple.is.running__<br/>
     Check if the simple webserver is running.
 
+<br/>
+In order to try out the examples goto node_modules/gepard/xmp.
+<br/>
+The following examples exists:
+
+* Listener.js
+* Emitter.js
+* EmitterWithBody.js
+* EmitterWithStatusInfo.js
+* Requester.js
+* Responder.js
+* Locker.js
+* AsyncSemaphore.js
+
 ## Java
 
-In order to try the examples goto node_modules/gepard/java.
+In order to try out the examples goto node_modules/gepard/java.
 All examples are included in lib/Gepard.jar.
 With the following command all examples can be executed:
 
@@ -306,6 +323,8 @@ __Listener__ may be replaced by:
 
 * Listener
 * Emitter
+* EmitterWithBody
+* EmitterWithStatusInfo
 * Requester
 * Responder
 * Locker
@@ -316,6 +335,22 @@ The class-version in the existing Gepard.jar is 1.8, so you need to hava java 1.
 There is an ant file to build your own jar.
 
 Options, e.g. for the event-name must be set in the common Java format: -Dname=hello
+
+## Python
+
+In order to try out the examples goto node_modules/gepard/python/xmp.
+
+The following examples exists:
+
+* Listener.py
+* Emitter.py
+* EmitterWithBody.py
+* EmitterWithStatusInfo.py
+* Requester.py
+* Responder.py
+* Locker.py
+* AsyncSemaphore.py
+* BlockingSemaphore.py
 
 # Configuration
 
@@ -413,8 +448,74 @@ for ( var i = 0 ; i < array.length ; i++ )
 		}
 	} ) ;
 }
-
 ```
+## A Nice Exotic Mixture of Pragramming Languages
+
+Suppose the following: There are a couple of JavaScript and Python programs to interact with a database. The database changes.
+And it would be nice to not change modules for database access.
+<br/>
+Escecially if the new database is an Oracle database. Perhaps on Linux.
+<br/>
+Everybody who had ever tried to install the appropriate NodeJS or Python module ended up in a mess of build, configuration and installation problems.
+<br/>
+One of the nicest Java features is the total abstraction of the database handling via the JDBC api.
+<br/>
+It is clear what to do: Use a Java Gepard client connected to a database and execute all simple REST kind of actions
+via request/respond on the basis of Gepard.
+<br/>
+In this combination changing a database vendor is only a 10 second job changing the connection url and restart the Java client. Ok: another 5 seconds. But that's it.
+<br/>
+No compilation, no installation no problems.
+
+# The Event Body
+This member of an event is the holder for all payload-data. In all languages this is a hashtable with the restriction that the key must be
+of type string.
+<br/>
+* Java: __Map&lt;String,Object&gt;__
+* JavaScript: __{}__ or in long form: __Object__
+* Python: __{}__ which is in fact an object of type __dict__
+
+Setter an getter are the appropriate methods __Event.putValue(name,value)__ and __Event.getValue(name)__.
+<br/>
+__value__ is either a scalar type, a hashtable with strings as keys and valid object types, a list containing valid object types or a a combination of all valid types.
+Thus a set of data like a tree can be used.
+<br/>
+__Note: Gepard's data exchange mechanism is NOT intended to transport serialized objects between clients.__
+<br/>
+The valid types are:
+* scalar type objects: string, int, double, number
+* array type objects:
+  - Array ( [] )
+  - List ( [] )
+* hashtable type objects:
+  - Java: Map&lt;String,Object&gt;
+  - Python: dict ( {} )
+  - JavaScript: Object ( {} )
+
+There are 2 type of objects which are treated by gepard in a special way:
+* dates
+  - JavaScript: Date
+  - Java: Date
+  - Python: datetime.datetime
+* bytes
+  - JavaScript: Buffer
+  - Java: byte[]
+  - Python: bytearray, bytes ( bytes should not be used to send because in python < 3 bytes is a subclass of str, typeof byte == 'str'
+    and thus cannot be detected by this mechanism)
+
+In these cases an object is transferred from a generic class of a sender to the generic class of the receiver which means it is reconstructed in the target programming language.
+<br/>
+__Note on Python:__
+<br/>
+The built-in date class in python is not able to parse or format ISO date strings. In order to enable full operability related to dates
+the gapard module tries to import the well known __dateutils__ module. This in turn imports the __six__ module. If these modules are in
+python's module path the generic python date class can be used.
+<br/>
+Details in:
+
+* JavaScript: [gepard/xmp/EmitterWithBody.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/EmitterWithBody.js)
+* Java: [gepard/java/org.gessinger/gepard/xmp/EmitterWithBody.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/EmitterWithBody.java)
+* Python: [gepard/python/xmp/EmitterWithBody.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/EmitterWithBody.py)
 
 # Examples
 
@@ -541,10 +642,12 @@ Details in:
 
 * JavaScript: [gepard/xmp/Emitter.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/Emitter.js)
 * JavaScript: [gepard/xmp/EmitterWithStatusInfo.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/EmitterWithStatusInfo.js)
+* JavaScript: [gepard/xmp/EmitterWithBody.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/EmitterWithBody.js)
 * Java: [gepard/java/org.gessinger/gepard/xmp/Emitter.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/Emitter.java)
 * Java: [gepard/java/org.gessinger/gepard/xmp/EmitterWithStatusInfo.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/EmitterWithStatusInfo.java)
+* Java: [gepard/java/org.gessinger/gepard/xmp/EmitterWithBody.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/EmitterWithBody.java)
 * Python: [gepard/python/xmp/Emitter.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/Emitter.py)
-* Python: [gepard/python/xmp/EmitterWithStatusInfo.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/EmitterWithStatusInfo.py)
+* Python: [gepard/python/xmp/EmitterWithBody.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/EmitterWithBody.py)
 
 ### Locks
 

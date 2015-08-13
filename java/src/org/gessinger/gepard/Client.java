@@ -75,6 +75,11 @@ public class Client
 			System.err.println ( Util.toString ( exc ) ) ;
 		}
 	}
+	String createUniqueId()
+	{
+    counter++ ;
+		return hostname + "_" + localPort + "-" + counter + "_" + new Date().getTime() ;
+	}
 	OutputStreamWriter getWriter()
 	throws UnsupportedEncodingException
 			 , IOException
@@ -207,9 +212,7 @@ public class Client
 			synchronized ( _lock1 )
 			{
 				getWriter() ;
-		    counter++ ;
-		    String uid = hostname + "_" + localPort + "-" + counter ;
-	  	  e.setUniqueId ( uid ) ;
+	  	  e.setUniqueId ( createUniqueId() ) ;
 				String t = e.toJSON() ;
 		    _out.write ( t, 0, t.length() ) ;
 		    _out.flush() ;
@@ -291,9 +294,7 @@ public class Client
 		Event e = new Event ( "system", "addEventListener" ) ;
     e.setUser ( user ) ;
 	  e.body.put ( "eventNameList", new String[] { eventName } ) ;
-    counter++ ;
-    String uid = hostname + "_" + localPort + "-" + counter ;
-    e.setUniqueId ( uid ) ;
+    e.setUniqueId ( createUniqueId() ) ;
     synchronized ( _LOCK )
     {
 	    eventListenerFunctions.put ( eventName, el ) ;
@@ -306,9 +307,7 @@ public class Client
 		Event e = new Event ( "system", "addEventListener" ) ;
     e.setUser ( user ) ;
 	  e.body.put ( "eventNameList", eventNameList ) ;
-    counter++ ;
-    String uid = hostname + "_" + localPort + "-" + counter ;
-    e.setUniqueId ( uid ) ;
+    e.setUniqueId ( createUniqueId() ) ;
     synchronized ( _LOCK )
     {
     	for ( String name : eventNameList )
@@ -344,9 +343,7 @@ public class Client
     Event e = new Event ( "system", "removeEventListener" ) ;
     e.setUser ( this.user ) ;
 	  e.body.put ( "eventNameList", nameList ) ;
-    counter++ ;
-    String uid = hostname + "_" + localPort + "-" + counter ;
-    e.setUniqueId ( uid ) ;
+    e.setUniqueId ( createUniqueId() ) ;
     _send ( e ) ;
 	}
 	public void remove ( EventListener el )
@@ -381,9 +378,7 @@ public class Client
     Event e = new Event ( "system", "removeEventListener" ) ;
     e.setUser ( this.user ) ;
 	  e.body.put ( "eventNameList", nameArray ) ;
-    counter++ ;
-    String uid = hostname + "_" + localPort + "-" + counter ;
-    e.setUniqueId ( uid ) ;
+    e.setUniqueId ( createUniqueId() ) ;
     _send ( e ) ;
   }
 	Hashtable<String,Event> toBeSentBack = new Hashtable<String,Event>() ;
