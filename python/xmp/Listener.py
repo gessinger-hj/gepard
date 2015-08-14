@@ -2,23 +2,15 @@
 
 import os, sys
 sys.path.insert ( 0, os.path.dirname(os.path.abspath(__file__) ) + "/../" )
-
-from gepard import Event, User, Client
+import gepard
 
 import json
 import time
 import sys
-def __LINE__():
-        try:
-                raise Exception
-        except:
-                return sys.exc_info()[2].tb_frame.f_back.f_lineno
-def __FILE__():
-        return inspect.currentframe().f_code.co_filename
 # ==========================================================================
 
-c = Client.getInstance()
-# c.setDaemon ( True )
+client = gepard.Client.getInstance()
+# client.setDaemon ( True )
 def on_close ( err, success ):
 	print ( err )
 def on_error ( err, success ):
@@ -32,16 +24,16 @@ def failure ( event ):
 	c.close()
 	sys.exit()
 
-c.onClose ( on_close )
-c.onError ( on_error )
-c.onShutdown ( on_shutdown )
+client.onClose ( on_close )
+client.onError ( on_error )
+client.onShutdown ( on_shutdown )
 
 def on_ABLARM ( event ):
 	print	( "on_ABLARM" )
 	print ( event )
-	date = event.getValue ( "date" )
+	date = event.getValue ( "DATE" )
 	print ( date )
 
 print ( "Listening for ALARM and BLARM" )
-c.on ( ["ALARM", "BLARM"], on_ABLARM )
+client.on ( ["ALARM", "BLARM"], on_ABLARM )
 

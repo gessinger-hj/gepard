@@ -19,10 +19,10 @@ import types
 import numbers
 import collections
 
-dateutil_exists = False ;
+dateutil_exists = False
 try:
 	import dateutil.parser
-	dateutil_exists = True ;
+	dateutil_exists = True
 except ImportError:
 	pass
 
@@ -40,12 +40,12 @@ class Event ( object ):
 		self.body		= None
 		if isinstance ( name, dict ):
 			obj = name
-			self.className = self.__class__.__name__ ;
+			self.className = self.__class__.__name__
 			self.name = obj["name"]
 			if 'user' in obj and obj["user"] != None:
-				self.user = User ( obj["user"] ) ;
+				self.user = User ( obj["user"] )
 			if 'type' in obj and obj["type"] != None:
-				self.type = obj["type"] ;
+				self.type = obj["type"]
 			self.control = obj["control"]
 			self.body = obj["body"]
 			return
@@ -55,7 +55,7 @@ class Event ( object ):
 		if type != None and not isinstance ( type, basestring):
 			raise ValueError ( "type must be None or a non empty string, not: " + str(type) + "(" + type.__class__.__name__ + ")" )
 
-		self.className = self.__class__.__name__ ;
+		self.className = self.__class__.__name__
 		self.name = name
 		self.type = type
 		if body == None:
@@ -98,7 +98,7 @@ class Event ( object ):
 			raise ValueError ( "body must be a dict, not: " + str(body) )
 		self.body = body
 	def getHostname ( self ):
-		return self.control["hostname"] ;
+		return self.control["hostname"]
 	def putValue ( self, name, value ):
 		if not isinstance ( name, basestring):
 			raise ValueError ( "name must be a non empty string, not: " + str(name) + "(" + name.__class__.__name__ + ")" )
@@ -123,7 +123,7 @@ class Event ( object ):
 	def setUniqueId ( self, uid ):
 		if "uniqueId" in self.control and self.control["uniqueId"] != None:
 			return
-		self.control["uniqueId"] = uid ;
+		self.control["uniqueId"] = uid
 	def getUniqueId ( self ):
 		if ( "uniqueId" in self.control ):
 			return self.control["uniqueId"]
@@ -221,18 +221,18 @@ class User ( object ):
 	def __init__ ( self, id, key=None, pwd=None, rights=None ):
 		if isinstance ( id, dict ):
 			obj = id
-			self.className = self.__class__.__name__ ;
+			self.className = self.__class__.__name__
 			self.id = obj.get("id")
 			self.key = obj.get("key")
 			self._pwd = obj.get("_pwd")
 			self.rights = obj.get("rights")
 			return
 
-		self.className = "User" ;
-		self.id        = id ;
-		self.key       = key ;
-		self._pwd      = pwd ;
-		self.rights = {} ;
+		self.className = "User"
+		self.id        = id
+		self.key       = key
+		self._pwd      = pwd
+		self.rights = {}
 		if rights == None:
 			self.rights = {}
 		elif isinstance ( rights, dict ):
@@ -266,8 +266,77 @@ class User ( object ):
 
 import socket, struct
 
+class CallbackWorker:
+	def __init__(self,client):
+		self.counter = 0
+		self.client = client
+	def run(self):
+		while True:
+			e = None
+			callback = None
+			try:
+				e = self.client._CallbackIsolator.get()
+				# print ( "counter=" + str(self.counter) )
+				if e == None:
+					break
+			except Exception as exc:
+				print ( exc )
+				break
+			try:
+				e._Client = self.client
+				if e.isStatusInfo():
+					callback = self.client.callbacks.get ( e.getUniqueId() )
+					if callback == None:
+						print ( "No callback found for:\n" + e )
+						continue
+					if "status" in callback:
+						del self.client.callbacks[e.getUniqueId()]
+						callback["status"] ( e )
+					continue
+				if e.isBad():
+					if e.isResult():
+						callback = self.client.callbacks.get ( e.getUniqueId() )
+						if callback == None:
+							print ( "No callback found for:\n" + e )
+							continue
+					del self.client.callbacks[e.getUniqueId()]
+					if e.isFailureInfoRequested() and "failure" in callback:
+						callback["failure"] ( e )
+					elif "error" in callback:
+						callback["error"] ( e )
+					elif "result" in callback:
+						callback["result"] ( e )
+					continue
+				if e.isResult():
+					callback = self.client.callbacks.get ( e.getUniqueId() )
+					if callback == None:
+						print ( "No callback found for:\n" + e )
+						continue
+					del self.client.callbacks[e.getUniqueId()]
+					if "result" in callback:
+						callback["result"] ( e )
+					else:
+						print ( "No result callback found for:\n" + e )
+					continue
+				functionList = self.client.eventListenerFunctions.get ( e.getName() )
+				found = False
+				for function in functionList:
+					found = True
+					function ( e )
+					if e.isResultRequested():
+						break
+				if not found:
+					print ( "listener function list for " + e.getName() + " not found." )
+					print ( e )
+			except Exception as exc:
+				print ( exc )
+			finally:
+				if "_Client" in e.__dict__:
+					e._Client = None
+					del e._Client
+
 class Client:
-	counter = 0 ;
+	counter = 0
 	_Instances = {}
 	@classmethod
 	def getInstance ( clazz, port=None, host=None ):
@@ -282,11 +351,11 @@ class Client:
 		return client
 
 	def __init__(self, port=None, host=None):
-		self._first = False
-		self.infoCallbacks = MultiMap()
+		self._first                 = False
+		self.infoCallbacks          = MultiMap()
 		self.eventListenerFunctions = MultiMap()
-		self.connected = False
-		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.connected              = False
+		self.sock                   = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		if port is None:
 			p = os.environ["GEPARD_PORT"]
 			if p != None:
@@ -312,22 +381,28 @@ class Client:
 			self.host = "localhost"
 		else:
 			self.host = host
-		self.user = None
-		self.closing = False
-		self._workerIsDaemon = False
-		self.callbacks = {}
-
-		self.semaphores = {}
+		self.user                = None
+		self.closing             = False
+		self._workerIsDaemon     = False
+		self.callbacks           = {}
+		
+		self.semaphores          = {}
 		self._NQ_semaphoreEvents = NamedQueue()
-		self._ownedResources = {}
-		self._NQ_lockEvents = NamedQueue()
+		self._ownedResources     = {}
+		self._NQ_lockEvents      = NamedQueue()
+		self._CallbackIsolator   = SyncedQueue()
+		self.numberOfCallbackWorker = 3
 
 	def setDaemon(self,status=True):
 		self._workerIsDaemon = status
 	def createUniqueId(self):
 		self.counter = self.counter + 1
 		millis = round(time.time()*1000)
-		return socket.gethostname() + "_" + str(os.getpid()) + "_" + str(millis) + "_" + str(self.counter) ;
+		return socket.gethostname() + "_" + str(os.getpid()) + "_" + str(millis) + "_" + str(self.counter)
+
+	def setNumberOfCallbackWorker ( self, n ):
+		if n > 0 and n < 10:
+			self.numberOfCallbackWorker = n
 
 	def onShutdown ( self, callback ):
 		self.infoCallbacks.put ( "shutdown", callback )
@@ -364,9 +439,9 @@ class Client:
 		self.removeEventListener ( eventNameOrFunction )
 	def removeEventListener ( self, eventNameOrFunction ):
 		if isinstance ( eventNameOrFunction, str ):
-			eventNameOrFunction = [ eventNameOrFunction ] ;
+			eventNameOrFunction = [ eventNameOrFunction ]
 		elif isinstance ( eventNameOrFunction, types.FunctionType ):
-			eventNameOrFunction = [ eventNameOrFunction ] ;
+			eventNameOrFunction = [ eventNameOrFunction ]
 
 		if isinstance ( eventNameOrFunction[0], str ):
 			for name in eventNameOrFunction:
@@ -407,6 +482,8 @@ class Client:
 			l_linger = 0                                                                                                                                                          
 			self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,                                                                                                                     
                  struct.pack('ii', l_onoff, l_linger))
+
+			self._startCallbackWorker()
 			self._startWorker()
 		except IOError as e:
 			self.connected = False
@@ -478,10 +555,18 @@ class Client:
 			self.callbacks[e.getUniqueId()] = callback
 
 	def _startWorker ( self ):
-		t = threading.Thread(target=self._worker ) #, args=(self,))
+		t = threading.Thread(target=self._worker )
 		t.setDaemon ( self._workerIsDaemon )
 		t.start()
 		return
+
+	def _startCallbackWorker(self):
+		for i in range ( 0, self.numberOfCallbackWorker ):
+			cr = CallbackWorker(self)
+			cr.counter = i
+			cr = threading.Thread(target=cr.run )
+			cr.setDaemon ( True )
+			cr.start()
 
 	def close ( self ):
 		if self.sock != None:
@@ -493,8 +578,8 @@ class Client:
 			except Exception as exc:
 				print ( exc )
 		self.infoCallbacks.clear()
-		# eventListenerFunctions.clear() ;
-  # 	_Instances.remove ( "" + this.host + ":" + this.port ) ;
+		# eventListenerFunctions.clear()
+  # 	_Instances.remove ( "" + this.host + ":" + this.port )
 		self.sock = None
 		self._emit ( "close", None )
 
@@ -514,15 +599,15 @@ class Client:
 				raise exc
 			bytes.write ( c )
 			if ( c == b'"' or c == b'\'' ):
-				q = c ;
+				q = c
 				while True:
 					c = self.sock.recv(1)
-					bytes.write ( c ) ;
+					bytes.write ( c )
 					if ( c == q ):
 						if ( lastWasBackslash ):
-							lastWasBackSlash = True ;
-							continue ;
-					break ;
+							lastWasBackSlash = True
+							continue
+					break
 			if ( c == b'{' ):
 				pcounter = pcounter + 1
 				continue
@@ -535,7 +620,7 @@ class Client:
 		s = bytes.getvalue().decode ( 'utf-8' )
 		e = Event.deserialize ( s )
 		# print ( e )
-		return e ;
+		return e
 
 	def _worker(self):
 		while True:
@@ -548,8 +633,8 @@ class Client:
 						break
 					if e.getType() == "acquireSemaphoreResult":
 						body = e.getBody()
-						resourceId = body.get ( "resourceId" ) ;
-						sem = self.semaphores.get ( resourceId ) ;
+						resourceId = body.get ( "resourceId" )
+						sem = self.semaphores.get ( resourceId )
 						if sem.hasCallback():
 							sem._isSemaphoreOwner = True
 							sem.callback ( sem )
@@ -557,8 +642,8 @@ class Client:
 							if self._NQ_semaphoreEvents.isWaiting ( sem.resourceId ):
 								self._NQ_semaphoreEvents._returnObj ( resourceId, e )
 							else:
-								sem.release() ;
-						continue ;
+								sem.release()
+						continue
 					if e.getType() == "releaseSemaphoreResult":
 						continue
 
@@ -570,68 +655,7 @@ class Client:
 					if e.getType() == "unlockResourceResult":
 						continue
 					continue
-
-				if e.isStatusInfo():
-					callback = self.callbacks.get ( e.getUniqueId() )
-					if callback == None:
-						print ( "No callback found for:\n" + e )
-						continue
-					if "status" in callback:
-						del self.callbacks[e.getUniqueId()]
-						callback["status"] ( e )
-					continue
-				if e.isBad():
-					if e.isResult():
-						callback = self.callbacks.get ( e.getUniqueId() )
-						if callback == None:
-							print ( "No callback found for:\n" + e )
-							continue
-					del self.callbacks[e.getUniqueId()]
-					if e.isFailureInfoRequested() and "failure" in callback:
-						callback["failure"] ( e )
-					elif "error" in callback:
-						callback["error"] ( e )
-					elif "result" in callback:
-						callback["result"] ( e )
-					continue
-				if e.isResult():
-					callback = self.callbacks.get ( e.getUniqueId() )
-					if callback == None:
-						print ( "No callback found for:\n" + e )
-						continue
-					del self.callbacks[e.getUniqueId()]
-					if "result" in callback:
-						try:
-							e._Client = self
-							callback["result"] ( e )
-						except Exception as exc:
-							print (exc)
-						if "_Client" in e.__dict__:
-							e._Client = None
-							del e._Client
-					else:
-						print ( "No result callback found for:\n" + e )
-					continue
-
-				functionList = self.eventListenerFunctions.get ( e.getName() )
-				found = False
-				for function in functionList:
-					found = True
-					try:
-						e._Client = self
-						function ( e )
-					except Exception as exc:
-						print (exc)
-					if "_Client" in e.__dict__:
-						e._Client = None
-						del e._Client
-					if e.isResultRequested():
-						break
-				if not found:
-					print ( "listener function list for " + e.getName() + " not found." )
-					print ( e )
-					continue
-
+				self._CallbackIsolator.put ( e )
 			except Exception:
 				break
 
@@ -655,11 +679,11 @@ class Client:
 			print ( "release lock: not owner of resourceId=" + lock.resourceId )
 			return
 		del self._ownedResources[lock.resourceId]
-		e = Event ( "system", "unlockResourceRequest" ) ;
-		body = e.getBody() ;
-		body["resourceId"] = lock.resourceId ;
+		e = Event ( "system", "unlockResourceRequest" )
+		body = e.getBody()
+		body["resourceId"] = lock.resourceId
 		e.setUniqueId ( self.createUniqueId() )
-		self._send ( e ) ;
+		self._send ( e )
 
 	def semaphoreTimeoutCallback(self,sem):
 		if self._NQ_semaphoreEvents.isWaiting ( sem.resourceId ):
@@ -696,8 +720,8 @@ class Client:
 				sem._Timer.start()
 			e = self._NQ_semaphoreEvents.get ( sem.resourceId )
 			if sem._Timer != None:
-				sem._Timer.cancel() ;
-				sem._Timer = None ;
+				sem._Timer.cancel()
+				sem._Timer = None
 			body = e.getBody()
 			resourceId = body.get ( "resourceId" )
 			sem._isSemaphoreOwner = body.get ( "isSemaphoreOwner" )
@@ -707,10 +731,10 @@ class Client:
 			print ( "release semaphore: not owner of resourceId=" + sem.resourceId )
 			return
 		e = Event ( "system", "releaseSemaphoreRequest" )
-		body = e.getBody() ;
+		body = e.getBody()
 		body["resourceId"] = sem.resourceId
 		del self.semaphores[sem.resourceId]
-		self._send ( e ) ;
+		self._send ( e )
 
 class Lock:
 	def __init__ ( self, resourceId, port=None, host=None ):
@@ -757,7 +781,7 @@ class Semaphore:
 		self._Timer = None
 		self.timeoutOccurs = False
 	def hasCallback(self):
-		return self.callback != None ;
+		return self.callback != None
 
 	def getClient(self):
 		return self.client
@@ -842,14 +866,14 @@ class MultiMap:
 		a = []
 		for k in self._map:
 			a.append ( k )
-		return a ;
+		return a
 
 	def getKeysOf ( self, value ):
-		a = [] ;
+		a = []
 		for key in self._map:
 			list = self._map[key]
 			if value in list: a.append ( key )
-		return a ;
+		return a
 
 	def removeValue ( self, value ):
 		keyList = self.getKeys()
@@ -886,16 +910,16 @@ class NamedQueue:
 			name = "OID-" + str(self._Counter)
 			v = { "name":name, "obj":obj }
 
+		self._condition.acquire()
 		self._NamedObjects.append ( v )
-		self._condition.acquire() ;
-		self._condition.notify_all() ;
-		self._condition.release() ;
+		self._condition.notify_all()
+		self._condition.release()
 		return name
 
 	def get ( self, name ):
 		self._condition.acquire()
 		try:
-			self._WaitingNames[name] = "" ;
+			del self._WaitingNames[name]
 			while True:
 				o = self._ReturnedObjects.get ( name )
 				if o == None:
@@ -921,7 +945,7 @@ class NamedQueue:
 				if len ( self._NamedObjects ) > 0:
 					o = self._NamedObjects[0]
 					self._NamedObjects.remove ( o )
-					return o ;
+					return o
 				if self._AwakeAll:
 					return None
 		except Exception as e:
@@ -970,10 +994,49 @@ class NamedQueue:
 			return name in self._WaitingNames
 		finally:
 			self._condition.release()
-	# def numberOfNamedObjects()
- #    return _NamedObjects.size() ;
-	# def numberOfReturnedObjects()
- #    return _ReturnedObjects.size() ;
+
+class SyncedQueue:
+	def __init__(self):
+		self._list    = []
+		self._AwakeAll        = False
+		self._lock = threading.Lock()
+		self._condition = threading.Condition ( self._lock )
+
+	def put ( self, o ):
+		self._condition.acquire()
+		try:
+			self._list.append ( o )
+			self._condition.notify()
+		except Exception as exc:
+			print ( exc )
+			raise
+		finally:
+			self._condition.release()
+
+	def get ( self ):
+		self._condition.acquire()
+		try:
+			if len ( self._list ) == 0:
+				self._condition.wait()
+			if self._AwakeAll:
+				return None
+			if len ( self._list ) > 0:
+				return self._list.pop(0)
+		except Exception as exc:
+			print ( exc )
+			raise
+		finally:
+			self._condition.release()
+
+	def awakeAll ( self ):
+		self._AwakeAll = True
+		self._condition.acquire()
+		try:
+			self._condition.notify_all()
+		except Exception as e:
+			raise
+		finally:
+			self._condition.release()
 
 def __LINE__():
         try:

@@ -5,7 +5,7 @@ import java.util.*;
 public class SyncedQueue<T>
 {
   private Vector<T> _list = new Vector<T>() ;
-
+  boolean _AwakeAll = false ;
   public SyncedQueue()
   {
   }
@@ -22,6 +22,10 @@ public class SyncedQueue<T>
       try { this.wait() ; }
       catch ( InterruptedException e ) { }
     }
+    if ( _AwakeAll )
+    {
+      return o ;
+    }
     if ( _list.size() > 0 )
     {
       o = _list.firstElement() ;
@@ -32,7 +36,6 @@ public class SyncedQueue<T>
   synchronized public T probe ( )
   {
     T o = null;
-
     if ( _list.size() > 0 )
     {
       o = _list.firstElement() ;
@@ -42,6 +45,7 @@ public class SyncedQueue<T>
   }
   public synchronized void awakeAll()
   {
+    _AwakeAll = true ;
     this.notifyAll() ;
   }
   public synchronized int size()

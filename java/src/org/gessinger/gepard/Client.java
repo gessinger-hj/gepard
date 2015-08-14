@@ -21,15 +21,18 @@ public class Client
 	boolean closing         = false ;
 	boolean _first          = false ;
 	static boolean _workerIsDaemon = false ;
+	int numberOfCallbackWorker = 3 ;
 
   MultiMap<String,EventListener> eventListenerFunctions = new MultiMap<String,EventListener>() ;
-  HashMap<String,EventCallback> callbacks = new HashMap<String,EventCallback>() ;
+  Hashtable<String,EventCallback> callbacks = new Hashtable<String,EventCallback>() ;
 
   HashMap<String,Semaphore> semaphores = new HashMap<String,Semaphore>() ;
   NamedQueue<Event> _NQ_semaphoreEvents = new NamedQueue<Event>() ;
   HashMap<String,Lock> _ownedResources = new HashMap<String,Lock>() ;
   NamedQueue<Event> _NQ_lockEvents = new NamedQueue<Event>() ;
   
+  SyncedQueue<Event> _CallbackIsolator = new SyncedQueue<Event>() ;
+
   static Hashtable<String,Client> _Instances = new Hashtable<String,Client>() ;
 
   static public Client getInstance()
@@ -77,6 +80,13 @@ public class Client
 			System.err.println ( Util.toString ( exc ) ) ;
 		}
 	}
+	public void setNumberOfCallbackWorker ( int n )
+	{
+		if ( n > 0 && n < 10 )
+		{
+			numberOfCallbackWorker = n ;
+		}
+	}
 	static public void setDaemon()
 	{
 		setDaemon ( true ) ;
@@ -117,6 +127,15 @@ public class Client
 	    _out.write ( t, 0, t.length() ) ;
 	    _out.flush() ;
 
+	    for ( int i = 0 ; i < numberOfCallbackWorker ; i++ )
+	    {
+		    CallbackWorker cr = new CallbackWorker() ;
+		    cr.counter = i ;
+		    Thread thcr = new Thread ( cr ) ;
+		    thcr.setDaemon ( true ) ;
+		    thcr.start() ;
+	    }
+	    
 	    Runner r = new Runner ( _in ) ;
 	    Thread thr = new Thread ( r ) ;
 	    thr.setDaemon ( _workerIsDaemon ) ;
@@ -266,6 +285,7 @@ public class Client
 		socket = null ;
 		_in    = null ;
 		_out   = null ;
+		_CallbackIsolator.awakeAll() ;
   	_emit ( "close", null ) ;
 	}
   String _LOCK = "LOCK" ;
@@ -405,6 +425,121 @@ public class Client
   	e.setIsResult() ;
     _send ( e ) ;
   }
+  class CallbackWorker implements Runnable
+  {
+  	int counter = 0 ;
+  	public void run()
+  	{
+  		while ( true )
+  		{
+	  		Event e = null ;
+  			try
+  			{
+		  		e = _CallbackIsolator.get() ;
+		  		System.out.println ( "counter=" + counter ) ;
+		  		if ( e == null )
+		  		{
+		  			break ;
+		  		}
+  			}
+  			catch ( Exception exc )
+  			{
+  				System.err.println ( Util.toString ( exc ) ) ;
+  				break ;
+  			}
+  			try
+  			{
+		    	if ( e.isStatusInfo() )
+		    	{
+						EventCallback ecb = callbacks.get ( e.getUniqueId() ) ;
+						if ( ecb == null )
+						{
+							System.err.println ( "No callback found for:\n" + e ) ;
+							continue ;
+						}
+						callbacks.remove ( e.getUniqueId() ) ;
+						if ( ecb instanceof StatusCallback )
+						{
+							((StatusCallback)ecb).status ( e ) ;
+						}
+						continue ;
+		    	}
+					if ( e.isBad() )
+					{
+						if ( e.isResult() )
+						{
+							EventCallback ecb = callbacks.get ( e.getUniqueId() ) ;
+							if ( ecb == null )
+							{
+								System.err.println ( "No callback found for:\n" + e ) ;
+								continue ;
+							}
+							callbacks.remove ( e.getUniqueId() ) ;
+							if ( e.isFailureInfoRequested() && ( ecb instanceof FailureCallback ) )
+							{
+								((FailureCallback)ecb).failure ( e ) ;
+							}
+							else
+							if ( ecb instanceof ErrorCallback )
+							{
+								((ErrorCallback)ecb).error ( e ) ;
+							}
+							else
+							if ( ecb instanceof ResultCallback )
+							{
+								((ResultCallback)ecb).result ( e ) ;
+							}
+						}
+						continue ;
+					}
+					if ( e.isResult() )
+					{
+						EventCallback ecb = callbacks.get ( e.getUniqueId() ) ;
+						if ( ecb == null )
+						{
+							System.err.println ( "No callback found for:\n" + ecb ) ;
+							continue ;
+						}
+						if ( ecb instanceof ResultCallback )
+						{
+							((ResultCallback)ecb).result ( e ) ;
+						}
+						continue ;
+					}
+					List<EventListener> list = eventListenerFunctions.get ( e.getName() ) ;
+					if ( list != null )
+					{
+						List<EventListener> clonedList = new ArrayList(list) ;
+						try
+						{
+							for ( EventListener l : clonedList )
+							{
+								if ( e.isResultRequested() )
+								{
+									toBeSentBack.put ( e.getUniqueId(), e ) ;
+									e._Client = Client.this ;
+									l.event ( e ) ;
+									break ;
+								}
+								else
+								{
+									l.event ( e ) ;
+								}
+							}
+						}
+						finally
+						{
+							clonedList.clear() ;
+						}
+					}
+  			}
+  			catch ( Exception exc )
+  			{
+  				System.err.println ( Util.toString ( exc ) ) ;
+  			}
+  		}
+  	}
+  }
   class Runner implements Runnable
   {
   	InputStreamReader in = null ;
@@ -486,91 +621,7 @@ public class Client
 		          }
 			    		continue ;
 			    	}
-			    	if ( e.isStatusInfo() )
-			    	{
-							EventCallback ecb = callbacks.get ( e.getUniqueId() ) ;
-							if ( ecb == null )
-							{
-								System.err.println ( "No callback found for:\n" + e ) ;
-								continue ;
-							}
-							callbacks.remove ( e.getUniqueId() ) ;
-							if ( ecb instanceof StatusCallback )
-							{
-								((StatusCallback)ecb).status ( e ) ;
-							}
-							continue ;
-			    	}
-			    	if ( e.isBad() )
-			    	{
-							if ( e.isResult() )
-							{
-								EventCallback ecb = callbacks.get ( e.getUniqueId() ) ;
-								if ( ecb == null )
-								{
-									System.err.println ( "No callback found for:\n" + e ) ;
-									continue ;
-								}
-								callbacks.remove ( e.getUniqueId() ) ;
-								if ( e.isFailureInfoRequested() && ( ecb instanceof FailureCallback ) )
-								{
-									((FailureCallback)ecb).failure ( e ) ;
-								}
-								else
-								if ( ecb instanceof ErrorCallback )
-								{
-									((ErrorCallback)ecb).error ( e ) ;
-								}
-								else
-								if ( ecb instanceof ResultCallback )
-								{
-									((ResultCallback)ecb).result ( e ) ;
-								}
-							}
-							continue ;
-			    	}
-			    	// TODO: status info requested.
-						if ( e.isResult() )
-						{
-							EventCallback ecb = callbacks.get ( e.getUniqueId() ) ;
-							if ( ecb == null )
-							{
-								System.err.println ( "No callback found for:\n" + ecb ) ;
-								continue ;
-							}
-							if ( ecb instanceof ResultCallback )
-							{
-								((ResultCallback)ecb).result ( e ) ;
-							}
-							continue ;
-						}
-						List<EventListener> list = eventListenerFunctions.get ( e.getName() ) ;
-						if ( list != null )
-						{
-							List<EventListener> clonedList = new ArrayList(list) ;
-							try
-							{
-								for ( EventListener l : clonedList )
-								{
-									if ( e.isResultRequested() )
-									{
-										toBeSentBack.put ( e.getUniqueId(), e ) ;
-										e._Client = Client.this ;
-										l.event ( e ) ;
-										break ;
-									}
-									else
-									{
-										l.event ( e ) ;
-									}
-								}
-							}
-							catch ( Exception exc )
-							{
-								clonedList.clear() ;
-								throw exc ;
-							}
-						}
+			    	_CallbackIsolator.put ( e ) ;
 					}
 		    }
       }
