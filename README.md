@@ -39,6 +39,7 @@ General purpose communication and synchronization layer for distributed applicat
     - [Event Emitter](#event-emitter-1)
       - [In Application](#in-application-1)
       - [In Browser](#in-browser-1)
+- [Technical Aspekts of the Client](#technical-aspekts-of-the-client)
 - [Found a bug? Help us fix it...](#found-a-bug-help-us-fix-it)
 - [https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md](#httpsgithubcomgessinger-hjgepardblobmasterchangelogmd)
 - [Contributors](#contributors)
@@ -507,7 +508,7 @@ In these cases an object is transferred from a generic class of a sender to the 
 <br/>
 __Note on Python:__
 <br/>
-The built-in date class in python is not able to parse or format ISO date strings. In order to enable full operability related to dates
+The built-in date class in python is not able to parse or format ISO date strings. In order to enable full interoperability related to dates
 the gapard module tries to import the well known __dateutils__ module. This in turn imports the __six__ module. If these modules are in
 python's module path the generic python date class can be used.
 <br/>
@@ -1040,6 +1041,27 @@ var event = new gepard.Event ( "CONFIG-CHANGED" ) ;
 event.setBody ( { "config-name" : "app.conf" } ) ;
 wc.emit ( event ) ;
 ```
+
+# Technical Aspekts of the Client
+
+NodeJS clients use the powerful but simple framework for asynchronously callbacks.
+<br/>
+In Java and Python this asynchronicity is is modeled by threads. There is a single thread reading from the socket connected to the Broker.
+Incoming events are dispatched and the appropriate callbacks are executed. The main thread is not affected.
+<br/>
+Thus any number of event listener may be registered or removed in the main thread.
+<br/>
+Synchronous callbacks are needed with Locks and Semaphores. In this case an id-based blocking message queue
+is used for communication between the threads.
+<br/>
+From this it is clear that all callback methods run in the context of the internal thread and __not__ in the context of the main thread.
+<br/>
+Per default the internal thread is not a daemon thread. If needed this can be changed by calling the method
+- Python: Client.setDaemon([True|False])
+- Java: Client.setDaemon([true|false])
+
+before the first action on a Client instance because the internal thread is started when the first connection is needed.
+
 # Found a bug? Help us fix it...
 
 We are trying our best to keep Gepard as free of bugs as possible, but if you find a problem that looks like a bug to you please follow these steps to help us fix it...

@@ -20,6 +20,8 @@ public class Client
 	int localPort           = 0 ;
 	boolean closing         = false ;
 	boolean _first          = false ;
+	static boolean _workerIsDaemon = false ;
+
   MultiMap<String,EventListener> eventListenerFunctions = new MultiMap<String,EventListener>() ;
   HashMap<String,EventCallback> callbacks = new HashMap<String,EventCallback>() ;
 
@@ -75,6 +77,14 @@ public class Client
 			System.err.println ( Util.toString ( exc ) ) ;
 		}
 	}
+	static public void setDaemon()
+	{
+		setDaemon ( true ) ;
+	}
+	static public void setDaemon ( boolean state )
+	{
+		_workerIsDaemon = state ;
+	}
 	String createUniqueId()
 	{
     counter++ ;
@@ -108,7 +118,9 @@ public class Client
 	    _out.flush() ;
 
 	    Runner r = new Runner ( _in ) ;
-	    new Thread ( r ).start() ;
+	    Thread thr = new Thread ( r ) ;
+	    thr.setDaemon ( _workerIsDaemon ) ;
+	    thr.start() ;
 	    try
 	    {
 		    synchronized ( r )
