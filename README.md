@@ -458,7 +458,7 @@ for ( var i = 0 ; i < array.length ; i++ )
 Suppose the following: There are a couple of JavaScript and Python programs to interact with a database. The database changes.
 And it would be nice to not change modules for database access.
 <br/>
-Escecially if the new database is an Oracle database. Perhaps on Linux.
+Especially if the new database is an Oracle database. Perhaps on Linux.
 <br/>
 Everybody who had ever tried to install the appropriate NodeJS or Python module ended up in a mess of build, configuration and installation problems.
 <br/>
