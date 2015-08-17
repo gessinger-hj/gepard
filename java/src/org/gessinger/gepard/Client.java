@@ -436,7 +436,6 @@ public class Client
   			try
   			{
 		  		e = _CallbackIsolator.get() ;
-		  		System.out.println ( "counter=" + counter ) ;
 		  		if ( e == null )
 		  		{
 		  			break ;

@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
-from gepard import Event, User, Client, MultiMap, NamedQueue
+import os, sys
+sys.path.insert ( 0, os.path.dirname(os.path.abspath(__file__) ) + "/../" )
+
+import gepard
 
 import json
 import threading
@@ -13,7 +16,17 @@ except ImportError:
 
 # ==========================================================================
 
-_NQ = NamedQueue() ;
+from glob import glob
+
+from os import listdir
+from os.path import isfile, join
+onlyfiles = [ f for f in listdir('.') if isfile(join('.',f)) ]
+print ( onlyfiles )
+
+s1 = "ABC12"
+i = s1.find ( "C1 ")
+print ( "i=" + i )
+_NQ = gepard.NamedQueue() ;
 
 def worker():
 	"""thread worker function"""

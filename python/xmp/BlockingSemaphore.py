@@ -16,7 +16,7 @@ def on_error ( err, info ):
 
 client.onError ( on_error )
 
-name = "user:10000"
+name = "user:4711"
 
 print ( "Acquire semaphore=" + name )
 print ( "  blocking mode" )

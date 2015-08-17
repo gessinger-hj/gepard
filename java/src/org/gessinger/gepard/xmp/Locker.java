@@ -7,9 +7,10 @@ public class Locker
   {
     try
     {
-      Lock lock = new Lock ( "user:4711" ) ;
+      Lock lock = new Lock ( "resid:main" ) ;
       lock.acquire() ;
 
+      System.out.println ( "Try to lock resource='resid:main'" ) ;
       if ( lock.isOwner() )
       {
         System.out.println ( lock ) ;

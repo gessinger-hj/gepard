@@ -14,7 +14,10 @@ def on_error ( err, info ):
 
 client.onError ( on_error )
 
-name = "user:10000"
+name = "user:4711"
+
+print ( "Acquire semaphore=" + name )
+print ( "  asynchronous mode" )
 
 def on_acquired(sem):
 	print ( sem )

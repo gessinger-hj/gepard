@@ -56,7 +56,7 @@ gepard.WebClient.prototype._createUniqueEventId = function()
 {
   return this._url + "_" + new Date().getTime() + "-" + this._proxyIdentifier + "-" + (gepard.counter++) ;
 };
-gepard.WebClient.prototype.emit = function ( p1, eventName )
+gepard.WebClient.prototype._emit = function ( p1, eventName )
 {
   var list = this._onCallbackFunctions.get ( eventName ) ;
   if ( list )
@@ -84,7 +84,7 @@ gepard.WebClient.prototype._connect = function()
     if ( ! thiz._socket ) return ;
     thiz._socket.close() ;
     thiz._socket = null ;
-    thiz.emit ( err, "error" ) ;
+    thiz._emit ( err, "error" ) ;
   } ;
   /**
    * Description
@@ -228,7 +228,7 @@ gepard.WebClient.prototype._connect = function()
   {
     if ( ! thiz._socket ) return ;
     thiz._socket = null ;
-    thiz.emit ( null, "close" ) ;
+    thiz._emit ( null, "close" ) ;
   } ;
   /**
    * Description
@@ -241,7 +241,7 @@ gepard.WebClient.prototype._connect = function()
     einfo.body.domain = document.domain ;
     thiz._socket.send ( einfo.serialize() ) ;
 
-    thiz.emit ( null, "open" ) ;
+    thiz._emit ( null, "open" ) ;
 
     var i ;
     if ( thiz._pendingEventList.length )

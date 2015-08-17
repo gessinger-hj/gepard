@@ -15,7 +15,8 @@ def on_error ( err, info ):
 
 client.onError ( on_error )
 
-lock = Lock ( "user:4711" )
+print ( "Try to lock resource='resid:main'" )
+lock = Lock ( "resid:main" )
 lock.acquire()
 
 if lock.isOwner():

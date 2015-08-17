@@ -8,8 +8,8 @@ public class BlockingSemaphore
     Util.argsToProperties ( args ) ;
     try
     {
-      Semaphore sem = new Semaphore ( "user:10000" ) ;
-      System.out.println ( "Trying to acquire the semaphore 'user:10000'" ) ;
+      Semaphore sem = new Semaphore ( "user:4711" ) ;
+      System.out.println ( "Trying to acquire the semaphore 'user:4711'" ) ;
 
       sem.acquire(5000) ;
 

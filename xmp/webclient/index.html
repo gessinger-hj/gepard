@@ -180,10 +180,10 @@ App.toFullString = function ( text, indent )
         <td>ALARM</td><td><button onclick='App.on("ALARM")'>add listener</button></td>
         <td><button onclick='App.removeEventListener()'>remove listener</button></td>
       </tr>
-      <tr><td>Resource:</td><td><button onclick='App.lockResource("user:4711")'>acquire "user:4711"</button></td></tr>
-      <tr><td></td><td><button onclick='App.unlockResource()'>release "user:4711"</button></td></tr>
-      <tr><td>Semaphore:</td><td><button onclick='App.semAcquire("user:10000")'>acquire "user:1000"</button></td></tr>
-      <tr><td></td><td><button onclick='App.semRelease()'>release "user:1000"</button></td></tr>
+      <tr><td>Resource:</td><td><button onclick='App.lockResource("resid:main")'>acquire "resid:main"</button></td></tr>
+      <tr><td></td><td><button onclick='App.unlockResource()'>release "resid:main"</button></td></tr>
+      <tr><td>Semaphore:</td><td><button onclick='App.semAcquire("user:4711")'>acquire "user:4711"</button></td></tr>
+      <tr><td></td><td><button onclick='App.semRelease()'>release "user:4711"</button></td></tr>
     </table>
     <div id="console-container">
       <button style='float:right;' onclick='Console.clear()'>Clear console</button>

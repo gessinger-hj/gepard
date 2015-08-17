@@ -286,7 +286,7 @@ TangoClass.prototype.toArray = function (iterable)
  */
 TangoClass.prototype.setProperty = function ( name, value )
 {
-  if ( ! this._envMap ) this._envMap = [] ;
+  if ( ! this._envMap ) this._envMap = {} ;
   this._envMap[name] = value ;
 };
 /**
@@ -333,7 +333,7 @@ TangoClass.prototype.getProperty = function ( name, defaultValue )
   }
   if ( ! this._envMap )
   {
-    this._envMap = [] ;
+    this._envMap = {} ;
   }
   var i ;
   if ( ! this.argsDone )

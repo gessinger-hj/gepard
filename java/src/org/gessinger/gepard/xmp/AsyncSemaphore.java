@@ -6,8 +6,8 @@ public class AsyncSemaphore
   {
     try
     {
-      final Semaphore sem = new Semaphore ( "user:10000" ) ;
-      System.out.println ( "Trying to acquire the semaphore 'user:10000'" ) ;
+      final Semaphore sem = new Semaphore ( "user:4711" ) ;
+      System.out.println ( "Trying to acquire the semaphore 'user:4711'" ) ;
       sem.acquire ( new SemaphoreCallback()
       {
         public void acquired ( Event e )

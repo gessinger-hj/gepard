@@ -69,8 +69,7 @@ if ( require.main === module )
   var Path   = require ( 'path') ;
   var url    = require ( 'url' ) ;
   
-  var root   = process.cwd() ;
-  root       = T.getProperty ( "root", root ) ;
+  var root   = T.getProperty ( "root", Path.join ( __dirname, "../xmp/webclient/" ) ) ;
   root       = Path.resolve ( root ) ;
 
   var jsroot   = Path.join ( root, "../../src" ) ;
@@ -78,7 +77,7 @@ if ( require.main === module )
   jsroot       = Path.resolve ( jsroot ) ;
 
   var port   = T.getInt ( "port", 8888 ) ;
-  var index  = T.getProperty ( "index", "index.html" ) ;
+  var index  = T.getProperty ( "index", Path.join ( __dirname, "../xmp/webclient/", "index.html" ) ) ;
   var logDir = Gepard.getLogDirectory() ;
   
   Log.init ( "level=info,Xedirect=3,file=%GEPARD_LOG%/%APPNAME%.log:max=1m:v=4") ;
@@ -92,7 +91,7 @@ if ( require.main === module )
     }
     try
     {
-      stat = fs.statSync ( Path.join ( root, index ) ) ;
+      stat = fs.statSync ( index ) ;
       if ( ! stat.isFile() )
       {
         throw new Error ( "Not a file: " + Path.join ( root, index ) + "\nshutdown." ) ;

@@ -11,6 +11,8 @@
 -->
     <property name="class.files" value="**/*.class" />
     <javac debug="on" optimize="on"
+			source="1.6"
+			target="1.6"
       srcdir="${sourcedir}"
       destdir="${bin.dir}"
       classpath="${jar.classpath}:${classpath}:${external.lib.dir}/omsyntax.jar"

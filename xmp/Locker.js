@@ -11,7 +11,7 @@ if ( require.main === module )
   {
     console.log (
       "Gepard example: Lock, lock a given resource.\n"
-    + "Usage: node Lock [-Dname=<resource-name>], default <resource-name>=user:4711"
+    + "Usage: node Lock [-Dname=<resource-name>], default <resource-name>=resid:main"
     ) ;
     process.exit() ;
   }
@@ -27,7 +27,7 @@ if ( require.main === module )
   });
   function execute()
   {
-    var key = T.getProperty ( "name", "user:4711" ) ;
+    var key = T.getProperty ( "name", "resid:main" ) ;
     var lock = new Lock ( key ) ;
     lock.acquire ( function ( err )
     {

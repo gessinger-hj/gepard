@@ -919,7 +919,7 @@ class NamedQueue:
 	def get ( self, name ):
 		self._condition.acquire()
 		try:
-			del self._WaitingNames[name]
+			self._WaitingNames[name] = True
 			while True:
 				o = self._ReturnedObjects.get ( name )
 				if o == None:

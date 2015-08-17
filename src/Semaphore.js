@@ -90,13 +90,13 @@ if ( require.main === module )
     console.log (
       "Gepard example: Semaphore, acquire a given semaphore.\n"
     + "Usage: node Semaphore [options]\n"
-    + "  Options are: -Dname=<semaphore-name>, default <semaphore-name>=user:10000\n"
+    + "  Options are: -Dname=<semaphore-name>, default <semaphore-name>=user:4711\n"
     + "               -Dname=<auto>, release semaphore imediately after aquiring ownership owner.\n"
     ) ;
     process.exit() ;
   }
 
-  var key = T.getProperty ( "name", "user:10000" ) ;
+  var key = T.getProperty ( "name", "user:4711" ) ;
   var auto = T.getProperty ( "auto" ) ;
   var sem = new Semaphore ( key ) ;
   console.log ( "Aquiring semaphor=" + key ) ;

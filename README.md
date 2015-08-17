@@ -81,7 +81,7 @@ client = gepard.Client.getInstance ( [ port [, host ] ] ) ;
 ```
 
 Up to now a client is a standalone JavaScript program, a JavaScript app inside a browser, a Java program or a Python program.
-In the next step clients for other languages like Php etc are planned.
+In the next step clients for other languages like Php, Perl etc are planned.
 
 The broker can be instantiated from a JavaScript program but the most common and simplest way to use it is to start it detached as a daemon.
 
@@ -205,6 +205,9 @@ The following is done:
 1.  the __m-th__ message is stored inside the broker waiting for any of the listeners sending back the response.
 1.  after receiving the first message-response from any listener the waiting __m-th + 1__ message is sent to the now free listener.
 
+As long as a sent message is not returned the Broker stores it in relation to the worker connection.
+If this connection dies the stored message is sent back to the originator marked with the fail state and appropriate text.
+The status can be testet with event.isBad() which returns true or false.
 
 ## Java bindings for all features:
 
@@ -405,7 +408,7 @@ Both do
 
 ```js
 gepard.port = 17502 ;
-var sem = new gepard.Semaphore ( "user:id:admin" ) ;
+var sem = new gepard.Semaphore ( "user:4711" ) ;
 this.sem.acquire ( function sem_callback ( err )
 {
   // we are owner
@@ -656,13 +659,13 @@ Application
 
 ```js
   var gepard = require ( "gepard" ) ;
-  var lock = new gepard.Lock ( "user:4711" ) ;
+  var lock = new gepard.Lock ( "resid:main" ) ;
 ```
 Browser
 
 ```js
 gepard.port = 17502 ;
-var lock = new gepard.Lock ( "user:4711" ) ;
+var lock = new gepard.Lock ( "resid:main" ) ;
 ```
 Code
 
@@ -682,7 +685,7 @@ Java
 
 ```java
 import org.gessinger.gepard.Lock ;
-Lock lock = new Lock ( "user:4711" ) ;
+Lock lock = new Lock ( "resid:main" ) ;
 lock.acquire() ;
 if ( lock.isOwner() )
 {
@@ -696,7 +699,7 @@ Python
 ```python
 import gepard
 
-lock = gepard.Lock ( "user:4711" )
+lock = gepard.Lock ( "resid:main" )
 lock.acquire()
 
 if lock.isOwner():
@@ -718,13 +721,13 @@ Application
 
 ```js
   var gepard = require ( "gepard" ) ;
-  var sem = new gepard.Semaphore ( "user:10000" ) ;
+  var sem = new gepard.Semaphore ( "user:4711" ) ;
 ```
 Browser
 
 ```js
 gepard.port = 17502 ;
-var sem = new gepard.Semaphore ( "user:10000" ) ;
+var sem = new gepard.Semaphore ( "user:4711" ) ;
 ```
 
 Code
@@ -747,7 +750,7 @@ Asynchronously
 ```java
 import org.gessinger.gepard.Semaphore ;
 import org.gessinger.gepard.SemaphoreCallback ;
-final Semaphore sem = new Semaphore ( "user:10000" ) ;
+final Semaphore sem = new Semaphore ( "user:4711" ) ;
 sem.acquire ( new SemaphoreCallback()
 {
   public void acquired ( Event e )
@@ -763,7 +766,7 @@ Synchronously
 
 ```java
 import org.gessinger.gepard.Semaphore ;
-final Semaphore sem = new Semaphore ( "user:10000" ) ;
+final Semaphore sem = new Semaphore ( "user:4711" ) ;
 // with or without a timeout
 sem.acquire(5000) ;
 
@@ -785,7 +788,7 @@ def on_owner(sem):
   ................
   sem.release()
 
-sem = gepard.Semaphore ( "user:10000" )
+sem = gepard.Semaphore ( "user:4711" )
 sem.acquire ( on_owner )
 ```
 
@@ -1054,7 +1057,11 @@ Thus any number of event listener may be registered or removed in the main threa
 Synchronous callbacks are needed with Locks and Semaphores. In this case an id-based blocking message queue
 is used for communication between the threads.
 <br/>
-From this it is clear that all callback methods run in the context of the internal thread and __not__ in the context of the main thread.
+Incoming events for asynchronous processing are propagated to separate running worker threads via a blocking fifo queue. Thus callbacks do not block each other. This applies to Java and Python.
+<br/>
+By default 2 threads are running. This can be changed with the method Client.setNumberOfCallbackWorker(). Maximum is 10.
+<br/>
+From this it is clear that all callback methods run in the context of one of the internal worker-threads and __not__ in the context of the main thread.
 <br/>
 Per default the internal thread is not a daemon thread. If needed this can be changed by calling the method
 - Python: Client.setDaemon([True|False])
