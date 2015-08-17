@@ -75,6 +75,11 @@ var LogFile = function()
   , 'So' ,'Mo' ,'Di' ,'Mi' ,'Do' ,'Fr' ,'Sa'
   );
 };
+LogFile.prototype.createInstance = function()
+{
+  var nl = new LogFile() ;
+  return nl ;
+};
 /**
  * Description
  * @param {} loggerInterface
@@ -514,6 +519,10 @@ LogFile.prototype.getCurrentLogFileName = function()
 {
   return "" + this._file ;
 };
+LogFile.prototype.getCurrentLogDirectory = function()
+{
+  return this._file.getParent() ;
+};
 /**
  * Description
  */
@@ -709,6 +718,14 @@ LogFile.prototype.debug = function ( str )
  * Description
  * @param {} str
  */
+LogFile.prototype.print = function ( str )
+{
+  this._writeToBuffer ( str, true, false, "" ) ;
+};
+LogFile.prototype.eol = function ( str )
+{
+  this._writeToBuffer ( str, false, true, "" ) ;
+};
 LogFile.prototype.info = function ( str )
 {
   if ( ! this._isInitialized ) this.init() ;
@@ -1150,6 +1167,10 @@ File.prototype.renameTo = function ( newName )
     fs.renameSync ( this.path, newName ) ;
   }
 };
+File.prototype.getParent = function ()
+{
+  return path.dirname ( this.path ) ;
+};
 
 if ( typeof org === 'undefined' ) org = {} ;
 if ( typeof org.gessinger === 'undefined' ) org.gessinger = {} ;
@@ -1163,7 +1184,8 @@ module.exports = org.gessinger.tangojs.LogFile ;
 
 if ( require.main === module )
 {
-  Log.init ( "level=notice,Xfile=Log-%DATE%.log" ) ;
+  var Log = org.gessinger.tangojs.LogFile ;
+  Log.init ( "level=notice,file=Log-%DATE%.log" ) ;
   Log.emergency ( "----------------" ) ;
   Log.alert ( "----------------" ) ;
   Log.critical ( "----------------" ) ;

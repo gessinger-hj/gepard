@@ -61,6 +61,8 @@ if ( require.main === module )
     // console.log ( exc ) ;
   }
   var Log    = require ( "../src/LogFile" ) ;
+  var accessLog = Log.createInstance() ;
+
   var Gepard = require ( "../src/Gepard" ) ;
   var Client = require ( "../src/Client" ) ;
   
@@ -81,6 +83,7 @@ if ( require.main === module )
   var logDir = Gepard.getLogDirectory() ;
   
   Log.init ( "level=info,Xedirect=3,file=%GEPARD_LOG%/%APPNAME%.log:max=1m:v=4") ;
+  accessLog.init ( "file=%GEPARD_LOG%/%APPNAME%.access-%DATE%.log" ) ;
 
   try
   {
@@ -119,7 +122,9 @@ if ( require.main === module )
       var requestUrl  = url.parse ( req.url ) ;
       var urlPathName = decodeURIComponent ( requestUrl.pathname ) ;
       var path ;
-
+      var logLine = ' ' + req.socket.remoteAddress + ' "' + req.method + ' ' + req.url + '"' ;
+      var stat ;
+      accessLog.print ( logLine ) ;
       if ( urlPathName.indexOf ( ".js" ) === urlPathName.length - 3 )
       {
         path = Path.join ( jsroot, urlPathName ) ;
@@ -131,13 +136,13 @@ if ( require.main === module )
       var isDir = false ;
       try
       {
-        var stat = fs.statSync ( path ) ;
+        stat = fs.statSync ( path ) ;
         if ( stat.isFile() )
         {
         }
         else
         {
-          path = Path.join ( path, index ) ;
+          path = index ;
           stat = fs.statSync ( path ) ;
         }
       }
@@ -145,6 +150,7 @@ if ( require.main === module )
       {
         res.writeHead ( 500 ) ;
         res.end() ;
+        accessLog.eol ( " 500" ) ;
         return ;
       }
       try
@@ -158,6 +164,7 @@ if ( require.main === module )
         {
           res.writeHead ( 200 ) ;
         }
+        accessLog.eol ( " 200 " + stat.size ) ;
         var ins = fs.createReadStream ( path ) ;
         ins.pipe ( res ) ;
         ins.on ( "end", function onend_in()
