@@ -1,4 +1,8 @@
 python/test/
 test/
+__pycache__/
+*.pyc
+java-classes/
+*.class
 .npmignore
 

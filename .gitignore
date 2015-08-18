@@ -1,7 +1,10 @@
 node_modules
 dev
 doc
-/.project
+__pycache__/
+*.pyc
+java-classes/
+*.class/.project
 *.class
 *.tgz
 *.pyc
