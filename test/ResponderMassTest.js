@@ -24,13 +24,23 @@ if ( require.main === module )
 		}
 		execute() ;
 	});
-	var n = 0 ;
 	function execute()
 	{
-		var name = "mass-test" ;
+		var n = 0 ;
 		var c = new Client() ;
-		c.on ( name, function(e)
+		c.on ( "mass-test-start", function(e)
 		{
+			n = 0 ;
+			console.log ( "mass test start" ) ;
+		});
+		c.on ( "mass-test-end", function(e)
+		{
+			console.log ( "mass test end" ) ;
+			console.log ( "n=" + n ) ;
+		});
+		c.on ( "mass-test", function(e)
+		{
+			n++ ;
 			e.sendBack() ;
 		});
 		c.on('end', function()

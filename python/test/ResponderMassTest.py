@@ -18,8 +18,18 @@ client.onClose ( on_close )
 client.onError ( on_error )
 client.onShutdown ( on_shutdown )
 
-def on_getFileList ( event ):
-	event.sendBack() ;
+def on_mass_test_start ( event ):
+	event.getClient().n = 0
+	print ( "mass-test-start" )
+client.on ( "mass-test-start", on_mass_test_start )
 
-client.on ( "mass-test", on_getFileList )
+def on_mass_test_end ( event ):
+	print ( "mass-test-end" )
+	print ( "n=" + str(event.getClient().n) )
+client.on ( "mass-test-end", on_mass_test_end )
+
+def on_mass_test ( event ):
+	event.getClient().n = event.getClient().n + 1
+	event.sendBack() ;
+client.on ( "mass-test", on_mass_test )
 

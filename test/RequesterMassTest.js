@@ -32,19 +32,21 @@ if ( require.main === module )
    	var c = new Client() ;
 		var m = nCalls ;
 		var T0 = new Date().getTime() ;
-		for ( var n = nCalls ; n >= 0 ; n-- )
-		{
-    	c.request ( name, function ( e )
-    	{
-				m-- ;
-				if ( m <= 1 )
-				{
-					var T1 = new Date().getTime() ;
-					var millis = T1 - T0 ;
-					var millisPerCall = millis / nCalls ;
-					console.log ( "millis=" + millis ) ;
-					console.log ( "millisPerCall=" + millisPerCall ) ;
-					this.end() ;
+    c.emit ( "mass-test-start" )
+    for ( var n = nCalls ; n > 0 ; n-- )
+    {
+      c.request ( name, function ( e )
+      {
+        m-- ;
+        if ( m < 1 )
+        {
+          var T1 = new Date().getTime() ;
+          var millis = T1 - T0 ;
+          var millisPerCall = millis / nCalls ;
+          console.log ( "millis=" + millis ) ;
+          console.log ( "millisPerCall=" + millisPerCall ) ;
+          c.emit ( "mass-test-end", { write: function(p){ c.end(); }} )
+					// this.end() ;
 				}
       }) ;
     }

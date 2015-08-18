@@ -485,10 +485,6 @@ Broker.prototype._ondata = function ( socket, chunk )
         uid                 = e.getUniqueId() ;
         requesterConnection = this._connections[sid] ;
 
-        for ( i = 0 ; i < this._connectionList.length  ; i++ )
-        {
-          this._connectionList[i]._messageUidsToBeProcessed.remove ( uid ) ;
-        }
         delete this._messagesToBeProcessed[uid] ;
         responderConnection._setCurrentlyProcessedMessageUid ( "" ) ;
         if ( requesterConnection )
@@ -497,6 +493,10 @@ Broker.prototype._ondata = function ( socket, chunk )
           uid = responderConnection._getNextMessageUidToBeProcessed() ;
           if ( uid )
           {
+            for ( i = 0 ; i < this._connectionList.length  ; i++ )
+            {
+              this._connectionList[i]._messageUidsToBeProcessed.remove ( uid ) ;
+            }
             e  = this._messagesToBeProcessed[uid] ;
             responderConnection.write ( e ) ;
             responderConnection._numberOfPendingRequests++ ;
@@ -537,25 +537,27 @@ Broker.prototype.toString = function()
  */
 Broker.prototype._sendMessageToClient = function ( e, socketList )
 {
-  var socket, i, messageSent       = false ;
+  var socket, i = false ;
   var uid                          = e.getUniqueId() ;
   this._messagesToBeProcessed[uid] = e ;
-  var str                          = e.serialize() ;
+
+  for ( i = 0 ; i < socketList.length ; i++ )
+  {
+    socket = socketList[i] ;
+    conn   = this._connections[socket.sid] ;
+    if ( conn._numberOfPendingRequests === 0 )
+    {
+      socket.write ( e.serialize() ) ;
+      conn._numberOfPendingRequests++ ;
+      conn._setCurrentlyProcessedMessageUid ( uid ) ;
+      return ;
+    }
+  }
   for ( i = 0 ; i < socketList.length ; i++ )
   {
     socket = socketList[i] ;
     conn   = this._connections[socket.sid] ;
     conn._messageUidsToBeProcessed.push ( uid ) ;
-    if ( ! messageSent )
-    {
-      if ( conn._numberOfPendingRequests === 0 )
-      {
-        socket.write ( str ) ;
-        conn._numberOfPendingRequests++ ;
-        conn._setCurrentlyProcessedMessageUid ( uid ) ;
-        messageSent = true ;
-      }
-    }
   }
 };
 /**

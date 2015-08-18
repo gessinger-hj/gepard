@@ -16,6 +16,7 @@ public class ResponderMassTest
       exc.printStackTrace() ;
     }
   }
+  int n = 0 ;
   ResponderMassTest()
   throws Exception
   {
@@ -28,19 +29,28 @@ public class ResponderMassTest
         System.exit ( 0 ) ;
       }
     });
-    String name = "mass-test" ;
-    System.out.println ( "Listen for requests with name=" + name ) ;
-    client.on ( name, new EventListener()
+    client.on ( "mass-test-start", new EventListener()
     {
       public void event ( Event e )
       {
-				try
-				{
-        	e.sendBack() ;
-				}
-				catch ( Exception exc )
-				{
-				}
+        n = 0 ;
+        System.out.println ( "mass text start" ) ;
+      }
+    } ) ;
+    client.on ( "mass-test-end", new EventListener()
+    {
+      public void event ( Event e )
+      {
+        System.out.println ( "mass text end" ) ;
+        System.out.println ( "n=" + n ) ;
+      }
+    } ) ;
+    client.on ( "mass-test", new EventListener()
+    {
+      public void event ( Event e )
+      {
+        n++ ;
+        try {e.sendBack() ; } catch ( Exception exc ) {}
       }
     } ) ;
   }
