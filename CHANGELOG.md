@@ -1,3 +1,6 @@
+## 1.3.1 (2015-08-18)
+- fix bug in HttpSimple.js example for websockets.
+
 ## 1.3.0 (2015-08-14)
 - Java and Python: introduce internal worker-threads for non-blocking execution of callback methods.
 programming langauage.
