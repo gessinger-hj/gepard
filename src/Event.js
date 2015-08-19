@@ -65,8 +65,11 @@ gepard.Event.prototype =
 	    Date.prototype.toJSON = old ;
 	  }
 	},
-	_classNameToConstructorDone: false,
 	_classNameToConstructor: {},
+	addClassNameToConstructor: function ( className, clazz )
+	{
+		this._classNameToConstructor[className] = clazz ;
+	},
 	/**
 	 * Description
 	 * @method deserialize
@@ -202,7 +205,28 @@ gepard.Event.prototype =
 	    }
 	    if ( o.className && typeof o.className === 'string' )
 	    {
-	// console.log ( "o.className=" + o.className ) ;
+	      var mcn = this._classNameToConstructor[o.className] ;
+	      if ( mcn )
+	      {
+			    if ( typeof Object.create === 'function' )
+			    {
+				    obj[k] = that = Object.create ( mcn.prototype ) ;
+				    for ( var kk in o )
+				    {
+				      if ( ! o.hasOwnProperty ( kk ) ) continue ;
+				      var oo = o[kk] ;
+				      if ( oo && typeof oo === 'object' )
+				      {
+				        if ( oo.className && typeof oo.className === 'string' )
+				        {
+				          that[kk] = this.deserialize ( oo ) ;
+				          continue ;
+				        }
+				      }
+				      that[kk] = o[kk]  ;
+				    }
+			    }
+	      }
 	    }
 	    if ( typeof o === 'object' )
 	    {
@@ -512,8 +536,7 @@ gepard.Event.prototype =
 	 */
 	putValue: function ( name, value )
 	{
-		if ( ! name )
-		if ( typeof name !== 'string' )
+		if ( ! name || typeof name !== 'string' )
 		{
 			throw new Error ( "Event.putValue(): name must be a string." ) ;
 		}
@@ -525,14 +548,29 @@ gepard.Event.prototype =
 	},
 	/**
 	 * Description
+	 * @method removeValue
+	 * @param {string} name
+	 * @return 
+	 */
+	removeValue: function ( name )
+	{
+		if ( ! name || typeof name !== 'string' )
+		{
+			throw new Error ( "Event.removeValue(): name must be a string." ) ;
+		}
+		var v = this.body[name] ;
+		delete this.body[name] ;
+		return v ;
+	},
+	/**
+	 * Description
 	 * @method getValue
 	 * @param {string} name
 	 * @return {any} value
 	 */
 	getValue: function ( name )
 	{
-		if ( ! name )
-		if ( typeof name !== 'string' )
+		if ( ! name || typeof name !== 'string' )
 		{
 			throw new Error ( "Event.getValue(): name must be a string." ) ;
 		}

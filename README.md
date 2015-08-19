@@ -479,7 +479,7 @@ of type string.
 * JavaScript: __{}__ or in long form: __Object__
 * Python: __{}__ which is in fact an object of type __dict__
 
-Setter an getter are the appropriate methods __Event.putValue(name,value)__ and __Event.getValue(name)__.
+Setter and getter are the appropriate methods __Event.putValue(name,value)__ and __Event.getValue(name)__.
 <br/>
 __value__ is either a scalar type, a hashtable with strings as keys and valid object types, a list containing valid object types or a a combination of all valid types.
 Thus a set of data like a tree can be used.
@@ -589,7 +589,7 @@ Python
 import gepard
 client = gepard.Client.getInstance()
 
-def on_ALARM ( event ):
+def on_ABLARM ( event ):
   print ( "on_ALARM" )
   print ( event )
 
@@ -651,6 +651,7 @@ Details in:
 * Java: [gepard/java/org.gessinger/gepard/xmp/EmitterWithStatusInfo.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/EmitterWithStatusInfo.java)
 * Java: [gepard/java/org.gessinger/gepard/xmp/EmitterWithBody.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/EmitterWithBody.java)
 * Python: [gepard/python/xmp/Emitter.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/Emitter.py)
+* Python: [gepard/python/xmp/EmitterWithBody.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/EmitterWithStatusInfo.py)
 * Python: [gepard/python/xmp/EmitterWithBody.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/EmitterWithBody.py)
 
 ### Locks
@@ -1100,7 +1101,7 @@ https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md
 	- __GEPARD_HOST__
 * All JavaScript client features like event listener, event emitter, semaphores, locks and messages
 	are available in any web-browser apps.
-* All client features are also available for Java
+* All client features are also available for Java and Python
 
 # Changelog
 See [change log details](https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md)

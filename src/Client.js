@@ -3,11 +3,12 @@ var os           = require('os');
 var EventEmitter = require ( "events" ).EventEmitter ;
 var util         = require ( "util" ) ;
 
-var T            = require ( "./Tango" ) ;
-var Event        = require ( "./Event" ) ;
-var MultiHash    = require ( "./MultiHash" ) ;
-var Log          = require ( "./LogFile" ) ;
-var User         = require ( "./User" ) ;
+var T             = require ( "./Tango" ) ;
+var Event         = require ( "./Event" ) ;
+var MultiHash     = require ( "./MultiHash" ) ;
+var Log           = require ( "./LogFile" ) ;
+var User          = require ( "./User" ) ;
+var FileReference = require ( "./FileReference" ) ;
 
 var counter = 0 ;
 /**
@@ -49,6 +50,19 @@ var Client = function ( port, host )
   {
     this._application = "Unknown" ;
   }
+  this._networkAddresses                   = [] ;
+  var networkInterfaces                    = os.networkInterfaces() ;
+  for ( var kk in networkInterfaces )
+  {
+    var ll = networkInterfaces[kk]
+    for ( var ii = 0 ; ii < ll.length ; ii++ )
+    {
+      var oo = ll[ii] ;
+      this._networkAddresses.push ( oo["address"] ) ;
+    }
+  }
+  var ee = new Event() ;
+  ee.addClassNameToConstructor ( "FileReference", FileReference ) ;
 } ;
 util.inherits ( Client, EventEmitter ) ;
 Client.prototype.toString = function()
@@ -90,6 +104,29 @@ Client.prototype.setUser = function ( user )
 {
   this.user = user ;
 } ;
+Client.prototype.brokerIsLocalHost = function()
+{
+  if ( typeof this._brokerIsLocalHost === 'boolean' )
+  {
+    return this._brokerIsLocalHost ;
+  }
+  for ( i = 0 ; i < this._networkAddresses.length ; i++ )
+  {
+    var index = this.socket.remoteAddress.indexOf ( this._networkAddresses[i] ) ;
+    if ( index < 0 )
+    {
+      continue ;
+    }
+    if ( this.socket.remoteAddress.indexOf ( this._networkAddresses[i] ) === this.socket.remoteAddress.length - this._networkAddresses[i].length )
+    {
+      this._brokerIsLocalHost = true ;
+      return this._brokerIsLocalHost ;
+    }
+  }
+  this._brokerIsLocalHost = false ;
+  return this._brokerIsLocalHost ;
+};
+
 /**
  * Description
  * @method connect
@@ -103,6 +140,7 @@ Client.prototype.connect = function()
   var thiz = this ;
   this.socket = net.connect ( p, function()
   {
+    var ilh = thiz.brokerIsLocalHost() ;
     thiz.alive = true ;
     var einfo = new Event ( "system", "client_info" ) ;
     einfo.body.language = "JavaScript" ;
