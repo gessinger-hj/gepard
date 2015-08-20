@@ -5,6 +5,7 @@ if ( require.main === module )
   var Event  = require ( "../src/Event" ) ;
   var Client = require ( "../src/Client" ) ;
   var Admin  = require ( "../src/Admin" ) ;
+  var FileReference  = require ( "../src/FileReference" ) ;
 
   if ( T.getProperty ( "help" ) )
   {
@@ -33,9 +34,15 @@ if ( require.main === module )
 		var m = nCalls ;
 		var T0 = new Date().getTime() ;
     c.emit ( "mass-test-start" )
+    // var event = new Event ( name ) ;
+    var fr = new FileReference ( "xxx.js" ) ;
+    // event.putValue ( "FR", fr ) ;
+
     for ( var n = nCalls ; n > 0 ; n-- )
     {
-      c.request ( name, function ( e )
+      var event = new Event ( name ) ;
+      event.putValue ( "FR", fr ) ;
+      c.request ( event, function ( e )
       {
         m-- ;
         if ( m < 1 )
@@ -46,6 +53,7 @@ if ( require.main === module )
           console.log ( "millis=" + millis ) ;
           console.log ( "millisPerCall=" + millisPerCall ) ;
           c.emit ( "mass-test-end", { write: function(p){ c.end(); }} )
+          console.log ( c._stats ) ;
 					// this.end() ;
 				}
       }) ;

@@ -70,6 +70,44 @@ gepard.Event.prototype =
 	{
 		this._classNameToConstructor[className] = clazz ;
 	},
+	setTargetIsLocalHost: function ( state )
+	{
+		state = !! state ;
+    this._visit ( this.body, function e_visit ( o )
+    {
+      if ( typeof o.setTargetIsLocalHost === 'function' )
+      {
+        o.setTargetIsLocalHost ( state ) ;
+      }
+    }) ;
+  },
+	visit: function ( visitor )
+	{
+		this._visit ( this, visitor ) ;
+	},
+	_visit: function ( obj, visitor )
+	{
+		for ( var key in obj )
+		{
+			var o = obj[key] ;
+			if ( typeof o !== 'object' )
+			{
+				continue ;
+			}
+			if ( ! o )
+			{
+				continue ;
+			}
+			if ( visitor.call ( null, o ) === false )
+			{
+				return false ;
+			}
+			if ( this._visit ( o, visitor ) === false )
+			{
+				return false ;
+			}
+		}
+	},
 	/**
 	 * Description
 	 * @method deserialize
@@ -221,6 +259,29 @@ gepard.Event.prototype =
 				        {
 				          that[kk] = this.deserialize ( oo ) ;
 				          continue ;
+				        }
+				        if ( typeof oo.type === 'string' )
+				        {
+						      if ( oo.type === 'Date' )
+						      {
+						        that[kk] = new Date ( oo.value ) ;
+						        continue ;
+						      }
+						      if ( typeof document === 'undefined' )
+						      {
+							      // if ( o.type === 'Xml' )
+							      // {
+							      //   var txml = require ( "Xml" ) ;
+							      //   var f = new txml.XmlFactory() ;
+							      //   obj[k] = f.create ( o.value ) ;
+							      //   continue ;
+							      // }
+							      if ( oo.type === "Buffer" && Array.isArray ( oo.data ) )
+							      {
+							        that[kk] = new Buffer ( oo.data ) ;
+							        continue ;
+							      }
+						      }
 				        }
 				      }
 				      that[kk] = o[kk]  ;

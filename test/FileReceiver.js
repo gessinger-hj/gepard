@@ -30,7 +30,9 @@ if ( require.main === module )
 		c.on ( "__FILE__", function(e)
 		{
 			var FR = e.removeValue ( "FR" ) ;
-console.log ( FR.toString() ) ;
+console.log ( FR ) ;
+			var b = FR.getBuffer() ;
+			FR.write ( FR.getName() + ".in" ) ;
 			e.sendBack() ;
 		});
 		c.on('end', function()

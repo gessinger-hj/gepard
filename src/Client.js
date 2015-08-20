@@ -11,6 +11,41 @@ var User          = require ( "./User" ) ;
 var FileReference = require ( "./FileReference" ) ;
 
 var counter = 0 ;
+var Stats = function()
+{
+  this.sum = { out: 0, in:0 } ;
+  this.bytes = { out: 0, in:0 } ;
+  this.calls = { out: 0, in:0 } ;
+};
+Stats.prototype =
+{
+  toString: function()
+  {
+    return "(Stats)[bytes-in=" + this.bytes.in
+              + "\n,bytes-out=" + this.bytes.out
+              + "\n]"
+              ;
+  },
+  clear: function()
+  {
+    this.calls.out = 0 ;
+    this.calls.in = 0 ;
+    this.bytes.out = 0 ;
+    this.bytes.in = 0 ;
+  },
+  incrementOut: function ( n )
+  {
+    this.calls.out += 1 ; 
+    this.sum.out += n ; 
+    this.bytes.out += n ; 
+  },
+  incrementIn: function ( n )
+  {
+    this.calls.in += 1 ;
+    this.sum.in += n ;
+    this.bytes.in += n ;
+  }
+};
 /**
  * @constructor
  * @extends EventEmitter
@@ -42,6 +77,7 @@ var Client = function ( port, host )
   this._ownedSemaphores             = {} ;
   this._pendingAcquireSemaphoreList = [] ;
   this._application                 = process.argv[1] ;
+  this._stats                       = new Stats() ;
   if ( this._application )
   {
     this._application = this._application.replace ( /\\/g, "/" ) ;
@@ -140,14 +176,17 @@ Client.prototype.connect = function()
   var thiz = this ;
   this.socket = net.connect ( p, function()
   {
-    var ilh = thiz.brokerIsLocalHost() ;
+    var json
+    thiz.brokerIsLocalHost() ;
     thiz.alive = true ;
     var einfo = new Event ( "system", "client_info" ) ;
     einfo.body.language = "JavaScript" ;
     einfo.body.hostname = os.hostname() ;
     einfo.body.connectionTime = new Date() ;
     einfo.body.application = thiz._application ;
-    this.write ( einfo.serialize() ) ;
+    json = einfo.serialize() ;
+    thiz._stats.incrementOut ( json.length )
+    this.write ( json ) ;
 
     var i ;
     if ( thiz.pendingEventList.length )
@@ -162,7 +201,10 @@ Client.prototype.connect = function()
         e.setUniqueId ( uid ) ;
         thiz.callbacks[uid] = ctx ;
         ctx.e = undefined ;
-        this.write ( e.serialize(), function()
+        e.setTargetIsLocalHost ( thiz.brokerIsLocalHost() ) ;
+        json = e.serialize() ;
+        thiz._stats.incrementOut ( json.length )
+        this.write ( json, function()
         {
           if ( ctx.write ) ctx.write.apply ( thiz, arguments ) ;
         }) ;
@@ -177,7 +219,10 @@ Client.prototype.connect = function()
         var uid = os.hostname() + "_" + this.localPort + "_" + new Date().getTime() + "_" + counter ;
         var ctx = thiz.pendingEventListenerList[i] ;
         ctx.e.setUniqueId ( uid ) ;
-        this.write ( ctx.e.serialize() ) ;
+        ctx.e.setTargetIsLocalHost ( thiz.brokerIsLocalHost() ) ;
+        json = ctx.e.serialize() ;
+        thiz._stats.incrementOut ( json.length )
+        this.write ( json ) ;
       }
       thiz.pendingEventListenerList.length = 0 ;
     }
@@ -189,7 +234,10 @@ Client.prototype.connect = function()
         var uid = os.hostname() + "_" + this.localPort + "_" + new Date().getTime() + "_" + counter ;
         var ctx = thiz._pendingLockList[i] ;
         ctx.e.setUniqueId ( uid ) ;
-        this.write ( ctx.e.serialize() ) ;
+        ctx.e.setTargetIsLocalHost ( thiz.brokerIsLocalHost() ) ;
+        json = ctx.e.serialize() ;
+        thiz._stats.incrementOut ( json.length )
+        this.write ( json ) ;
         thiz._acquiredResources[e.body.resourceId] = ctx;
       }
       thiz._pendingLockList.length = 0 ;
@@ -202,7 +250,10 @@ Client.prototype.connect = function()
         var uid = os.hostname() + "_" + this.localPort + "_" + new Date().getTime() + "_" + counter ;
         var ctx = thiz._pendingAcquireSemaphoreList[i] ;
         ctx.e.setUniqueId ( uid ) ;
-        this.write ( ctx.e.serialize() ) ;
+        ctx.e.setTargetIsLocalHost ( thiz.brokerIsLocalHost() ) ;
+        json = ctx.e.serialize() ;
+        thiz._stats.incrementOut ( json.length )
+        this.write ( json ) ;
         thiz._acquiredSemaphores[e.body.resourceId] = ctx;
       }
       thiz._pendingAcquireSemaphoreList.length = 0 ;
@@ -242,6 +293,7 @@ Client.prototype.connect = function()
           break ;
         }
       }
+      thiz._stats.incrementIn ( m.length )
       if ( m.charAt ( 0 ) === '{' )
       {
         e = Event.prototype.deserialize ( m ) ;
@@ -622,7 +674,10 @@ Client.prototype.emit = function ( params, callback, opts )
     this.callbacks[uid] = ctx ;
 
     var thiz = this ;
-    s.write ( e.serialize(), function()
+    e.setTargetIsLocalHost ( thiz.brokerIsLocalHost() ) ;
+    var json = e.serialize() ;
+    this._stats.incrementOut ( json.length )
+    s.write ( json, function()
     {
       if ( ctx.write ) ctx.write.apply ( thiz, arguments ) ;
     } ) ;
@@ -817,7 +872,9 @@ Client.prototype.removeEventListener = function ( eventNameOrFunction )
     e.setUser ( this.user ) ;
     e.body.eventNameList = eventNameList ;
     var s = this.getSocket() ;
-    s.write ( e.serialize() ) ;
+    var json = e.serialize() ;
+    this._stats.incrementOut ( json.length )
+    s.write ( json ) ;
   }
 };
 /**
@@ -1005,9 +1062,12 @@ Client.prototype.sendResult = function ( message )
  * Description
  * @param {} event
  */
-Client.prototype.send = function ( event )
+Client.prototype.send = function ( e )
 {
-  this.getSocket().write ( event.serialize() ) ;
+  e.setTargetIsLocalHost ( this.brokerIsLocalHost() ) ;
+  var json = e.serialize() ;
+  this._stats.incrementOut ( json.length )
+  this.getSocket().write ( json ) ;
 };
 /**
  * Description

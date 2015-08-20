@@ -4,17 +4,18 @@
  * [net description]
  * @type {[type]}
  */
-var net          = require ( 'net' ) ;
-var util         = require ( 'util' ) ;
-var EventEmitter = require ( "events" ).EventEmitter ;
-var Event        = require ( "./Event" ) ;
-var T            = require ( "./Tango" ) ;
-var MultiHash    = require ( "./MultiHash" ) ;
-var Log          = require ( "./LogFile" ) ;
-var os           = require ( "os" ) ;
-var fs           = require ( "fs" ) ;
-var dns          = require ( "dns" ) ;
-var Path         = require ( "path" ) ;
+var net           = require ( 'net' ) ;
+var util          = require ( 'util' ) ;
+var EventEmitter  = require ( "events" ).EventEmitter ;
+var Event         = require ( "./Event" ) ;
+var T             = require ( "./Tango" ) ;
+var MultiHash     = require ( "./MultiHash" ) ;
+var Log           = require ( "./LogFile" ) ;
+var os            = require ( "os" ) ;
+var fs            = require ( "fs" ) ;
+var dns           = require ( "dns" ) ;
+var Path          = require ( "path" ) ;
+var FileReference = require ( "FileReference" ) ;
 
 if ( typeof Promise === 'undefined' ) // since node 0.12+
 {
@@ -127,6 +128,7 @@ Connection.prototype.write = function ( data )
 {
   if ( data instanceof Event )
   {
+    data.setTargetIsLocalHost ( this.isLocalHost() ) ;
     this.socket.write ( data.serialize() ) ;
   }
   if ( typeof data === 'string' )
@@ -355,6 +357,8 @@ var Broker = function ( port, ip )
     conn = new Connection ( thiz, socket ) ;
     thiz.validateAction ( thiz._connectionHook.connect, [ conn ], thiz, thiz._checkInConnection, [ conn ] ) ;
   });
+  var ee = new Event() ;
+  ee.addClassNameToConstructor ( "FileReference", FileReference ) ;
 };
 
 util.inherits ( Broker, EventEmitter ) ;
@@ -547,7 +551,7 @@ Broker.prototype._sendMessageToClient = function ( e, socketList )
     conn   = this._connections[socket.sid] ;
     if ( conn._numberOfPendingRequests === 0 )
     {
-      socket.write ( e.serialize() ) ;
+      conn.write ( e ) ;
       conn._numberOfPendingRequests++ ;
       conn._setCurrentlyProcessedMessageUid ( uid ) ;
       return ;
@@ -575,7 +579,6 @@ Broker.prototype._sendEventToClients = function ( conn, e )
   var isStatusInfoRequested = e.isStatusInfoRequested() ;
   e.control._isStatusInfoRequested = undefined ;
   var str = e.serialize() ;
-  e.control._isStatusInfoRequested = isStatusInfoRequested ;
   var socketList = this._eventNameToSockets.get ( name ) ;
   var s ;
   if ( socketList )
@@ -589,11 +592,20 @@ Broker.prototype._sendEventToClients = function ( conn, e )
     {
       for ( i = 0 ; i < socketList.length ; i++ )
       {
-        socketList[i].write ( str ) ;
+        var target_conn = this._connections[socketList[i].sid] ;
+        if ( target_conn.isLocalHost() )
+        {
+          target_conn.write ( e ) ;
+        }
+        else
+        {
+          target_conn.write ( e ) ;
+        }
       }
     }
     if ( isStatusInfoRequested )
     {
+      e.control._isStatusInfoRequested = isStatusInfoRequested ;
       e.setIsStatusInfo() ;
       e.control.status = { code:0, name:"success", reason:"Listener found for event: " + e.getName() } ;
       e.control.requestedName = e.getName() ;
@@ -925,10 +937,15 @@ Broker.prototype._ejectSocket = function ( socket )
   {
     conn._setCurrentlyProcessedMessageUid ( "" ) ;
     var requesterMessage    = this._messagesToBeProcessed[uid] ;
-    var requester_sid       = requesterMessage.getSourceIdentifier() ;
-    var requesterConnection = this._connections[requester_sid] ;
-
     delete this._messagesToBeProcessed[uid] ;
+
+    var requester_sid ;
+    var requesterConnection ;
+    if ( requesterMessage )
+    {
+      requester_sid       = requesterMessage.getSourceIdentifier() ;
+      requesterConnection = this._connections[requester_sid] ;
+    }
 
     for ( i = 0 ; i < this._connectionList.length  ; i++ )
     {
@@ -941,6 +958,7 @@ Broker.prototype._ejectSocket = function ( socket )
       requesterConnection.write ( requesterMessage ) ;
     }
     else
+    if ( requesterMessage )
     {
       Log.log ( "Requester not found for result:\n" + requesterMessage.toString() ) ;
     }
@@ -998,7 +1016,7 @@ Broker.prototype._closeAllSockets = function ( exceptSocket )
     {
       continue ;
     }
-    conn.socket.write ( e.serialize() ) ;
+    conn.write ( e ) ;
     conn.socket.end() ;
   }
 };

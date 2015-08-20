@@ -26,12 +26,14 @@ if ( require.main === module )
    	var name = "__FILE__" ;
    	var c = new Client() ;
     var event = new Event ( "__FILE__" ) ;
-    var fr = new FileReference ( "ResponderMassTest.js" ) ;
-console.log ( fr ) ;
+    var fr = new FileReference ( "xxx.js" ) ;
     event.putValue ( "FR", fr ) ;
     c.request ( event, function ( e )
     {
-      console.log ( e ) ;
+      if ( e.isBad() )
+      {
+        console.log ( e ) ;
+      }
 			this.end() ;
     }) ;
   });

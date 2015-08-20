@@ -31,12 +31,14 @@ if ( require.main === module )
 		c.on ( "mass-test-start", function(e)
 		{
 			n = 0 ;
+			c._stats.clear() ;
 			console.log ( "mass test start" ) ;
 		});
 		c.on ( "mass-test-end", function(e)
 		{
 			console.log ( "mass test end" ) ;
 			console.log ( "n=" + n ) ;
+			console.log ( c._stats ) ;
 		});
 		c.on ( "mass-test", function(e)
 		{
