@@ -23,7 +23,7 @@ if ( require.main === module )
       console.log ( "Not running on " + this.getHostPort() ) ;
 			process.exit() ;
     }
- 		var nCalls = T.getInt ( "nCalls", 10 ) ;
+ 		var nCalls = T.getInt ( "n", 10 ) ;
 		if ( nCalls < 1 )
 		{
 			console.log ( "invalidn=" + n ) ;
@@ -35,7 +35,7 @@ if ( require.main === module )
 		var T0 = new Date().getTime() ;
     c.emit ( "mass-test-start" )
     // var event = new Event ( name ) ;
-    var fr = new FileReference ( "xxx.js" ) ;
+    var fr = new FileReference ( "xxx.txt" ) ;
     // event.putValue ( "FR", fr ) ;
 
     for ( var n = nCalls ; n > 0 ; n-- )
