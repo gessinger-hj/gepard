@@ -94,6 +94,10 @@ public class Event
     }
     return s ;
   }
+  boolean targetIsLocalHost()
+  {
+    return targetIsLocalHost ;
+  }
   void setTargetIsLocalHost ( boolean state )
   {
     targetIsLocalHost = state ;

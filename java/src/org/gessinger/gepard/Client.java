@@ -8,20 +8,21 @@ import com.google.gson.* ;
 
 public class Client
 {
-	static int counter      = 0 ;
-	int port                = -1 ;
-	String host             = "localhost" ;
-	Socket socket           = null ;
-	User user               = null ;
-	InputStreamReader  _in  = null ;
-	OutputStreamWriter _out = null ;
-	String _lock1           = "_lock1" ;
-	String hostname         = "" ;
-	int localPort           = 0 ;
-	boolean closing         = false ;
-	boolean _first          = false ;
+	static int counter             = 0 ;
+	int port                       = -1 ;
+	String host                    = "localhost" ;
+	Socket socket                  = null ;
+	User user                      = null ;
+	InputStreamReader  _in         = null ;
+	OutputStreamWriter _out        = null ;
+	String _lock1                  = "_lock1" ;
+	String hostname                = "" ;
+	int localPort                  = 0 ;
+	boolean closing                = false ;
+	boolean _first                 = false ;
+	boolean targetIsLocalHost      = false ;
 	static boolean _workerIsDaemon = false ;
-	int numberOfCallbackWorker = 3 ;
+	int numberOfCallbackWorker     = 3 ;
 
   MultiMap<String,EventListener> eventListenerFunctions = new MultiMap<String,EventListener>() ;
   Hashtable<String,EventCallback> callbacks = new Hashtable<String,EventCallback>() ;
@@ -103,6 +104,7 @@ public class Client
 	OutputStreamWriter getWriter()
 	throws UnsupportedEncodingException
 			 , IOException
+			 , ConnectException
 	{
 		if ( _out != null ) return _out ;
 		try
@@ -114,7 +116,14 @@ public class Client
 	    _in = new InputStreamReader ( in, "utf-8" ) ;
 
 	    localPort = socket.getLocalPort() ;
-
+	    InetAddress ia = socket.getInetAddress() ;
+	    if (  ia.isAnyLocalAddress()
+	    	 || ia.isLoopbackAddress()
+	    	 || NetworkInterface.getByInetAddress(ia) != null
+	    	 )
+	    {
+	    	targetIsLocalHost = true ;
+	    }
 	    Event e = new Event ( "system", "client_info" ) ;
 	    Map<String,Object> body = e.getBody() ;
 
@@ -123,6 +132,7 @@ public class Client
 	    body.put ( "connectionTime", Util.getISODateTime() ) ;
 	    body.put ( "application", Util.getMainClassName() ) ;
 
+	    e.setTargetIsLocalHost ( targetIsLocalHost ) ;
 			String t = e.toJSON() ;
 	    _out.write ( t, 0, t.length() ) ;
 	    _out.flush() ;
@@ -156,11 +166,15 @@ public class Client
 		catch ( UnsupportedEncodingException exc )
 		{
 	  	_emit ( "error", exc.getMessage() ) ;
+	  	System.err.println ( "host=" + host ) ;
+	  	System.err.println ( "port=" + port ) ;
 			throw exc ;
 		}
 		catch ( IOException exc )
 		{
 	  	_emit ( "error", exc.getMessage() ) ;
+	  	System.err.println ( "host=" + host ) ;
+	  	System.err.println ( "port=" + port ) ;
 			throw exc ;
 		}
 		return _out ;
@@ -245,6 +259,7 @@ public class Client
 			{
 				getWriter() ;
 	  	  e.setUniqueId ( createUniqueId() ) ;
+		    e.setTargetIsLocalHost ( targetIsLocalHost ) ;
 				String t = e.toJSON() ;
 		    _out.write ( t, 0, t.length() ) ;
 		    _out.flush() ;

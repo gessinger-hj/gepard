@@ -4,7 +4,7 @@ import java.util.* ;
 import java.io.* ;
 import java.text.* ;
 
-public class FileReference implements JSONEncodable, JSONDecodable
+public class FileReference implements JSONEncodable, JSONDecodable, HasSetTargetIsLocalHost
 {
 	String path                         = "" ;
 	String name                         = "" ;
@@ -27,7 +27,7 @@ public class FileReference implements JSONEncodable, JSONDecodable
 	}
 	public String toString()
 	{
-	  return "(" + this.getClass().getName() + ")[\n  path=" + path + "\n  name=" + name + "\n" + Util.toString ( data ) + "\n]" ;
+	  return "(" + this.getClass().getName() + ")[\n  path=" + path + "\n  name=" + name + "\n  date=" + Util.toString ( data ) + "\n]" ;
 	}
 	public void setTargetIsLocalHost ( boolean state )
 	{
@@ -53,7 +53,7 @@ public class FileReference implements JSONEncodable, JSONDecodable
 		hm.put ( "path", path ) ;
 		hm.put ( "name", name ) ;
 		hm.put ( "data", data ) ;
-    Util.convertJavaTypedDataToNodeJS ( hm ) ;
+    Util.convertJavaTypedDataToNodeJS ( targetIsLocalHost, hm ) ;
 		return hm ;
 	}
 	public byte[] getBytes()

@@ -31,7 +31,7 @@ if ( require.main === module )
 		{
 			// var FR = e.removeValue ( "FR" ) ;
 			var FR = e.getValue ( "FR" ) ;
-console.log ( FR ) ;
+console.log ( String ( FR ) ) ;
 			var b = FR.getBytes() ;
 console.log ( b ) ;
 			FR.write ( FR.getName() + ".in" ) ;

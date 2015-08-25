@@ -20,7 +20,7 @@ var FileReference = function ( file )
     this.path = this.path.replace ( /\\/g, "/" ) ;
     this.name = this.path.substring ( this.path.lastIndexOf ( "/" ) + 1 ) ;
   }
-  this.brokerIsLocalHost = false ;
+  this.targetIsLocalHost = false ;
 };
 /**
  * Description
@@ -29,7 +29,8 @@ var FileReference = function ( file )
  */
 FileReference.prototype.toString = function()
 {
-  return "(" + this.className + ")[path=" + this.path + "]" ;
+  return "(" + this.className + ")[\npath=" + this.path + "\n  name=" + this.name + "\n  data=" + this.data + "\n]" ;
+
 };
 FileReference.prototype.setTargetIsLocalHost = function ( state )
 {
@@ -49,7 +50,7 @@ FileReference.prototype.toJSON = function()
   delete this.targetIsLocalHost ;
   return { className:'FileReference', path: this.path, name:this.name, data:data } ;
 };
-FileReference.prototype.getBuffer = function()
+FileReference.prototype.getBytes = function()
 {
   if ( this.data instanceof Buffer )
   {

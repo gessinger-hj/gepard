@@ -47,10 +47,10 @@ final public class Util
   throws IOException
   {
     if ( e.body == null ) return ;
-    convertJavaTypedDataToNodeJS ( e.control ) ;
-    convertJavaTypedDataToNodeJS ( e.body ) ;
+    convertJavaTypedDataToNodeJS ( e.targetIsLocalHost(), e.control ) ;
+    convertJavaTypedDataToNodeJS ( e.targetIsLocalHost(), e.body ) ;
   }
-  static void convertJavaTypedDataToNodeJS ( Map<String,Object> source )
+  static void convertJavaTypedDataToNodeJS ( boolean targetIsLocalHost, Map<String,Object> source )
   throws IOException
   {
     for ( String key : source.keySet() )
@@ -76,12 +76,16 @@ final public class Util
       else
       if ( o instanceof JSONEncodable )
       {
+        if ( o instanceof HasSetTargetIsLocalHost )
+        {
+          ((HasSetTargetIsLocalHost)o).setTargetIsLocalHost ( targetIsLocalHost ) ;
+        }
         source.put ( key, ((JSONEncodable)o).toJSON() ) ;
       }
       else
       if ( o instanceof Map )
       {
-        convertNodeJSTypedDataToJava ( (Map<String,Object>) o ) ;
+        convertJavaTypedDataToNodeJS ( targetIsLocalHost, (Map<String,Object>) o ) ;
       }
     }
   }
