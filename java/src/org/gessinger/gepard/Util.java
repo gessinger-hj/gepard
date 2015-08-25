@@ -44,12 +44,14 @@ final public class Util
     return className ;
   }
   static void convertJavaTypedDataToNodeJS ( Event e )
+  throws IOException
   {
     if ( e.body == null ) return ;
     convertJavaTypedDataToNodeJS ( e.control ) ;
     convertJavaTypedDataToNodeJS ( e.body ) ;
   }
   static void convertJavaTypedDataToNodeJS ( Map<String,Object> source )
+  throws IOException
   {
     for ( String key : source.keySet() )
     {
@@ -69,8 +71,17 @@ final public class Util
         map.put ( "type", "Date" ) ;
         String s = getISODateTime ( date ) ;
         map.put ( "value", s ) ;
-
         source.put ( key, map ) ;
+      }
+      else
+      if ( o instanceof JSONEncodable )
+      {
+        source.put ( key, ((JSONEncodable)o).toJSON() ) ;
+      }
+      else
+      if ( o instanceof Map )
+      {
+        convertNodeJSTypedDataToJava ( (Map<String,Object>) o ) ;
       }
     }
   }
@@ -134,10 +145,46 @@ final public class Util
           }
         }
         convertNodeJSTypedDataToJava ( map ) ;
-        continue ;
+        Object ooo =  map.get ( "className" ) ;
+        if ( ooo != null && ( ooo instanceof String ) )
+        {
+          String className = (String) ooo ;
+          Class clazz = null ;
+          try
+          {
+            clazz = Class.forName ( className ) ;
+          }
+          catch ( ClassNotFoundException exc )
+          {
+          }
+          if ( clazz == null )
+          {
+            try
+            {
+              clazz = Class.forName ( _classNameToFullClassName.get ( className ) ) ;
+              Object instance = clazz.newInstance() ;
+              ((JSONDecodable)instance).fromJSON ( map ) ;
+              source.put ( key, instance ) ;
+            }
+            catch ( Exception exc )
+            {
+              System.out.println ( Util.toString ( exc ) ) ;
+            }
+          }
+        }
       }
     }
   }
+  static Map<String,String> _classNameToFullClassName = new HashMap<String,String>() ;
+  static
+  {
+    _classNameToFullClassName.put ( "FileReference", "org.gessinger.gepard.FileReference" ) ;
+  }
+  static void addClassNameToFullClassName ( String className, String fullClassName )
+  {
+    _classNameToFullClassName.put ( className, fullClassName ) ;
+  }
+
   static Hashtable<String,SimpleDateFormat> _DateFormats = new Hashtable<String,SimpleDateFormat>() ;
   static Date _parseDate ( String ymdOrSoap, boolean withTZ )
   throws Exception
@@ -957,6 +1004,41 @@ final public class Util
       String mn = ste[n].getMethodName() ;
       int ln = ste[n].getLineNumber() ;
       return cn + "." + mn + "(" + fn + ":" + ln + ")" ;
+    }
+  }
+  static public void copy ( InputStream in, OutputStream out )
+  throws IOException
+  {
+    byte buffer[] = new byte[2*4096];
+    while ( true )
+    {
+      int r = in.read( buffer );
+      if ( r < 0 ) break ;
+      out.write( buffer, 0, r );
+    }
+  }
+  static byte[] getBytes ( File file )
+  throws IOException
+  {
+    InputStream in = null ;
+    ByteArrayOutputStream out = null ;
+    try
+    {
+      in = new FileInputStream ( file ) ;
+      out = new ByteArrayOutputStream() ;
+      Util.copy ( in, out ) ;
+      out.close() ;
+      return out.toByteArray() ;
+    }
+    catch ( IOException exc )
+    {
+      System.err.println ( Util.toString ( exc ) ) ;
+      throw exc ;
+    }
+    finally
+    {
+      if ( in != null ) try { in.close() ; } catch ( Exception e ) {}
+      if ( out != null ) try { out.close() ; } catch ( Exception e ) {}
     }
   }
 }

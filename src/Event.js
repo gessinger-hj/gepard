@@ -687,6 +687,14 @@ gepard.Event.prototype =
 	{
 		return this.control.uniqueId ;
 	},
+	isInUse: function()
+	{
+		return !! this.control.isInUse ;
+	},
+	setInUse: function()
+	{
+		return this.control.isInUse = true ;
+	},
 	/**
 	 * Description
 	 * @method isBad

@@ -10,8 +10,8 @@ if ( require.main === module )
   if ( T.getProperty ( "help" ) )
   {
     console.log (
-      "Gepard Examples: Requester, request a result for the message with name 'getFileList'.\n"
-    + "Usage: node Requester\n"
+      "Gepard Examples: RequesterMassTest, do a statistic for performance analysation.\n"
+    + "Usage: node RequesterMassTest.js [-n=<number-of-calls>, -b=<number-of-bytes>], default: 10\n"
     ) ;
     process.exit() ;
   }
@@ -23,25 +23,34 @@ if ( require.main === module )
       console.log ( "Not running on " + this.getHostPort() ) ;
 			process.exit() ;
     }
- 		var nCalls = T.getInt ( "n", 10 ) ;
-		if ( nCalls < 1 )
+    var nb = T.getInt ( "b", 0 ) ;
+ 		var n = T.getInt ( "n", 10 ) ;
+		if ( n < 1 )
 		{
-			console.log ( "invalidn=" + n ) ;
+			console.log ( "invalid n=" + n ) ;
 			return ;
 		}
    	var name = "mass-test" ;
    	var c = new Client() ;
-		var m = nCalls ;
-		var T0 = new Date().getTime() ;
+		var m = n ;
     c.emit ( "mass-test-start" )
-    // var event = new Event ( name ) ;
-    var fr = new FileReference ( "xxx.txt" ) ;
-    // event.putValue ( "FR", fr ) ;
-
-    for ( var n = nCalls ; n > 0 ; n-- )
+    var txt = "" ;
+    var i ;
+    if ( nb > 0 )
+    {
+      for ( i = nb ; i > 0 ; i-- )
+      {
+        txt += "A" ;
+      }
+    }
+		var T0 = new Date().getTime() ;
+    for ( i = n ; i > 0 ; i-- )
     {
       var event = new Event ( name ) ;
-      event.putValue ( "FR", fr ) ;
+      if ( txt )
+      {
+        event.putValue ( "TEXT", txt ) ;
+      }
       c.request ( event, function ( e )
       {
         m-- ;
@@ -49,7 +58,7 @@ if ( require.main === module )
         {
           var T1 = new Date().getTime() ;
           var millis = T1 - T0 ;
-          var millisPerCall = millis / nCalls ;
+          var millisPerCall = millis / n ;
           console.log ( "millis=" + millis ) ;
           console.log ( "millisPerCall=" + millisPerCall ) ;
           c.emit ( "mass-test-end", { write: function(p){ c.end(); }} )

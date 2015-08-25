@@ -583,6 +583,10 @@ Client.prototype.emit = function ( params, callback, opts )
   if ( params instanceof Event )
   {
     e = params ;
+    if ( e.isInUse() )
+    {
+      throw new Error ( "This event is used already. It must not be used again." ) ;
+    }
   }
   else
   if ( typeof params === 'string' )
@@ -658,6 +662,7 @@ Client.prototype.emit = function ( params, callback, opts )
       throw new Error ( "Missing callback for StatusInfo" ) ;
     }
   }
+  e.setInUse() ;
   var socketExists = !! this.socket ;
   if ( this.pendingEventList.length || ! socketExists )
   {

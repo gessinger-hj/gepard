@@ -29,9 +29,11 @@ if ( require.main === module )
 		var c = new Client() ;
 		c.on ( "__FILE__", function(e)
 		{
-			var FR = e.removeValue ( "FR" ) ;
+			// var FR = e.removeValue ( "FR" ) ;
+			var FR = e.getValue ( "FR" ) ;
 console.log ( FR ) ;
-			var b = FR.getBuffer() ;
+			var b = FR.getBytes() ;
+console.log ( b ) ;
 			FR.write ( FR.getName() + ".in" ) ;
 			e.sendBack() ;
 		});

@@ -208,6 +208,7 @@ public class Client
 	public void emit ( Event e, EventCallback ecb )
 	throws IOException
 	{
+		e.setInUse() ;
 		boolean hasCallbacks = false ;
 		if ( ecb instanceof StatusCallback )
 		{

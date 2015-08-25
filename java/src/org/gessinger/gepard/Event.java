@@ -22,6 +22,17 @@ public class Event
     }
   }
 
+  public String toJSON()
+  throws IOException
+  {
+    Gson gson = new Gson() ;
+    if ( _mapByteArrayToJavaScriptBuffer )
+    {
+      Util.convertJavaTypedDataToNodeJS ( this ) ;
+    }
+    String json = gson.toJson ( this ) ;
+    return json ;
+  }
   public static Event fromJSON ( String json )
   {
     Event e = (Event) _gson.fromJson ( json, Event.class ) ;
@@ -35,6 +46,7 @@ public class Event
   String name = "" ;
   String type = "" ;
   User user = null ;
+  boolean targetIsLocalHost = false ;
   transient Client _Client = null ;
   HashMap<String,Object> control = new HashMap<String,Object>() ;
   Map<String,Object> body = new HashMap<String,Object>() ;
@@ -82,15 +94,9 @@ public class Event
     }
     return s ;
   }
-  public String toJSON()
+  void setTargetIsLocalHost ( boolean state )
   {
-    Gson gson = new Gson() ;
-    if ( _mapByteArrayToJavaScriptBuffer )
-    {
-      Util.convertJavaTypedDataToNodeJS ( this ) ;
-    }
-    String json = gson.toJson ( this ) ;
-    return json ;
+    targetIsLocalHost = state ;
   }
   public Date getCreatedAt()
   {
@@ -213,6 +219,17 @@ public class Event
   {
     return "" + this.control.get ( "uniqueId" ) ;
   }
+  public boolean isInUse()
+  {
+    if ( this.control == null ) return false ;
+    if ( ! this.control.containsKey ( "isInUse" ) ) return false ;
+    Boolean b = (Boolean)this.control.get ( "isInUse" ) ;
+    return true ;
+  }
+  void setInUse()
+  {
+    this.control.put ( "isInUse", new Boolean ( true ) ) ;
+  }
   public boolean isBad()
   {
     if ( this.control == null ) return false ;
@@ -269,6 +286,10 @@ public class Event
   public void putValue ( String name, Object obj )
   {
     this.body.put ( name, obj ) ;
+  }
+  public Object removeValue ( String name )
+  {
+    return body.remove ( name ) ;
   }
   public void putBodyValue ( String name, Object obj )
   {
