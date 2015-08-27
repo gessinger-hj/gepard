@@ -578,7 +578,6 @@ Broker.prototype._sendEventToClients = function ( conn, e )
   e.setSourceIdentifier ( conn.sid ) ;
   var isStatusInfoRequested = e.isStatusInfoRequested() ;
   e.control._isStatusInfoRequested = undefined ;
-  var str = e.serialize() ;
   var socketList = this._eventNameToSockets.get ( name ) ;
   var s ;
   if ( socketList )
@@ -621,7 +620,7 @@ Broker.prototype._sendEventToClients = function ( conn, e )
     {
       if ( ! list[j].test ( name ) ) continue ;
       found = true ;
-      this._connectionList[i].socket.write ( str ) ;
+      this._connectionList[i].write ( e ) ;
       if ( e.isResultRequested() && ! e.isBroadcast() )
       {
         break ;

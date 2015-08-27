@@ -30,11 +30,10 @@ var FileReference = function ( file )
 FileReference.prototype.toString = function()
 {
   return "(" + this.className + ")[\npath=" + this.path + "\n  name=" + this.name + "\n  data=" + this.data + "\n]" ;
-
 };
 FileReference.prototype.setTargetIsLocalHost = function ( state )
 {
-  this.targetIsLocalHost = !!state ;
+  this.targetIsLocalHost = ! !!state ; // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 };
 /**
  * Description
@@ -47,12 +46,14 @@ FileReference.prototype.toJSON = function()
   {
     data = fs.readFileSync ( this.path ) ;
   }
+
+  var v = { type:"Buffer",data:data } ;
   delete this.targetIsLocalHost ;
-  return { className:'FileReference', path: this.path, name:this.name, data:data } ;
+  return { className:'FileReference', path: this.path, name:this.name, data:v } ; //data } ;
 };
 FileReference.prototype.getBytes = function()
 {
-  if ( this.data instanceof Buffer )
+  if ( this.data ) //instanceof Buffer )
   {
     return this.data ;
   }
