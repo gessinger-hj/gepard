@@ -1,3 +1,6 @@
+## 1.3.3 (2015-08-28)
+- fix issue for Buffer.toJSON in node version <= 0.10
+
 ## 1.3.1 (2015-08-18)
 - bugfix in HttpSimple.js example for websockets.
 - bugfix in Broker, load balancing not perfect.

@@ -33,7 +33,7 @@ FileReference.prototype.toString = function()
 };
 FileReference.prototype.setTargetIsLocalHost = function ( state )
 {
-  this.targetIsLocalHost = ! !!state ; // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  this.targetIsLocalHost = !!state ; // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 };
 /**
  * Description
@@ -46,10 +46,13 @@ FileReference.prototype.toJSON = function()
   {
     data = fs.readFileSync ( this.path ) ;
   }
-
-  var v = { type:"Buffer",data:data } ;
+  var version = parseFloat ( global.process.versions.node ) ;
+  if ( data && version <= 0.1 )
+  {
+    data = { type:"Buffer",data:data } ;
+  }
   delete this.targetIsLocalHost ;
-  return { className:'FileReference', path: this.path, name:this.name, data:v } ; //data } ;
+  return { className:'FileReference', path: this.path, name:this.name, data:data } ;
 };
 FileReference.prototype.getBytes = function()
 {
