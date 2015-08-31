@@ -26,7 +26,8 @@ if ( require.main === module )
    	var name = "__FILE__" ;
    	var c = new Client() ;
     var event = new Event ( "__FILE__" ) ;
-    var fr = new FileReference ( "xxx.txt" ) ;
+    var fileName = T.getProperty ( "file", "FileSender.js" ) ;
+    var fr = new FileReference ( fileName ) ;
     event.putValue ( "FR", fr ) ;
     c.request ( event, function ( e )
     {

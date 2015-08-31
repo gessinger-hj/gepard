@@ -6,6 +6,7 @@ General purpose communication and synchronization layer for distributed applicat
 
 - [Overview](#overview)
 - [What is new](#what-is-new)
+  - [New __FileReference__ class for JavaScript and Jave to simplify file-transfer.](#new-__filereference__-class-for-javascript-and-jave-to-simplify-file-transfer)
   - [Let's talk about Python](#lets-talk-about-python)
   - [Controlling Connections and Actions with a Hook](#controlling-connections-and-actions-with-a-hook)
   - [Perfect load balanced message handling.](#perfect-load-balanced-message-handling)
@@ -106,6 +107,17 @@ or
 node_modules/.bin/gp.admin [ --help ]
 ```
 # What is new
+
+## New __FileReference__ class for JavaScript and Jave to simplify file-transfer.
+An instance of the __FileReference__ class may be inserted at any place inside the body of an Event.
+<br/>
+If the client runs on the same machine as the broker only the full path-name of the file will be transferred.
+<br/>
+If the broker runs on a different machine the content of the file is read in as a byte-array and transferred as payload to the broker.
+<br/>
+If the broker detects a target on a different machine the file is read in and put into the event's body before sinding the data.
+<br/>
+This is done on a per connection basis.
 
 ## Let's talk about Python
 

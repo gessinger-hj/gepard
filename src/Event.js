@@ -37,16 +37,28 @@ gepard.Event.prototype =
 	/**
 	 * Description
 	 * @method serialize
-	 * @param {} obj
-	 * @return 
+	 * @param {object} obj
+	 * @return string
 	 */
 	serialize: function ( obj )
 	{
+		var Date_toJSON, Buffer_toJSON ;
 		if ( ! obj )
 		{
 			obj = this ;
 		}
-	  var old = Date.prototype.toJSON ;
+ 		if ( typeof Buffer !== 'undefined' )
+ 		{
+ 			var s = String ( Buffer.prototype.toJSON ) ;
+ 			if ( s.indexOf ( 'type:' ) < 0 && s.indexOf ( 'data' ) < 0 )
+ 			{
+ 				Buffer.prototype.toJSON = function function_Buffer_toJSON()
+ 				{
+			    return { type:"Buffer", data:Array.prototype.slice.call(this, 0) } ;
+			  }
+ 			}
+ 		}
+	  Date_toJSON = Date.prototype.toJSON ;
 	  try
 	  {
 	    /**
@@ -54,7 +66,7 @@ gepard.Event.prototype =
     	 * @method toJSON
     	 * @return ObjectExpression
     	 */
-    	Date.prototype.toJSON = function()
+    	Date.prototype.toJSON = function function_Date_toJSON()
 	    {
 	      return { type:'Date', 'value': this.toISOString() } ;
 	    };
@@ -62,7 +74,14 @@ gepard.Event.prototype =
 	  }
 	  finally
 	  {
-	    Date.prototype.toJSON = old ;
+	  	if ( Date_toJSON )
+	  	{
+	    	Date.prototype.toJSON = Date_toJSON ;
+	  	}
+	  	if ( Buffer_toJSON )
+	  	{
+	    	Buffer.prototype.toJSON = Buffer_toJSON ;
+	  	}
 	  }
 	},
 	_classNameToConstructor: {},
@@ -225,6 +244,14 @@ gepard.Event.prototype =
 	        obj[k] = new Date ( o.value ) ;
 	        continue ;
 	      }
+	      if ( typeof Buffer !== 'undefined' )
+	      {
+		      if ( o.type === "Buffer" && Array.isArray ( o.data ) )
+		      {
+		        obj[k] = new Buffer ( o.data ) ;
+		        continue ;
+		      }
+	      }
 	      if ( typeof document === 'undefined' )
 	      {
 		      if ( o.type === 'Xml' )
@@ -232,11 +259,6 @@ gepard.Event.prototype =
 		        var txml = require ( "Xml" ) ;
 		        var f = new txml.XmlFactory() ;
 		        obj[k] = f.create ( o.value ) ;
-		        continue ;
-		      }
-		      if ( o.type === "Buffer" && Array.isArray ( o.data ) )
-		      {
-		        obj[k] = new Buffer ( o.data ) ;
 		        continue ;
 		      }
 	      }
@@ -267,6 +289,14 @@ gepard.Event.prototype =
 						        that[kk] = new Date ( oo.value ) ;
 						        continue ;
 						      }
+						      if ( typeof Buffer !== 'undefined' )
+						      {
+							      if ( oo.type === "Buffer" && Array.isArray ( oo.data ) )
+							      {
+							        that[kk] = new Buffer ( oo.data ) ;
+							        continue ;
+							      }
+							    }
 						      if ( typeof document === 'undefined' )
 						      {
 							      // if ( o.type === 'Xml' )
@@ -276,11 +306,6 @@ gepard.Event.prototype =
 							      //   obj[k] = f.create ( o.value ) ;
 							      //   continue ;
 							      // }
-							      if ( oo.type === "Buffer" && Array.isArray ( oo.data ) )
-							      {
-							        that[kk] = new Buffer ( oo.data ) ;
-							        continue ;
-							      }
 						      }
 				        }
 				      }
