@@ -11,15 +11,16 @@ if ( !Array.isArray )
   	return arg && arg.constructor === Array ;
   };
 }
-var _isBrowser = true ;
+var _Event_isBrowser = true ;
 if ( typeof document !== 'undefined' && typeof module === 'undefined' ) // browser
 {
-	_isBrowser = true ;
+	_Event_isBrowser = true ;
 }
 else
 {
-	_isBrowser = false ;
+	_Event_isBrowser = false ;
 }
+var _Event_replace_Buffer_toJSON = null ;
 /**
  * Description
  * @constructor
@@ -49,8 +50,15 @@ gepard.Event.prototype =
 		}
  		if ( typeof Buffer !== 'undefined' )
  		{
- 			var s = String ( Buffer.prototype.toJSON ) ;
- 			if ( s.indexOf ( 'type:' ) < 0 && s.indexOf ( 'data' ) < 0 )
+ 			if ( _Event_replace_Buffer_toJSON === null )
+ 			{
+ 				var s = String ( Buffer.prototype.toJSON ) ;
+	 			if ( s.indexOf ( 'type:' ) < 0 && s.indexOf ( 'data' ) < 0 )
+	 			{
+	 				_Event_replace_Buffer_toJSON = true ;
+	 			}
+ 			}
+ 			if ( _Event_replace_Buffer_toJSON )
  			{
  				Buffer.prototype.toJSON = function function_Buffer_toJSON()
  				{
@@ -344,7 +352,7 @@ gepard.Event.prototype =
 			}
 		}
 		else this.body = {} ;
-		if ( ! _isBrowser )
+		if ( ! _Event_isBrowser )
 		{
 			var os = require ( "os" ) ;
 			this._setHostname  ( os.hostname() ) ;
@@ -784,7 +792,7 @@ gepard.Event.prototype =
 		return this.control.hostname ;
 	}
 };
-if ( _isBrowser )
+if ( _Event_isBrowser )
 {
 	gepard.serialize = gepard.Event.prototype.serialize ;
 	gepard.deserialize = gepard.Event.prototype.deserialize ;

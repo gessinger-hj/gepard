@@ -33,7 +33,7 @@ FileReference.prototype.toString = function()
 };
 FileReference.prototype.setTargetIsLocalHost = function ( state )
 {
-  this.targetIsLocalHost = !!state ;
+  this.targetIsLocalHost = ! !!state ;
 };
 /**
  * Description
@@ -51,7 +51,7 @@ FileReference.prototype.toJSON = function()
 };
 FileReference.prototype.getBytes = function()
 {
-  if ( this.data ) //instanceof Buffer )
+  if ( this.data )
   {
     return this.data ;
   }
