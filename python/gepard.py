@@ -1038,6 +1038,48 @@ class SyncedQueue:
 		finally:
 			self._condition.release()
 
+class util ( object ):
+	_globals = {}
+	args_collected = False
+	@classmethod
+	def putProperty ( clazz, name, value ):
+		clazz.setProperty ( name, value )
+	@classmethod
+	def setProperty ( clazz, name, value ):
+		if not clazz.args_collected:
+			clazz.argsToProperties()
+			clazz.args_collected = True
+		clazz._globals[name] = value
+	@classmethod
+	def argsToProperties ( clazz ):
+		for i in range ( 0, len ( sys.argv ) ):
+			if sys.argv[i].find ( "-D" ) == 0 or sys.argv[i].find ( "--" ) == 0:
+				if len ( sys.argv[i] ) < 3 or sys.argv[i][2] == '=':
+					print ( "Missing option name: " + sys.argv[i] )
+					continue
+				pos = sys.argv[i].find ( '=' )
+				if pos < 0:
+					v = sys.argv[i][2:]
+					clazz._globals[v] = v
+				else:
+					clazz._globals[sys.argv[i][2:pos]]= sys.argv[i][pos+1:]
+	@classmethod
+	def getProperty ( clazz, name ):
+		if not clazz.args_collected:
+			clazz.argsToProperties()
+			clazz.args_collected = True
+		v = clazz._globals.get ( name )
+		if v != None:  return v
+		v = os.environ.get ( name )
+		if v != None: return v
+		if name.find ( '.' ) > 0:
+			name = name.replace ( '.', '_' )
+			v = os.environ.get ( name )
+			if v != None: return v
+			name = name.upper() ;
+			v = os.environ.get ( name )
+		return v
+
 def __LINE__():
         try:
                 raise Exception
