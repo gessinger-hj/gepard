@@ -1,3 +1,6 @@
+## 1.3.3 (2015-09-02)
+- Python: getProperty with optional default
+
 ## 1.3.3 (2015-08-31)
 - introduce the FileReference class in JavaScript and Java for minimal load.
 - fix issue for Buffer.toJSON in node version <= 0.10

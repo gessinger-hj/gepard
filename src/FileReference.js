@@ -29,11 +29,11 @@ var FileReference = function ( file )
  */
 FileReference.prototype.toString = function()
 {
-  return "(" + this.className + ")[\npath=" + this.path + "\n  name=" + this.name + "\n  data=" + this.data + "\n]" ;
+  return "(" + this.className + ")[  \npath=" + this.path + "\n  name=" + this.name + "\n  data=" + this.data + "\n]" ;
 };
 FileReference.prototype.setTargetIsLocalHost = function ( state )
 {
-  this.targetIsLocalHost = ! !!state ;
+  this.targetIsLocalHost = !!state ;
 };
 /**
  * Description

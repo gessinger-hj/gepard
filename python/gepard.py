@@ -1064,7 +1064,7 @@ class util ( object ):
 				else:
 					clazz._globals[sys.argv[i][2:pos]]= sys.argv[i][pos+1:]
 	@classmethod
-	def getProperty ( clazz, name ):
+	def getProperty ( clazz, name, defaultProperty=None ):
 		if not clazz.args_collected:
 			clazz.argsToProperties()
 			clazz.args_collected = True
@@ -1078,7 +1078,31 @@ class util ( object ):
 			if v != None: return v
 			name = name.upper() ;
 			v = os.environ.get ( name )
+			if v == None:
+				return defaultProperty
 		return v
+
+class FileReference(object):
+	"""docstring for FileReference"""
+	def __init__(self, file=None):
+		self.className = "FileReference"
+		self.path = ""
+		self.name = ""
+		self.data = None
+		if file != None:
+			self.path = file.replace ( "\\", "/" )
+			self.path = os.path.abspath ( self.path )
+			self.path = self.path.replace ( "\\", "/" )
+			self.name = os.path.basename ( self.path )
+		self.targetIsLocalHost = False
+	def __str__(self):
+		s = StringIO()
+		s.write("(")
+		s.write(self.__class__.__name__)
+		s.write(")")
+		s.write("[\n  path=" + str(self.path) + "\n  name=" + str(self.name) + "\n  data=" + str(self.data) + "\n]" )
+		return s.getvalue()
+
 
 def __LINE__():
         try:

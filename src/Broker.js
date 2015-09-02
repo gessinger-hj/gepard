@@ -1090,9 +1090,9 @@ module.exports = Broker ;
 
 if ( require.main === module )
 {
-  var Admin = require ( "./Admin" ) ;
+  var Admin  = require ( "./Admin" ) ;
   var Gepard = require ( "./Gepard" ) ;
-  var what = T.getProperty ( "help" ) ;
+  var what   = T.getProperty ( "help" ) ;
   if ( what )
   {
     console.log ( "Broker for Gepard" ) ;
