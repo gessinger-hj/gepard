@@ -15,7 +15,7 @@ var os            = require ( "os" ) ;
 var fs            = require ( "fs" ) ;
 var dns           = require ( "dns" ) ;
 var Path          = require ( "path" ) ;
-var FileReference = require ( "FileReference" ) ;
+var FileReference = require ( "./FileReference" ) ;
 
 if ( typeof Promise === 'undefined' ) // since node 0.12+
 {
@@ -1053,6 +1053,7 @@ Broker.prototype.listen = function ( port, callback )
 Broker.prototype.setConfig = function ( configuration )
 {
   var connectionHookIsFile = false ;
+  var hook ;
   if ( ! configuration )
   {
     configuration = T.getProperty ( "config" )
@@ -1078,12 +1079,17 @@ Broker.prototype.setConfig = function ( configuration )
   if ( ! configuration )
   {
     configuration = { connectionHook: "ConnectionHook" } ;
+    hook = require ( "./" + configuration.connectionHook ) ;
   }
   if ( ! configuration.connectionHook )
   {
     configuration.connectionHook = "ConnectionHook" ;
+    hook = require ( "./" + configuration.connectionHook ) ;
   }
-  var hook = require ( configuration.connectionHook ) ;
+  if ( ! hook )
+  {
+    hook = require ( configuration.connectionHook ) ;
+  }
   this._connectionHook = new hook() ;
 };
 module.exports = Broker ;

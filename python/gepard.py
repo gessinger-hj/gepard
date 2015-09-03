@@ -31,6 +31,8 @@ try:
 except NameError:
 	basestring = str
 
+import inspect
+
 class Event ( object ):
 	def __init__ (self,name,type=None,body=None):
 		self.name		= None
@@ -201,6 +203,11 @@ class Event ( object ):
 						 , "control":obj.control
 						 , "user":juser
 						 }
+		if hasattr ( obj, "toJSON" ) and callable ( getattr ( obj, "toJSON" ) ):
+			m = getattr ( obj, "toJSON" )
+			if m != None:
+				o = obj.toJSON()
+				return o
 		raise TypeError ( repr(obj) + ' is not JSON serializable' )
 	@staticmethod
 	def fromJSON ( obj ):
@@ -482,7 +489,8 @@ class Client:
 			l_linger = 0                                                                                                                                                          
 			self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,                                                                                                                     
                  struct.pack('ii', l_onoff, l_linger))
-
+			print ( "socket.getpeername()=" + str(self.sock.getpeername()[0] ) )
+			print ( "socket.getsockname()=" + str(self.sock.getsockname() ) )
 			self._startCallbackWorker()
 			self._startWorker()
 		except IOError as e:
@@ -1078,8 +1086,8 @@ class util ( object ):
 			if v != None: return v
 			name = name.upper() ;
 			v = os.environ.get ( name )
-			if v == None:
-				return defaultProperty
+		if v == None:
+			return defaultProperty
 		return v
 
 class FileReference(object):
@@ -1102,6 +1110,55 @@ class FileReference(object):
 		s.write(")")
 		s.write("[\n  path=" + str(self.path) + "\n  name=" + str(self.name) + "\n  data=" + str(self.data) + "\n]" )
 		return s.getvalue()
+
+	def setTargetIsLocalHost(self,state):
+		self.targetIsLocalHost = state
+
+	def getBytes(self):
+		if self.data != None:
+		  return self.data
+		return fs.readFileSync ( self.path ) ;
+	def getName(self):
+		return self.name
+	def getPath(self):
+		return self.path
+	def toJSON(self):
+		data = self.data
+		if data == None and not self.targetIsLocalHost:
+			fd = open ( self.path, "rb" )
+			data = bytearray ( fd.read() )
+
+		obj = { "className": self.__class__.__name__
+					, "path": self.path
+					, "name": self.name
+					, "data": data 
+					}
+		return obj
+
+# FileReference.prototype.write = function ( fullFileName )
+# {
+# 	var ws ;
+# 	if ( ! this.data )
+# 	{
+# 	var options =
+# 	{
+# 		  flags: 'r'
+# 		, encoding: null
+# 		, fd: null
+# 		, autoClose: true
+# 		} ;
+# 		ws = fs.createWriteStream ( fullFileName, { encoding: null } ) ;
+# 		var rs = fs.createReadStream ( this.path, options ) ;
+# 		rs.pipe ( ws ) ;
+# 	}
+# 	else
+# 	{
+# 		ws = fs.createWriteStream ( fullFileName, { encoding: null } ) ;
+# 		ws.write ( this.data ) ;
+# 		ws.end() ;
+# 	}
+# };
+
 
 
 def __LINE__():

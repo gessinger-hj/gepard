@@ -14,6 +14,7 @@ try:
 except ImportError:
 	from io import StringIO
 
+import ipaddress
 # ==========================================================================
 
 from glob import glob
@@ -26,8 +27,23 @@ print ( onlyfiles )
 p = gepard.util.getProperty ( "l.anguage" )
 print ( "pp=" + str ( p ) )
 
-fr = gepard.FileReference ( "GT.py" )
+# fd = open ( "GT.py", "rb" )
+# b = fd.read()
+# print ( "type(b)=" + str(type(b)) )
+# print ( "isinstance ( b, bytes )=" + str(isinstance ( b, str )) )
+# ba = bytearray()
+# print ( "type(b)=" + str(type(b)) )
+
+
+fr = gepard.FileReference ( "data.bin" )
 print ( fr )
+
+e = gepard.Event ( "__FILE__" )
+e.putValue ( "FR", fr )
+
+t = e.serialize()
+print ( t )
+
 # _NQ = gepard.NamedQueue() ;
 
 # def worker():

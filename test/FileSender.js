@@ -23,7 +23,6 @@ if ( require.main === module )
       console.log ( "Not running on " + this.getHostPort() ) ;
 			process.exit() ;
     }
-   	var name = "__FILE__" ;
    	var c = new Client() ;
     var event = new Event ( "__FILE__" ) ;
     var fileName = T.getProperty ( "file", "FileSender.js" ) ;
