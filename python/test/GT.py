@@ -36,13 +36,21 @@ print ( "pp=" + str ( p ) )
 
 
 fr = gepard.FileReference ( "data.bin" )
-print ( fr )
+# print ( fr )
 
 e = gepard.Event ( "__FILE__" )
 e.putValue ( "FR", fr )
 
 t = e.serialize()
-print ( t )
+# print ( t )
+
+ee = gepard.Event.deserialize ( t )
+# print ( ee )
+
+FR = ee.getValue ( "FR" )
+print ( str ( FR ) )
+print ( type(FR["data"]) )
+
 
 # _NQ = gepard.NamedQueue() ;
 

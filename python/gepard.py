@@ -222,6 +222,13 @@ class Event ( object ):
 				return bytes(obj['data'])
 			if obj['type'] == 'Buffer':
 				return bytes(obj['data'])
+		# if 'className' in obj:
+		# 	className = obj['className']
+		# 	if className != "Event":
+		# 		clazz = globals()[className]
+		# 		print ( clazz )
+		# 		nuo = clazz("XXXXXXXXXXXXXXXXXXX")
+		# 		print ( str(nuo) )
 		return obj
 
 class User ( object ):
