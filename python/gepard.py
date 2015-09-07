@@ -111,6 +111,14 @@ class Event ( object ):
 		if name not in self.body:
 			return None
 		return self.body[name]
+	def removeValue ( self, name ):
+		if not isinstance ( name, basestring):
+			raise ValueError ( "name must be a non empty string, not: " + str(name) + "(" + name.__class__.__name__ + ")" )
+		if name not in self.body:
+			return None
+		obj = self.body[name]
+		del self.body[name]
+		return obj
 	def getClient(self):
 		return self._Client
 	def sendBack(self):
@@ -222,13 +230,11 @@ class Event ( object ):
 				return bytes(obj['data'])
 			if obj['type'] == 'Buffer':
 				return bytes(obj['data'])
-		# if 'className' in obj:
-		# 	className = obj['className']
-		# 	if className != "Event":
-		# 		clazz = globals()[className]
-		# 		print ( clazz )
-		# 		nuo = clazz("XXXXXXXXXXXXXXXXXXX")
-		# 		print ( str(nuo) )
+		if 'className' in obj:
+			className = obj['className']
+			if className != "Event":
+				clazz = globals()[className]
+				return clazz(obj)
 		return obj
 
 class User ( object ):
@@ -354,7 +360,8 @@ class Client:
 	_Instances = {}
 	@classmethod
 	def getInstance ( clazz, port=None, host=None ):
-		if host == None: host = "localhost"
+		if host == None: host = util.getProperty ( "gepard.host", "localhost" )
+		if port == None: port = util.getProperty ( "gepard.port", 17501 )
 		key = str(port) + ":" + str(host)
 		client = clazz._Instances.get ( key )
 		if client != None:
@@ -370,31 +377,13 @@ class Client:
 		self.eventListenerFunctions = MultiMap()
 		self.connected              = False
 		self.sock                   = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		if port is None:
-			p = os.environ["GEPARD_PORT"]
-			if p != None:
-				if not p.isdigit():
-					raise Exception ( "Invalid GEPARD_PORT=" + p )
-				try:
-					port = int ( p )
-				except:
-					port = None
-					raise Exception ( "Invalid GEPARD_PORT=" + p )
+		if host == None: host = util.getProperty ( "gepard.host", "localhost" )
+		if port == None: port = util.getProperty ( "gepard.port", 17501 )
+		port = int ( port )
 
-		if port is None:
-			self.port = 17501
-		else:
-			self.port = port
+		self.host = host
+		self.port = port
 
-		if host is None:
-			h = os.environ["GEPARD_HOST"]
-			if h != None:
-				host = h
-
-		if host is None:
-			self.host = "localhost"
-		else:
-			self.host = host
 		self.user                = None
 		self.closing             = False
 		self._workerIsDaemon     = False
@@ -496,8 +485,8 @@ class Client:
 			l_linger = 0                                                                                                                                                          
 			self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,                                                                                                                     
                  struct.pack('ii', l_onoff, l_linger))
-			print ( "socket.getpeername()=" + str(self.sock.getpeername()[0] ) )
-			print ( "socket.getsockname()=" + str(self.sock.getsockname() ) )
+			if self.sock.getpeername()[0] == self.sock.getsockname()[0]:
+				FileReference.targetIsLocalHost = True
 			self._startCallbackWorker()
 			self._startWorker()
 		except IOError as e:
@@ -594,7 +583,9 @@ class Client:
 				print ( exc )
 		self.infoCallbacks.clear()
 		# eventListenerFunctions.clear()
-  # 	_Instances.remove ( "" + this.host + ":" + this.port )
+		key = str(self.port) + ":" + str(self.host)
+		if key in self._Instances:
+			del self._Instances[key]
 		self.sock = None
 		self._emit ( "close", None )
 
@@ -1099,17 +1090,26 @@ class util ( object ):
 
 class FileReference(object):
 	"""docstring for FileReference"""
+	targetIsLocalHost = False
 	def __init__(self, file=None):
 		self.className = "FileReference"
 		self.path = ""
 		self.name = ""
 		self.data = None
+		if isinstance ( file, dict ):
+			obj = file
+			self.className = self.__class__.__name__
+			self.path = obj["path"]
+			if 'name' in obj and obj["name"] != None:
+				self.name = obj["name"]
+			if 'data' in obj and obj["data"] != None:
+				self.data = obj["data"]
+			return
 		if file != None:
 			self.path = file.replace ( "\\", "/" )
 			self.path = os.path.abspath ( self.path )
 			self.path = self.path.replace ( "\\", "/" )
 			self.name = os.path.basename ( self.path )
-		self.targetIsLocalHost = False
 	def __str__(self):
 		s = StringIO()
 		s.write("(")
@@ -1118,13 +1118,11 @@ class FileReference(object):
 		s.write("[\n  path=" + str(self.path) + "\n  name=" + str(self.name) + "\n  data=" + str(self.data) + "\n]" )
 		return s.getvalue()
 
-	def setTargetIsLocalHost(self,state):
-		self.targetIsLocalHost = state
-
 	def getBytes(self):
 		if self.data != None:
-		  return self.data
-		return fs.readFileSync ( self.path ) ;
+			return self.data
+		fd = open ( self.path, "rb" )
+		return fd.read()
 	def getName(self):
 		return self.name
 	def getPath(self):
@@ -1142,31 +1140,11 @@ class FileReference(object):
 					}
 		return obj
 
-# FileReference.prototype.write = function ( fullFileName )
-# {
-# 	var ws ;
-# 	if ( ! this.data )
-# 	{
-# 	var options =
-# 	{
-# 		  flags: 'r'
-# 		, encoding: null
-# 		, fd: null
-# 		, autoClose: true
-# 		} ;
-# 		ws = fs.createWriteStream ( fullFileName, { encoding: null } ) ;
-# 		var rs = fs.createReadStream ( this.path, options ) ;
-# 		rs.pipe ( ws ) ;
-# 	}
-# 	else
-# 	{
-# 		ws = fs.createWriteStream ( fullFileName, { encoding: null } ) ;
-# 		ws.write ( this.data ) ;
-# 		ws.end() ;
-# 	}
-# };
-
-
+	def write ( self, name):
+		data = self.getBytes()
+		fd = open ( name, "wb" )
+		fd.write ( data )
+		fd.close()
 
 def __LINE__():
         try:

@@ -29,12 +29,19 @@ if ( require.main === module )
 		var c = new Client() ;
 		c.on ( "__FILE__", function(e)
 		{
-			// var FR = e.removeValue ( "FR" ) ;
-			var FR = e.getValue ( "FR" ) ;
-console.log ( String ( FR ) ) ;
-			var b = FR.getBytes() ;
-console.log ( b ) ;
-			FR.write ( FR.getName() + ".in" ) ;
+			var FR = e.removeValue ( "FR" ) ;
+			console.log ( FR.getName() + " received." ) ;
+			var fname = FR.getName() + ".js.in" ;
+			try
+			{
+				FR.write ( fname ) ;
+				console.log ( fname + " written." ) ;
+			}
+			catch ( exc )
+			{
+      	e.control.status = { code:1, name:"error", reason:"could not write: " + fname } ;
+				console.log ( exc ) ;
+			}
 			e.sendBack() ;
 		});
 		c.on('end', function()

@@ -19,10 +19,12 @@ client.onError ( on_error )
 client.onShutdown ( on_shutdown )
 
 def on___FILE__ ( e ):
-	FR = e.getValue ( "FR" )
-	print ( str(FR) )
-	# FR.write ( FR.getName() + ".in" ) ;
-	# e.sendBack() ;
+	FR = e.removeValue ( "FR" )
+	print ( FR.getName() + " received." ) ;
+	fname = FR.getName() + ".py.in"
+	FR.write ( fname ) ;
+	print ( fname + " written.")
+	e.sendBack() ;
 
 client.on ( "__FILE__", on___FILE__ )
 

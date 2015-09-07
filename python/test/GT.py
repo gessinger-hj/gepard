@@ -14,7 +14,7 @@ try:
 except ImportError:
 	from io import StringIO
 
-import ipaddress
+# import ipaddress
 # ==========================================================================
 
 from glob import glob
@@ -51,6 +51,14 @@ FR = ee.getValue ( "FR" )
 print ( str ( FR ) )
 print ( type(FR["data"]) )
 
+import subprocess
+
+proc = subprocess.Popen ( "/sbin/ifconfig", stdout=subprocess.PIPE ) ;
+print ( proc.stdout )
+for line in proc.stdout:
+   #the real code does filtering here
+   print ( "test:", line.rstrip() )
+# print ( type(t) )
 
 # _NQ = gepard.NamedQueue() ;
 
