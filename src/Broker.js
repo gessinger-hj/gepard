@@ -126,14 +126,21 @@ Connection.prototype.removeEventListener = function ( e )
  */
 Connection.prototype.write = function ( data )
 {
-  if ( data instanceof Event )
+  try
   {
-    data.setTargetIsLocalHost ( this.isLocalHost() ) ;
-    this.socket.write ( data.serialize() ) ;
+    if ( data instanceof Event )
+    {
+      data.setTargetIsLocalHost ( this.isLocalHost() ) ;
+      this.socket.write ( data.serialize() ) ;
+    }
+    if ( typeof data === 'string' )
+    {
+      this.socket.write ( data ) ;
+    }
   }
-  if ( typeof data === 'string' )
+  catch ( exc )
   {
-    this.socket.write ( data ) ;
+    Log.log ( exc ) ;
   }
 };
 /**
