@@ -60,6 +60,7 @@ gepard.Event.prototype =
  			}
  			if ( _Event_replace_Buffer_toJSON )
  			{
+	    	Buffer_toJSON = Buffer.prototype.toJSON ;
  				Buffer.prototype.toJSON = function function_Buffer_toJSON()
  				{
 			    return { type:"Buffer", data:Array.prototype.slice.call(this, 0) } ;

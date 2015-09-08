@@ -412,7 +412,7 @@ Broker.prototype._checkInConnection = function ( conn )
 {
   this._connections[conn.sid] = conn ;
   this._connectionList.push ( conn ) ;
-  Log.info ( 'Socket connected' );
+  Log.info ( 'Socket connected, sid=' + conn.sid ) ;
   conn.socket.on ( "error", this._ejectSocket.bind ( this, conn.socket ) ) ;
   conn.socket.on ( 'close', this._ejectSocket.bind ( this, conn.socket ) ) ;
   conn.socket.on ( 'end', this._ejectSocket.bind ( this, conn.socket ) ) ;

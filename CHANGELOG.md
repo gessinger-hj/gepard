@@ -1,5 +1,5 @@
 ## 1.3.3 (2015-09-02)
-- Python: getProperty with optional default
+- Python: getProperty() with optional default
 
 ## 1.3.3 (2015-08-31)
 - introduce the FileReference class in JavaScript and Java for minimal load.
