@@ -1,4 +1,10 @@
+## 1.3.3 (2015-09-29)
+- Python: USERNAME in client-info visible to broker
+- JavaScript: USERNAME in client-info visible to broker
+- ConnectionHook: getUSERNAME()
+
 ## 1.3.3 (2015-09-02)
+- introduce the FileReference class in Python for minimal load.
 - Python: getProperty() with optional default
 
 ## 1.3.3 (2015-08-31)

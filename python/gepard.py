@@ -498,6 +498,10 @@ class Client:
 		event.body["hostname"]       = socket.gethostname()
 		event.body["connectionTime"] = datetime.datetime.now()
 		event.body["application"]    = os.path.abspath(sys.argv[0])
+		if os.sep == '/':
+			event.body["USERNAME"]    	 = os.environ.get ( "LOGNAME" )
+		else:
+			event.body["USERNAME"]    = os.environ.get ( "USERNAME" )
 
 		self._send ( event ) 
 

@@ -99,6 +99,7 @@ var Client = function ( port, host )
   }
   var ee = new Event() ;
   ee.addClassNameToConstructor ( "FileReference", FileReference ) ;
+  this.USERNAME = T.getUSERNAME() ;
 } ;
 util.inherits ( Client, EventEmitter ) ;
 Client.prototype.toString = function()
@@ -178,13 +179,14 @@ Client.prototype.connect = function()
   {
     var json
     thiz.brokerIsLocalHost() ;
-    thiz.alive = true ;
-    var einfo = new Event ( "system", "client_info" ) ;
-    einfo.body.language = "JavaScript" ;
-    einfo.body.hostname = os.hostname() ;
+    thiz.alive                = true ;
+    var einfo                 = new Event ( "system", "client_info" ) ;
+    einfo.body.language       = "JavaScript" ;
+    einfo.body.hostname       = os.hostname() ;
     einfo.body.connectionTime = new Date() ;
-    einfo.body.application = thiz._application ;
-    json = einfo.serialize() ;
+    einfo.body.application    = thiz._application ;
+    einfo.body.USERNAME       = thiz.USERNAME ;
+    json                      = einfo.serialize() ;
     thiz._stats.incrementOut ( json.length )
     this.write ( json ) ;
 

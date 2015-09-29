@@ -1,4 +1,5 @@
 var util = require  ( "util" ) ;
+var path = require  ( "path" ) ;
 if ( ! String.prototype.startsWith )
 {
   /*
@@ -788,7 +789,26 @@ TangoClass.prototype.resolve = function ( src, map, delimiter )
   }
   return tgt ;
 }
-
+TangoClass.prototype.isWindows = function()
+{
+  return path.sep === '\\' ;
+};
+TangoClass.prototype.isUnix = function()
+{
+  return path.sep === '/' ;
+};
+TangoClass.prototype.getUSERNAME = function()
+{
+  if ( this.isWindows() )
+  {
+    // USERPROFILE=C:\Users\<user-name>
+    return process.env["USERNAME"] ;
+  }
+  else
+  {
+    return process.env["LOGNAME"] ;
+  }
+};
 var Tango = null ;
 
 if ( typeof org === 'undefined' ) org = {} ;
