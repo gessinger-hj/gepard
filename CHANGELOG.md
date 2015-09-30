@@ -1,3 +1,7 @@
+## 1.3.3 (2015-09-30)
+- Java: USERNAME in client-info visible to broker
+- Python, JavaScript, Java: default user object in event created from client.USERNAME
+
 ## 1.3.3 (2015-09-29)
 - Python: USERNAME in client-info visible to broker
 - JavaScript: USERNAME in client-info visible to broker

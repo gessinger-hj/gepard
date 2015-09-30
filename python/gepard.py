@@ -384,7 +384,6 @@ class Client:
 		self.host = host
 		self.port = port
 
-		self.user                = None
 		self.closing             = False
 		self._workerIsDaemon     = False
 		self.callbacks           = {}
@@ -395,6 +394,11 @@ class Client:
 		self._NQ_lockEvents      = NamedQueue()
 		self._CallbackIsolator   = SyncedQueue()
 		self.numberOfCallbackWorker = 3
+		if os.sep == '/':
+			self.USERNAME = os.environ.get ( "LOGNAME" )
+		else:
+			self.USERNAME = os.environ.get ( "USERNAME" )
+		self.user = User ( self.USERNAME )
 
 	def setDaemon(self,status=True):
 		self._workerIsDaemon = status
@@ -432,8 +436,6 @@ class Client:
 			self.eventListenerFunctions.put ( n, callback )
 
 		e = Event ( "system", "addEventListener" )
-		if self.user != None:
-			e.setUser ( user )
 		e.body["eventNameList"] = eventNameList
 		e.setUniqueId ( self.createUniqueId() )
 		self._send ( e )
@@ -450,8 +452,6 @@ class Client:
 			for name in eventNameOrFunction:
 				self.eventListenerFunctions.remove ( name )
 			e = Event ( "system", "removeEventListener" )
-			if self.user != None:
-				e.setUser ( user )
 			e.body["eventNameList"] = eventNameOrFunction
 			e.setUniqueId ( self.createUniqueId() )
 			self._send ( e )
@@ -463,8 +463,6 @@ class Client:
 					nameList.append ( name )
 					self.eventListenerFunctions.removeValue ( el )
 			e = Event ( "system", "removeEventListener" )
-			if self.user != None:
-				e.setUser ( user )
 			e.body["eventNameList"] = nameList
 			e.setUniqueId ( self.createUniqueId() )
 			self._send ( e )
@@ -498,15 +496,14 @@ class Client:
 		event.body["hostname"]       = socket.gethostname()
 		event.body["connectionTime"] = datetime.datetime.now()
 		event.body["application"]    = os.path.abspath(sys.argv[0])
-		if os.sep == '/':
-			event.body["USERNAME"]    	 = os.environ.get ( "LOGNAME" )
-		else:
-			event.body["USERNAME"]    = os.environ.get ( "USERNAME" )
-
+		event.body["USERNAME"]    	 = self.USERNAME
+		
 		self._send ( event ) 
 
 	def _send ( self, event ):
 		self.connect()
+		if event.getUser() == None:
+			event.setUser ( self.user )
 		event.setUniqueId ( self.createUniqueId() )
 		self.sock.sendall ( event.serialize().encode ( "utf-8" ) )
 

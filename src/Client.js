@@ -100,6 +100,7 @@ var Client = function ( port, host )
   var ee = new Event() ;
   ee.addClassNameToConstructor ( "FileReference", FileReference ) ;
   this.USERNAME = T.getUSERNAME() ;
+  this.user = new User ( this.USERNAME ) ;
 } ;
 util.inherits ( Client, EventEmitter ) ;
 Client.prototype.toString = function()
@@ -682,6 +683,10 @@ Client.prototype.emit = function ( params, callback, opts )
 
     var thiz = this ;
     e.setTargetIsLocalHost ( thiz.brokerIsLocalHost() ) ;
+    if ( ! e.getUser() )
+    {
+      e.setUser ( this.user ) ;
+    }
     var json = e.serialize() ;
     this._stats.incrementOut ( json.length )
     s.write ( json, function()

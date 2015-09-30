@@ -34,6 +34,7 @@ public class Client
   
   SyncedQueue<Event> _CallbackIsolator = new SyncedQueue<Event>() ;
 
+  String USERNAME = System.getProperty ( "user.name" ) ;
   static Hashtable<String,Client> _Instances = new Hashtable<String,Client>() ;
 
   static public Client getInstance()
@@ -80,6 +81,15 @@ public class Client
 		{
 			System.err.println ( Util.toString ( exc ) ) ;
 		}
+		user = new User ( USERNAME ) ;
+	}
+	public String getUSERNAME()
+	{
+		return USERNAME ;
+	}
+	public void setUser ( User user )
+	{
+  	this.user = user ;
 	}
 	public void setNumberOfCallbackWorker ( int n )
 	{
@@ -131,6 +141,7 @@ public class Client
 	    body.put ( "hostname", hostname ) ;
 	    body.put ( "connectionTime", Util.getISODateTime() ) ;
 	    body.put ( "application", Util.getMainClassName() ) ;
+	    body.put ( "USERNAME", USERNAME ) ;
 
 	    e.setTargetIsLocalHost ( targetIsLocalHost ) ;
 			String t = e.toJSON() ;
@@ -257,6 +268,10 @@ public class Client
 		{
 			synchronized ( _lock1 )
 			{
+				if ( e.getUser() == null )
+				{
+					e.setUser ( user ) ;
+				}
 				getWriter() ;
 	  	  e.setUniqueId ( createUniqueId() ) ;
 		    e.setTargetIsLocalHost ( targetIsLocalHost ) ;
@@ -340,7 +355,6 @@ public class Client
 	throws IOException
 	{
 		Event e = new Event ( "system", "addEventListener" ) ;
-    e.setUser ( user ) ;
 	  e.body.put ( "eventNameList", new String[] { eventName } ) ;
     e.setUniqueId ( createUniqueId() ) ;
     synchronized ( _LOCK )
@@ -353,7 +367,6 @@ public class Client
 	throws IOException
 	{
 		Event e = new Event ( "system", "addEventListener" ) ;
-    e.setUser ( user ) ;
 	  e.body.put ( "eventNameList", eventNameList ) ;
     e.setUniqueId ( createUniqueId() ) ;
     synchronized ( _LOCK )
@@ -389,7 +402,6 @@ public class Client
 			eventListenerFunctions.remove ( name ) ;
 		}
     Event e = new Event ( "system", "removeEventListener" ) ;
-    e.setUser ( this.user ) ;
 	  e.body.put ( "eventNameList", nameList ) ;
     e.setUniqueId ( createUniqueId() ) ;
     _send ( e ) ;
@@ -424,7 +436,6 @@ public class Client
 		}
 		String[] nameArray = nameList.toArray(new String[0]);
     Event e = new Event ( "system", "removeEventListener" ) ;
-    e.setUser ( this.user ) ;
 	  e.body.put ( "eventNameList", nameArray ) ;
     e.setUniqueId ( createUniqueId() ) ;
     _send ( e ) ;
