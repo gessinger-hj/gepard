@@ -100,7 +100,12 @@ var Client = function ( port, host )
   var ee = new Event() ;
   ee.addClassNameToConstructor ( "FileReference", FileReference ) ;
   this.USERNAME = T.getUSERNAME() ;
+  if ( ! this.USERNAME )
+  {
+    this.USERNAME = "guest" ;
+  }
   this.user = new User ( this.USERNAME ) ;
+  this._timeStamp = 0 ;
 } ;
 util.inherits ( Client, EventEmitter ) ;
 Client.prototype.toString = function()
@@ -268,6 +273,7 @@ Client.prototype.connect = function()
     {
       return ;
     }
+    thiz._timeStamp = new Date().getTime() ;
     var found ;
     var mm = data.toString() ;
     if ( ! this.partialMessage ) this.partialMessage = "" ;
@@ -346,6 +352,15 @@ Client.prototype.connect = function()
           {
             thiz.end() ;
             thiz._private_emit ( "shutdown" ) ;
+            return ;
+          }
+          if ( e.getType() === "PINGRequest" )
+          {
+            e.setType ( "PINGResult" ) ;
+            var s = thiz.getSocket() ;
+            var json = e.serialize() ;
+            thiz._stats.incrementOut ( json.length )
+            s.write ( json ) ;
             return ;
           }
           if ( e.isBad() )

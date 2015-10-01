@@ -51,6 +51,7 @@ var Connection = function ( broker, socket )
   this._numberOfPendingRequests               = 0 ;
   this._messageUidsToBeProcessed              = [] ;
   this._isLocalHost ;
+  this._timeStamp                             = 0 ;
 };
 /**
  * Description
@@ -64,6 +65,10 @@ Connection.prototype.toString = function()
 Connection.prototype.getClientInfo = function()
 {
   return this.client_info ;
+};
+Connection.prototype.setTimestamp = function()
+{
+  this._timeStamp = new Date().getTime() ;
 };
 Connection.prototype.flush = function()
 {
@@ -137,6 +142,7 @@ Connection.prototype.write = function ( data )
     {
       this.socket.write ( data ) ;
     }
+    this.setTimestamp() ;
   }
   catch ( exc )
   {
@@ -190,6 +196,7 @@ Connection.prototype._sendInfoResult = function ( e )
     {
       client_info2[key2] = client_info[key2] ;
     }
+    client_info2.lastActionTime = new Date ( conn._timeStamp ).toISOString() ;
     e.body.connectionList.push ( client_info2 ) ;
     if ( conn._ownedSemaphoresRecourceIdList.length )
     {
@@ -367,6 +374,7 @@ var Broker = function ( port, ip )
   });
   var ee = new Event() ;
   ee.addClassNameToConstructor ( "FileReference", FileReference ) ;
+  this._heartbeatIntervalMillis = 5000 ;
 };
 
 util.inherits ( Broker, EventEmitter ) ;
@@ -434,7 +442,7 @@ Broker.prototype._ondata = function ( socket, chunk )
   }
   var mm = chunk.toString() ;
   var conn = this._connections[socket.sid] ;
-
+  conn.setTimestamp() ;
   var i, j, found ;
   var eventNameList ;
   var eOut ;
@@ -681,12 +689,16 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
   {
     return ;
   }
-  else
+  if ( e.getType() === "PINGResult" )
+  {
+console.log ( e ) ;
+    return ;
+  }
   if ( e.getType() === "shutdown" )
   {
     this.validateAction ( this._connectionHook.shutdown, [ conn, e ], this, this._shutdown, [ conn, e ] ) ;
+    return ;
   }
-  else
   if ( e.getType() === "client_info" )
   {
     conn.client_info = e.body ; e.body = {} ;
@@ -721,31 +733,27 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
         conn.client_info.applicationName = app.substring ( app.lastIndexOf ( '/' ) + 1 ) ;
       }
     }
+    return ;
   }
-  else
   if ( e.getType() === "getInfoRequest" )
   {
     this.validateAction ( this._connectionHook.getInfoRequest, [ conn, e ], conn, conn._sendInfoResult, [ e ] ) ;
     return ;
   }
-  else
   if ( e.getType() === "addEventListener" )
   {
     this.validateAction ( this._connectionHook.addEventListener, [ conn, e.body.eventNameList ], conn, conn._addEventListener, [ e ] ) ;
     return ;
   }
-  else
   if ( e.getType() === "removeEventListener" )
   {
     conn.removeEventListener ( e ) ;
   }
-  else
   if ( e.getType() === "lockResourceRequest" )
   {
     this.validateAction ( this._connectionHook.lockResource, [ conn, e.body.resourceId ], this, this._lockResource, [ conn, e ] ) ;
     return ;
   }
-  else
   if ( e.getType() === "unlockResourceRequest" )
   {
     var resourceId = e.body.resourceId ;
@@ -767,23 +775,20 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
     delete this._lockOwner[resourceId] ;
     conn._lockedResourcesIdList.remove ( resourceId ) ;
     conn.write ( e ) ;
+    return ;
   }
-  else
   if ( e.getType() === "acquireSemaphoreRequest" )
   {
     this.validateAction ( this._connectionHook.acquireSemaphore, [ conn, e.body.resourceId ], this, this._acquireSemaphoreRequest, [ conn, e ] ) ;
     return ;
   }
-  else
   if ( e.getType() === "releaseSemaphoreRequest" )
   {
     this._releaseSemaphoreRequest ( conn.socket, e ) ;
+    return ;
   }
-  else
-  {
-    Log.error ( "Invalid type: '" + e.getType() + "' for " + e.getName() ) ;
-    Log.error ( e.toString() ) ;
-  }
+  Log.error ( "Invalid type: '" + e.getType() + "' for " + e.getName() ) ;
+  Log.error ( e.toString() ) ;
 };
 Broker.prototype._lockResource = function ( conn, e )
 {
@@ -1049,9 +1054,74 @@ Broker.prototype.listen = function ( port, callback )
      * Description
      * @return 
      */
-    callback = function() { Log.notice ( 'server bound to port=' + thiz.port ); } ;
+    callback = function()
+               {
+                 Log.notice ( 'server bound to port=' + thiz.port ) ;
+                 setTimeout ( thiz._checkHeartbeat.bind ( thiz ), thiz._heartbeatIntervalMillis ) ;
+               } ;
   }
   this.server.listen ( this.port, callback ) ;
+};
+Broker.prototype._checkHeartbeat = function()
+{
+  var socketsToBeClosed = [] ;
+  var socketsToBePINGed = [] ;
+  var i, conn ;
+  var now = new Date().getTime() ;
+  var heartbeatInterval = ( this._heartbeatIntervalMillis / 1000 ) ;
+  var heartbeatInterval_x_2 = ( this._heartbeatIntervalMillis / 1000 ) * 2 ;
+  var e = new Event ( "system", "PINGRequest" ) ;
+  var se = e.serialize() ;
+  for ( i = 0 ; i < this._connectionList.length ; i++ )
+  {
+    conn = this._connectionList[i] ;
+    var dt = ( now - conn._timeStamp ) / 1000 ;
+    try
+    {
+console.log ( "dt=" + dt ) ;
+      if ( dt > heartbeatInterval_x_2 )
+      {
+        socketsToBeClosed.push ( conn ) ;
+console.log ( "to be closed" ) ;
+        continue ;
+      }
+      if ( dt > heartbeatInterval )
+      {
+        socketsToBePINGed.push ( conn ) ;
+      }
+    }
+    catch ( exc )
+    {
+      Log.log ( exc ) ;
+    }
+  }
+  for ( i = 0 ; i < socketsToBeClosed.length ; i++ )
+  {
+console.log ( "closing -----------------------" ) ;
+    try
+    {
+      socketsToBeClosed[i].socket.end() ;
+    }
+    catch ( exc )
+    {
+      Log.log ( exc ) ;
+    }
+  }
+  socketsToBeClosed.length = 0 ;
+  for ( i = 0 ; i < socketsToBePINGed.length ; i++ )
+  {
+console.log ( "PINGRequest -----------------------" ) ;
+    try
+    {
+      socketsToBePINGed[i].socket.write ( se ) ;
+    }
+    catch ( exc )
+    {
+      Log.log ( exc ) ;
+    }
+  }
+  socketsToBePINGed.length = 0 ;
+  setTimeout ( this._checkHeartbeat.bind ( this ), this._heartbeatIntervalMillis ) ;
 };
 /**
  * @method setConfig
