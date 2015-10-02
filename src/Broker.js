@@ -135,14 +135,15 @@ Connection.prototype.write = function ( data )
   {
     if ( data instanceof Event )
     {
+      this.setTimestamp() ;
       data.setTargetIsLocalHost ( this.isLocalHost() ) ;
       this.socket.write ( data.serialize() ) ;
     }
     if ( typeof data === 'string' )
     {
+      this.setTimestamp() ;
       this.socket.write ( data ) ;
     }
-    this.setTimestamp() ;
   }
   catch ( exc )
   {
@@ -691,7 +692,6 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
   }
   if ( e.getType() === "PINGResult" )
   {
-console.log ( e ) ;
     return ;
   }
   if ( e.getType() === "shutdown" )
@@ -1047,6 +1047,7 @@ Broker.prototype.listen = function ( port, callback )
   {
     this.port = T.getProperty ( "gepard.port", 17501 ) ;
   }
+  this._checkHeartbeat_bind = this._checkHeartbeat.bind ( this ) ;
   if ( typeof callback !== 'function' )
   {
     var thiz = this ;
@@ -1057,7 +1058,8 @@ Broker.prototype.listen = function ( port, callback )
     callback = function()
                {
                  Log.notice ( 'server bound to port=' + thiz.port ) ;
-                 setTimeout ( thiz._checkHeartbeat.bind ( thiz ), thiz._heartbeatIntervalMillis ) ;
+                 setTimeout ( thiz._checkHeartbeat_bind, thiz._heartbeatIntervalMillis ) ;
+                 // setInterval ( thiz._checkHeartbeat_bind, thiz._heartbeatIntervalMillis ) ;
                } ;
   }
   this.server.listen ( this.port, callback ) ;
@@ -1069,8 +1071,9 @@ Broker.prototype._checkHeartbeat = function()
   var i, conn ;
   var now = new Date().getTime() ;
   var heartbeatInterval = ( this._heartbeatIntervalMillis / 1000 ) ;
-  var heartbeatInterval_x_2 = ( this._heartbeatIntervalMillis / 1000 ) * 2 ;
+  var heartbeatInterval_x_2 = ( this._heartbeatIntervalMillis / 1000 ) * 3 ;
   var e = new Event ( "system", "PINGRequest" ) ;
+  e.control._heartbeatIntervalMillis = this._heartbeatIntervalMillis ;
   var se = e.serialize() ;
   for ( i = 0 ; i < this._connectionList.length ; i++ )
   {
@@ -1078,11 +1081,9 @@ Broker.prototype._checkHeartbeat = function()
     var dt = ( now - conn._timeStamp ) / 1000 ;
     try
     {
-console.log ( "dt=" + dt ) ;
       if ( dt > heartbeatInterval_x_2 )
       {
         socketsToBeClosed.push ( conn ) ;
-console.log ( "to be closed" ) ;
         continue ;
       }
       if ( dt > heartbeatInterval )
@@ -1097,9 +1098,9 @@ console.log ( "to be closed" ) ;
   }
   for ( i = 0 ; i < socketsToBeClosed.length ; i++ )
   {
-console.log ( "closing -----------------------" ) ;
     try
     {
+      Log.info ( "Connection timed out:\n" + socketsToBeClosed[i].toString() + "\n" ) ;
       socketsToBeClosed[i].socket.end() ;
     }
     catch ( exc )
@@ -1110,7 +1111,6 @@ console.log ( "closing -----------------------" ) ;
   socketsToBeClosed.length = 0 ;
   for ( i = 0 ; i < socketsToBePINGed.length ; i++ )
   {
-console.log ( "PINGRequest -----------------------" ) ;
     try
     {
       socketsToBePINGed[i].socket.write ( se ) ;
@@ -1121,7 +1121,7 @@ console.log ( "PINGRequest -----------------------" ) ;
     }
   }
   socketsToBePINGed.length = 0 ;
-  setTimeout ( this._checkHeartbeat.bind ( this ), this._heartbeatIntervalMillis ) ;
+  setTimeout ( this._checkHeartbeat_bind, this._heartbeatIntervalMillis ) ;
 };
 /**
  * @method setConfig

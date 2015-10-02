@@ -35,6 +35,8 @@ public class Client
   SyncedQueue<Event> _CallbackIsolator = new SyncedQueue<Event>() ;
 
   String USERNAME = System.getProperty ( "user.name" ) ;
+	Long _heartbeatIntervalMillis = 0 ;
+
   static Hashtable<String,Client> _Instances = new Hashtable<String,Client>() ;
 
   static public Client getInstance()
@@ -80,6 +82,10 @@ public class Client
 		catch ( Exception exc )
 		{
 			System.err.println ( Util.toString ( exc ) ) ;
+		}
+		if ( USERNAME == null )
+		{
+			USERNAME = "guest" ;
 		}
 		user = new User ( USERNAME ) ;
 	}
@@ -600,6 +606,12 @@ public class Client
 			    		{
 	  						_emit ( "shutdown", null ) ;
 	  						break ;
+			    		}
+			    		if ( e.getType().equals ( "PINGRequest" ) )
+			    		{
+			    			e.setType ( "PINGResult" ) ;
+	  						_send ( e ) ;
+	  						continue ;
 			    		}
 		          if ( e.getType().equals ( "acquireSemaphoreResult" ) )
 		          {

@@ -106,6 +106,7 @@ var Client = function ( port, host )
   }
   this.user = new User ( this.USERNAME ) ;
   this._timeStamp = 0 ;
+  this._heartbeatIntervalMillis = 0 ;
 } ;
 util.inherits ( Client, EventEmitter ) ;
 Client.prototype.toString = function()
@@ -361,6 +362,7 @@ Client.prototype.connect = function()
             var json = e.serialize() ;
             thiz._stats.incrementOut ( json.length )
             s.write ( json ) ;
+            thiz._heartbeatIntervalMillis = e.control._heartbeatIntervalMillis ;
             return ;
           }
           if ( e.isBad() )

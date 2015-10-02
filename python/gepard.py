@@ -77,7 +77,6 @@ class Event ( object ):
 		s.write("[name='" + self.name + ",type='" + str(self.type) + "']\n" )
 		s.write("  control:\n" )
 		s.write("  " + str(self.control) )
-		# s.write(",user=" + str(self.user) )
 		if isinstance ( self.user, User ):
 			s.write("\n  user:\n    " + str(self.user) )
 		s.write("\n  body:\n  " + str(self.body) )
@@ -91,6 +90,8 @@ class Event ( object ):
 		return self.name
 	def getType ( self ):
 		return self.type
+	def setType ( self, type ):
+		self.type = type
 	def setUser ( self, user ):
 		self.user = user
 	def getUser ( self ):
@@ -265,7 +266,7 @@ class User ( object ):
 		s.write("(")
 		s.write(self.__class__.__name__)
 		s.write(")")
-		s.write("[id=" + self.id )
+		s.write("[id=" + str(self.id) )
 		s.write(",_pwd=" + "******" )
 		s.write(",key=" + str(self.key) )
 		s.write(",rights=" + str(self.rights) )
@@ -398,8 +399,11 @@ class Client:
 			self.USERNAME = os.environ.get ( "LOGNAME" )
 		else:
 			self.USERNAME = os.environ.get ( "USERNAME" )
-		self.user = User ( self.USERNAME )
 
+		if self.USERNAME == None:
+			selfUSERNAME = "guest"
+		self.user = User ( self.USERNAME )
+		self._heartbeatIntervalMillis = 0
 	def setDaemon(self,status=True):
 		self._workerIsDaemon = status
 	def createUniqueId(self):
@@ -638,6 +642,11 @@ class Client:
 					if e.getType() != None and e.getType() == "shutdown":
 						self._emit ( "shutdown", None, None )
 						break
+					if e.getType() != None and e.getType() == "PINGRequest":
+						e.setType ( "PINGResult" )
+						self._heartbeatIntervalMillis = e.__dict__["control"]["_heartbeatIntervalMillis"]
+						self._send ( e )
+						continue
 					if e.getType() == "acquireSemaphoreResult":
 						body = e.getBody()
 						resourceId = body.get ( "resourceId" )
