@@ -228,10 +228,7 @@ Client.prototype.connect = function()
         var uid = os.hostname() + "_" + this.localPort + "_" + new Date().getTime() + "_" + counter ;
         var ctx = thiz.pendingEventListenerList[i] ;
         ctx.e.setUniqueId ( uid ) ;
-        ctx.e.setTargetIsLocalHost ( thiz.brokerIsLocalHost() ) ;
-        json = ctx.e.serialize() ;
-        thiz._stats.incrementOut ( json.length )
-        this.write ( json ) ;
+        thiz.send ( ctx.e ) ;
       }
       thiz.pendingEventListenerList.length = 0 ;
     }
@@ -243,10 +240,7 @@ Client.prototype.connect = function()
         var uid = os.hostname() + "_" + this.localPort + "_" + new Date().getTime() + "_" + counter ;
         var ctx = thiz._pendingLockList[i] ;
         ctx.e.setUniqueId ( uid ) ;
-        ctx.e.setTargetIsLocalHost ( thiz.brokerIsLocalHost() ) ;
-        json = ctx.e.serialize() ;
-        thiz._stats.incrementOut ( json.length )
-        this.write ( json ) ;
+        thiz.send ( ctx.e ) ;
         thiz._acquiredResources[e.body.resourceId] = ctx;
       }
       thiz._pendingLockList.length = 0 ;
@@ -259,10 +253,7 @@ Client.prototype.connect = function()
         var uid = os.hostname() + "_" + this.localPort + "_" + new Date().getTime() + "_" + counter ;
         var ctx = thiz._pendingAcquireSemaphoreList[i] ;
         ctx.e.setUniqueId ( uid ) ;
-        ctx.e.setTargetIsLocalHost ( thiz.brokerIsLocalHost() ) ;
-        json = ctx.e.serialize() ;
-        thiz._stats.incrementOut ( json.length )
-        this.write ( json ) ;
+        thiz.send ( ctx.e ) ;
         thiz._acquiredSemaphores[e.body.resourceId] = ctx;
       }
       thiz._pendingAcquireSemaphoreList.length = 0 ;
@@ -358,11 +349,13 @@ Client.prototype.connect = function()
           if ( e.getType() === "PINGRequest" )
           {
             e.setType ( "PINGResult" ) ;
-            var s = thiz.getSocket() ;
-            var json = e.serialize() ;
-            thiz._stats.incrementOut ( json.length )
-            s.write ( json ) ;
-            thiz._heartbeatIntervalMillis = e.control._heartbeatIntervalMillis ;
+            thiz.send ( e ) ;
+            if ( thiz._heartbeatIntervalMillis <= 0 )
+            {
+              thiz._checkHeartbeat_bind = thiz._checkHeartbeat.bind ( thiz ) ;
+              thiz._heartbeatIntervalMillis = e.control._heartbeatIntervalMillis ;
+              setTimeout ( thiz._checkHeartbeat_bind, thiz._heartbeatIntervalMillis ) ;
+            }
             return ;
           }
           if ( e.isBad() )
@@ -515,6 +508,23 @@ Client.prototype.connect = function()
     thiz.alive = false ;
     thiz._private_emit ( "error", e ) ;
   });
+};
+Client.prototype._checkHeartbeat = function()
+{
+  if ( ! this.alive )
+  {
+    return ;
+  }
+  var now = new Date().getTime() ;
+  var heartbeatInterval = ( this._heartbeatIntervalMillis / 1000 ) ;
+  var heartbeatInterval_x_3 = ( this._heartbeatIntervalMillis / 1000 ) * 3 ;
+  var dt = ( now - this._timeStamp ) / 1000 ;
+  if ( dt > heartbeatInterval_x_3 )
+  {
+console.log ( "missing ping request -> end()" ) ;
+    this.socket.end() ;
+  }
+  setTimeout ( this._checkHeartbeat_bind, this._heartbeatIntervalMillis ) ;
 } ;
 Client.prototype._writeCallback = function()
 {
@@ -705,7 +715,8 @@ Client.prototype.emit = function ( params, callback, opts )
       e.setUser ( this.user ) ;
     }
     var json = e.serialize() ;
-    this._stats.incrementOut ( json.length )
+    this._stats.incrementOut ( json.length ) ;
+    this._timeStamp = new Date().getTime() ;
     s.write ( json, function()
     {
       if ( ctx.write ) ctx.write.apply ( thiz, arguments ) ;
@@ -900,10 +911,7 @@ Client.prototype.removeEventListener = function ( eventNameOrFunction )
     var e = new Event ( "system", "removeEventListener" ) ;
     e.setUser ( this.user ) ;
     e.body.eventNameList = eventNameList ;
-    var s = this.getSocket() ;
-    var json = e.serialize() ;
-    this._stats.incrementOut ( json.length )
-    s.write ( json ) ;
+    this.send ( e ) ;
   }
 };
 /**
@@ -1097,6 +1105,7 @@ Client.prototype.send = function ( e )
   var json = e.serialize() ;
   this._stats.incrementOut ( json.length )
   this.getSocket().write ( json ) ;
+  this._timeStamp = new Date().getTime() ;
 };
 /**
  * Description

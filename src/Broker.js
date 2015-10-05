@@ -1059,19 +1059,30 @@ Broker.prototype.listen = function ( port, callback )
                {
                  Log.notice ( 'server bound to port=' + thiz.port ) ;
                  setTimeout ( thiz._checkHeartbeat_bind, thiz._heartbeatIntervalMillis ) ;
-                 // setInterval ( thiz._checkHeartbeat_bind, thiz._heartbeatIntervalMillis ) ;
                } ;
   }
   this.server.listen ( this.port, callback ) ;
 };
 Broker.prototype._checkHeartbeat = function()
 {
+  if ( ! this.n )
+  {
+    this.n = 0
+  }
+//   this.n++ ;
+// console.log ( "this.n=" + this.n ) ;
+//   if ( this.n > 3 )
+//   {
+// console.log ( "No PING any more." ) ;
+//     setTimeout ( this._checkHeartbeat_bind, this._heartbeatIntervalMillis ) ;
+//     return ;
+//   }
   var socketsToBeClosed = [] ;
   var socketsToBePINGed = [] ;
   var i, conn ;
   var now = new Date().getTime() ;
   var heartbeatInterval = ( this._heartbeatIntervalMillis / 1000 ) ;
-  var heartbeatInterval_x_2 = ( this._heartbeatIntervalMillis / 1000 ) * 3 ;
+  var heartbeatInterval_x_3 = ( this._heartbeatIntervalMillis / 1000 ) * 3 ;
   var e = new Event ( "system", "PINGRequest" ) ;
   e.control._heartbeatIntervalMillis = this._heartbeatIntervalMillis ;
   var se = e.serialize() ;
@@ -1081,7 +1092,7 @@ Broker.prototype._checkHeartbeat = function()
     var dt = ( now - conn._timeStamp ) / 1000 ;
     try
     {
-      if ( dt > heartbeatInterval_x_2 )
+      if ( dt > heartbeatInterval_x_3 )
       {
         socketsToBeClosed.push ( conn ) ;
         continue ;

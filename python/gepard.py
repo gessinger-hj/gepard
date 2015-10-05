@@ -644,7 +644,8 @@ class Client:
 						break
 					if e.getType() != None and e.getType() == "PINGRequest":
 						e.setType ( "PINGResult" )
-						self._heartbeatIntervalMillis = e.__dict__["control"]["_heartbeatIntervalMillis"]
+						if e.__dict__["control"].get ( "_heartbeatIntervalMillis" ) != None:
+							self._heartbeatIntervalMillis = e.__dict__["control"]["_heartbeatIntervalMillis"]
 						self._send ( e )
 						continue
 					if e.getType() == "acquireSemaphoreResult":
