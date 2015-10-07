@@ -1065,10 +1065,10 @@ Broker.prototype.listen = function ( port, callback )
 };
 Broker.prototype._checkHeartbeat = function()
 {
-  if ( ! this.n )
-  {
-    this.n = 0
-  }
+  // if ( ! this.n )
+  // {
+  //   this.n = 0
+  // }
 //   this.n++ ;
 // console.log ( "this.n=" + this.n ) ;
 //   if ( this.n > 3 )
