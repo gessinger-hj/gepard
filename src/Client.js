@@ -354,7 +354,7 @@ Client.prototype.connect = function()
             {
               thiz._checkHeartbeat_bind = thiz._checkHeartbeat.bind ( thiz ) ;
               thiz._heartbeatIntervalMillis = e.control._heartbeatIntervalMillis ;
-              setTimeout ( thiz._checkHeartbeat_bind, thiz._heartbeatIntervalMillis ) ;
+              setInterval ( thiz._checkHeartbeat_bind, thiz._heartbeatIntervalMillis ) ;
             }
             return ;
           }
@@ -521,10 +521,9 @@ Client.prototype._checkHeartbeat = function()
   var dt = ( now - this._timeStamp ) / 1000 ;
   if ( dt > heartbeatInterval_x_3 )
   {
-console.log ( "missing ping request -> end()" ) ;
+    Log.log ( "missing ping request -> end()" ) ;
     this.socket.end() ;
   }
-  setTimeout ( this._checkHeartbeat_bind, this._heartbeatIntervalMillis ) ;
 } ;
 Client.prototype._writeCallback = function()
 {

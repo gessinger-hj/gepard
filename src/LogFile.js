@@ -95,10 +95,6 @@ LogFile.prototype.setLogger = function ( loggerInterface )
   // , warning: function ( str ) {}
   // , notice: function ( str ) {}
   // , info: function ( str ) {}
-    /**
-     * Description
-     * @param {} str
-     */
     debug: function ( str ) {}
   // , log: function ( str ) {}
   } ;
@@ -120,6 +116,10 @@ LogFile.prototype.setLogger = function ( loggerInterface )
   if ( ! o.notice ) o.notice = o.info ;
 
   this._LogCallback = o ;
+};
+LogFile.prototype.isDEBUG = function()
+{
+  return this._LEVEL & this.LogLevel.DEBUG ;
 };
 /**
  * Description
@@ -160,7 +160,7 @@ LogFile.prototype.init = function ( s )
   }
 
   if ( ! s ) s = "" ;
-  if ( tango_app_str ) s = tango_app_str + "," + s ;
+  if ( tango_app_str ) s = s + "," + tango_app_str ;
 
   var str = s ;
   var initString = str ;
