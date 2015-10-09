@@ -849,20 +849,24 @@ Broker.prototype._shutdown = function ( conn, e )
   }
   else
   {
-try
-{
-    Log.notice ( 'server shutting down' ) ;
-    e.control.status = { code:0, name:"ack" } ;
-    conn.write ( e ) ;
-    this._closeAllSockets() ;
-    this.server.unref() ;
-    Log.notice ( 'server shut down' ) ;
-    this.emit ( "shutdown" ) ;
-}
-catch ( exc )
-{
-  T.log ( exc ) ;
-}
+    try
+    {
+      if ( this.intervallId )
+      {
+        clearInterval ( this.intervallId ) ;
+      }
+      Log.notice ( 'server shutting down' ) ;
+      e.control.status = { code:0, name:"ack" } ;
+      conn.write ( e ) ;
+      this._closeAllSockets() ;
+      this.server.unref() ;
+      Log.notice ( 'server shut down' ) ;
+      this.emit ( "shutdown" ) ;
+    }
+    catch ( exc )
+    {
+      T.log ( exc ) ;
+    }
   }
 };
 Broker.prototype._acquireSemaphoreRequest = function ( conn, e )
@@ -1058,7 +1062,7 @@ Broker.prototype.listen = function ( port, callback )
     callback = function()
                {
                  Log.notice ( 'server bound to port=' + thiz.port ) ;
-                 setInterval ( thiz._checkHeartbeat_bind, thiz._heartbeatIntervalMillis ) ;
+                 thiz.intervallId = setInterval ( thiz._checkHeartbeat_bind, thiz._heartbeatIntervalMillis ) ;
                } ;
   }
   this.server.listen ( this.port, callback ) ;

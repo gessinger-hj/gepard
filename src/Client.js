@@ -66,7 +66,7 @@ var Client = function ( port, host )
   this.pendingResultList            = {} ;
   this.callbacks                    = {} ;
   this.pendingEventListenerList     = [] ;
-  this.eventListenerFunctions       = new MultiHash() ;
+  this.eventNameToListener          = new MultiHash() ;
   this.listenerFunctionsList        = [] ;
   this._pendingLockList             = [] ;
   this._acquiredResources           = {} ;
@@ -182,7 +182,20 @@ Client.prototype.connect = function()
   if ( this.port  ) p.port = this.port ;
   if ( this.host  ) p.host = this.host ;
   var thiz = this ;
-  this.socket = net.connect ( p, function()
+  this.socket = net.connect ( p ) ;
+  this.socket.on ( 'end', function socket_on_end()
+  {
+    thiz.alive = false ;
+    thiz.socket = null ;
+    thiz._private_emit ( "end" ) ;
+  });
+  this.socket.on ( 'error', function socket_on_error ( e )
+  {
+    thiz.alive = false ;
+    thiz.socket = null ;
+    thiz._private_emit ( "error", e ) ;
+  });
+  this.socket.on ( "connect", function()
   {
     var json
     thiz.brokerIsLocalHost() ;
@@ -352,9 +365,8 @@ Client.prototype.connect = function()
             thiz.send ( e ) ;
             if ( thiz._heartbeatIntervalMillis <= 0 )
             {
-              thiz._checkHeartbeat_bind = thiz._checkHeartbeat.bind ( thiz ) ;
               thiz._heartbeatIntervalMillis = e.control._heartbeatIntervalMillis ;
-              setInterval ( thiz._checkHeartbeat_bind, thiz._heartbeatIntervalMillis ) ;
+              thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._heartbeatIntervalMillis ) ;
             }
             return ;
           }
@@ -450,7 +462,7 @@ Client.prototype.connect = function()
             continue ;
           }
           found = false ;
-          callbackList = thiz.eventListenerFunctions.get ( e.getName() ) ;
+          callbackList = thiz.eventNameToListener.get ( e.getName() ) ;
           if ( callbackList )
           {
             found = true ;
@@ -498,21 +510,60 @@ Client.prototype.connect = function()
       }
     }
   } ) ;
-  this.socket.on ( 'end', function socket_on_end()
+};
+Client.prototype.isRunning = function ( callback )
+{
+  var thiz = this ;
+  var socket ;
+  var p = {} ;
+  if ( this.port  ) p.port = this.port ;
+  if ( this.host  ) p.host = this.host ;
+
+  try
   {
-    thiz.alive = false ;
-    thiz._private_emit ( "end" ) ;
-  });
-  this.socket.on ( 'error', function socket_on_error ( e )
+    socket = net.connect ( p ) ;
+    socket.on ( 'error', function socket_on_error( data )
+    {
+      callback.call ( thiz, false ) ;
+      socket.end() ;
+    });
+    socket.on ( "connect", function()
+    {
+      callback.call ( thiz, true ) ;
+      socket.end() ;
+    });
+  }
+  catch ( exc )
   {
-    thiz.alive = false ;
-    thiz._private_emit ( "error", e ) ;
-  });
+  }
 };
 Client.prototype._checkHeartbeat = function()
 {
+  var i ;
+  var thiz = this ;
   if ( ! this.alive )
   {
+    this.isRunning ( function test_isRunning ( isRunning )
+    {
+      if ( ! isRunning )
+      {
+        return ;
+      }
+      Log.logln ( "re-connect" ) ;
+      // set up new event listener
+      var keyList = this.eventNameToListener.getKeys() ;
+      if ( keyList.length )
+      {
+        var e = new Event ( "system", "addEventListener" ) ;
+        if ( thiz.user )
+        {
+          e.setUser ( thiz.user ) ;
+        }
+        e.body.eventNameList = keyList ;
+        thiz.pendingEventListenerList.push ( { e:e } ) ;
+        thiz.getSocket() ;
+      }
+    }) ;
     return ;
   }
   var now = new Date().getTime() ;
@@ -521,8 +572,8 @@ Client.prototype._checkHeartbeat = function()
   var dt = ( now - this._timeStamp ) / 1000 ;
   if ( dt > heartbeatInterval_x_3 )
   {
-    Log.log ( "missing ping request -> end()" ) ;
-    this.socket.end() ;
+    Log.logln ( "missing ping request -> end()" ) ;
+    this.end ( true ) ;
   }
 } ;
 Client.prototype._writeCallback = function()
@@ -727,17 +778,24 @@ Client.prototype.emit = function ( params, callback, opts )
  * @method end
  * @return 
  */
-Client.prototype.end = function()
+Client.prototype.end = function ( keepDataForReconnect )
 {
   this.alive = false ;
   if ( this.socket ) this.socket.end() ;
   this.socket = null ;
   this.pendingEventList = [] ;
-  this.user = null ;
   this.pendingResultList = {} ;
   this.pendingEventListenerList = [] ;
-  this.eventListenerFunctions.flush() ;
-  this.listenerFunctionsList = [] ;
+  if ( keepDataForReconnect !== true )
+  {
+    this.user = null ;
+    this.eventNameToListener.flush() ;
+    this.listenerFunctionsList = [] ;
+    if ( this.intervalId )
+    {
+      clearInterval ( this.intervalId ) ;
+    }
+  }
 };
 /**
  * Description
@@ -779,7 +837,7 @@ Client.prototype.addEventListener = function ( eventNameList, callback )
   var i ;
   for ( i = 0 ; i < eventNameList.length ; i++ )
   {
-    this.eventListenerFunctions.put ( eventNameList[i], callback ) ;
+    this.eventNameToListener.put ( eventNameList[i], callback ) ;
   }
   for ( i = 0 ; i < eventNameList.length ; i++ )
   {
@@ -799,12 +857,12 @@ Client.prototype.addEventListener = function ( eventNameList, callback )
 
   if ( ! this.socket )
   {
-    this.pendingEventListenerList.push ( { e:e, callback:callback } ) ;
+    this.pendingEventListenerList.push ( { e:e } ) ;
   }
   else
   if ( this.pendingEventListenerList.length )
   {
-    this.pendingEventListenerList.push ( { e:e, callback:callback } ) ;
+    this.pendingEventListenerList.push ( { e:e } ) ;
   }
   var s = this.getSocket() ;
   if ( ! this.pendingEventListenerList.length )
@@ -885,7 +943,7 @@ Client.prototype.removeEventListener = function ( eventNameOrFunction )
     if ( typeof item === 'string' )
     {
       eventNameList.push ( item ) ;
-      var list = this.eventListenerFunctions.get ( item ) ;
+      var list = this.eventNameToListener.get ( item ) ;
       if ( list )
       {
         for ( j = 0 ; j < list.length ; j++ )
@@ -893,17 +951,17 @@ Client.prototype.removeEventListener = function ( eventNameOrFunction )
           this.listenerFunctionsList.remove ( list[j] ) ;
         }
       }
-      this.eventListenerFunctions.remove ( item ) ;
+      this.eventNameToListener.remove ( item ) ;
     }
     else
     if ( typeof item === 'function' )
     {
-      var keys = this.eventListenerFunctions.getKeysOf ( item ) ;
+      var keys = this.eventNameToListener.getKeysOf ( item ) ;
       for ( i = 0 ; i < keys.length ; i++ )
       {
         eventNameList.push ( keys[i] ) ;
       }
-      this.eventListenerFunctions.remove ( item ) ;
+      this.eventNameToListener.remove ( item ) ;
       this.listenerFunctionsList.remove ( item ) ;
     }
     if ( ! eventNameList.length ) return ;

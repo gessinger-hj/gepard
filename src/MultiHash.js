@@ -6,6 +6,7 @@ tangojs.MultiHash = function()
 {
   this._hash = {} ;
   this.className = "MultiHash" ;
+  this.__defineGetter__( "length", this.size.bind ( this ) ) ;
 };
 tangojs.MultiHash.prototype =
 {
@@ -110,6 +111,11 @@ tangojs.MultiHash.prototype =
   {
     var l = this._hash[key] ;
     return l ;
+  },
+  size: function()
+  {
+    var k = this.getKeys() ;
+    return k.length ;
   },
   /**
    * Description
