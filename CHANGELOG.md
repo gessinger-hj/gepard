@@ -1,5 +1,5 @@
 ## 1.3.3 (2015-10-09)
-- JavaScript: Introduce re-connection and re-installation af all client's listeners in case Broker was down/not reachable and is available again after.
+- JavaScript: Introduce re-connection and re-installation af all client's listeners in case Broker was down/not reachable and is available again.
 
 ## 1.3.3 (2015-10-02)
 - Introduce Heartbeat for all flavours.

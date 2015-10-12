@@ -104,14 +104,21 @@ var Client = function ( port, host )
   {
     this.USERNAME = "guest" ;
   }
-  this.user = new User ( this.USERNAME ) ;
-  this._timeStamp = 0 ;
-  this._heartbeatIntervalMillis = 0 ;
+  this.user                     = new User ( this.USERNAME ) ;
+  this._timeStamp               = 0 ;
+  this._heartbeatIntervalMillis = 5000 ;
+  this._reconnect               = true ;
+  this.firstPING                = true ;
 } ;
 util.inherits ( Client, EventEmitter ) ;
 Client.prototype.toString = function()
 {
   return "(Client)[connected=" + ( this.socket ? true : false ) + "]" ;
+};
+Client.prototype.setReconnect = function ( state )
+{
+  state = !! state ;
+  this._reconnect = state ;
 };
 Client.prototype.holdsLocksOrSemaphores = function()
 {
@@ -355,19 +362,25 @@ Client.prototype.connect = function()
         {
           if ( e.getType() === "shutdown" )
           {
-            thiz.end() ;
             thiz._private_emit ( "shutdown" ) ;
+            if ( thiz._reconnect ) thiz.end ( true ) ;
+            else                   thiz.end()
             return ;
           }
           if ( e.getType() === "PINGRequest" )
           {
             e.setType ( "PINGResult" ) ;
             thiz.send ( e ) ;
-            if ( thiz._heartbeatIntervalMillis <= 0 )
+            if ( thiz.firstPING )
             {
               thiz._heartbeatIntervalMillis = e.control._heartbeatIntervalMillis ;
+              if ( this.intervalId )
+              {
+                clearInterval ( this.intervalId ) ;
+              }
               thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._heartbeatIntervalMillis ) ;
             }
+            thiz.firstPING = false ;
             return ;
           }
           if ( e.isBad() )
@@ -543,14 +556,17 @@ Client.prototype._checkHeartbeat = function()
   var thiz = this ;
   if ( ! this.alive )
   {
+    if ( ! this._reconnect )
+    {
+      if  ( this.intervalId ) clearInterval ( this.intervalId ) ;
+      return ;
+    }
     this.isRunning ( function test_isRunning ( isRunning )
     {
       if ( ! isRunning )
       {
         return ;
       }
-      Log.logln ( "re-connect" ) ;
-      // set up new event listener
       var keyList = this.eventNameToListener.getKeys() ;
       if ( keyList.length )
       {
@@ -562,6 +578,7 @@ Client.prototype._checkHeartbeat = function()
         e.body.eventNameList = keyList ;
         thiz.pendingEventListenerList.push ( { e:e } ) ;
         thiz.getSocket() ;
+        Log.logln ( "re-connect in progress." ) ;
       }
     }) ;
     return ;
@@ -573,7 +590,12 @@ Client.prototype._checkHeartbeat = function()
   if ( dt > heartbeatInterval_x_3 )
   {
     Log.logln ( "missing ping request -> end()" ) ;
-    this.end ( true ) ;
+    if ( ! this._reconnect )
+    {
+      this.end() ;
+      if  ( this.intervalId ) clearInterval ( this.intervalId ) ;
+    }
+    else this.end ( true ) ;
   }
 } ;
 Client.prototype._writeCallback = function()
@@ -593,6 +615,10 @@ Client.prototype.getSocket = function()
   if ( ! this.socket )
   {
     this.connect() ;
+    if ( ! this.intervalId )
+    {
+      this.intervalId = setInterval ( this._checkHeartbeat.bind ( this ), this._heartbeatIntervalMillis ) ;
+    }
   }
   return this.socket ;
 };
@@ -864,14 +890,33 @@ Client.prototype.addEventListener = function ( eventNameList, callback )
   {
     this.pendingEventListenerList.push ( { e:e } ) ;
   }
-  var s = this.getSocket() ;
-  if ( ! this.pendingEventListenerList.length )
+  if ( ! this.socket && this._reconnect )
   {
-    counter++ ;
-    var uid = os.hostname() + "_" + this.localPort + "_" + new Date().getTime() + "_" + counter ;
-    e.setUniqueId ( uid ) ;
     var thiz = this ;
-    this.send ( e ) ;
+    var id = setInterval ( function cb1()
+    {
+      thiz.isRunning ( function cb2 ( state )
+      {
+        if ( !state )
+        {
+          return ;
+        }
+        clearInterval ( id ) ;
+        s = thiz.getSocket() ;
+      }) ;
+    }, this._heartbeatIntervalMillis ) ;
+  }
+  else
+  {
+    var s = this.getSocket() ;
+    if ( ! this.pendingEventListenerList.length )
+    {
+      counter++ ;
+      var uid = os.hostname() + "_" + this.localPort + "_" + new Date().getTime() + "_" + counter ;
+      e.setUniqueId ( uid ) ;
+      var thiz = this ;
+      this.send ( e ) ;
+    }
   }
 };
 /**
