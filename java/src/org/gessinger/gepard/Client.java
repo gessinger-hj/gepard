@@ -727,6 +727,7 @@ public class Client
 		{
 			return null ;
 		}
+System.out.println ( sb ) ;
     return sb.toString() ;
 	}
 	class TT extends TimerTask
