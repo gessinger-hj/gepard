@@ -642,8 +642,8 @@ class Client:
 					if e.getType() != None and e.getType() == "shutdown":
 						self._emit ( "shutdown", None, None )
 						break
-					if e.getType() != None and e.getType() == "PINGRequest":
-						e.setType ( "PINGResult" )
+					if e.getType() != None and e.getType() == "PING":
+						e.setType ( "PONG" )
 						if e.__dict__["control"].get ( "_heartbeatIntervalMillis" ) != None:
 							self._heartbeatIntervalMillis = e.__dict__["control"]["_heartbeatIntervalMillis"]
 						self._send ( e )

@@ -106,7 +106,8 @@ var Client = function ( port, host )
   }
   this.user                     = new User ( this.USERNAME ) ;
   this._timeStamp               = 0 ;
-  this._heartbeatIntervalMillis = 5000 ;
+  this._heartbeatIntervalMillis = 10000 ;
+  this._reconnectIntervalMillis = 5000 ;
   this._reconnect               = true ;
   this.firstPING                = true ;
 } ;
@@ -193,8 +194,13 @@ Client.prototype.connect = function()
   this.socket.on ( 'end', function socket_on_end()
   {
     thiz.alive = false ;
-    thiz.socket = null ;
     thiz._private_emit ( "end" ) ;
+    if ( thiz.intervalId ) clearInterval ( thiz.intervalId ) ;
+    if ( this.keepDataForReconnect )
+    {
+      thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._reconnectIntervalMillis ) ;
+    }
+    thiz.socket = null ;
   });
   this.socket.on ( 'error', function socket_on_error ( e )
   {
@@ -367,9 +373,9 @@ Client.prototype.connect = function()
             else                   thiz.end()
             return ;
           }
-          if ( e.getType() === "PINGRequest" )
+          if ( e.getType() === "PING" )
           {
-            e.setType ( "PINGResult" ) ;
+            e.setType ( "PONG" ) ;
             thiz.send ( e ) ;
             if ( thiz.firstPING )
             {
@@ -580,6 +586,8 @@ Client.prototype._checkHeartbeat = function()
         thiz.getSocket() ;
         Log.logln ( "re-connect in progress." ) ;
       }
+      if  ( thiz.intervalId ) clearInterval ( thiz.intervalId ) ;
+      thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._heartbeatIntervalMillis ) ;
     }) ;
     return ;
   }
@@ -595,7 +603,12 @@ Client.prototype._checkHeartbeat = function()
       this.end() ;
       if  ( this.intervalId ) clearInterval ( this.intervalId ) ;
     }
-    else this.end ( true ) ;
+    else
+    {
+      if  ( this.intervalId ) clearInterval ( this.intervalId ) ;
+      this.intervalId = setInterval ( this._checkHeartbeat.bind ( this ), this._reconnectIntervalMillis ) ;
+      this.end ( true ) ;
+    }
   }
 } ;
 Client.prototype._writeCallback = function()
@@ -615,10 +628,6 @@ Client.prototype.getSocket = function()
   if ( ! this.socket )
   {
     this.connect() ;
-    if ( ! this.intervalId )
-    {
-      this.intervalId = setInterval ( this._checkHeartbeat.bind ( this ), this._heartbeatIntervalMillis ) ;
-    }
   }
   return this.socket ;
 };
@@ -807,7 +816,7 @@ Client.prototype.emit = function ( params, callback, opts )
 Client.prototype.end = function ( keepDataForReconnect )
 {
   this.alive = false ;
-  if ( this.socket ) this.socket.end() ;
+  if ( this.socket ) { this.socket.end() ; this.socket.keepDataForReconnect = keepDataForReconnect ; }
   this.socket = null ;
   this.pendingEventList = [] ;
   this.pendingResultList = {} ;
@@ -817,10 +826,8 @@ Client.prototype.end = function ( keepDataForReconnect )
     this.user = null ;
     this.eventNameToListener.flush() ;
     this.listenerFunctionsList = [] ;
-    if ( this.intervalId )
-    {
-      clearInterval ( this.intervalId ) ;
-    }
+    if ( this.intervalId ) clearInterval ( this.intervalId ) ;
+    this.intervalId = null ;
   }
 };
 /**
@@ -890,23 +897,23 @@ Client.prototype.addEventListener = function ( eventNameList, callback )
   {
     this.pendingEventListenerList.push ( { e:e } ) ;
   }
-  if ( ! this.socket && this._reconnect )
-  {
-    var thiz = this ;
-    var id = setInterval ( function cb1()
-    {
-      thiz.isRunning ( function cb2 ( state )
-      {
-        if ( !state )
-        {
-          return ;
-        }
-        clearInterval ( id ) ;
-        s = thiz.getSocket() ;
-      }) ;
-    }, this._heartbeatIntervalMillis ) ;
-  }
-  else
+  // if ( ! this.socket && this._reconnect )
+  // {
+  //   var thiz = this ;
+  //   var id = setInterval ( function cb1()
+  //   {
+  //     thiz.isRunning ( function cb2 ( state )
+  //     {
+  //       if ( !state )
+  //       {
+  //         return ;
+  //       }
+  //       clearInterval ( id ) ;
+  //       s = thiz.getSocket() ;
+  //     }) ;
+  //   }, this._reconnectIntervalMillis ) ;
+  // }
+  // else
   {
     var s = this.getSocket() ;
     if ( ! this.pendingEventListenerList.length )

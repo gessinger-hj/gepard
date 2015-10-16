@@ -375,7 +375,7 @@ var Broker = function ( port, ip )
   });
   var ee = new Event() ;
   ee.addClassNameToConstructor ( "FileReference", FileReference ) ;
-  this._heartbeatIntervalMillis = 5000 ;
+  this._heartbeatIntervalMillis = 10000 ;
 };
 
 util.inherits ( Broker, EventEmitter ) ;
@@ -690,7 +690,7 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
   {
     return ;
   }
-  if ( e.getType() === "PINGResult" )
+  if ( e.getType() === "PONG" )
   {
     return ;
   }
@@ -1089,7 +1089,7 @@ Broker.prototype._checkHeartbeat = function()
   var now = new Date().getTime() ;
   var heartbeatInterval = ( this._heartbeatIntervalMillis / 1000 ) ;
   var heartbeatInterval_x_3 = ( this._heartbeatIntervalMillis / 1000 ) * 3 ;
-  var e = new Event ( "system", "PINGRequest" ) ;
+  var e = new Event ( "system", "PING" ) ;
   e.control._heartbeatIntervalMillis = this._heartbeatIntervalMillis ;
   var se = e.serialize() ;
   for ( i = 0 ; i < this._connectionList.length ; i++ )

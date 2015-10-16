@@ -35,7 +35,7 @@ public class Client
   SyncedQueue<Event> _CallbackIsolator = new SyncedQueue<Event>() ;
 
   String USERNAME = System.getProperty ( "user.name" ) ;
-	Long _heartbeatIntervalMillis = 0 ;
+	Long _heartbeatIntervalMillis = 0L ;
 
   static Hashtable<String,Client> _Instances = new Hashtable<String,Client>() ;
 
@@ -607,9 +607,9 @@ public class Client
 	  						_emit ( "shutdown", null ) ;
 	  						break ;
 			    		}
-			    		if ( e.getType().equals ( "PINGRequest" ) )
+			    		if ( e.getType().equals ( "PING" ) )
 			    		{
-			    			e.setType ( "PINGResult" ) ;
+			    			e.setType ( "PONG" ) ;
 	  						_send ( e ) ;
 	  						continue ;
 			    		}
