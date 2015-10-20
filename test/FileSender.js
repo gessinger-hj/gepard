@@ -25,14 +25,18 @@ if ( require.main === module )
     }
    	var c = new Client() ;
     var event = new Event ( "__FILE__" ) ;
-    var fileName = T.getProperty ( "file", "FileSender.js" ) ;
-    var fr = new FileReference ( fileName ) ;
+    var file = T.getProperty ( "file", "FileSender.js" ) ;
+    var fr = new FileReference ( file ) ;
     event.putValue ( "FR", fr ) ;
     c.request ( event, function ( e )
     {
       if ( e.isBad() )
       {
         console.log ( e ) ;
+      }
+      else
+      {
+        console.log ( "File " + file + " sent successfully." )
       }
 			this.end() ;
     }) ;

@@ -77,6 +77,7 @@ FileReference.prototype.write = function ( fullFileName )
     , fd: null
     , autoClose: true
     } ;
+    var stat = fs.statSync ( this.path ) ;
     ws = fs.createWriteStream ( fullFileName, { encoding: null } ) ;
     var rs = fs.createReadStream ( this.path, options ) ;
     rs.pipe ( ws ) ;

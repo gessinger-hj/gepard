@@ -41,23 +41,18 @@ fr = gepard.FileReference ( "data.bin" )
 e = gepard.Event ( "__FILE__" )
 e.putValue ( "FR", fr )
 
-t = e.serialize()
-# print ( t )
+e.setUser ( gepard.User ( "gess" ) )
 
-ee = gepard.Event.deserialize ( t )
+t = e.serialize()
+print ( t )
+
+# ee = gepard.Event.deserialize ( t )
 # print ( ee )
 
-FR = ee.getValue ( "FR" )
-print ( str ( FR ) )
-print ( type(FR["data"]) )
+# FR = ee.getValue ( "FR" )
+# print ( str ( FR ) )
 
-import subprocess
 
-proc = subprocess.Popen ( "/sbin/ifconfig", stdout=subprocess.PIPE ) ;
-print ( proc.stdout )
-for line in proc.stdout:
-   #the real code does filtering here
-   print ( "test:", line.rstrip() )
 # print ( type(t) )
 
 # _NQ = gepard.NamedQueue() ;

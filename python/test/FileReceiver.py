@@ -22,8 +22,11 @@ def on___FILE__ ( e ):
 	FR = e.removeValue ( "FR" )
 	print ( FR.getName() + " received." ) ;
 	fname = FR.getName() + ".py.in"
-	FR.write ( fname ) ;
-	print ( fname + " written.")
+	try:
+		FR.write ( fname ) ;
+		print ( fname + " written.")
+	except Exception as exc:
+		print ( exc )
 	e.sendBack() ;
 
 client.on ( "__FILE__", on___FILE__ )

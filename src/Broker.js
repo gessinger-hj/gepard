@@ -443,6 +443,10 @@ Broker.prototype._ondata = function ( socket, chunk )
   }
   var mm = chunk.toString() ;
   var conn = this._connections[socket.sid] ;
+  if ( ! conn )
+  {
+    return ;
+  }
   conn.setTimestamp() ;
   var i, j, found ;
   var eventNameList ;

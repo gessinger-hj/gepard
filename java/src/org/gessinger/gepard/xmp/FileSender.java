@@ -24,7 +24,8 @@ public class FileSender
     String name = "__FILE__" ;
 
     Event event = new Event ( "__FILE__" ) ;
-    FileReference fr = new FileReference ( "xxx.js" ) ;
+    final String file = "xxx.js" ;
+    FileReference fr = new FileReference ( file ) ;
     event.putValue ( "FR", fr ) ;
     client.request ( event, new ResultCallback()
     {
@@ -36,8 +37,7 @@ public class FileSender
         }
         else
         {
-          FileReference FR = (FileReference) e.getValue ( "FR" ) ;
-          System.out.println ( FR ) ;
+          System.out.println ( "File " + file + " sent successfully." ) ;
         }
         client.close() ;
       }

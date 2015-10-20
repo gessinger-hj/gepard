@@ -44,8 +44,6 @@ class Event ( object ):
 			obj = name
 			self.className = self.__class__.__name__
 			self.name = obj["name"]
-			if 'user' in obj and obj["user"] != None:
-				self.user = User ( obj["user"] )
 			if 'type' in obj and obj["type"] != None:
 				self.type = obj["type"]
 			self.control = obj["control"]
@@ -203,15 +201,16 @@ class Event ( object ):
 						 }
 		if isinstance ( obj, Event ):
 			juser = None
-			if obj.user:
+			if obj.user != None:
 				juser = obj.user.toJSON()
-			return { 'className': obj.className
-						 , 'name':obj.name
-						 , "type":obj.type
-						 , "body":obj.body
-						 , "control":obj.control
-						 , "user":juser
-						 }
+			ju = { 'className': obj.className
+						, 'name':obj.name
+						, "type":obj.type
+						, "body":obj.body
+						, "control":obj.control
+						, "user":juser
+						}
+			return ju
 		if hasattr ( obj, "toJSON" ) and callable ( getattr ( obj, "toJSON" ) ):
 			m = getattr ( obj, "toJSON" )
 			if m != None:
@@ -274,12 +273,13 @@ class User ( object ):
 		return s.getvalue()
 
 	def toJSON(self):
-		return { 'className': self.className
-					 , "id":self.id
-					 , "key":self.key
-					 , "_pwd":self._pwd
-					 , "rights":self.rights
-					 }
+		ju = { 'className': self.className
+					, "id":self.id
+					, "key":self.key
+					, "_pwd":self._pwd
+					, "rights":self.rights
+					}
+		return ju
 	def addRight ( self, name, value ):
 		self.rights[name] = value
 	def getRight ( self, name ):

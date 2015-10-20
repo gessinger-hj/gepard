@@ -31,7 +31,7 @@ if ( require.main === module )
 		{
 			var FR = e.removeValue ( "FR" ) ;
 			console.log ( FR.getName() + " received." ) ;
-			var fname = FR.getName() + ".js.in" ;
+			var fname = FR.getName() + ".in" ;
 			try
 			{
 				FR.write ( fname ) ;
