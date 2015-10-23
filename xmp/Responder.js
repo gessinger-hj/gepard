@@ -2,11 +2,9 @@
 
 if ( require.main === module )
 {
-	var T			= require ( "../src/Tango" ) ;
-	var Client = require ( "../src/Client" ) ;
-	var Admin	= require ( "../src/Admin" ) ;
+  var gepard = require ( "gepard" ) ;
 
-	if ( T.getProperty ( "help" ) )
+	if ( gepard.getProperty ( "help" ) )
 	{
 		console.log (
 			"Gepard Examples: Responder, respond to a request to with the name 'getFileList'.\n"
@@ -15,7 +13,7 @@ if ( require.main === module )
 		process.exit() ;
 	}
 
-	new Admin().isRunning ( function admin_is_running ( state )
+	new gepard.Admin().isRunning ( function admin_is_running ( state )
 	{
 		if ( ! state )
 		{
@@ -28,8 +26,8 @@ if ( require.main === module )
 	function execute()
 	{
 		var name = "getFileList" ;
-		var c = new Client() ;
-		var respondDelayed = T.getBool ( "delay", false )
+		var c = gepard.getClient() ;
+		var respondDelayed = gepard.getBool ( "delay", false )
 		console.log ( "Listen for requests with name=" + name ) ;
 		var fileList = [ "a.js", "b.js", "c.js" ] ;
 		c.on ( name, function(e)

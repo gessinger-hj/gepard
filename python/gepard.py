@@ -488,7 +488,7 @@ class Client:
 			self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,                                                                                                                     
                  struct.pack('ii', l_onoff, l_linger))
 			if self.sock.getpeername()[0] == self.sock.getsockname()[0]:
-				FileReference.targetIsLocalHost = True
+				FileContainer.targetIsLocalHost = True
 			self._startCallbackWorker()
 			self._startWorker()
 		except IOError as e:
@@ -1099,11 +1099,11 @@ class util ( object ):
 			return defaultProperty
 		return v
 
-class FileReference(object):
-	"""docstring for FileReference"""
+class FileContainer(object):
+	"""docstring for FileContainer"""
 	targetIsLocalHost = False
 	def __init__(self, file=None):
-		self.className = "FileReference"
+		self.className = "FileContainer"
 		self.path = ""
 		self.name = ""
 		self.data = None

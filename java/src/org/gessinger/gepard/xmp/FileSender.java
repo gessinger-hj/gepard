@@ -25,7 +25,7 @@ public class FileSender
 
     Event event = new Event ( "__FILE__" ) ;
     final String file = "xxx.js" ;
-    FileReference fr = new FileReference ( file ) ;
+    FileContainer fr = new FileContainer ( file ) ;
     event.putValue ( "FR", fr ) ;
     client.request ( event, new ResultCallback()
     {

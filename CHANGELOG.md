@@ -14,11 +14,11 @@
 - ConnectionHook: getUSERNAME()
 
 ## 1.3.3 (2015-09-02)
-- introduce the FileReference class in Python for minimal load.
+- introduce the FileContainer class in Python for minimal load.
 - Python: getProperty() with optional default
 
 ## 1.3.3 (2015-08-31)
-- introduce the FileReference class in JavaScript and Java for minimal load.
+- introduce the FileContainer class in JavaScript and Java for minimal load.
 - fix issue for Buffer.toJSON in node version <= 0.10
 
 ## 1.3.1 (2015-08-18)

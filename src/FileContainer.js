@@ -7,9 +7,9 @@ var fs   = require ( 'fs') ;
  * @constructor
  * @return 
  */
-var FileReference = function ( file )
+var FileContainer = function ( file )
 {
-  this.className = "FileReference" ;
+  this.className = "FileContainer" ;
   this.path = "" ;
   this.name = "" ;
   this.data = null ;
@@ -27,11 +27,11 @@ var FileReference = function ( file )
  * @method toString
  * @return string
  */
-FileReference.prototype.toString = function()
+FileContainer.prototype.toString = function()
 {
   return "(" + this.className + ")[  \npath=" + this.path + "\n  name=" + this.name + "\n  data=" + this.data + "\n]" ;
 };
-FileReference.prototype.setTargetIsLocalHost = function ( state )
+FileContainer.prototype.setTargetIsLocalHost = function ( state )
 {
   this.targetIsLocalHost = !!state ;
 };
@@ -39,7 +39,7 @@ FileReference.prototype.setTargetIsLocalHost = function ( state )
  * Description
  * @return string 
  */
-FileReference.prototype.toJSON = function()
+FileContainer.prototype.toJSON = function()
 {
   var data = this.data ;
   if ( ! this.targetIsLocalHost && ! data )
@@ -47,9 +47,9 @@ FileReference.prototype.toJSON = function()
     data = fs.readFileSync ( this.path ) ;
   }
   delete this.targetIsLocalHost ;
-  return { className:'FileReference', path: this.path, name:this.name, data:data } ;
+  return { className:'FileContainer', path: this.path, name:this.name, data:data } ;
 };
-FileReference.prototype.getBytes = function()
+FileContainer.prototype.getBytes = function()
 {
   if ( this.data )
   {
@@ -57,15 +57,15 @@ FileReference.prototype.getBytes = function()
   }
   return fs.readFileSync ( this.path ) ;
 };
-FileReference.prototype.getName = function()
+FileContainer.prototype.getName = function()
 {
   return this.name ;
 };
-FileReference.prototype.getPath = function()
+FileContainer.prototype.getPath = function()
 {
   return this.path ;
 };
-FileReference.prototype.write = function ( fullFileName )
+FileContainer.prototype.write = function ( fullFileName )
 {
   var ws ;
   if ( ! this.data )
@@ -90,4 +90,4 @@ FileReference.prototype.write = function ( fullFileName )
   }
 };
 
-module.exports = FileReference ;
+module.exports = FileContainer ;

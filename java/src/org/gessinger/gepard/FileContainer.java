@@ -4,13 +4,13 @@ import java.util.* ;
 import java.io.* ;
 import java.text.* ;
 
-public class FileReference implements JSONEncodable, JSONDecodable, HasSetTargetIsLocalHost
+public class FileContainer implements JSONEncodable, JSONDecodable, HasSetTargetIsLocalHost
 {
 	String path                         = "" ;
 	String name                         = "" ;
 	byte[] data                         = null ;
 	transient boolean targetIsLocalHost = false ;
-	public FileReference ( String file )
+	public FileContainer ( String file )
 	throws Exception
 	{
 	  if ( file != null )
@@ -21,7 +21,7 @@ public class FileReference implements JSONEncodable, JSONDecodable, HasSetTarget
 	    name = path.substring ( path.lastIndexOf ( "/" ) + 1 ) ;
 	  }
 	}
-	public FileReference()
+	public FileContainer()
 	throws Exception
 	{
 	}
@@ -49,7 +49,7 @@ public class FileReference implements JSONEncodable, JSONDecodable, HasSetTarget
 		  data = getBytes() ;
 		}
 		HashMap<String,Object> hm = new HashMap<String,Object>() ;
-		hm.put ( "className", "FileReference" ) ;
+		hm.put ( "className", "FileContainer" ) ;
 		hm.put ( "path", path ) ;
 		hm.put ( "name", name ) ;
 		hm.put ( "data", data ) ;

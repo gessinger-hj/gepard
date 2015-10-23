@@ -35,7 +35,7 @@ print ( "pp=" + str ( p ) )
 # print ( "type(b)=" + str(type(b)) )
 
 
-fr = gepard.FileReference ( "data.bin" )
+fr = gepard.FileContainer ( "data.bin" )
 # print ( fr )
 
 e = gepard.Event ( "__FILE__" )

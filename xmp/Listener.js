@@ -2,11 +2,9 @@
 
 if ( require.main === module )
 {
-	var T			= require ( "../src/Tango" ) ;
-	var Client = require ( "../src/Client" ) ;
-	var Admin	= require ( "../src/Admin" ) ;
+	var gepard = require ( "gepard" ) ;
 
-	if ( T.getProperty ( "help" ) )
+	if ( gepard.getProperty ( "help" ) )
 	{
 		console.log (
 			"Gepard Examples: Listener, listen to a given event.\n"
@@ -16,7 +14,7 @@ if ( require.main === module )
 		process.exit() ;
 	}
 
-	new Admin().isRunning ( function admin_is_running ( state )
+	new gepard.Admin().isRunning ( function admin_is_running ( state )
 	{
 		if ( ! state )
 		{
@@ -28,7 +26,8 @@ if ( require.main === module )
 	function execute()
 	{
 		var name = [ "ALARM", "BLARM" ] ;
-		var c = new Client() ;
+		var c = gepard.getClient() ;
+		c.setReconnect ( true ) ;
 		console.log ( "Listen for events with name=" + name ) ;
 		c.on ( name, function(e)
 		{

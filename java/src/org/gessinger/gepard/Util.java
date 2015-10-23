@@ -182,7 +182,7 @@ final public class Util
   static Map<String,String> _classNameToFullClassName = new HashMap<String,String>() ;
   static
   {
-    _classNameToFullClassName.put ( "FileReference", "org.gessinger.gepard.FileReference" ) ;
+    _classNameToFullClassName.put ( "FileContainer", "org.gessinger.gepard.FileContainer" ) ;
   }
   static void addClassNameToFullClassName ( String className, String fullClassName )
   {

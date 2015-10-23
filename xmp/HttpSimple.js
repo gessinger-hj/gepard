@@ -4,10 +4,9 @@
 
 if ( require.main === module )
 {
-  var T      = require ( "../src/Tango" ) ;
-  var Admin  = require ( "../src/Admin" ) ;
+  var gepard = require ( "gepard" ) ;
 
-  var what = T.getProperty ( "help" ) ;
+  var what = gepard.getProperty ( "help" ) ;
   if ( what )
   {
     console.log ( "HttpSimple for Gepard" ) ;
@@ -27,7 +26,7 @@ if ( require.main === module )
   var client = null ;
   var connect_to_boker = function()
   {
-    new Admin().isRunning ( function admin_is_running ( state )
+    new gepard.Admin().isRunning ( function admin_is_running ( state )
     {
       if ( ! state )
       {
@@ -35,7 +34,7 @@ if ( require.main === module )
       }
       try
       {
-        client = new Client() ;
+        client = gepard.getClient() ;
         client.on ( "shutdown", function client_onshutdown()
         {
           process.exit ( 0 ) ;
@@ -71,15 +70,15 @@ if ( require.main === module )
   var Path   = require ( 'path') ;
   var url    = require ( 'url' ) ;
   
-  var root   = T.getProperty ( "root", Path.join ( __dirname, "../xmp/webclient/" ) ) ;
+  var root   = gepard.getProperty ( "root", Path.join ( __dirname, "../xmp/webclient/" ) ) ;
   root       = Path.resolve ( root ) ;
 
   var jsroot   = Path.join ( root, "../../src" ) ;
-  jsroot       = T.getProperty ( "jsroot", jsroot ) ;
+  jsroot       = gepard.getProperty ( "jsroot", jsroot ) ;
   jsroot       = Path.resolve ( jsroot ) ;
 
-  var port   = T.getInt ( "port", 8888 ) ;
-  var index  = T.getProperty ( "index", Path.join ( __dirname, "../xmp/webclient/", "index.html" ) ) ;
+  var port   = gepard.getInt ( "port", 8888 ) ;
+  var index  = gepard.getProperty ( "index", Path.join ( __dirname, "../xmp/webclient/", "index.html" ) ) ;
   var logDir = Gepard.getLogDirectory() ;
   
   Log.init ( "level=info,Xedirect=3,file=%GEPARD_LOG%/%APPNAME%.log:max=1m:v=4") ;

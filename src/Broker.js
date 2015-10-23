@@ -15,7 +15,7 @@ var os            = require ( "os" ) ;
 var fs            = require ( "fs" ) ;
 var dns           = require ( "dns" ) ;
 var Path          = require ( "path" ) ;
-var FileReference = require ( "./FileReference" ) ;
+var FileContainer = require ( "./FileContainer" ) ;
 
 if ( typeof Promise === 'undefined' ) // since node 0.12+
 {
@@ -374,7 +374,7 @@ var Broker = function ( port, ip )
     thiz.validateAction ( thiz._connectionHook.connect, [ conn ], thiz, thiz._checkInConnection, [ conn ] ) ;
   });
   var ee = new Event() ;
-  ee.addClassNameToConstructor ( "FileReference", FileReference ) ;
+  ee.addClassNameToConstructor ( "FileContainer", FileContainer ) ;
   this._heartbeatIntervalMillis = 10000 ;
 };
 
@@ -696,6 +696,7 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
   }
   if ( e.getType() === "PONG" )
   {
+    Log.info ( "Heartbeat PONG received from: " + conn.sid ) ;
     return ;
   }
   if ( e.getType() === "shutdown" )
@@ -1141,6 +1142,7 @@ Broker.prototype._checkHeartbeat = function()
       Log.log ( exc ) ;
     }
   }
+  Log.info ( "Heartbeat PING sent." ) ;
   socketsToBePINGed.length = 0 ;
 };
 /**

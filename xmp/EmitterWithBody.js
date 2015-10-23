@@ -1,13 +1,9 @@
 #!/usr/bin/env node
 if ( require.main === module )
 {
-  var T      = require ( "../src/Tango" ) ;
-  var Event  = require ( "../src/Event" ) ;
-  var Client = require ( "../src/Client" ) ;
-  var Admin  = require ( "../src/Admin" ) ;
-  var User   = require ( "../src/User" ) ;
+  var gepard = require ( "gepard" ) ;
 
-  if ( T.getProperty ( "help" ) )
+  if ( gepard.getProperty ( "help" ) )
   {
     console.log (
       "Gepard Examples: Emitter, emit a given event.\n"
@@ -16,7 +12,7 @@ if ( require.main === module )
     process.exit() ;
   }
 
-  new Admin().isRunning ( function admin_is_running ( state )
+  new gepard.Admin().isRunning ( function admin_is_running ( state )
   {
     if ( ! state )
     {
@@ -28,13 +24,13 @@ if ( require.main === module )
 
   function execute()
   {
-    var name = T.getProperty ( "name", "ALARM" ) ;
+    var name = gepard.getProperty ( "name", "ALARM" ) ;
 
-    var c = new Client() ;
-    var e = new Event ( name ) ;
+    var c = gepard.getClient() ;
+    var e = new gepard.Event ( name ) ;
     e.putValue ( "BINARY", new Buffer ( [ 64, 65, 66, 67 ] ) ) ;
     e.putValue ( "DATE", new Date() ) ;
-    var u = new User ( "smith" ) ;
+    var u = new gepard.User ( "smith" ) ;
     u.addRight ( "CAN_READ_FILES", "*.docx" ) ;
     e.setUser ( u ) ;
 

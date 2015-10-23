@@ -1,13 +1,9 @@
 #!/usr/bin/env node
 if ( require.main === module )
 {
-  var T      = require ( "../src/Tango" ) ;
-  var Event  = require ( "../src/Event" ) ;
-  var Client = require ( "../src/Client" ) ;
-  var Admin  = require ( "../src/Admin" ) ;
-  var Lock   = require ( "../src/Lock" ) ;
+  var gepard = require ( "gepard" ) ;
 
-  if ( T.getProperty ( "help" ) )
+  if ( gepard.getProperty ( "help" ) )
   {
     console.log (
       "Gepard example: Lock, lock a given resource.\n"
@@ -16,7 +12,7 @@ if ( require.main === module )
     process.exit() ;
   }
 
-  new Admin().isRunning ( function admin_is_running ( state )
+  new gepard.Admin().isRunning ( function admin_is_running ( state )
   {
     if ( ! state )
     {
@@ -27,8 +23,8 @@ if ( require.main === module )
   });
   function execute()
   {
-    var key = T.getProperty ( "name", "resid:main" ) ;
-    var lock = new Lock ( key ) ;
+    var key = gepard.getProperty ( "name", "resid:main" ) ;
+    var lock = new gepard.Lock ( key ) ;
     lock.acquire ( function ( err )
     {
       console.log ( "" + this.toString() ) ;

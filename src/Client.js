@@ -8,7 +8,7 @@ var Event         = require ( "./Event" ) ;
 var MultiHash     = require ( "./MultiHash" ) ;
 var Log           = require ( "./LogFile" ) ;
 var User          = require ( "./User" ) ;
-var FileReference = require ( "./FileReference" ) ;
+var FileContainer = require ( "./FileContainer" ) ;
 
 var counter = 0 ;
 var Stats = function()
@@ -98,7 +98,7 @@ var Client = function ( port, host )
     }
   }
   var ee = new Event() ;
-  ee.addClassNameToConstructor ( "FileReference", FileReference ) ;
+  ee.addClassNameToConstructor ( "FileContainer", FileContainer ) ;
   this.USERNAME = T.getUSERNAME() ;
   if ( ! this.USERNAME )
   {
@@ -108,7 +108,7 @@ var Client = function ( port, host )
   this._timeStamp               = 0 ;
   this._heartbeatIntervalMillis = 10000 ;
   this._reconnectIntervalMillis = 5000 ;
-  this._reconnect               = true ;
+  this._reconnect               = false ;
   this.firstPING                = true ;
 } ;
 util.inherits ( Client, EventEmitter ) ;
@@ -196,6 +196,10 @@ Client.prototype.connect = function()
     thiz.alive = false ;
     thiz._private_emit ( "end" ) ;
     if ( thiz.intervalId ) clearInterval ( thiz.intervalId ) ;
+    if ( thiz._reconnect )
+    {
+      this.keepDataForReconnect = true ;
+    }
     if ( this.keepDataForReconnect )
     {
       thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._reconnectIntervalMillis ) ;

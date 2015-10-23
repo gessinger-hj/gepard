@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 
 var net   = require('net');
-var Event = require ( "./Event" ) ;
-var T     = require ( "./Tango" ) ;
+var gepard = require ( "gepard" ) ;
 
 /**
  * @constructor
@@ -14,12 +13,12 @@ var T     = require ( "./Tango" ) ;
  */
 var Admin = function ( port, host )
 {
-	this.port = T.getProperty ( "gepard.port", port ) ;
+	this.port = gepard.getProperty ( "gepard.port", port ) ;
 	if ( ! this.port )
 	{
 		this.port = 17501 ;
 	}
-	this.host = T.getProperty ( "gepard.host", host ) ;
+	this.host = gepard.getProperty ( "gepard.host", host ) ;
 };
 /**
  * method getPort
@@ -103,7 +102,7 @@ Admin.prototype._execute = function ( action, what, callback )
 	{
 		this.socket.on ( "connect", function()
 		{
-		  var e = new Event ( "system", "shutdown" ) ;
+		  var e = new gepard.Event ( "system", "shutdown" ) ;
 		  if ( what )
 		  {
 		  	e.body.shutdown_sid = what ;
@@ -120,7 +119,7 @@ Admin.prototype._execute = function ( action, what, callback )
 	{
 		this.socket.on ( "connect", function()
 		{
-		  var e = new Event ( "system", "getInfoRequest" ) ;
+		  var e = new gepard.Event ( "system", "getInfoRequest" ) ;
 		  e.body.info_type = what ;
 		  this.write ( e.serialize() ) ;
 		});
@@ -139,12 +138,12 @@ Admin.prototype._execute = function ( action, what, callback )
 			}
 		}
     console.log ( "Not running on " + thiz.getHostPort() ) ;
-		// T.lwhere (  ) ;
-		// T.log ( data ) ;
+		// gepard.lwhere (  ) ;
+		// gepard.log ( data ) ;
 	});
 	this.socket.on ( 'end', function socket_on_end( data )
 	{
-		// T.lwhere (  ) ;
+		// gepard.lwhere (  ) ;
 	});
 	this.socket.on ( 'data', function ondata ( data )
 	{
@@ -153,7 +152,7 @@ Admin.prototype._execute = function ( action, what, callback )
     if ( ! this.partialMessage ) this.partialMessage = "" ;
     mm = this.partialMessage + mm ;
     this.partialMessage = "" ;
-    var result = T.splitJSONObjects ( mm ) ;
+    var result = gepard.splitJSONObjects ( mm ) ;
     var messageList = result.list ;
     var i, j, k ;
     var ctx, uid, rcb, e, callbackList ;
@@ -178,7 +177,7 @@ Admin.prototype._execute = function ( action, what, callback )
       }
       if ( m.charAt ( 0 ) === '{' )
 		  {
-		    var e = Event.prototype.deserialize ( m ) ;
+		    var e = gepard.Event.prototype.deserialize ( m ) ;
 		    if ( e.getType() === "getInfoResult" )
 		    {
 		    	if ( what === "conn" )
@@ -277,14 +276,14 @@ Admin.prototype._execute = function ( action, what, callback )
 		    	}
 		    	else
 		    	{
-		    		if ( e.isBad() ) T.log ( e.getStatus() ) ;
-		    		else             T.log ( e.getBody() ) ;
+		    		if ( e.isBad() ) gepard.log ( e.getStatus() ) ;
+		    		else             gepard.log ( e.getBody() ) ;
 		    	}
 		    }
 		    else
 		    {
-		    	if ( e.isBad() ) T.log ( e.getStatus() ) ;
-	    		else             T.log ( e.getBody() ) ;
+		    	if ( e.isBad() ) gepard.log ( e.getStatus() ) ;
+	    		else             gepard.log ( e.getBody() ) ;
 		    }
 		  }
 		}
@@ -339,12 +338,12 @@ Admin.prototype.getNumberOfApplications = function ( applicationName, callback )
 module.exports = Admin ;
 if ( require.main === module )
 {
-	var port = T.getProperty ( "gepard.port", 17501 ) ;
-	var host = T.getProperty ( "gepard.host" ) ;
+	var port = gepard.getProperty ( "gepard.port", 17501 ) ;
+	var host = gepard.getProperty ( "gepard.host" ) ;
 
 	var ad = new Admin ( port, host ) ;
 
-	var what = T.getProperty ( "help" ) ;
+	var what = gepard.getProperty ( "help" ) ;
 	if ( what )
 	{
 		console.log ( "Admin tool for Gepard" ) ;
@@ -370,14 +369,14 @@ if ( require.main === module )
 		console.log ( "      default is environment variable GEPARD_HOST or localhost" ) ;
 		return ;
 	}
-	what = T.getProperty ( "shutdown" ) ;
+	what = gepard.getProperty ( "shutdown" ) ;
 	if ( what )
 	{
 		if ( what === "true" ) what = null ;
 		ad.shutdown ( what ) ;
 		return ;
 	}
-	what = T.getProperty ( "run" ) ;
+	what = gepard.getProperty ( "run" ) ;
 	if ( what  )
 	{
 		if ( what === "true" )
@@ -395,7 +394,7 @@ console.log ( "n=" + n ) ;
 // 		} ) ;
 		return ;
 	}
-	what = T.getProperty ( "isRunning" ) ;
+	what = gepard.getProperty ( "isRunning" ) ;
 	if ( what  )
 	{
 		ad.isRunning ( function admin_is_running ( state )
@@ -413,13 +412,13 @@ console.log ( "n=" + n ) ;
 	var cmds  = [ "conn", "lock", "sem", "events" ] ;
 	for ( var i = 0 ; i < cmds.length ; i++ )
 	{
-		if ( T.getProperty ( cmds[i] ) )
+		if ( gepard.getProperty ( cmds[i] ) )
 		{
 			ad.info ( cmds[i] ) ;
 			return ;
 		}
 	}
-	what = T.getProperty ( "info", "true" ) ;
+	what = gepard.getProperty ( "info", "true" ) ;
 	if ( what )
 	{
 		if ( what !== "true" )
