@@ -7,6 +7,7 @@ public class FileSender
 {
   static public void main ( String[] args )
   {
+    Util.argsToProperties ( args ) ;
     try
     {
       FileSender j = new FileSender() ;
@@ -21,10 +22,8 @@ public class FileSender
   {
     final Client client = Client.getInstance() ;
 
-    String name = "__FILE__" ;
-
     Event event = new Event ( "__FILE__" ) ;
-    final String file = "xxx.js" ;
+    final String file = Util.getProperty ( "file", "build.xml" ) ;
     FileContainer fr = new FileContainer ( file ) ;
     event.putValue ( "FR", fr ) ;
     client.request ( event, new ResultCallback()
@@ -38,6 +37,9 @@ public class FileSender
         else
         {
           System.out.println ( "File " + file + " sent successfully." ) ;
+          System.out.println ( "code: " + e.getStatusCode() );
+          System.out.println ( "name: " + e.getStatusName() );
+          System.out.println ( "reason: " + e.getStatusReason() );
         }
         client.close() ;
       }

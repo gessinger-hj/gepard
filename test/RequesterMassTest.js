@@ -5,7 +5,6 @@ if ( require.main === module )
   var Event  = require ( "../src/Event" ) ;
   var Client = require ( "../src/Client" ) ;
   var Admin  = require ( "../src/Admin" ) ;
-  var FileReference  = require ( "../src/FileReference" ) ;
 
   if ( T.getProperty ( "help" ) )
   {

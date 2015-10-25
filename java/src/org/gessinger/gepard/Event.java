@@ -241,7 +241,8 @@ public class Event
     Map<String,Object> status = (Map<String,Object>)this.control.get ( "status" ) ;
     if ( status == null ) return false ;
     if ( ! status.containsKey ( "code" ) ) return false ;
-    return ! (status.get ( "code" )+"").equals ( "0" ) ;
+    int code = getStatusCode() ;
+    return code != 0 ;
   }
   public Map<String,Object> getStatus()
   {
@@ -272,12 +273,24 @@ public class Event
     Map<String,Object> status = (Map<String,Object>)this.control.get ( "status" ) ;
     try
     {
-      return Integer.parseInt ( "" + status.get ( "reason" ) ) ;
+      return (int)Double.parseDouble ( "" + status.get ( "code" ) ) ;
     }
     catch ( Exception exc )
     {
     }
     return 0 ;
+  }
+  public void setStatus ( int code, String name, String reason )
+  {
+    Map<String,Object> status = (Map<String,Object>)this.control.get ( "status" ) ;
+    if ( status == null )
+    {
+      status = new HashMap<String,Object>() ;
+      this.control.put ( "status", status ) ;
+      status.put ( "code",  new Integer  (  code ) ) ;
+      if ( name != null ) status.put ( "name",  name ) ;
+      if ( reason != null ) status.put ( "reason",  reason ) ;
+    }
   }
   public Object getValue ( String name )
   {

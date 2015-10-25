@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 var net   = require('net');
-var gepard = require ( "gepard" ) ;
+var T = require ( "./Tango" ) ;
+var Event = require ( "./Event" ) ;
 
 /**
  * @constructor
@@ -13,12 +14,12 @@ var gepard = require ( "gepard" ) ;
  */
 var Admin = function ( port, host )
 {
-	this.port = gepard.getProperty ( "gepard.port", port ) ;
+	this.port = T.getProperty ( "gepard.port", port ) ;
 	if ( ! this.port )
 	{
 		this.port = 17501 ;
 	}
-	this.host = gepard.getProperty ( "gepard.host", host ) ;
+	this.host = T.getProperty ( "gepard.host", host ) ;
 };
 /**
  * method getPort
@@ -102,7 +103,7 @@ Admin.prototype._execute = function ( action, what, callback )
 	{
 		this.socket.on ( "connect", function()
 		{
-		  var e = new gepard.Event ( "system", "shutdown" ) ;
+		  var e = new Event ( "system", "shutdown" ) ;
 		  if ( what )
 		  {
 		  	e.body.shutdown_sid = what ;
@@ -119,7 +120,7 @@ Admin.prototype._execute = function ( action, what, callback )
 	{
 		this.socket.on ( "connect", function()
 		{
-		  var e = new gepard.Event ( "system", "getInfoRequest" ) ;
+		  var e = new Event ( "system", "getInfoRequest" ) ;
 		  e.body.info_type = what ;
 		  this.write ( e.serialize() ) ;
 		});
@@ -152,7 +153,7 @@ Admin.prototype._execute = function ( action, what, callback )
     if ( ! this.partialMessage ) this.partialMessage = "" ;
     mm = this.partialMessage + mm ;
     this.partialMessage = "" ;
-    var result = gepard.splitJSONObjects ( mm ) ;
+    var result = T.splitJSONObjects ( mm ) ;
     var messageList = result.list ;
     var i, j, k ;
     var ctx, uid, rcb, e, callbackList ;
@@ -177,7 +178,7 @@ Admin.prototype._execute = function ( action, what, callback )
       }
       if ( m.charAt ( 0 ) === '{' )
 		  {
-		    var e = gepard.Event.prototype.deserialize ( m ) ;
+		    var e = Event.prototype.deserialize ( m ) ;
 		    if ( e.getType() === "getInfoResult" )
 		    {
 		    	if ( what === "conn" )
@@ -276,14 +277,14 @@ Admin.prototype._execute = function ( action, what, callback )
 		    	}
 		    	else
 		    	{
-		    		if ( e.isBad() ) gepard.log ( e.getStatus() ) ;
-		    		else             gepard.log ( e.getBody() ) ;
+		    		if ( e.isBad() ) T.log ( e.getStatus() ) ;
+		    		else             T.log ( e.getBody() ) ;
 		    	}
 		    }
 		    else
 		    {
-		    	if ( e.isBad() ) gepard.log ( e.getStatus() ) ;
-	    		else             gepard.log ( e.getBody() ) ;
+		    	if ( e.isBad() ) T.log ( e.getStatus() ) ;
+	    		else             T.log ( e.getBody() ) ;
 		    }
 		  }
 		}
@@ -338,12 +339,12 @@ Admin.prototype.getNumberOfApplications = function ( applicationName, callback )
 module.exports = Admin ;
 if ( require.main === module )
 {
-	var port = gepard.getProperty ( "gepard.port", 17501 ) ;
-	var host = gepard.getProperty ( "gepard.host" ) ;
+	var port = T.getProperty ( "gepard.port", 17501 ) ;
+	var host = T.getProperty ( "gepard.host" ) ;
 
 	var ad = new Admin ( port, host ) ;
 
-	var what = gepard.getProperty ( "help" ) ;
+	var what = T.getProperty ( "help" ) ;
 	if ( what )
 	{
 		console.log ( "Admin tool for Gepard" ) ;
@@ -369,14 +370,14 @@ if ( require.main === module )
 		console.log ( "      default is environment variable GEPARD_HOST or localhost" ) ;
 		return ;
 	}
-	what = gepard.getProperty ( "shutdown" ) ;
+	what = T.getProperty ( "shutdown" ) ;
 	if ( what )
 	{
 		if ( what === "true" ) what = null ;
 		ad.shutdown ( what ) ;
 		return ;
 	}
-	what = gepard.getProperty ( "run" ) ;
+	what = T.getProperty ( "run" ) ;
 	if ( what  )
 	{
 		if ( what === "true" )
@@ -394,7 +395,7 @@ console.log ( "n=" + n ) ;
 // 		} ) ;
 		return ;
 	}
-	what = gepard.getProperty ( "isRunning" ) ;
+	what = T.getProperty ( "isRunning" ) ;
 	if ( what  )
 	{
 		ad.isRunning ( function admin_is_running ( state )
@@ -412,13 +413,13 @@ console.log ( "n=" + n ) ;
 	var cmds  = [ "conn", "lock", "sem", "events" ] ;
 	for ( var i = 0 ; i < cmds.length ; i++ )
 	{
-		if ( gepard.getProperty ( cmds[i] ) )
+		if ( T.getProperty ( cmds[i] ) )
 		{
 			ad.info ( cmds[i] ) ;
 			return ;
 		}
 	}
-	what = gepard.getProperty ( "info", "true" ) ;
+	what = T.getProperty ( "info", "true" ) ;
 	if ( what )
 	{
 		if ( what !== "true" )

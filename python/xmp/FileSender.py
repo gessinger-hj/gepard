@@ -8,7 +8,7 @@ client = gepard.Client.getInstance()
 
 event = gepard.Event ( "__FILE__" )
 
-file = gepard.util.getProperty ( "file", "data.bin" )
+file = gepard.util.getProperty ( "file", "FileSender.py" )
 fr = gepard.FileContainer ( file )
 event.putValue ( "FR", fr )
 
