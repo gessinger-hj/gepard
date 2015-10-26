@@ -6,7 +6,7 @@ General purpose communication and synchronization layer for distributed applicat
 
 - [Overview](#overview)
 - [What is new](#what-is-new)
-  - [New __FileReference__ class for JavaScript and Jave to simplify file-transfer.](#new-__filereference__-class-for-javascript-and-jave-to-simplify-file-transfer)
+  - [New __FileContainer__ class for JavaScript and Java to simplify file-transfer.](#new-__filecontainer__-class-for-javascript-and-java-to-simplify-file-transfer)
   - [Let's talk about Python](#lets-talk-about-python)
   - [Controlling Connections and Actions with a Hook](#controlling-connections-and-actions-with-a-hook)
   - [Perfect load balanced message handling.](#perfect-load-balanced-message-handling)
@@ -30,7 +30,7 @@ General purpose communication and synchronization layer for distributed applicat
     - [Event Emitter](#event-emitter)
     - [Locks](#locks)
     - [Semaphores](#semaphores)
-    - [Request / result](#request--result)
+    - [Request / Result](#request--result)
       - [Send request](#send-request)
       - [Send result](#send-result)
   - [Examples Long](#examples-long)
@@ -40,6 +40,7 @@ General purpose communication and synchronization layer for distributed applicat
     - [Event Emitter](#event-emitter-1)
       - [In Application](#in-application-1)
       - [In Browser](#in-browser-1)
+- [File Transfer with the FileContainer Class](#file-transfer-with-the-filecontainer-class)
 - [Technical Aspekts of the Client](#technical-aspekts-of-the-client)
 - [Found a bug? Help us fix it...](#found-a-bug-help-us-fix-it)
 - [https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md](#httpsgithubcomgessinger-hjgepardblobmasterchangelogmd)
@@ -108,14 +109,14 @@ node_modules/.bin/gp.admin [ --help ]
 ```
 # What is new
 
-## New __FileReference__ class for JavaScript and Jave to simplify file-transfer.
-An instance of the __FileReference__ class may be inserted at any place inside the body of an Event.
+## New __FileContainer__ class for JavaScript and Java to simplify file-transfer.
+An instance of the __FileContainer__ class may be inserted at any place inside the body of an Event.
 <br/>
 If the client runs on the same machine as the broker only the full path-name of the file will be transferred.
 <br/>
 If the broker runs on a different machine the content of the file is read in as a byte-array and transferred as payload to the broker.
 <br/>
-If the broker detects a target on a different machine the file is read in and put into the event's body before sinding the data.
+If the broker detects a target on a different machine the file is read in and put into the event's body before sending the data.
 <br/>
 This is done on a per connection basis.
 
@@ -148,7 +149,7 @@ acquireSemaphore ( connection, resourceId )
 ```
 Each of these methods must return an answer wether to allow or reject the corresponding action.
 <br/>
-The answer must be either a boolean value or a Thenable which means a Promise object of any kind.
+The answer must be either a boolean value or a __Thenable__ which means a __Promise__ object of any kind.
 <br/>
 The default for shutdown is to return a __false__ value if the incoming connection is not from localhost.
 In all other cases the default returns a __true__
@@ -548,11 +549,14 @@ Ready to use examles for Python are located in __.../gepard/python/xmp__
 
 Adding a event-listener with the __on()__ method may be done with a single event-name or a list of event-names.
 
-JavaScript: client.on ( "ALARM", callback ) or client.on ( [ "ALARM", "BLARM" ], callback )
+__JavaScript__: client.on ( "ALARM", callback )
+   <br/> or client.on ( [ "ALARM", "BLARM" ], callback )
 
-Java: client.on ( "ALARM", callback ) or client.on ( new String[] { "ALARM", "BLARM" }, callback )
+__Java__: client.on ( "ALARM", callback )
+ <br/>or client.on ( new String[] { "ALARM", "BLARM" }, callback )
 
-Python: client.on ( "ALARM", callback ) or client.on ( [ "ALARM", "BLARM" ], callback )
+__Python__: client.on ( "ALARM", callback )
+<br/>or client.on ( [ "ALARM", "BLARM" ], callback )
 
 The callback will be called with an Event object of the appropriate name ( e.getName() )
 
@@ -663,7 +667,7 @@ Details in:
 * Java: [gepard/java/org.gessinger/gepard/xmp/EmitterWithStatusInfo.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/EmitterWithStatusInfo.java)
 * Java: [gepard/java/org.gessinger/gepard/xmp/EmitterWithBody.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/EmitterWithBody.java)
 * Python: [gepard/python/xmp/Emitter.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/Emitter.py)
-* Python: [gepard/python/xmp/EmitterWithBody.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/EmitterWithStatusInfo.py)
+* Python: [gepard/python/xmp/EmitterWithStatusInfo.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/EmitterWithStatusInfo.py)
 * Python: [gepard/python/xmp/EmitterWithBody.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/EmitterWithBody.py)
 
 ### Locks
@@ -828,7 +832,7 @@ Details in:
 * Python: [gepard/python/xmp/AsyncSemaphore.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/AsyncSemaphore.py)
 * Python: [gepard/python/xmp/BlockingSemaphore.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/BlockingSemaphore.py)
 
-### Request / result
+### Request / Result
 
 #### Send request
 
@@ -981,7 +985,6 @@ var gepard = require ( "gepard" ) ;
 var c = gepard.getClient() ;
 
 var eventName = "ALARM" ;
-var c = new Client() ;
 console.log ( "Listen for events with name=" + eventName ) ;
 c.on ( eventName, function(e)
 {
@@ -1056,6 +1059,53 @@ var wc = gepard.getWebClient ( 17502 ) ;
 var event = new gepard.Event ( "CONFIG-CHANGED" ) ;
 event.setBody ( { "config-name" : "app.conf" } ) ;
 wc.emit ( event ) ;
+```
+
+# File Transfer with the FileContainer Class
+The basic usage of this class is as follows:
+
+- FileSender
+
+```js
+var gepard  = require ( "gepard" ) ;
+var c = gepard.getClient() ;
+var event = new gepard.Event ( "__FILE__" ) ;
+event.putValue ( "DATA", new gepard.FileContainer ( "<full-file-name>" ) ) ;
+c.request ( event, function ( e )
+{
+  if ( e.isBad() )
+  {
+    console.log ( e.getStatus() ) ;
+  }
+  else
+  {
+    console.log ( "File " + file + " sent successfully." )
+  }
+  this.end() ;
+}) ;
+```
+
+- FileReceiver
+
+```js
+  var c = gepard.getClient() ;
+  c.on ( "__FILE__", function(e)
+  {
+    var data = e.removeValue ( "DATA" ) ;
+    console.log ( data.getName() + " received." ) ;
+    var fname = data.getName() + ".in" ;
+    try
+    {
+      FR.write ( fname ) ;
+      console.log ( fname + " written." ) ;
+    }
+    catch ( exc )
+    {
+      e.control.status = { code:1, name:"error", reason:"could not write: " + fname } ;
+      console.log ( exc ) ;
+    }
+    e.sendBack() ;
+  });
 ```
 
 # Technical Aspekts of the Client

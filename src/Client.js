@@ -110,6 +110,8 @@ var Client = function ( port, host )
   this._reconnectIntervalMillis = 5000 ;
   this._reconnect               = false ;
   this.firstPING                = true ;
+  this.version                  = 1 ;
+  this.brokerVersion            = 0 ;
 } ;
 util.inherits ( Client, EventEmitter ) ;
 Client.prototype.toString = function()
@@ -223,6 +225,7 @@ Client.prototype.connect = function()
     einfo.body.connectionTime = new Date() ;
     einfo.body.application    = thiz._application ;
     einfo.body.USERNAME       = thiz.USERNAME ;
+    einfo.body.version        = thiz.version ;
     json                      = einfo.serialize() ;
     thiz._stats.incrementOut ( json.length )
     this.write ( json ) ;
@@ -377,6 +380,26 @@ Client.prototype.connect = function()
             else                   thiz.end()
             return ;
           }
+          if ( e.getType() === "broker_info" )
+          {
+            thiz.brokerVersion = e.body.brokerVersion ;
+            if ( thiz.brokerVersion > 0 )
+            {
+              if ( thiz.firstPING )
+              {
+                thiz._heartbeatIntervalMillis = e.control._heartbeatIntervalMillis ;
+                if ( this.intervalId )
+                {
+                  clearInterval ( this.intervalId ) ;
+                }
+                if ( thiz.reconnect )
+                {
+                  thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._heartbeatIntervalMillis ) ;
+                }
+              }
+            }
+            return ;
+          }
           if ( e.getType() === "PING" )
           {
             e.setType ( "PONG" ) ;
@@ -388,7 +411,10 @@ Client.prototype.connect = function()
               {
                 clearInterval ( this.intervalId ) ;
               }
-              thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._heartbeatIntervalMillis ) ;
+              if ( thiz.reconnect )
+              {
+                thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._heartbeatIntervalMillis ) ;
+              }
             }
             thiz.firstPING = false ;
             return ;

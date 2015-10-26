@@ -376,6 +376,7 @@ var Broker = function ( port, ip )
   var ee = new Event() ;
   ee.addClassNameToConstructor ( "FileContainer", FileContainer ) ;
   this._heartbeatIntervalMillis = 10000 ;
+  this.brokerVersion = 1 ;
 };
 
 util.inherits ( Broker, EventEmitter ) ;
@@ -707,8 +708,13 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
   if ( e.getType() === "client_info" )
   {
     conn.client_info = e.body ; e.body = {} ;
+    if ( ! conn.client_info.version )
+    {
+      conn.client_info.version = 0 ;
+    }
+    conn.version         = conn.client_info.version
     conn.client_info.sid = conn.sid ;
-    var app = conn.client_info.application ;
+    var app              = conn.client_info.application ;
     if ( app )
     {
       app = app.replace ( /\\/g, "/" ) ;
@@ -737,6 +743,12 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
         }
         conn.client_info.applicationName = app.substring ( app.lastIndexOf ( '/' ) + 1 ) ;
       }
+    }
+    if ( conn.version > 0 )
+    {
+      var einfo                 = new Event ( "system", "broker_info" ) ;
+      einfo.body.brokerVersion  = this.brokerVersion ;
+      conn.write ( einfo ) ;
     }
     return ;
   }
@@ -1074,20 +1086,6 @@ Broker.prototype.listen = function ( port, callback )
 };
 Broker.prototype._checkHeartbeat = function()
 {
-  if ( Log.isDEBUG() )
-  {
-    if ( ! this.n )
-    {
-      this.n = 0
-    }
-    this.n++ ;
-    console.log ( "this.n=" + this.n ) ;
-    if ( this.n > 3 )
-    {
-      console.log ( "No PING any more." ) ;
-      return ;
-    }
-  }
   var socketsToBeClosed = [] ;
   var socketsToBePINGed = [] ;
   var i, conn ;
@@ -1100,6 +1098,11 @@ Broker.prototype._checkHeartbeat = function()
   for ( i = 0 ; i < this._connectionList.length ; i++ )
   {
     conn = this._connectionList[i] ;
+    if ( conn.version <= 0 )
+    {
+      continue ;
+    }
+
     var dt = ( now - conn._timeStamp ) / 1000 ;
     try
     {

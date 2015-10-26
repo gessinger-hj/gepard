@@ -27,7 +27,7 @@ if ( require.main === module )
 	{
 		var name = [ "ALARM", "BLARM" ] ;
 		var c = gepard.getClient() ;
-		c.setReconnect ( true ) ;
+		// c.setReconnect ( true ) ;
 		console.log ( "Listen for events with name=" + name ) ;
 		c.on ( name, function(e)
 		{

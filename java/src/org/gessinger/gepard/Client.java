@@ -39,6 +39,8 @@ public class Client
 
   static Hashtable<String,Client> _Instances = new Hashtable<String,Client>() ;
 
+  int version = 1 ;
+  int brokerVersion = 0 ;
   static public Client getInstance()
   {
   	return getInstance ( -1, null ) ;
@@ -148,6 +150,7 @@ public class Client
 	    body.put ( "connectionTime", Util.getISODateTime() ) ;
 	    body.put ( "application", Util.getMainClassName() ) ;
 	    body.put ( "USERNAME", USERNAME ) ;
+	    body.put ( "version", new Integer ( version ) ) ;
 
 	    e.setTargetIsLocalHost ( targetIsLocalHost ) ;
 			String t = e.toJSON() ;
@@ -613,6 +616,23 @@ public class Client
 	  						_send ( e ) ;
 	  						continue ;
 			    		}
+ 		          if ( e.getType().equals ( "broker_info" ) )
+		          {
+		          	Map<String,Object> body = e.getBody() ;
+						    try
+						    {
+						      Double vers = (Double) body.get ( "brokerVersion" ) ;
+						      if ( vers != null )
+						      {
+							      brokerVersion = vers.intValue() ;
+						      }
+						    }
+						    catch ( Exception exc )
+						    {
+									System.err.println ( Util.toString ( exc ) ) ;
+						    }
+    		        continue ;
+    		      }
 		          if ( e.getType().equals ( "acquireSemaphoreResult" ) )
 		          {
 		          	Map<String,Object> body = e.getBody() ;

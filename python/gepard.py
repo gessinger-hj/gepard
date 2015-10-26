@@ -404,6 +404,8 @@ class Client:
 			selfUSERNAME = "guest"
 		self.user = User ( self.USERNAME )
 		self._heartbeatIntervalMillis = 0
+		self.version = 1
+		self.brokerVersion = 0
 	def setDaemon(self,status=True):
 		self._workerIsDaemon = status
 	def createUniqueId(self):
@@ -501,6 +503,7 @@ class Client:
 		event.body["connectionTime"] = datetime.datetime.now()
 		event.body["application"]    = os.path.abspath(sys.argv[0])
 		event.body["USERNAME"]    	 = self.USERNAME
+		event.body["version"]    	   = self.version
 		
 		self._send ( event ) 
 
@@ -647,6 +650,10 @@ class Client:
 						if e.__dict__["control"].get ( "_heartbeatIntervalMillis" ) != None:
 							self._heartbeatIntervalMillis = e.__dict__["control"]["_heartbeatIntervalMillis"]
 						self._send ( e )
+						continue
+					if e.getType() != None and e.getType() == "broker_info":
+						if e.__dict__["body"].get ( "brokerVersion" ) != None:
+							self.brokerVersion = e.__dict__["body"]["brokerVersion"]
 						continue
 					if e.getType() == "acquireSemaphoreResult":
 						body = e.getBody()
