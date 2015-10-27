@@ -1260,7 +1260,7 @@ We are trying our best to keep Gepard as free of bugs as possible, but if you fi
   i.e., there is a high chance that the very same bug has re-appeared. Otherwise, create a new issue report.
 
 * Whenever you create a new issue report in our issue tracker, please make sure to include as much information as possible like
-  exceptions with text and stack trace or other log informations.
+  exceptions with text and stack trace or other log information.
   <br/>
   Having all the required information saves a lot of work.
 
