@@ -387,7 +387,6 @@ Client.prototype.connect = function()
             {
               if ( thiz.firstPING )
               {
-                thiz._heartbeatIntervalMillis = e.control._heartbeatIntervalMillis ;
                 if ( this.intervalId )
                 {
                   clearInterval ( this.intervalId ) ;

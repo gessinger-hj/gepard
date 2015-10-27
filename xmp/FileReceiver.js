@@ -27,13 +27,14 @@ if ( require.main === module )
 		var c = gepard.getClient() ;
 		c.on ( "__FILE__", function(e)
 		{
-			var FR = e.removeValue ( "FR" ) ;
-			console.log ( FR.getName() + " received." ) ;
-			var fname = FR.getName() + ".in" ;
+			var data = e.removeValue ( "DATA" ) ;
+			console.log ( data.getName() + " received." ) ;
+			var fname = data.getName() + ".in" ;
 			try
 			{
-				FR.write ( fname ) ;
+				data.write ( fname ) ;
 				console.log ( fname + " written." ) ;
+      	e.control.status = { code:0, name:"success", reason: "Accepted: " + fname } ;
 			}
 			catch ( exc )
 			{

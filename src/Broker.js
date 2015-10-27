@@ -497,7 +497,6 @@ Broker.prototype._ondata = function ( socket, chunk )
         socket.end() ;
         return ;
       }
-//console.log ( e ) ;
       if ( ! e.body )
       {
         this._ejectSocket ( socket ) ;
@@ -746,9 +745,13 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
     }
     if ( conn.version > 0 )
     {
-      var einfo                 = new Event ( "system", "broker_info" ) ;
-      einfo.body.brokerVersion  = this.brokerVersion ;
-      conn.write ( einfo ) ;
+      var thiz = this ;
+      setTimeout ( function()
+      {
+        var einfo                 = new Event ( "system", "broker_info" ) ;
+        einfo.body.brokerVersion  = thiz.brokerVersion ;
+        conn.write ( einfo ) ;
+      },500) ;
     }
     return ;
   }

@@ -24,8 +24,7 @@ public class FileSender
 
     Event event = new Event ( "__FILE__" ) ;
     final String file = Util.getProperty ( "file", "build.xml" ) ;
-    FileContainer fr = new FileContainer ( file ) ;
-    event.putValue ( "FR", fr ) ;
+    event.putValue ( "DATA", new FileContainer ( file ) ) ;
     client.request ( event, new ResultCallback()
     {
       public void result ( Event e )

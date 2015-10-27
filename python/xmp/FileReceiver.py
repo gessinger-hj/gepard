@@ -3,9 +3,9 @@
 import os, sys
 sys.path.insert ( 0, os.path.dirname(os.path.abspath(__file__) ) + "/../" )
 
-from gepard import Event, Client
+import gepard
 
-client = Client.getInstance()
+client = gepard.Client.getInstance()
 # client.setDaemon ( True )
 def on_close ( err, info ):
 	print ( err )
@@ -19,15 +19,22 @@ client.onError ( on_error )
 client.onShutdown ( on_shutdown )
 
 def on___FILE__ ( e ):
-	FR = e.removeValue ( "FR" )
-	print ( FR.getName() + " received." ) ;
-	fname = FR.getName() + ".py.in"
+	data = e.removeValue ( "DATA" )
+	print ( data.getName() + " received." ) ;
+	fname = data.getName() + ".in"
 	try:
-		FR.write ( fname ) ;
+		data.write ( fname ) ;
 		print ( fname + " written.")
+		# e.setStatus ( 0, "success", "File accepted.")
 	except Exception as exc:
 		print ( exc )
-	e.sendBack() ;
+		# e.setStatus ( 1, "error", "File not accepted.")
+	try:
+		print ( "1 -----------")
+		e.sendBack() ;
+		print ( "2 -----------")
+	except Exception as e:
+		print ( e )
 
 client.on ( "__FILE__", on___FILE__ )
 

@@ -154,7 +154,14 @@ class Event ( object ):
 		if "control" not in self.__dict__: return None
 		if "status" not in self.control: return None
 		return self.control["status"]["name"]
-
+	def setStatus ( self, code=0, name="success", reason=""):
+		if "control" not in self.__dict__:
+			self.control = {}
+		if "status" not in self.control:
+			self.control["status"] = {}
+		self.control["status"]["code"] = code
+		self.control["status"]["name"] = name
+		self.control["status"]["reason"] = reason
 	def setIsResult ( self ):
 		self.control["_isResult"] = True
 	def isResult ( self ):

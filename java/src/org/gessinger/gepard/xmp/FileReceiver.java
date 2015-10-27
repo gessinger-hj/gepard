@@ -29,7 +29,7 @@ public class FileReceiver
       {
         try
         {
-          FileContainer fileContainer = (FileContainer) e.removeValue ( "FR" ) ;
+          FileContainer fileContainer = (FileContainer) e.removeValue ( "DATA" ) ;
           String fname = fileContainer.getName() + ".in" ;
           fileContainer.write ( fname ) ;
           System.out.println ( fname + " written." );

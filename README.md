@@ -12,17 +12,17 @@ General purpose communication and synchronization layer for distributed applicat
   - [Perfect load balanced message handling.](#perfect-load-balanced-message-handling)
   - [Java bindings for all features:](#java-bindings-for-all-features)
 - [Install](#install)
-- [Getting Startet](#getting-startet)
+- [Getting Started](#getting-started)
   - [Base](#base)
   - [JavaScript](#javascript)
   - [Java](#java)
   - [Python](#python)
 - [Configuration](#configuration)
 - [Use Cases](#use-cases)
-  - [Configuration Changes ( Events )](#configuration-changes--events-)
-  - [Concurrent editing of a Dataset ( Semaphores )](#concurrent-editing-of-a-dataset--semaphores-)
-  - [Synchronization of file processing ( Locks )](#synchronization-of-file-processing--locks-)
-  - [A Nice Exotic Mixture of Pragramming Languages](#a-nice-exotic-mixture-of-pragramming-languages)
+  - [Configuration Changes (Events)](#configuration-changes-events)
+  - [Concurrent editing of a Dataset (Semaphores)](#concurrent-editing-of-a-dataset-semaphores)
+  - [Synchronization of file processing (Locks)](#synchronization-of-file-processing-locks)
+  - [A Nice Exotic Mixture of Programming Languages](#a-nice-exotic-mixture-of-programming-languages)
 - [The Event Body](#the-event-body)
 - [Examples](#examples)
   - [Examples Short](#examples-short)
@@ -41,6 +41,8 @@ General purpose communication and synchronization layer for distributed applicat
       - [In Application](#in-application-1)
       - [In Browser](#in-browser-1)
 - [File Transfer with the FileContainer Class](#file-transfer-with-the-filecontainer-class)
+  - [FileSender](#filesender)
+  - [ileReceiver](#ilereceiver)
 - [Technical Aspekts of the Client](#technical-aspekts-of-the-client)
 - [Found a bug? Help us fix it...](#found-a-bug-help-us-fix-it)
 - [https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md](#httpsgithubcomgessinger-hjgepardblobmasterchangelogmd)
@@ -119,7 +121,8 @@ If the broker runs on a different machine the content of the file is read in as 
 If the broker detects a target on a different machine the file is read in and put into the event's body before sending the data.
 <br/>
 This is done on a per connection basis.
-
+<br/>
+[Details](#file-transfer-with-the-filecontainer-class)
 ## Let's talk about Python
 
 In this release a full featured Python client is included. The implementation is __pure generic Python code__.
@@ -128,7 +131,7 @@ The features are:
 * emit event
 * listen to events
 * request / result ( messages )
-* semaphores ( synchronously / synchronously )
+* semaphores ( synchronously / asynchronously )
 * locks
 
 ## Controlling Connections and Actions with a Hook
@@ -220,7 +223,7 @@ The following is done:
 
 As long as a sent message is not returned the Broker stores it in relation to the worker connection.
 If this connection dies the stored message is sent back to the originator marked with the fail state and appropriate text.
-The status can be testet with event.isBad() which returns true or false.
+The status can be tested with event.isBad() which returns true or false.
 
 ## Java bindings for all features:
 
@@ -232,11 +235,11 @@ The status can be testet with event.isBad() which returns true or false.
 
 With this it is very easy to communicate or synchronize between JavaScript programs or webapps in a browser with a Java server or Java program.
 
-The conversion from JSON to Java and vica versa is done with the Gson Google library for Java.
+The conversion from JSON to Java and vice versa is done with the Gson Google library for Java.
 
 If you need special serialization / deserialization you may set the appropriate Gson instance in the Event-class statically with the method Event.setGson() ;
 
-The Event-class may convert the json to map Java's byte[]-array to NodeJS's Buffer and vica versa.
+The Event-class may convert the json to map Java's byte[]-array to NodeJS's Buffer and vice versa.
 This can be set statically by Event.mapByteArrayToJavaScriptBuffer ( boolean state ).
 The default is true.
 
@@ -249,7 +252,7 @@ or the newest stable but development version:
 
 npm install git+https://github.com/gessinger-hj/gepard
 
-# Getting Startet
+# Getting Started
 
 Here are some kind of "Hello World" examples.
 
@@ -315,7 +318,7 @@ Start your browser and go to: __localhost:8888__
 <br/>
 In order to try out the examples goto node_modules/gepard/xmp.
 <br/>
-The following examples exists:
+The following examples exist:
 
 * Listener.js
 * Emitter.js
@@ -348,7 +351,7 @@ __Listener__ may be replaced by:
 * AsyncSemaphore
 * BlockingSemaphore
 
-The class-version in the existing Gepard.jar is 1.8, so you need to hava java 1.8 installed.
+The class-version in the existing Gepard.jar is 1.6, so you need to have at least java 1.6 installed.
 There is an ant file to build your own jar.
 
 Options, e.g. for the event-name must be set in the common Java format: -Dname=hello
@@ -357,7 +360,7 @@ Options, e.g. for the event-name must be set in the common Java format: -Dname=h
 
 In order to try out the examples goto node_modules/gepard/python/xmp.
 
-The following examples exists:
+The following examples exist:
 
 * Listener.py
 * Emitter.py
@@ -395,7 +398,7 @@ supplying these items
 
 # Use Cases
 
-## Configuration Changes ( Events )
+## Configuration Changes (Events)
 
 Suppose you have 1 program that changes configuration-entries in a database-table.
 After the new entries are committed the program sends an event with:
@@ -412,8 +415,8 @@ All clients including web-clients setup a listener for example with
 client.on ( "CONFIG-CHANGE", function callback(e) {} ) ;
 ```
 
-## Concurrent editing of a Dataset ( Semaphores )
-Two user with their web browser want to edit the same user-data in a database.
+## Concurrent editing of a Dataset (Semaphores)
+Two users with their web browser want to edit the same user-data in a database.
 In this case a Semaphore is very useful.
 
 <br/>
@@ -433,11 +436,11 @@ this.sem.acquire ( function sem_callback ( err )
 }) ;
 ```
 
-## Synchronization of file processing ( Locks )
+## Synchronization of file processing (Locks)
 
-Suppose ther are many files in a directory waiting to be processed.
+Suppose there are many files in a directory waiting to be processed.
 <br/>
-Lets name the directory: foo/bar/input
+Let's name the directory: foo/bar/input
 <br/>
 In order to speed up the overall processing several identical programs should work together.
 <br/>
@@ -466,7 +469,7 @@ for ( var i = 0 ; i < array.length ; i++ )
 	} ) ;
 }
 ```
-## A Nice Exotic Mixture of Pragramming Languages
+## A Nice Exotic Mixture of Programming Languages
 
 Suppose the following: There are a couple of JavaScript and Python programs to interact with a database. The database changes.
 And it would be nice to not change modules for database access.
@@ -536,12 +539,12 @@ Details in:
 
 # Examples
 
-Ready to use examles for JavaScript are located in __.../gepard/xmp__
+Ready to use examples for JavaScript are located in __.../gepard/xmp__
 <br/>
-Ready to use examles for Java are located in __.../gepard/gepard/java/org.gessinger/gepard/xmp__ and copiled in
+Ready to use examples for Java are located in __.../gepard/gepard/java/org.gessinger/gepard/xmp__ and compiled in
 __.../gepard/java/lib/Gepard.jar__
 <br/>
-Ready to use examles for Python are located in __.../gepard/python/xmp__
+Ready to use examples for Python are located in __.../gepard/python/xmp__
 
 ## Examples Short
 
@@ -1062,16 +1065,22 @@ wc.emit ( event ) ;
 ```
 
 # File Transfer with the FileContainer Class
+
 The basic usage of this class is as follows:
 
-- FileSender
+## FileSender
+
+JavaScript:
+<br/>See also: [gepard/xmp/FileSender.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/FileSender.js)
+
 
 ```js
 var gepard  = require ( "gepard" ) ;
-var c = gepard.getClient() ;
+var client = gepard.getClient() ;
 var event = new gepard.Event ( "__FILE__" ) ;
-event.putValue ( "DATA", new gepard.FileContainer ( "<full-file-name>" ) ) ;
-c.request ( event, function ( e )
+var file = "<full-file-name>" ;
+event.putValue ( "DATA", new gepard.FileContainer ( file ) ) ;
+client.request ( event, function ( e )
 {
   if ( e.isBad() )
   {
@@ -1085,18 +1094,71 @@ c.request ( event, function ( e )
 }) ;
 ```
 
-- FileReceiver
+Python:
+<br/>See also: [gepard/python/xmp/FileSender.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/FileSender.py)
+
+```python
+client = gepard.Client.getInstance()
+
+event = gepard.Event ( "__FILE__" )
+
+file = "<full-file-name>" ;
+event.putValue ( "DATA", gepard.FileContainer ( file ) )
+
+def result ( e ):
+  if e.isBad():
+    print ( e.getStatusReason() )
+  else:
+    print ( "File " + file + " sent successfully." )
+  e.getClient().close()
+
+print ( "Sending " + file )
+client.request ( event, result )
+```
+Java:
+<br/>See also: [gepard/java/org.gessinger/gepard/xmp/FileSender.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/FileSender.java)
+
+```java
+    final Client client = Client.getInstance() ;
+
+    Event event = new Event ( "__FILE__" ) ;
+    final String file = "<full-file-name>"
+    event.putValue ( "DATA", new FileContainer ( file ) ) ;
+    client.request ( event, new ResultCallback()
+    {
+      public void result ( Event e )
+      {
+        if ( e.isBad() )
+        {
+          System.out.println ( e ) ;
+        }
+        else
+        {
+          System.out.println ( "File " + file + " sent successfully." ) ;
+          System.out.println ( "code: " + e.getStatusCode() );
+          System.out.println ( "name: " + e.getStatusName() );
+          System.out.println ( "reason: " + e.getStatusReason() );
+        }
+        client.close() ;
+      }
+    }) ;
+```
+
+##FileReceiver
+
+JavaScript:
+<br/>See also: [gepard/xmp/FileReceiver.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/FileReceiver.js)
 
 ```js
-  var c = gepard.getClient() ;
-  c.on ( "__FILE__", function(e)
+  var client = gepard.getClient() ;
+  client.on ( "__FILE__", function(e)
   {
     var data = e.removeValue ( "DATA" ) ;
     console.log ( data.getName() + " received." ) ;
     var fname = data.getName() + ".in" ;
     try
     {
-      FR.write ( fname ) ;
+      data.write ( fname ) ;
       console.log ( fname + " written." ) ;
     }
     catch ( exc )
@@ -1108,11 +1170,64 @@ c.request ( event, function ( e )
   });
 ```
 
+Python:
+<br/>See also: [gepard/python/xmp/FileReceiver.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/FileReceiver.py)
+
+```py
+client = gepard.Client.getInstance()
+
+def on___FILE__ ( e ):
+  data = e.removeValue ( "DATA" )
+  print ( data.getName() + " received." ) ;
+  fname = data.getName() + ".in"
+  try:
+    data.write ( fname ) ;
+    print ( fname + " written.")
+  except Exception as exc:
+    print ( exc )
+  e.sendBack() ;
+
+client.on ( "__FILE__", on___FILE__ )
+```
+Java:
+<br/>See also: [gepard/java/org.gessinger/gepard/xmp/FileReceiver.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/FileReceiver.java)
+
+```java
+final Client client = Client.getInstance() ;
+client.on ( "__FILE__", new EventListener()
+{
+  public void event ( Event e )
+  {
+    try
+    {
+      FileContainer fileContainer = (FileContainer) e.removeValue ( "DATA" ) ;
+      String fname = fileContainer.getName() + ".in" ;
+      fileContainer.write ( fname ) ;
+      System.out.println ( fname + " written." );
+      e.setStatus ( 0, "success", "File accepted." ) ;
+    }
+    catch ( Exception exc )
+    {
+      e.setStatus ( 1, "error", "File not saved." ) ;
+      System.out.println ( Util.toString ( exc ) ) ;
+    }
+    try
+    {
+      e.sendBack() ;
+    }
+    catch ( Exception exc )
+    {
+      System.out.println ( Util.toString ( exc ) ) ;
+    }
+  }
+} ) ;
+
+```
 # Technical Aspekts of the Client
 
 NodeJS clients use the powerful but simple framework for asynchronously callbacks.
 <br/>
-In Java and Python this asynchronicity is is modeled by threads. There is a single thread reading from the socket connected to the Broker.
+In Java and Python this asynchronicity is modeled by threads. There is a single thread reading from the socket connected to the Broker.
 Incoming events are dispatched and the appropriate callbacks are executed. The main thread is not affected.
 <br/>
 Thus any number of event listener may be registered or removed in the main thread.

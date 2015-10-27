@@ -9,13 +9,13 @@ client = gepard.Client.getInstance()
 event = gepard.Event ( "__FILE__" )
 
 file = gepard.util.getProperty ( "file", "FileSender.py" )
-fr = gepard.FileContainer ( file )
-event.putValue ( "FR", fr )
+event.putValue ( "DATA", gepard.FileContainer ( file ) )
 
 def result ( e ):
 	if e.isBad():
-		print ( e.getStatusReason() )
+		print ( e.getStatus() )
 	else:
+		print ( e.getStatus() )
 		print ( "File " + file + " sent successfully." )
 	e.getClient().close()
 

@@ -19,12 +19,11 @@ if ( require.main === module )
       console.log ( "Not running on " + this.getHostPort() ) ;
 			process.exit() ;
     }
-   	var c = gepard.getClient() ;
+   	var client = gepard.getClient() ;
     var event = new gepard.Event ( "__FILE__" ) ;
     var file = gepard.getProperty ( "file", "FileSender.js" ) ;
-    var fr = new gepard.FileContainer ( file ) ;
-    event.putValue ( "FR", fr ) ;
-    c.request ( event, function ( e )
+    event.putValue ( "DATA", new gepard.FileContainer ( file ) ) ;
+    client.request ( event, function ( e )
     {
       if ( e.isBad() )
       {
