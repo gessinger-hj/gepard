@@ -6,7 +6,7 @@ General purpose communication and synchronization layer for distributed applicat
 
 - [Overview](#overview)
 - [What is new](#what-is-new)
-  - [New __FileContainer__ class for JavaScript and Java to simplify file-transfer.](#new-__filecontainer__-class-for-javascript-and-java-to-simplify-file-transfer)
+  - [New FileContainer class for JavaScript and Java to simplify file-transfer.](#new-filecontainer-class-for-javascript-and-java-to-simplify-file-transfer)
   - [Let's talk about Python](#lets-talk-about-python)
   - [Controlling Connections and Actions with a Hook](#controlling-connections-and-actions-with-a-hook)
   - [Perfect load balanced message handling.](#perfect-load-balanced-message-handling)
@@ -111,7 +111,7 @@ node_modules/.bin/gp.admin [ --help ]
 ```
 # What is new
 
-## New __FileContainer__ class for JavaScript and Java to simplify file-transfer.
+## New FileContainer class for JavaScript and Java to simplify file-transfer.
 An instance of the __FileContainer__ class may be inserted at any place inside the body of an Event.
 <br/>
 If the client runs on the same machine as the broker only the full path-name of the file will be transferred.
