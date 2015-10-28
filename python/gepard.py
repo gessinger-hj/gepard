@@ -411,7 +411,7 @@ class Client:
 			selfUSERNAME = "guest"
 		self.user = User ( self.USERNAME )
 		self._heartbeatIntervalMillis = 0
-		self.version = 1
+		self.version = 0
 		self.brokerVersion = 0
 	def setDaemon(self,status=True):
 		self._workerIsDaemon = status
