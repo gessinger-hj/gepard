@@ -4,5 +4,8 @@ __pycache__/
 *.pyc
 java-classes/
 *.class
+.gitignore
 .npmignore
+python/dateutil/
+six.py
 
