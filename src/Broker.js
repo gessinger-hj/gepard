@@ -317,6 +317,41 @@ Connection.prototype.getApplicationName = function() { if ( ! this.client_info )
 Connection.prototype.getApplication = function() { if ( ! this.client_info ) return "" ; return this.client_info.application ; } ;
 Connection.prototype.getId = function() { if ( ! this.client_info ) return "" ; return this.client_info.sid ; } ;
 Connection.prototype.getUSERNAME = function() { if ( ! this.client_info.USERNAME ) return "" ; return this.client_info.USERNAME ; } ;
+
+var TP = function ( name )
+{
+  this.active = true ;
+  this.name = name ;
+};
+TP.prototype.log = function ( value )
+{
+  if ( ! this.active )
+  {
+    return ;
+  }
+  Log.logln ( value ) ;
+};
+
+var TPStoreClass = function()
+{
+  this.store = {} ;
+};
+TPStoreClass.prototype.add = function ( tp )
+{
+  this.store[tp.name] = tp ;
+};
+TPStoreClass.prototype.handleTracePointsWithList = function ( e )
+{
+console.log ( e ) ;
+  for ( var k in this.store )
+  {
+    this.store[k].active = ! this.store[k].active ;
+  }
+};
+TPStore = new TPStoreClass() ;
+
+TPStore.add ( new TP ( "EVENT_IN" ) ) ;
+
 /**
  * @constructor
  * @extends {EventEmitter}
@@ -500,6 +535,8 @@ Broker.prototype._ondata = function ( socket, chunk )
         socket.end() ;
         return ;
       }
+      TPStore.store["EVENT_IN"].log ( e ) ;
+
       if ( ! e.body )
       {
         this._ejectSocket ( socket ) ;
@@ -705,6 +742,13 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
   if ( e.getType() === "shutdown" )
   {
     this.validateAction ( this._connectionHook.shutdown, [ conn, e ], this, this._shutdown, [ conn, e ] ) ;
+    return ;
+  }
+  if ( e.getType() === "tracePoint" )
+  {
+    TPStore.handleTracePointsWithList ( e ) ;
+    e.control.status = { code:0, name:"ack" } ;
+    conn.write ( e ) ;
     return ;
   }
   if ( e.getType() === "client_info" )

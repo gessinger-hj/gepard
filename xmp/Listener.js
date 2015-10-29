@@ -27,7 +27,11 @@ if ( require.main === module )
 	{
 		var name = [ "ALARM", "BLARM" ] ;
 		var c = gepard.getClient() ;
-		// c.setReconnect ( true ) ;
+		c.setReconnect ( true ) ;
+		c.on ( "reconnect", function on_reconnect ( e )
+		{
+			console.log ( e.body ) ;
+		});
 		console.log ( "Listen for events with name=" + name ) ;
 		c.on ( name, function(e)
 		{
@@ -44,6 +48,7 @@ if ( require.main === module )
 		c.on('shutdown', function()
 		{
 			console.log('broker shut down');
+			this.setReconnect ( false ) ;
 		});
 	}
 }

@@ -55,6 +55,10 @@ Admin.prototype.shutdown = function ( what )
 {
 	this._execute ( "shutdown", what ) ;
 };
+Admin.prototype.tracePoint = function ( what )
+{
+	this._execute ( "tracePoint", what ) ;
+};
 /**
  * Display an info from GPBroker
  * @method info
@@ -116,6 +120,16 @@ Admin.prototype._execute = function ( action, what, callback )
 		  }
 		});
 		// return ;
+	}
+	else
+	if ( action === "tracePoint" )
+	{
+		this.socket.on ( "connect", function()
+		{
+		  var e = new Event ( "system", "tracePoint" ) ;
+		  e.body.tracePointList = what ;
+		  this.write ( e.serialize() ) ;
+		});
 	}
 	else
 	{
@@ -419,6 +433,12 @@ console.log ( "n=" + n ) ;
 			ad.info ( cmds[i] ) ;
 			return ;
 		}
+	}
+	what = T.getProperty ( "tp", "*" ) ;
+	if ( what )
+	{
+		ad.tracePoint ( what ) ;
+		return ;
 	}
 	what = T.getProperty ( "info", "true" ) ;
 	if ( what )

@@ -193,10 +193,10 @@ Client.prototype.connect = function()
   if ( this.host  ) p.host = this.host ;
   var thiz = this ;
   this.socket = net.connect ( p ) ;
-  this.socket.on ( 'end', function socket_on_end()
+  this.socket.on ( 'end', function socket_on_end ( e )
   {
     thiz.alive = false ;
-    thiz._private_emit ( "end" ) ;
+    thiz._private_emit ( "end", e ) ;
     if ( thiz.intervalId ) clearInterval ( thiz.intervalId ) ;
     if ( thiz._reconnect )
     {
@@ -614,6 +614,7 @@ Client.prototype._checkHeartbeat = function()
         thiz.pendingEventListenerList.push ( { e:e } ) ;
         thiz.getSocket() ;
         Log.logln ( "re-connect in progress." ) ;
+        thiz._private_emit ( "reconnect", e ) ;
       }
       if  ( thiz.intervalId ) clearInterval ( thiz.intervalId ) ;
       thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._heartbeatIntervalMillis ) ;
@@ -968,6 +969,7 @@ Client.prototype.on = function ( eventName, callback )
      && (  eventName === "shutdown"
         || eventName === "end"
         || eventName === "error"
+        || eventName === "reconnect"
         )
      )
   {
