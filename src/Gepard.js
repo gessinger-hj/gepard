@@ -10,6 +10,7 @@ var Gepard = function()
 {
   this.className = "Gepard" ;
   this._logDir = null ;
+  this.version = "" ;
 };
 /**
  * Description
@@ -19,6 +20,24 @@ var Gepard = function()
 Gepard.prototype.toString = function()
 {
   return "(" + this.className + ")[_logDir=" + this._logDir + "]" ;
+};
+Gepard.prototype.getVersion = function()
+{
+  if ( this.version )
+  {
+    return this.version ;
+  }
+  var fs  = require ( "fs" ) ;
+  try
+  {
+    var package_json = JSON.parse ( fs.readFileSync ( __dirname + "/../package.json", 'utf8' ) ) ;
+    this.version  = package_json.version ;
+  }
+  catch ( exc )
+  {
+    this.version = "X" ;
+  }
+  return this.version ;
 };
 /**
  * Description

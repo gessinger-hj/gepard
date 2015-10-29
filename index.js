@@ -11,19 +11,19 @@ gepard.getClient = function ( port, host )
 	host = host ? host : undefined ;
 	if ( ! port )
 	{
-		port = this.getProperty ( "gepard.port", "17501" ) ;
+		port = gepard.getProperty ( "gepard.port", "17501" ) ;
 	}
 	if ( ! host )
 	{
-		host = this.getProperty ( "gepard.host" ) ;
+		host = gepard.getProperty ( "gepard.host" ) ;
 	}
-	var c = this._Instances["" + host + ":" + port] ;
+	var c = gepard._Instances["" + host + ":" + port] ;
 	if ( c )
 	{
 		return c ;
 	}
-	c = new this.Client ( port, host ) ;
-	var thiz = this ;
+	c = new gepard.Client ( port, host ) ;
+	var thiz = gepard ;
 	c.on ( "end", function onend()
 	{
 		delete thiz._Instances["" + host + ":" + port] ;
@@ -36,7 +36,7 @@ gepard.getClient = function ( port, host )
 	{
 		delete thiz._Instances["" + host + ":" + port] ;
 	} ) ;
-	this._Instances["" + host + ":" + port] = c 
+	gepard._Instances["" + host + ":" + port] = c 
 	return c ;
  }
 

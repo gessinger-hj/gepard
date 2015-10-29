@@ -39,7 +39,7 @@ public class Client
 
   static Hashtable<String,Client> _Instances = new Hashtable<String,Client>() ;
 
-  int version = 0 ;
+  int version = 1 ;
   int brokerVersion = 0 ;
   static public Client getInstance()
   {

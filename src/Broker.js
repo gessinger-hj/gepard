@@ -16,6 +16,7 @@ var fs            = require ( "fs" ) ;
 var dns           = require ( "dns" ) ;
 var Path          = require ( "path" ) ;
 var FileContainer = require ( "./FileContainer" ) ;
+var Gepard        = require ( "./Gepard" ) ;
 
 if ( typeof Promise === 'undefined' ) // since node 0.12+
 {
@@ -161,6 +162,8 @@ Connection.prototype._sendInfoResult = function ( e )
   var i, first, str, key, conn, key2 ;
   e.setType ( "getInfoResult" ) ;
   e.control.status = { code:0, name:"ack" } ;
+  e.body.gepardVersion = Gepard.getVersion() ;
+  e.body.brokerVersion = this.broker.brokerVersion ;
   e.body.log = { levelName: Log.getLevelName(), level:Log.getLevel(), file: Log.getCurrentLogFileName() } ;
   e.body.currentEventNames = this.broker._eventNameToSockets.getKeys() ;
   for ( i = 0 ; i < this.broker._connectionList.length ; i++ )
@@ -1203,7 +1206,6 @@ module.exports = Broker ;
 if ( require.main === module )
 {
   var Admin  = require ( "./Admin" ) ;
-  var Gepard = require ( "./Gepard" ) ;
   var what   = T.getProperty ( "help" ) ;
   if ( what )
   {

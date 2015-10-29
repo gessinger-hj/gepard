@@ -110,7 +110,7 @@ var Client = function ( port, host )
   this._reconnectIntervalMillis = 5000 ;
   this._reconnect               = false ;
   this.firstPING                = true ;
-  this.version                  = 0 ;
+  this.version                  = 1 ;
   this.brokerVersion            = 0 ;
 } ;
 util.inherits ( Client, EventEmitter ) ;

@@ -2,6 +2,7 @@
 
 if ( require.main === module )
 {
+	var gepard			= require ( "gepard" ) ;
 	var T			= require ( "../src/Tango" ) ;
 	var Client = require ( "../src/Client" ) ;
 	var Admin	= require ( "../src/Admin" ) ;

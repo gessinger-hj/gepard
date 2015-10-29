@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
-var net   = require('net');
-var T = require ( "./Tango" ) ;
-var Event = require ( "./Event" ) ;
+var net    = require('net');
+var T      = require ( "./Tango" ) ;
+var Event  = require ( "./Event" ) ;
+var Gepard = require ( "./Gepard" ) ;
 
 /**
  * @constructor
