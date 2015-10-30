@@ -127,7 +127,7 @@ Admin.prototype._execute = function ( action, what, callback )
 		this.socket.on ( "connect", function()
 		{
 		  var e = new Event ( "system", "tracePoint" ) ;
-		  e.body.tracePointList = what ;
+		  e.body.tracePointAction = what ;
 		  this.write ( e.serialize() ) ;
 		});
 	}
@@ -385,6 +385,7 @@ if ( require.main === module )
 		console.log ( "      default is environment variable GEPARD_HOST or localhost" ) ;
 		return ;
 	}
+	var i ;
 	what = T.getProperty ( "shutdown" ) ;
 	if ( what )
 	{
@@ -426,7 +427,7 @@ console.log ( "n=" + n ) ;
 		return ;
 	}
 	var cmds  = [ "conn", "lock", "sem", "events" ] ;
-	for ( var i = 0 ; i < cmds.length ; i++ )
+	for ( i = 0 ; i < cmds.length ; i++ )
 	{
 		if ( T.getProperty ( cmds[i] ) )
 		{
@@ -434,9 +435,56 @@ console.log ( "n=" + n ) ;
 			return ;
 		}
 	}
-	what = T.getProperty ( "tp", "*" ) ;
+	what = T.getProperty ( "tp" ) ;
 	if ( what )
 	{
+		if ( what === '*' || what === true )
+		{
+			what = '{"points":[{"name":"*","state":"toggle"}]}' ;
+		}
+
+		what = JSON.parse ( what ) ;
+		ad.tracePoint ( what ) ;
+		return ;
+	}
+	what = T.getProperty ( "tpon" ) ;
+	if ( what )
+	{
+		if ( what === '*' || what === true )
+		{
+			what = '*' ;
+		}
+		var l = what.split(',') ;
+		var a = [] ;
+		what = { "points":a } ;
+		for ( i = 0 ; i < l.length ; i++ )
+		{
+			a.push ( { "name": l[i], state:"on" } ) ;
+		}
+		ad.tracePoint ( what ) ;
+		return ;
+	}
+	what = T.getProperty ( "tpoff" ) ;
+	if ( what )
+	{
+		if ( what === '*' || what === true )
+		{
+			what = '*' ;
+		}
+		var l = what.split(',') ;
+		var a = [] ;
+		what = { "points":a } ;
+		for ( i = 0 ; i < l.length ; i++ )
+		{
+			a.push ( { "name": l[i], state:"off" } ) ;
+		}
+		ad.tracePoint ( what ) ;
+		return ;
+	}
+	what = T.getProperty ( "tpl" ) ;
+	if ( what )
+	{
+		what = { "list": [] } ;
 		ad.tracePoint ( what ) ;
 		return ;
 	}

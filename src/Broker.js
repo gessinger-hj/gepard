@@ -136,6 +136,8 @@ Connection.prototype.write = function ( data )
   {
     if ( data instanceof Event )
     {
+      var t = this.client_info ? this.client_info.application : ""
+      TPStore.store["EVENT_OUT"].log ( data.getName() + "/" + data.getType() + "-->" + t + "(" + this.sid + ")" ) ;
       this.setTimestamp() ;
       data.setTargetIsLocalHost ( this.isLocalHost() ) ;
       this.socket.write ( data.serialize() ) ;
@@ -293,7 +295,12 @@ Connection.prototype.isLocalHost = function()
   }
   for ( i = 0 ; i < this.broker._networkAddresses.length ; i++ )
   {
-    var index = this.socket.remoteAddress.indexOf ( this.broker._networkAddresses[i] ) ;
+    var ra = this.socket.remoteAddress ;
+    if ( ! ra )
+    {
+      continue ;
+    }
+    var index = ra.indexOf ( this.broker._networkAddresses[i] ) ;
     if ( index < 0 )
     {
       continue ;
@@ -320,7 +327,7 @@ Connection.prototype.getUSERNAME = function() { if ( ! this.client_info.USERNAME
 
 var TP = function ( name )
 {
-  this.active = true ;
+  this.active = false ;
   this.name = name ;
 };
 TP.prototype.log = function ( value )
@@ -340,17 +347,48 @@ TPStoreClass.prototype.add = function ( tp )
 {
   this.store[tp.name] = tp ;
 };
-TPStoreClass.prototype.handleTracePointsWithList = function ( e )
+TPStoreClass.prototype.tracePointAction = function ( tracePointAction )
 {
-console.log ( e ) ;
-  for ( var k in this.store )
+  var i, j, k ;
+  if ( tracePointAction.points )
   {
-    this.store[k].active = ! this.store[k].active ;
+    for ( i = 0 ; i < tracePointAction.points.length ; i++ )
+    {
+      var item = tracePointAction.points[i] ;
+      if ( item.name === '*' )
+      {
+        for ( k in this.store )
+        {
+          if ( item.state === 'on' ) this.store[k].active = true ;
+          if ( item.state === 'off' ) this.store[k].active = false ;
+          if ( item.state === 'toggle' ) this.store[k].active = ! this.store[k].active ;
+        }
+        continue ;
+      }
+      var tp = this.store[item.name] ;
+      if ( tp )
+      {
+        if ( item.state === 'on' ) tp.active = true ;
+        if ( item.state === 'off' ) tp.active = false ;
+        if ( item.state === 'toggle' ) tp.active = ! tp.active ;
+      }
+    }
   }
+  var list ;
+  // if ( tracePointAction.list )
+  {
+    list = [] ;
+    for ( k in this.store )
+    {
+      list.push ( { name:this.store[k].name, active:this.store[k].active })
+    }
+  }
+  return list ;
 };
 TPStore = new TPStoreClass() ;
 
 TPStore.add ( new TP ( "EVENT_IN" ) ) ;
+TPStore.add ( new TP ( "EVENT_OUT" ) ) ;
 
 /**
  * @constructor
@@ -746,8 +784,13 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
   }
   if ( e.getType() === "tracePoint" )
   {
-    TPStore.handleTracePointsWithList ( e ) ;
+    var tracePointResult = TPStore.tracePointAction ( e.body.tracePointAction ) ;
     e.control.status = { code:0, name:"ack" } ;
+    if ( tracePointResult )
+    {
+      e.body.tracePointStatus = tracePointResult ;
+    }
+    e.removeValue ( "tracePointAction" ) ;
     conn.write ( e ) ;
     return ;
   }

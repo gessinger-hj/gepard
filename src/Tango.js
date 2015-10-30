@@ -329,6 +329,7 @@ TangoClass.prototype.getProperty = function ( name, defaultValue )
     value = this._envMap[name] ;
     if ( typeof value !== 'undefined' )
     {
+      if ( typeof value === 'object' ) return defaultValue ? defaultValue : true ;
       return value ;
     }
   }
@@ -355,7 +356,7 @@ TangoClass.prototype.getProperty = function ( name, defaultValue )
         var pos = p.indexOf ( '=' ) ;
         if ( pos < 0 )
         {
-          this.setProperty ( p.substring ( 2 ), "true" ) ;
+          this.setProperty ( p.substring ( 2 ), {} ) ;
         }
         else
         {
@@ -377,7 +378,7 @@ TangoClass.prototype.getProperty = function ( name, defaultValue )
         var pos = p.indexOf ( '=' ) ;
         if ( pos < 0 )
         {
-          this.setProperty ( p.substring ( 2 ), "true" ) ;
+          this.setProperty ( p.substring ( 2 ), {} ) ;
         }
         else
         {
@@ -391,6 +392,7 @@ TangoClass.prototype.getProperty = function ( name, defaultValue )
   value = this._envMap[name] ;
   if ( typeof value !== 'undefined' )
   {
+    if ( typeof value === 'object' ) return defaultValue ? defaultValue : true ;
     return value ;
   }
   value = process.env[name] ;
