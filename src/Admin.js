@@ -438,7 +438,7 @@ console.log ( "n=" + n ) ;
 	what = T.getProperty ( "tp" ) ;
 	if ( what )
 	{
-		if ( what === '*' || what === true )
+		if ( what === '*' || what === "true" )
 		{
 			what = '{"points":[{"name":"*","state":"toggle"}]}' ;
 		}
@@ -450,7 +450,7 @@ console.log ( "n=" + n ) ;
 	what = T.getProperty ( "tpon" ) ;
 	if ( what )
 	{
-		if ( what === '*' || what === true )
+		if ( what === '*' || what === "true" )
 		{
 			what = '*' ;
 		}
@@ -467,7 +467,7 @@ console.log ( "n=" + n ) ;
 	what = T.getProperty ( "tpoff" ) ;
 	if ( what )
 	{
-		if ( what === '*' || what === true )
+		if ( what === '*' || what === "true" )
 		{
 			what = '*' ;
 		}

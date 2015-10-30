@@ -329,7 +329,7 @@ TangoClass.prototype.getProperty = function ( name, defaultValue )
     value = this._envMap[name] ;
     if ( typeof value !== 'undefined' )
     {
-      if ( typeof value === 'object' ) return defaultValue ? defaultValue : true ;
+      if ( typeof value === 'object' ) return defaultValue ? defaultValue : "true" ;
       return value ;
     }
   }
@@ -392,7 +392,7 @@ TangoClass.prototype.getProperty = function ( name, defaultValue )
   value = this._envMap[name] ;
   if ( typeof value !== 'undefined' )
   {
-    if ( typeof value === 'object' ) return defaultValue ? defaultValue : true ;
+    if ( typeof value === 'object' ) return defaultValue ? defaultValue : "true" ;
     return value ;
   }
   value = process.env[name] ;
