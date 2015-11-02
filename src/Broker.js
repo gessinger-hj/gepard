@@ -136,8 +136,19 @@ Connection.prototype.write = function ( data )
   {
     if ( data instanceof Event )
     {
-      var t = this.client_info ? this.client_info.application : ""
-      TPStore.store["EVENT_OUT"].log ( data.getName() + "/" + data.getType() + "-->" + t + "(" + this.sid + ")" ) ;
+      if ( data.getName() !== 'system' )
+      {
+        var t = this.client_info ? this.client_info.application : ""
+
+        if ( data.getName() !== 'system' )
+        {
+          TPStore.store["EVENT_OUT"].log ( data.getName() + "/" + data.getType() + "-->" + t + "(" + this.sid + ")" ) ;
+          if ( data.isResult() )
+          {
+            TPStore.store["EVENT_OUT"].log ( data ) ;
+          }
+        }
+      }
       this.setTimestamp() ;
       data.setTargetIsLocalHost ( this.isLocalHost() ) ;
       this.socket.write ( data.serialize() ) ;
@@ -166,6 +177,7 @@ Connection.prototype._sendInfoResult = function ( e )
   e.control.status = { code:0, name:"ack" } ;
   e.body.gepardVersion = Gepard.getVersion() ;
   e.body.brokerVersion = this.broker.brokerVersion ;
+  e.body.heartbeatIntervalMillis = this.broker._heartbeatIntervalMillis ;
   e.body.log = { levelName: Log.getLevelName(), level:Log.getLevel(), file: Log.getCurrentLogFileName() } ;
   e.body.currentEventNames = this.broker._eventNameToSockets.getKeys() ;
   for ( i = 0 ; i < this.broker._connectionList.length ; i++ )
@@ -329,6 +341,7 @@ var TP = function ( name )
 {
   this.active = false ;
   this.name = name ;
+  this.mode = "" ;
 };
 TP.prototype.log = function ( value )
 {
@@ -336,7 +349,19 @@ TP.prototype.log = function ( value )
   {
     return ;
   }
-  Log.logln ( value ) ;
+  if ( value instanceof Event )
+  {
+    var mode = this.mode ;
+    if ( ! mode ) mode = 'b' ; //body
+    if ( mode === 'a' ) Log.log ( value ) ;
+    if ( mode.indexOf ( 'u' ) >= 0 ) Log.logln ( value.user ) ;
+    if ( mode.indexOf ( 'c' ) >= 0 ) Log.logln ( value.control ) ;
+    if ( mode.indexOf ( 'b' ) >= 0 ) Log.logln ( value.body ) ;
+  }
+  else
+  {
+    Log.logln ( value ) ;
+  }
 };
 
 var TPStoreClass = function()
@@ -362,6 +387,7 @@ TPStoreClass.prototype.tracePointAction = function ( tracePointAction )
           if ( item.state === 'on' ) this.store[k].active = true ;
           if ( item.state === 'off' ) this.store[k].active = false ;
           if ( item.state === 'toggle' ) this.store[k].active = ! this.store[k].active ;
+          this.store[k].mode = item.mode ;
         }
         continue ;
       }
@@ -371,6 +397,7 @@ TPStoreClass.prototype.tracePointAction = function ( tracePointAction )
         if ( item.state === 'on' ) tp.active = true ;
         if ( item.state === 'off' ) tp.active = false ;
         if ( item.state === 'toggle' ) tp.active = ! tp.active ;
+        tp.mode = item.mode ;
       }
     }
   }
@@ -451,7 +478,7 @@ var Broker = function ( port, ip )
   });
   var ee = new Event() ;
   ee.addClassNameToConstructor ( "FileContainer", FileContainer ) ;
-  this._heartbeatIntervalMillis = 10000 ;
+  this._heartbeatIntervalMillis = 180000 ;
   this.brokerVersion = 1 ;
 };
 
@@ -573,7 +600,10 @@ Broker.prototype._ondata = function ( socket, chunk )
         socket.end() ;
         return ;
       }
-      TPStore.store["EVENT_IN"].log ( e ) ;
+      if ( e.getName() !== 'system' )
+      {
+        TPStore.store["EVENT_IN"].log ( e ) ;
+      }
 
       if ( ! e.body )
       {
@@ -782,8 +812,28 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
     this.validateAction ( this._connectionHook.shutdown, [ conn, e ], this, this._shutdown, [ conn, e ] ) ;
     return ;
   }
+  if ( e.getType() === "setSystemParameter" )
+  {
+    var sp = e.body.systemParameter ;
+    if ( ! isNaN ( sp._heartbeatIntervalMillis ) )
+    {
+      e.removeValue ( "systemParameter" ) ;
+      this._heartbeatIntervalMillis = sp._heartbeatIntervalMillis ;
+      if ( this.intervallId )
+      {
+        clearInterval ( this.intervallId ) ;
+        this.intervallId = setInterval ( this._checkHeartbeat_bind, this._heartbeatIntervalMillis ) ;
+      }
+    }
+    conn._sendInfoResult ( e ) ;
+    return ;
+  }
   if ( e.getType() === "tracePoint" )
   {
+    if ( e.body.tracePointAction.log === "on" )
+    {
+      Log.logln ( e.body.tracePointAction ) ;
+    }
     var tracePointResult = TPStore.tracePointAction ( e.body.tracePointAction ) ;
     e.control.status = { code:0, name:"ack" } ;
     if ( tracePointResult )
@@ -838,8 +888,9 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
       var thiz = this ;
       setTimeout ( function()
       {
-        var einfo                 = new Event ( "system", "broker_info" ) ;
-        einfo.body.brokerVersion  = thiz.brokerVersion ;
+        var einfo                           = new Event ( "system", "broker_info" ) ;
+        einfo.body.brokerVersion            = thiz.brokerVersion ;
+        einfo.body._heartbeatIntervalMillis = thiz._heartbeatIntervalMillis ;
         conn.write ( einfo ) ;
       },500) ;
     }
@@ -1227,6 +1278,10 @@ Broker.prototype._checkHeartbeat = function()
     }
   }
   socketsToBeClosed.length = 0 ;
+  if ( socketsToBePINGed.length )
+  {
+    Log.info ( "Heartbeat PING sent." ) ;
+  }
   for ( i = 0 ; i < socketsToBePINGed.length ; i++ )
   {
     try
@@ -1238,7 +1293,6 @@ Broker.prototype._checkHeartbeat = function()
       Log.log ( exc ) ;
     }
   }
-  Log.info ( "Heartbeat PING sent." ) ;
   socketsToBePINGed.length = 0 ;
 };
 /**

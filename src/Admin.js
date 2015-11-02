@@ -59,6 +59,10 @@ Admin.prototype.tracePoint = function ( what )
 {
 	this._execute ( "tracePoint", what ) ;
 };
+Admin.prototype.setSystemParameter = function ( what )
+{
+	this._execute ( "setSystemParameter", what ) ;
+};
 /**
  * Display an info from GPBroker
  * @method info
@@ -128,6 +132,16 @@ Admin.prototype._execute = function ( action, what, callback )
 		{
 		  var e = new Event ( "system", "tracePoint" ) ;
 		  e.body.tracePointAction = what ;
+		  this.write ( e.serialize() ) ;
+		});
+	}
+	else
+	if ( action === "setSystemParameter" )
+	{
+		this.socket.on ( "connect", function()
+		{
+		  var e = new Event ( "system", "setSystemParameter" ) ;
+		  e.body.systemParameter = what ;
 		  this.write ( e.serialize() ) ;
 		});
 	}
@@ -486,6 +500,21 @@ console.log ( "n=" + n ) ;
 	{
 		what = { "list": [] } ;
 		ad.tracePoint ( what ) ;
+		return ;
+	}
+	what = parseInt ( T.getProperty ( "hbm" ) ) ;
+	if ( ! isNaN ( what ) )
+	{
+		if ( what < 0 )
+		{
+			what = 1000 ;
+		}
+		else
+		if ( what < 1000 )
+		{
+			what = what * 1000 ;
+		}
+		ad.setSystemParameter ( { _heartbeatIntervalMillis: what } ) ;
 		return ;
 	}
 	what = T.getProperty ( "info", "true" ) ;

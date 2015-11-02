@@ -108,7 +108,7 @@ var Client = function ( port, host )
   this._timeStamp               = 0 ;
   this._heartbeatIntervalMillis = 10000 ;
   this._reconnectIntervalMillis = 5000 ;
-  this._reconnect               = false ;
+  this._reconnect               = T.getBool ( "gepard.reconnect", false ) ;
   this.firstPING                = true ;
   this.version                  = 1 ;
   this.brokerVersion            = 0 ;
@@ -385,16 +385,13 @@ Client.prototype.connect = function()
             thiz.brokerVersion = e.body.brokerVersion ;
             if ( thiz.brokerVersion > 0 )
             {
-              if ( thiz.firstPING )
+              if ( this.intervalId )
               {
-                if ( this.intervalId )
-                {
-                  clearInterval ( this.intervalId ) ;
-                }
-                if ( thiz.reconnect )
-                {
-                  thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._heartbeatIntervalMillis ) ;
-                }
+                clearInterval ( this.intervalId ) ;
+              }
+              if ( thiz.reconnect )
+              {
+                thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._heartbeatIntervalMillis ) ;
               }
             }
             return ;
@@ -614,6 +611,7 @@ Client.prototype._checkHeartbeat = function()
         thiz.pendingEventListenerList.push ( { e:e } ) ;
         thiz.getSocket() ;
         Log.logln ( "re-connect in progress." ) ;
+        Log.logln ( e.body.eventNameList ) ;
         thiz._private_emit ( "reconnect", e ) ;
       }
       if  ( thiz.intervalId ) clearInterval ( thiz.intervalId ) ;
