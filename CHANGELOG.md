@@ -1,3 +1,10 @@
+## 1.4.0 (2015-11-02)
+- JavaScript: configure reconnection-policy for a client by parameter --gepard.reconnect=true or environment variable GEPARD_RECONNECT=true
+- Introduce TracePoint concept into the Broker.
+	Trace by trace-point name
+- Change tracing of events online without restart.
+- Change heartbeat-interval times online.
+
 ## 1.3.3 (2015-10-09)
 - JavaScript: Introduce re-connection and re-installation af all client's listeners in case Broker was down/not reachable and is available again.
 

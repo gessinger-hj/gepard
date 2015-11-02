@@ -109,7 +109,6 @@ var Client = function ( port, host )
   this._heartbeatIntervalMillis = 10000 ;
   this._reconnectIntervalMillis = 5000 ;
   this._reconnect               = T.getBool ( "gepard.reconnect", false ) ;
-  this.firstPING                = true ;
   this.version                  = 1 ;
   this.brokerVersion            = 0 ;
 } ;
@@ -400,7 +399,7 @@ Client.prototype.connect = function()
           {
             e.setType ( "PONG" ) ;
             thiz.send ( e ) ;
-            if ( thiz.firstPING )
+            if ( thiz._heartbeatIntervalMillis !== e.control._heartbeatIntervalMillis )
             {
               thiz._heartbeatIntervalMillis = e.control._heartbeatIntervalMillis ;
               if ( this.intervalId )
@@ -412,7 +411,6 @@ Client.prototype.connect = function()
                 thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._heartbeatIntervalMillis ) ;
               }
             }
-            thiz.firstPING = false ;
             return ;
           }
           if ( e.isBad() )

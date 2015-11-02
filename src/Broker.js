@@ -818,11 +818,15 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
     if ( ! isNaN ( sp._heartbeatIntervalMillis ) )
     {
       e.removeValue ( "systemParameter" ) ;
-      this._heartbeatIntervalMillis = sp._heartbeatIntervalMillis ;
-      if ( this.intervallId )
+      if ( this._heartbeatIntervalMillis !== sp._heartbeatIntervalMillis )
       {
-        clearInterval ( this.intervallId ) ;
+        this._heartbeatIntervalMillis = sp._heartbeatIntervalMillis ;
+        if ( this.intervallId )
+        {
+          clearInterval ( this.intervallId ) ;
+        }
         this.intervallId = setInterval ( this._checkHeartbeat_bind, this._heartbeatIntervalMillis ) ;
+        this._send_PING_to_all() ;
       }
     }
     conn._sendInfoResult ( e ) ;
@@ -1227,6 +1231,28 @@ Broker.prototype.listen = function ( port, callback )
                } ;
   }
   this.server.listen ( this.port, callback ) ;
+};
+Broker.prototype._send_PING_to_all = function()
+{
+  var e = new Event ( "system", "PING" ) ;
+  e.control._heartbeatIntervalMillis = this._heartbeatIntervalMillis ;
+  var se = e.serialize() ;
+  for ( i = 0 ; i < this._connectionList.length ; i++ )
+  {
+    conn = this._connectionList[i] ;
+    if ( conn.version <= 0 )
+    {
+      continue ;
+    }
+    try
+    {
+      conn.socket.write ( se ) ;
+    }
+    catch ( exc )
+    {
+      Log.log ( exc ) ;
+    }
+  }
 };
 Broker.prototype._checkHeartbeat = function()
 {
