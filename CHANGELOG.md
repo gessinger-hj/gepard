@@ -1,3 +1,9 @@
+## 1.4.0 (2015-11-05)
+- Default is reconnect=off
+	Reconnect=on with either
+	* option: --gepard.reconnect
+	* environment variable GEPARD_RECONNECT
+	* client.setRecconnect ( true ) before any socket connection is active
 ## 1.4.0 (2015-11-02)
 - JavaScript: configure reconnection-policy for a client by parameter --gepard.reconnect=true or environment variable GEPARD_RECONNECT=true
 - Introduce TracePoint concept into the Broker.
