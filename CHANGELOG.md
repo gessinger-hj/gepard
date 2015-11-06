@@ -6,6 +6,7 @@
 	1.	config entry: "heartbeatMillis": &lt;millis>
 
 ## 1.4.0 (2015-11-05)
+- JavaScript: configure reconnection-policy for a client by parameter --gepard.reconnect=true or environment variable GEPARD_RECONNECT=true
 - Default is reconnect=off
 	Reconnect=on with either
 	* option: --gepard.reconnect
@@ -13,7 +14,6 @@
 	* client.setRecconnect ( true ) before any socket connection is active
 
 ## 1.4.0 (2015-11-02)
-- JavaScript: configure reconnection-policy for a client by parameter --gepard.reconnect=true or environment variable GEPARD_RECONNECT=true
 - Introduce TracePoint concept into the Broker.
 	Trace by trace-point name
 - Change tracing of events online without restart.
