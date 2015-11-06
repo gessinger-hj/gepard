@@ -479,6 +479,8 @@ var Broker = function ( port, ip )
   var ee = new Event() ;
   ee.addClassNameToConstructor ( "FileContainer", FileContainer ) ;
   this._heartbeatIntervalMillis = 180000 ;
+  this._heartbeatIntervalMillis = T.getInt ( "gepard.heartbeat.millis", this._heartbeatIntervalMillis ) ;
+
   this.brokerVersion = 1 ;
 };
 
@@ -1367,6 +1369,12 @@ Broker.prototype.setConfig = function ( configuration )
     hook = require ( configuration.connectionHook ) ;
   }
   this._connectionHook = new hook() ;
+  if ( configuration.heartbeatMillis )
+  {
+    var hbm = parseInt ( configuration.heartbeatMillis ) ;
+    if ( ! isNaN ( hbm ) ) this._heartbeatIntervalMillis = hbm ;
+  }
+  this._heartbeatIntervalMillis = T.getInt ( "gepard.heartbeat.millis", this._heartbeatIntervalMillis ) ;
 };
 module.exports = Broker ;
 

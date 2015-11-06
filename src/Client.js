@@ -399,9 +399,9 @@ Client.prototype.connect = function()
           {
             e.setType ( "PONG" ) ;
             thiz.send ( e ) ;
-            if ( thiz._heartbeatIntervalMillis !== e.control._heartbeatIntervalMillis )
+            if ( thiz._heartbeatIntervalMillis !== e.body._heartbeatIntervalMillis )
             {
-              thiz._heartbeatIntervalMillis = e.control._heartbeatIntervalMillis ;
+              thiz._heartbeatIntervalMillis = e.body._heartbeatIntervalMillis ;
               if ( this.intervalId )
               {
                 clearInterval ( this.intervalId ) ;

@@ -35,10 +35,12 @@ public class Client
   SyncedQueue<Event> _CallbackIsolator = new SyncedQueue<Event>() ;
 
   String USERNAME = System.getProperty ( "user.name" ) ;
-	Long _heartbeatIntervalMillis = 0L ;
-
+	long _heartbeatIntervalMillis = 10000L ;
+  long _reconnectIntervalMillis = 5000L ;
+  boolean _reconnect            = Util.getBool ( "gepard.reconnect", false ) ;
   static Hashtable<String,Client> _Instances = new Hashtable<String,Client>() ;
 
+  MutableTimer _Timer = new MutableTimer ( true ) ;
   int version = 1 ;
   int brokerVersion = 0 ;
   static public Client getInstance()
@@ -90,6 +92,13 @@ public class Client
 			USERNAME = "guest" ;
 		}
 		user = new User ( USERNAME ) ;
+		_Timer.add ( _heartbeatIntervalMillis, new Runnable()
+		{
+			public void run()
+			{
+				_checkHeartbeat() ;
+			}
+		} ) ;
 	}
 	public String getUSERNAME()
 	{
@@ -128,6 +137,8 @@ public class Client
 		try
 		{
 	    socket = new Socket ( host, port ) ;
+      socket.setSoTimeout ( 3 * (int)(_heartbeatIntervalMillis) ) ;
+
 	    OutputStream out = socket.getOutputStream() ;
 	    _out = new OutputStreamWriter ( out, "utf-8" ) ;
 	    InputStream in = socket.getInputStream() ;
@@ -593,7 +604,15 @@ public class Client
 
 		    while ( true )
 		    {
-			    String t = readNextJSON ( in ) ;
+		    	String t = null ;
+	        try
+	        {
+				    t = readNextJSON ( in ) ;
+	        }
+	        catch ( SocketTimeoutException exc )
+	        { 
+	          break ;
+	        }
 			    if ( t == null )
 			    {
   					_emit ( "close", null ) ;
@@ -626,6 +645,12 @@ public class Client
 						      {
 							      brokerVersion = vers.intValue() ;
 						      }
+						      Double heartbeatIntervalMillis = (Double) body.get ( "_heartbeatIntervalMillis" ) ;
+						      if ( heartbeatIntervalMillis != null )
+						      {
+							      _heartbeatIntervalMillis = heartbeatIntervalMillis.longValue() ;
+						      }
+						    	_Timer.start ( _heartbeatIntervalMillis ) ;
 						    }
 						    catch ( Exception exc )
 						    {
@@ -868,5 +893,9 @@ public class Client
 		Map<String,Object> body = e.getBody() ;
   	body.put ( "resourceId", lock.resourceId ) ;
   	_send ( e ) ;
+	}
+	private void _checkHeartbeat()
+	{
+		System.out.println ( "_checkHeartbeat" ) ;
 	}
 }

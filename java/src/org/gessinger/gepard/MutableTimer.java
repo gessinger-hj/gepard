@@ -55,28 +55,127 @@ public class MutableTimer
     rc.task = task ;
     timer.schedule ( rc.task, 0, rc.period ) ;
   }
+  public void add ( long period, Runnable runnable )
+  {
+    RunnableContext rc = new RunnableContext ( period, "", runnable ) ;
+    taskList.add ( rc ) ;
+  }
+  public void add ( long period, String name, Runnable runnable )
+  {
+    RunnableContext rc = new RunnableContext ( period, name, runnable ) ;
+    taskList.add ( rc ) ;
+  }
   public void stop()
   {
     for ( RunnableContext rc : taskList )
     {
-      rc.task.cancel() ;
+      if ( rc.task != null )
+      {
+        rc.task.cancel() ;
+        rc.task = null ;
+      }
+    }
+  }
+  public void stop ( String name )
+  {
+    for ( RunnableContext rc : taskList )
+    {
+      if ( name.equals ( rc.name ) )
+      {
+        if ( rc.task != null )
+        {
+          rc.task.cancel() ;
+          rc.task = null ;
+        }
+      }
     }
   }
   public void start()
   {
     for ( RunnableContext rc : taskList )
     {
+      if ( rc.task != null ) continue ;
       _schedule ( rc ) ;
     }
   }
-  public void start ( long nuperiod )
+  public void start ( long period )
   {
     for ( RunnableContext rc : taskList )
     {
-      rc.period = nuperiod ;
+      if ( rc.task != null ) continue ;
+      rc.period = period ;
       _schedule ( rc ) ;
     }
   }
+  public void start ( String name )
+  {
+    for ( RunnableContext rc : taskList )
+    {
+      if ( name.equals ( rc.name ) )
+      {
+        if ( rc.task != null ) continue ;
+        _schedule ( rc ) ;
+      }
+    }
+  }
+  public void start ( long period, String name )
+  {
+    for ( RunnableContext rc : taskList )
+    {
+      if ( name.equals ( rc.name ) )
+      {
+        if ( rc.task != null ) continue ;
+        rc.period = period ;
+        _schedule ( rc ) ;
+      }
+    }
+  }
+
+  public void restart ( long period )
+  {
+    for ( RunnableContext rc : taskList )
+    {
+      if ( rc.task != null )
+      {
+        rc.task.cancel() ;
+        rc.task = null ;
+      }
+      rc.period = period ;
+      _schedule ( rc ) ;
+    }
+  }
+  public void restart ( String name )
+  {
+    for ( RunnableContext rc : taskList )
+    {
+      if ( name.equals ( rc.name ) )
+      {
+        if ( rc.task != null )
+        {
+          rc.task.cancel() ;
+          rc.task = null ;
+        }
+        _schedule ( rc ) ;
+      }
+    }
+  }
+  public void restart ( long period, String name )
+  {
+    for ( RunnableContext rc : taskList )
+    {
+      if ( name.equals ( rc.name ) )
+      {
+        if ( rc.task != null )
+        {
+          rc.task.cancel() ;
+          rc.task = null ;
+        }
+        rc.period = period ;
+        _schedule ( rc ) ;
+      }
+    }
+  }
+
   public void cancel ( String taskName )
   {
     ArrayList<RunnableContext> toBeRemoved = new ArrayList<RunnableContext>() ;
@@ -84,7 +183,10 @@ public class MutableTimer
     {
       if ( rc.name.equals ( taskName ) )
       {
-        rc.task.cancel() ;
+        if ( rc.task != null )
+        {
+          rc.task.cancel() ;
+        }
         toBeRemoved.add ( rc ) ;
       }
     }
@@ -98,7 +200,10 @@ public class MutableTimer
   {
     for ( RunnableContext rc : taskList )
     {
-      rc.task.cancel() ;
+      if ( rc.task != null )
+      {
+        rc.task.cancel() ;
+      }
     }
     taskList.clear() ;
   }
@@ -111,7 +216,7 @@ public class MutableTimer
   throws Exception
   {
     MutableTimer gt = new MutableTimer() ;
-    System.out.format("About to schedule task.%n");
+    System.out.println ( "Schedule task R1" ) ;
     gt.schedule ( 1000, "R1", new Runnable()
     {
       public void run()
@@ -122,11 +227,12 @@ public class MutableTimer
     Thread.sleep ( 5000 ) ;
     // gt.cancel ( "R1" ) ;
     gt.stop() ;
+    System.out.println ( "Sleep 2000" ) ;
     Thread.sleep ( 2000 ) ;
     gt.start(100) ;
+    System.out.println ( "Sleep 2000" ) ;
     Thread.sleep ( 2000 ) ;
     gt.cancelAll() ;
-    System.out.format("Task scheduled.%n");
     gt.schedule ( 500, "R2", new Runnable()
     {
       public void run()
@@ -135,7 +241,26 @@ public class MutableTimer
       }
     }) ;
     // gt.schedule ( 500, () -> System.out.println ( "boop" ) ) ;
+    System.out.println ( "Sleep 5000" ) ;
     Thread.sleep ( 5000 ) ;
+    System.out.println ( "stop R2" ) ;
+    gt.stop ( "R2" ) ;
+    System.out.println ( "Add R3" ) ;
+    gt.add ( 1000, "R3", new Runnable()
+    {
+      public void run()
+      {
+        System.out.println ( "baaaap" ) ;
+      }
+    });
+    System.out.println ( "Start R3" ) ;
+    gt.start ( "R3" ) ;
+    System.out.println ( "Sleep 5000 for R3 1000" ) ;
+    Thread.sleep ( 5000 ) ;
+    System.out.println ( "Restart R3 500" ) ;
+    gt.restart ( 100, "R3" ) ;
+    System.out.println ( "Sleep 1000 for R3 100" ) ;
+    Thread.sleep ( 1000 ) ;
     // gt.cancelAll() ;
     // gt.cancel() ;
   }

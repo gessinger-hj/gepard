@@ -1,3 +1,4 @@
 {
 	"connectionHook": "XmpConnectionHook.js"
+,	"heartbeatMillis": 100000
 }

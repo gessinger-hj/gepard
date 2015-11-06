@@ -1,9 +1,18 @@
 ## 1.4.0 (2015-11-05)
+<<<<<<< HEAD
 - Default is reconnect=off
 	Reconnect=on with either
 	* option: --gepard.reconnect
 	* environment variable GEPARD_RECONNECT
 	* client.setRecconnect ( true ) before any socket connection is active
+=======
+- Broker: configure heartbeat-interval with:
+
+	1.	parameter: --gepard.heartbeat.millis=&lt;millis>
+	1.	environment: variable GEPARD_HEARTBEAT_MILLIS=&lt;millis>
+	1.	config entry: "heartbeatMillis": &lt;millis>
+
+>>>>>>> Heartbeat/Reconnect Java
 ## 1.4.0 (2015-11-02)
 - JavaScript: configure reconnection-policy for a client by parameter --gepard.reconnect=true or environment variable GEPARD_RECONNECT=true
 - Introduce TracePoint concept into the Broker.

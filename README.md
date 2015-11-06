@@ -90,6 +90,7 @@ In the next step clients for other languages like Php, Perl etc are planned.
 The broker can be instantiated from a JavaScript program but the most common and simplest way to use it is to start it detached as a daemon.
 
 The appropriate command is:
+
 ```bash
 node_modules/.bin/gp.broker
 ```
