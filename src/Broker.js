@@ -337,9 +337,9 @@ Connection.prototype.getApplication = function() { if ( ! this.client_info ) ret
 Connection.prototype.getId = function() { if ( ! this.client_info ) return "" ; return this.client_info.sid ; } ;
 Connection.prototype.getUSERNAME = function() { if ( ! this.client_info.USERNAME ) return "" ; return this.client_info.USERNAME ; } ;
 
-var TP = function ( name )
+var TP = function ( name, active )
 {
-  this.active = false ;
+  this.active = !! active ;
   this.name = name ;
   this.mode = "" ;
 };
@@ -363,7 +363,10 @@ TP.prototype.log = function ( value )
     Log.logln ( value ) ;
   }
 };
-
+TP.prototype.isActive = function()
+{
+  return this.active ;
+};
 var TPStoreClass = function()
 {
   this.store = {} ;
@@ -416,6 +419,7 @@ TPStore = new TPStoreClass() ;
 
 TPStore.add ( new TP ( "EVENT_IN" ) ) ;
 TPStore.add ( new TP ( "EVENT_OUT" ) ) ;
+TPStore.add ( new TP ( "HEARTBEAT", true ) ) ;
 
 /**
  * @constructor
@@ -1258,6 +1262,11 @@ Broker.prototype._send_PING_to_all = function()
 };
 Broker.prototype._checkHeartbeat = function()
 {
+  if ( ! TPStore.store["EVENT_IN"].isActive() )
+  {
+    return ;
+  }
+
   var socketsToBeClosed = [] ;
   var socketsToBePINGed = [] ;
   var i, conn ;

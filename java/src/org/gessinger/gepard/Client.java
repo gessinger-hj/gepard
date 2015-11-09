@@ -92,11 +92,11 @@ public class Client
 			USERNAME = "guest" ;
 		}
 		user = new User ( USERNAME ) ;
-		_Timer.add ( _heartbeatIntervalMillis, new Runnable()
+		_Timer.add ( _reconnectIntervalMillis, new Runnable()
 		{
 			public void run()
 			{
-				_checkHeartbeat() ;
+				_checkReconnect() ;
 			}
 		} ) ;
 	}
@@ -137,7 +137,10 @@ public class Client
 		try
 		{
 	    socket = new Socket ( host, port ) ;
-      socket.setSoTimeout ( 3 * (int)(_heartbeatIntervalMillis) ) ;
+	    if ( version > 0 )
+	    {
+	      socket.setSoTimeout ( 3 * (int)(_heartbeatIntervalMillis) ) ;
+	    }
 
 	    OutputStream out = socket.getOutputStream() ;
 	    _out = new OutputStreamWriter ( out, "utf-8" ) ;
@@ -610,7 +613,9 @@ public class Client
 				    t = readNextJSON ( in ) ;
 	        }
 	        catch ( SocketTimeoutException exc )
-	        { 
+	        {
+	        	_Timer.start() ;
+	        	System.out.println ( Util.toString ( exc ) );
 	          break ;
 	        }
 			    if ( t == null )
@@ -649,8 +654,8 @@ public class Client
 						      if ( heartbeatIntervalMillis != null )
 						      {
 							      _heartbeatIntervalMillis = heartbeatIntervalMillis.longValue() ;
+							      socket.setSoTimeout ( 3 * (int)_heartbeatIntervalMillis ) ;
 						      }
-						    	_Timer.start ( _heartbeatIntervalMillis ) ;
 						    }
 						    catch ( Exception exc )
 						    {
@@ -894,8 +899,8 @@ public class Client
   	body.put ( "resourceId", lock.resourceId ) ;
   	_send ( e ) ;
 	}
-	private void _checkHeartbeat()
+	private void _checkReconnect()
 	{
-		System.out.println ( "_checkHeartbeat" ) ;
+		System.out.println ( "_checkReconnect" ) ;
 	}
 }
