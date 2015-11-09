@@ -23,6 +23,7 @@ public class Client
 	boolean targetIsLocalHost      = false ;
 	static boolean _workerIsDaemon = false ;
 	int numberOfCallbackWorker     = 3 ;
+	boolean callbackWorkerCreated  = false ;
 
   MultiMap<String,EventListener> eventListenerFunctions = new MultiMap<String,EventListener>() ;
   Hashtable<String,EventCallback> callbacks = new Hashtable<String,EventCallback>() ;
@@ -96,7 +97,10 @@ public class Client
 		{
 			public void run()
 			{
-				_checkReconnect() ;
+				if ( _reconnect )
+				{
+					_checkReconnect() ;
+				}
 			}
 		} ) ;
 	}
@@ -107,6 +111,14 @@ public class Client
 	public void setUser ( User user )
 	{
   	this.user = user ;
+	}
+	public void setReconnect ( boolean state )
+	{
+		_reconnect = state ;
+	}
+	public boolean isReconnect()
+	{
+		return _reconnect ;
 	}
 	public void setNumberOfCallbackWorker ( int n )
 	{
@@ -129,6 +141,13 @@ public class Client
 		return hostname + "_" + localPort + "-" + counter + "_" + new Date().getTime() ;
 	}
 	OutputStreamWriter getWriter()
+	throws UnsupportedEncodingException
+			 , IOException
+			 , ConnectException
+	{
+		return getWriter ( false ) ;
+	}
+	OutputStreamWriter getWriter ( boolean testForReconnect )
 	throws UnsupportedEncodingException
 			 , IOException
 			 , ConnectException
@@ -171,13 +190,17 @@ public class Client
 	    _out.write ( t, 0, t.length() ) ;
 	    _out.flush() ;
 
-	    for ( int i = 0 ; i < numberOfCallbackWorker ; i++ )
+	    if ( ! callbackWorkerCreated )
 	    {
-		    CallbackWorker cr = new CallbackWorker() ;
-		    cr.counter = i ;
-		    Thread thcr = new Thread ( cr ) ;
-		    thcr.setDaemon ( true ) ;
-		    thcr.start() ;
+		    for ( int i = 0 ; i < numberOfCallbackWorker ; i++ )
+		    {
+			    CallbackWorker cr = new CallbackWorker() ;
+			    cr.counter = i ;
+			    Thread thcr = new Thread ( cr ) ;
+			    thcr.setDaemon ( true ) ;
+			    thcr.start() ;
+		    }
+		    callbackWorkerCreated = true ;
 	    }
 	    
 	    Runner r = new Runner ( _in ) ;
@@ -206,12 +229,79 @@ public class Client
 		}
 		catch ( IOException exc )
 		{
-	  	_emit ( "error", exc.getMessage() ) ;
-	  	System.err.println ( "host=" + host ) ;
-	  	System.err.println ( "port=" + port ) ;
+			if ( ! testForReconnect )
+			{
+		  	_emit ( "error", exc.getMessage() ) ;
+		  	System.err.println ( "host=" + host ) ;
+	  		System.err.println ( "port=" + port ) ;
+			}
 			throw exc ;
 		}
 		return _out ;
+	}
+	public void startReconnections()
+	throws Exception
+	{
+		if ( socket != null )
+		{
+			try
+			{
+				closing = true ;
+				socket.setSoLinger ( true, 0 ) ;
+				if ( _out != null )
+				{
+		    	_out.flush() ;
+		    	_out.close() ;
+				}
+				if ( _in != null )
+				{
+		    	_in.close() ;
+				}
+	    	socket.close() ;
+			}
+			catch ( Exception exc )
+			{
+				System.err.println ( Util.toString ( exc ) ) ;
+			}
+		}
+		socket = null ;
+		_in    = null ;
+		_out   = null ;
+  	_Timer.start() ;
+	}
+	public void close (  )
+	{
+		if ( socket != null )
+		{
+			try
+			{
+				closing = true ;
+				socket.setSoLinger ( true, 0 ) ;
+				if ( _out != null )
+				{
+		    	_out.flush() ;
+		    	_out.close() ;
+				}
+				if ( _in != null )
+				{
+		    	_in.close() ;
+				}
+	    	socket.close() ;
+			}
+			catch ( Exception exc )
+			{
+				System.err.println ( Util.toString ( exc ) ) ;
+			}
+		}
+		socket = null ;
+		_in    = null ;
+		_out   = null ;
+
+		infoCallbacks.clear() ;
+		eventListenerFunctions.clear() ;
+  	_Instances.remove ( "" + this.host + ":" + this.port ) ;
+		_CallbackIsolator.awakeAll() ;
+  	_emit ( "close", null ) ;
 	}
 	public void emit ( String name )
 	throws IOException
@@ -309,39 +399,6 @@ public class Client
 			throw exc ;
 		}
 	}
-	public void close (  )
-	{
-		if ( socket != null )
-		{
-			try
-			{
-				closing = true ;
-				socket.setSoLinger ( true, 0 ) ;
-				if ( _out != null )
-				{
-		    	_out.flush() ;
-		    	_out.close() ;
-				}
-				if ( _in != null )
-				{
-		    	_in.close() ;
-				}
-	    	socket.close() ;
-			}
-			catch ( Exception exc )
-			{
-				System.err.println ( Util.toString ( exc ) ) ;
-			}
-		}
-		infoCallbacks.clear() ;
-		eventListenerFunctions.clear() ;
-  	_Instances.remove ( "" + this.host + ":" + this.port ) ;
-		socket = null ;
-		_in    = null ;
-		_out   = null ;
-		_CallbackIsolator.awakeAll() ;
-  	_emit ( "close", null ) ;
-	}
   String _LOCK = "LOCK" ;
   MultiMap<String,InfoCallback> infoCallbacks = new MultiMap<String,InfoCallback>() ;
   public void onShutdown ( InfoCallback icb )
@@ -355,6 +412,10 @@ public class Client
   public void onError ( InfoCallback icb )
   {
   	infoCallbacks.put ( "error", icb ) ;
+  }
+  public void onReconnect ( InfoCallback icb )
+  {
+  	infoCallbacks.put ( "reconnect", icb ) ;
   }
   void _emit ( String eventName, String reason )
   {
@@ -587,6 +648,7 @@ public class Client
   				System.err.println ( Util.toString ( exc ) ) ;
   			}
   		}
+System.out.println ( "CallbackWorker end." ) ;
   	}
   }
   class Runner implements Runnable
@@ -614,8 +676,22 @@ public class Client
 	        }
 	        catch ( SocketTimeoutException exc )
 	        {
-	        	_Timer.start() ;
 	        	System.out.println ( Util.toString ( exc ) );
+						if ( _reconnect )
+						{
+					    System.err.println ( "missing ping request --> try reconnect." ) ;
+		        	startReconnections() ;
+						}
+	          break ;
+	        }
+	        catch ( IOException exc )
+	        {
+	        	System.out.println ( Util.toString ( exc ) );
+						if ( _reconnect )
+						{
+					    System.err.println ( "missing ping request --> try reconnect." ) ;
+		        	startReconnections() ;
+						}
 	          break ;
 	        }
 			    if ( t == null )
@@ -721,7 +797,7 @@ public class Client
   }
 
 	private synchronized String readNextJSON ( InputStreamReader in )
-	throws IOException
+	throws Exception
 	{
 	  StringBuilder sb = new StringBuilder() ;
 		try
@@ -729,8 +805,21 @@ public class Client
 	    int k = 0 ;
 	    char q = 0 ;
 	    int pcounter = 0 ;
-	    while ( ( k = in.read() ) >= 0 )
+	    if ( version > 0 )
 	    {
+	      socket.setSoTimeout ( 3 * (int)(_heartbeatIntervalMillis) ) ;
+	    }
+	    while ( true )
+	    {
+	    	k = in.read() ;
+	    	if ( k < 0 )
+	    	{
+	    		if ( _reconnect )
+	    		{
+	    			throw new IOException ( "Error reading from socket. k=" + k ) ;
+	    		}
+	    		break ;
+	    	}
 	    	char c = (char)(k&0xFFFF) ;
 		    sb.append ( c ) ;
 		    if ( c == '"' || c == '\'' )
@@ -768,7 +857,7 @@ public class Client
 		    }
 		  }
 		}
-		catch ( IOException exc )
+		catch ( Exception exc )
 		{
 			if ( closing ) return null ;
 			throw exc ;
@@ -901,6 +990,37 @@ public class Client
 	}
 	private void _checkReconnect()
 	{
-		System.out.println ( "_checkReconnect" ) ;
+		try
+		{
+			closing = false ;
+			getWriter ( true ) ;
+			Set<String> keySet = eventListenerFunctions.keySet() ;
+			ArrayList<String> list = new ArrayList<String>() ;
+			for ( String key : keySet )
+			{
+				list.add ( key ) ;
+			}
+			String[] eventNameList = list.toArray ( new String[0] ) ;
+
+			_Timer.stop() ;
+			Event e = new Event ( "system", "addEventListener" ) ;
+		  e.body.put ( "eventNameList", eventNameList ) ;
+	    e.setUniqueId ( createUniqueId() ) ;
+      System.err.println ( "re-connect in progress." ) ;
+      System.err.println ( list.toString() ) ;
+      _emit ( "reconnect", list.toString() ) ;
+	    _send ( e ) ;
+		}
+		catch ( ConnectException cexc )
+		{
+		}
+		catch ( IOException ioexc )
+		{
+			System.out.println ( Util.toString ( ioexc ) ) ;
+		}
+		catch ( Exception exc )
+		{
+			System.out.println ( Util.toString ( exc ) ) ;
+		}
 	}
 }

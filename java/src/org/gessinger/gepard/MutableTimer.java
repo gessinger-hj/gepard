@@ -24,6 +24,10 @@ public class MutableTimer
       this.runnable = runnable ;
       this.task     = null ;
     }
+    public String toString()
+    {
+      return "(" + getClass().getName() + ")[\nname=" + name + "\n,period=" + period + "\n,task=" + task + "\n]" ;
+    }
   }
   public MutableTimer()
   {
@@ -53,7 +57,7 @@ public class MutableTimer
       }
     };
     rc.task = task ;
-    timer.schedule ( rc.task, 0, rc.period ) ;
+    timer.schedule ( rc.task, rc.period, rc.period ) ;
   }
   public void add ( long period, Runnable runnable )
   {

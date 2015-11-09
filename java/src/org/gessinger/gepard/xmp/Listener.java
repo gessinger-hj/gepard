@@ -33,6 +33,13 @@ public class Listener
         System.out.println ( e ) ;
       }
     });
+    client.onReconnect ( new InfoCallback()
+    {
+      public void info ( Client c, Event e )
+      {
+        System.out.println ( e ) ;
+      }
+    });
     String name = Util.getProperty ( "name", "ALARM" ) ;
     System.out.println ( "Listen for events with name=" + name ) ;
     client.on ( name, new EventListener()
@@ -42,5 +49,9 @@ public class Listener
         System.out.println ( e ) ;
       }
     } ) ;
+    if ( client.isReconnect() )
+    {
+      Thread.sleep ( Long.MAX_VALUE ) ;
+    }
   }
 }

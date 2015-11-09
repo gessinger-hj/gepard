@@ -1262,7 +1262,7 @@ Broker.prototype._send_PING_to_all = function()
 };
 Broker.prototype._checkHeartbeat = function()
 {
-  if ( ! TPStore.store["EVENT_IN"].isActive() )
+  if ( ! TPStore.store["HEARTBEAT"].isActive() )
   {
     return ;
   }
