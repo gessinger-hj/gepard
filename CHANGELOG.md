@@ -1,3 +1,11 @@
+## 1.4.0 (2015-11-10)
+- Java: configure reconnection-policy for a client with either
+	* option: --gepard.reconnect
+	* environment variable GEPARD_RECONNECT
+	* client.setRecconnect ( true ) before any socket connection is active
+
+	Default is reconnect=off
+
 ## 1.4.0 (2015-11-06)
 - Broker: configure heartbeat-interval with:
 

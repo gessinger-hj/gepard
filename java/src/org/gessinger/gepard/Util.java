@@ -172,7 +172,7 @@ final public class Util
             }
             catch ( Exception exc )
             {
-              System.out.println ( Util.toString ( exc ) ) ;
+              System.err.println ( Util.toString ( exc ) ) ;
             }
           }
         }

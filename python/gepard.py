@@ -611,8 +611,20 @@ class Client:
 		lastWasBackslash = False
 		q = 0
 		pcounter = 0
+		print ( "_heartbeatIntervalMillis=" + str ( self._heartbeatIntervalMillis ) )
+		print ( "_heartbeatIntervalSecs=" + str ( ( 3 * self._heartbeatIntervalMillis ) / 1000 ) )
+		print ( "self.brokerVersion=" + str ( self.brokerVersion ) )
+		try:
+			if self.brokerVersion > 0 and self._heartbeatIntervalMillis > 0 :
+				self.sock.settimeout ( ( 3 * self._heartbeatIntervalMillis ) / 1000 )
+		except Exception as e:
+			print ( e )
+
 		while True:
-			c = self.sock.recv(1)
+			try:
+				c = self.sock.recv(1)
+			except Exception as e:
+				print ( e )
 			if c == b'':
 				self.connected = False
 				exc = IOError ( "socket connection broken" )
@@ -661,6 +673,7 @@ class Client:
 					if e.getType() != None and e.getType() == "broker_info":
 						if e.__dict__["body"].get ( "brokerVersion" ) != None:
 							self.brokerVersion = e.__dict__["body"]["brokerVersion"]
+							self._heartbeatIntervalMillis = e.__dict__["body"]["_heartbeatIntervalMillis"]
 						continue
 					if e.getType() == "acquireSemaphoreResult":
 						body = e.getBody()

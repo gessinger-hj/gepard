@@ -23,21 +23,30 @@ public class Listener
     {
       public void info ( Client c, Event e )
       {
-        System.out.println ( e ) ;
+        c.setReconnect ( false ) ;
+        System.out.println ( e.getName() + "/" + e.getType() ) ;
+        System.exit ( 0 ) ;
       }
     });
     client.onClose ( new InfoCallback()
     {
       public void info ( Client c, Event e )
       {
-        System.out.println ( e ) ;
+        System.out.println ( e.getName() + "/" + e.getType() ) ;
       }
     });
     client.onReconnect ( new InfoCallback()
     {
       public void info ( Client c, Event e )
       {
-        System.out.println ( e ) ;
+        System.out.println ( e.getName() + "/" + e.getType() ) ;
+      }
+    });
+    client.onDisconnect ( new InfoCallback()
+    {
+      public void info ( Client c, Event e )
+      {
+        System.out.println ( e.getName() + "/" + e.getType() ) ;
       }
     });
     String name = Util.getProperty ( "name", "ALARM" ) ;

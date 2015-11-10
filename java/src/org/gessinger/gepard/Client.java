@@ -3,11 +3,12 @@ package org.gessinger.gepard ;
 import java.util.* ;
 import java.io.* ;
 import java.net.* ;
-
+import java.util.logging.* ;
 import com.google.gson.* ;
 
 public class Client
 {
+	private static Logger LOGGER = Logger.getLogger ( "org.gessinger.gepard" ) ;
 	static int counter             = 0 ;
 	int port                       = -1 ;
 	String host                    = "localhost" ;
@@ -44,6 +45,20 @@ public class Client
   MutableTimer _Timer = new MutableTimer ( true ) ;
   int version = 1 ;
   int brokerVersion = 0 ;
+
+  class LFormatter extends SimpleFormatter
+  {
+  	public String format ( LogRecord rec )
+  	{
+  		// String s = super.format ( rec ) ;
+  		StringBuilder sb = new StringBuilder() ;
+  		sb.append ( "[" ) ;
+  		sb.append ( Util.getISODateTime ( new Date ( rec.getMillis() ) ) ) ;
+  		sb.append ( "] " ) ;
+  		sb.append ( rec.getMessage() ) ;
+  		return sb.toString() ;
+  	}
+  }
   static public Client getInstance()
   {
   	return getInstance ( -1, null ) ;
@@ -74,6 +89,16 @@ public class Client
 	}
 	public Client ( int port, String host )
 	{
+		Handler h = new ConsoleHandler() ;
+		h.setFormatter ( new LFormatter() ) ;
+		Handler[] handlers = LOGGER.getHandlers() ;
+		if ( handlers.length > 0 )
+		{
+			LOGGER.removeHandler ( handlers[0] ) ;
+		}
+		LOGGER.setUseParentHandlers ( false ) ;
+		LOGGER.addHandler ( h ) ;
+
 		this.port      = port ;
 		this.host      = host ;
 		if ( this.port <= 0 ) this.port    = Util.getInt ( "gepard.port", 17501 ) ;
@@ -86,7 +111,7 @@ public class Client
 		}
 		catch ( Exception exc )
 		{
-			System.err.println ( Util.toString ( exc ) ) ;
+			LOGGER.info ( Util.toString ( exc ) ) ;
 		}
 		if ( USERNAME == null )
 		{
@@ -216,15 +241,15 @@ public class Client
 	    }
 	    catch ( Exception exc )
 	    {
-	    	System.out.println ( Util.toString ( exc ) ) ;
+	    	LOGGER.info ( Util.toString ( exc ) ) ;
 	    }
 	  	_Instances.put ( "" + this.host + ":" + this.port, this ) ;
 		}
 		catch ( UnsupportedEncodingException exc )
 		{
 	  	_emit ( "error", exc.getMessage() ) ;
-	  	System.err.println ( "host=" + host ) ;
-	  	System.err.println ( "port=" + port ) ;
+	  	LOGGER.info ( "host=" + host + "\n" ) ;
+	  	LOGGER.info ( "port=" + port + "\n" ) ;
 			throw exc ;
 		}
 		catch ( IOException exc )
@@ -232,8 +257,8 @@ public class Client
 			if ( ! testForReconnect )
 			{
 		  	_emit ( "error", exc.getMessage() ) ;
-		  	System.err.println ( "host=" + host ) ;
-	  		System.err.println ( "port=" + port ) ;
+		  	LOGGER.info ( "host=" + host + "\n" ) ;
+	  		LOGGER.info ( "port=" + port + "\n" ) ;
 			}
 			throw exc ;
 		}
@@ -261,7 +286,7 @@ public class Client
 			}
 			catch ( Exception exc )
 			{
-				System.err.println ( Util.toString ( exc ) ) ;
+				LOGGER.info ( Util.toString ( exc ) ) ;
 			}
 		}
 		socket = null ;
@@ -290,7 +315,7 @@ public class Client
 			}
 			catch ( Exception exc )
 			{
-				System.err.println ( Util.toString ( exc ) ) ;
+				LOGGER.info ( Util.toString ( exc ) ) ;
 			}
 		}
 		socket = null ;
@@ -417,6 +442,10 @@ public class Client
   {
   	infoCallbacks.put ( "reconnect", icb ) ;
   }
+  public void onDisconnect ( InfoCallback icb )
+  {
+  	infoCallbacks.put ( "disconnect", icb ) ;
+  }
   void _emit ( String eventName, String reason )
   {
   	if ( ! infoCallbacks.containsKey ( eventName ) ) return ;
@@ -430,7 +459,7 @@ public class Client
   		}
   		catch ( Exception exc )
   		{
-  			System.err.println ( Util.toString ( exc ) ) ;
+  			LOGGER.info ( Util.toString ( exc ) ) ;
   		}
   	}
   }
@@ -554,7 +583,7 @@ public class Client
   			}
   			catch ( Exception exc )
   			{
-  				System.err.println ( Util.toString ( exc ) ) ;
+  				LOGGER.info ( Util.toString ( exc ) ) ;
   				break ;
   			}
   			try
@@ -564,7 +593,7 @@ public class Client
 						EventCallback ecb = callbacks.get ( e.getUniqueId() ) ;
 						if ( ecb == null )
 						{
-							System.err.println ( "No callback found for:\n" + e ) ;
+							LOGGER.info ( "No callback found for:\n" + e ) ;
 							continue ;
 						}
 						callbacks.remove ( e.getUniqueId() ) ;
@@ -581,7 +610,7 @@ public class Client
 							EventCallback ecb = callbacks.get ( e.getUniqueId() ) ;
 							if ( ecb == null )
 							{
-								System.err.println ( "No callback found for:\n" + e ) ;
+								LOGGER.info ( "No callback found for:\n" + e ) ;
 								continue ;
 							}
 							callbacks.remove ( e.getUniqueId() ) ;
@@ -607,7 +636,7 @@ public class Client
 						EventCallback ecb = callbacks.get ( e.getUniqueId() ) ;
 						if ( ecb == null )
 						{
-							System.err.println ( "No callback found for:\n" + ecb ) ;
+							LOGGER.info ( "No callback found for:\n" + ecb ) ;
 							continue ;
 						}
 						if ( ecb instanceof ResultCallback )
@@ -645,10 +674,9 @@ public class Client
   			}
   			catch ( Exception exc )
   			{
-  				System.err.println ( Util.toString ( exc ) ) ;
+  				LOGGER.info ( Util.toString ( exc ) ) ;
   			}
   		}
-System.out.println ( "CallbackWorker end." ) ;
   	}
   }
   class Runner implements Runnable
@@ -674,22 +702,13 @@ System.out.println ( "CallbackWorker end." ) ;
 	        {
 				    t = readNextJSON ( in ) ;
 	        }
-	        catch ( SocketTimeoutException exc )
-	        {
-	        	System.out.println ( Util.toString ( exc ) );
-						if ( _reconnect )
-						{
-					    System.err.println ( "missing ping request --> try reconnect." ) ;
-		        	startReconnections() ;
-						}
-	          break ;
-	        }
 	        catch ( IOException exc )
 	        {
-	        	System.out.println ( Util.toString ( exc ) );
+	        	LOGGER.info ( Util.toString ( exc ) + "\n" ) ;
+		        _emit ( "disconnect", exc.toString() ) ;
 						if ( _reconnect )
 						{
-					    System.err.println ( "missing ping request --> try reconnect." ) ;
+					    LOGGER.info ( "missing ping request --> try reconnect.\n" ) ;
 		        	startReconnections() ;
 						}
 	          break ;
@@ -708,7 +727,11 @@ System.out.println ( "CallbackWorker end." ) ;
 			    		if ( e.getType().equals ( "shutdown" ) )
 			    		{
 	  						_emit ( "shutdown", null ) ;
-	  						break ;
+	  						if ( ! _reconnect )
+	  						{
+		  						break ;
+	  						}
+	  						continue ;
 			    		}
 			    		if ( e.getType().equals ( "PING" ) )
 			    		{
@@ -735,7 +758,7 @@ System.out.println ( "CallbackWorker end." ) ;
 						    }
 						    catch ( Exception exc )
 						    {
-									System.err.println ( Util.toString ( exc ) ) ;
+									LOGGER.info ( Util.toString ( exc ) ) ;
 						    }
     		        continue ;
     		      }
@@ -791,7 +814,7 @@ System.out.println ( "CallbackWorker end." ) ;
       }
       catch ( Exception exc )
       {
-        System.out.println ( Util.toString ( exc ) ) ;
+        LOGGER.info ( Util.toString ( exc ) ) ;
       }
     }
   }
@@ -888,7 +911,7 @@ System.out.println ( "CallbackWorker end." ) ;
 					}
 					catch ( Exception exc )
 					{
-						System.out.println ( Util.toString ( exc ) ) ; ;
+						LOGGER.info ( Util.toString ( exc ) ) ; ;
 					}
 					semaphores.remove ( sem.resourceId ) ;
 					Event e = new Event ( "system", "acquireSemaphoreResult" ) ;
@@ -909,11 +932,11 @@ System.out.println ( "CallbackWorker end." ) ;
 			Semaphore s = semaphores.get ( sem.resourceId ) ;
 			if ( s.isOwner() )
 			{
-		    System.out.println ( Util.toString ( "Client.acquireSemaphore: already owner of resourceId=" + sem.resourceId ) ) ;
+		    LOGGER.info ( "Client.acquireSemaphore: already owner of resourceId=" + sem.resourceId + "\n" ) ;
 			}
 			else
 			{
-		    System.out.println ( Util.toString ( "Client.acquireSemaphore: already waiting for ownership owner of resourceId=" + sem.resourceId ) ) ;
+		    LOGGER.info ( "Client.acquireSemaphore: already waiting for ownership owner of resourceId=" + sem.resourceId + "\n" ) ;
 			}
     	return ;
 		}
@@ -946,7 +969,7 @@ System.out.println ( "CallbackWorker end." ) ;
 	{
 		if ( ! semaphores.containsKey ( sem.resourceId ) )
 		{
-	    System.out.println ( "release semaphore: not owner of resourceId=" + sem.resourceId ) ;
+	    LOGGER.info ( "release semaphore: not owner of resourceId=" + sem.resourceId + "\n" ) ;
     	return ;
 		}
 		Event e = new Event ( "system", "releaseSemaphoreRequest" ) ;
@@ -960,7 +983,7 @@ System.out.println ( "CallbackWorker end." ) ;
 	{
 		if ( _ownedResources.containsKey ( lock.resourceId ) )
 		{
-	    System.out.println ( "acquire lock: already owner of resourceId=" + lock.resourceId ) ;
+	    LOGGER.info ( "acquire lock: already owner of resourceId=" + lock.resourceId + "\n" ) ;
     	return ;
 		}
 		_ownedResources.put ( lock.resourceId, lock ) ;
@@ -979,7 +1002,7 @@ System.out.println ( "CallbackWorker end." ) ;
 	{
 		if ( ! _ownedResources.containsKey ( lock.resourceId ) )
 		{
-	    System.out.println ( Util.toString ( "release lock: not owner of resourceId=" + lock.resourceId ) ) ;
+	    LOGGER.info ( "release lock: not owner of resourceId=" + lock.resourceId + "\n" ) ;
     	return ;
 		}
 		_ownedResources.remove ( lock.resourceId ) ;
@@ -1006,8 +1029,7 @@ System.out.println ( "CallbackWorker end." ) ;
 			Event e = new Event ( "system", "addEventListener" ) ;
 		  e.body.put ( "eventNameList", eventNameList ) ;
 	    e.setUniqueId ( createUniqueId() ) ;
-      System.err.println ( "re-connect in progress." ) ;
-      System.err.println ( list.toString() ) ;
+      LOGGER.info ( "re-connect in progress with events: " + list.toString() + "\n" ) ;
       _emit ( "reconnect", list.toString() ) ;
 	    _send ( e ) ;
 		}
@@ -1016,11 +1038,11 @@ System.out.println ( "CallbackWorker end." ) ;
 		}
 		catch ( IOException ioexc )
 		{
-			System.out.println ( Util.toString ( ioexc ) ) ;
+			LOGGER.info ( Util.toString ( ioexc ) ) ;
 		}
 		catch ( Exception exc )
 		{
-			System.out.println ( Util.toString ( exc ) ) ;
+			LOGGER.info ( Util.toString ( exc ) ) ;
 		}
 	}
 }
