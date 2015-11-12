@@ -419,6 +419,10 @@ class Client:
 		self._Timer.add ( self._reconnectIntervalMillis/1000, self.timerCallback )
 		self._callbackWorkerRunning   = False
 
+# def decorateTimerCallback(_self):
+# 	def deco ()
+# 	_self.timerCallback()
+
 	def timerCallback(self):
 		self._checkReconnect()
 		try:
