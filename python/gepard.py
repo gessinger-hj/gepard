@@ -396,7 +396,7 @@ class Client:
 		self._workerIsDaemon     = False
 		self.callbacks           = {}
 		
-		self.semaphores          = {}
+		self._semaphores          = {}
 		self._NQ_semaphoreEvents = NamedQueue()
 		self._ownedResources     = {}
 		self._NQ_lockEvents      = NamedQueue()
@@ -409,10 +409,41 @@ class Client:
 
 		if self.USERNAME == None:
 			selfUSERNAME = "guest"
-		self.user = User ( self.USERNAME )
+		self.user                     = User ( self.USERNAME )
 		self._heartbeatIntervalMillis = 0
-		self.version = 1
-		self.brokerVersion = 0
+		self.version                  = 1
+		self.brokerVersion            = 0
+		self._reconnect               = util.getProperty ( "gepard.reconnect", "false" ) == "true"
+		self._Timer                   = MutableTimer ( True )
+		self._reconnectIntervalMillis = 5000
+		self._Timer.add ( self._reconnectIntervalMillis/1000, self.timerCallback )
+		self._callbackWorkerRunning   = False
+
+	def timerCallback(self):
+		self._checkReconnect()
+		try:
+			self.connect()
+      # var keyList = this.eventNameToListener.getKeys() ;
+      # if ( keyList.length )
+      # {
+      #   var e = new Event ( "system", "addEventListener" ) ;
+      #   if ( thiz.user )
+      #   {
+      #     e.setUser ( thiz.user ) ;
+      #   }
+      #   e.body.eventNameList = keyList ;
+      #   thiz.pendingEventListenerList.push ( { e:e } ) ;
+      #   thiz.getSocket() ;
+      #   Log.logln ( "re-connect in progress." ) ;
+      #   Log.logln ( e.body.eventNameList ) ;
+      #   thiz._private_emit ( "reconnect", e ) ;
+      # }
+			self._emit ( "reconnect" ) #, e ) ;
+		except Exception as e:
+			print ( e )
+	def setReconnect ( self, state ):
+		self._reconnect = state == True
+
 	def setDaemon(self,status=True):
 		self._workerIsDaemon = status
 	def createUniqueId(self):
@@ -430,6 +461,10 @@ class Client:
 		self.infoCallbacks.put ( "close", callback )
 	def onError ( self, callback ):
 		self.infoCallbacks.put ( "error", callback )
+	def onReconnect ( self, icb ):
+		self.infoCallbacks.put ( "reconnect", icb ) ;
+	def onDisconnect ( self, icb ):
+		self.infoCallbacks.put ( "disconnect", icb ) ;
 
 	def on ( self, eventNameList, callback ):
 		if isinstance ( eventNameList, str ):
@@ -498,7 +533,9 @@ class Client:
                  struct.pack('ii', l_onoff, l_linger))
 			if self.sock.getpeername()[0] == self.sock.getsockname()[0]:
 				FileContainer.targetIsLocalHost = True
-			self._startCallbackWorker()
+			if not self._callbackWorkerRunning:
+				self._startCallbackWorker()
+				self._callbackWorkerRunning = True
 			self._startWorker()
 		except IOError as e:
 			self.connected = False
@@ -597,12 +634,43 @@ class Client:
 			except Exception as exc:
 				print ( exc )
 		self.infoCallbacks.clear()
+		self._semaphores         = {}
+		self._NQ_semaphoreEvents.clear()
+		self._ownedResources     = {}
+		self._NQ_lockEvents.clear()
+
 		# eventListenerFunctions.clear()
 		key = str(self.port) + ":" + str(self.host)
 		if key in self._Instances:
 			del self._Instances[key]
 		self.sock = None
 		self._emit ( "close", None )
+
+	def startReconnections(self):
+		try:
+			if self.sock != None:
+				try:
+					self.closing = True
+					self.connected = False
+					self.sock.shutdown ( socket.SHUT_RDWR )
+					self.sock.close()
+				except Exception as exc:
+					print ( exc )
+			key = str(self.port) + ":" + str(self.host)
+			if key in self._Instances:
+				del self._Instances[key]
+			self.callbacks = {}
+			self._semaphores         = {}
+			self._NQ_semaphoreEvents.awakeAll()
+			self._ownedResources     = {}
+			self._NQ_lockEvents.awakeAll()
+			self.sock = None
+			self._Timer.start()
+		except Exception as e:
+			print ( e )
+
+	def _checkReconnect(self):
+		print ( self )
 
 	def readNextJSON(self):
 		uid = self.createUniqueId()
@@ -611,9 +679,6 @@ class Client:
 		lastWasBackslash = False
 		q = 0
 		pcounter = 0
-		print ( "_heartbeatIntervalMillis=" + str ( self._heartbeatIntervalMillis ) )
-		print ( "_heartbeatIntervalSecs=" + str ( ( 3 * self._heartbeatIntervalMillis ) / 1000 ) )
-		print ( "self.brokerVersion=" + str ( self.brokerVersion ) )
 		try:
 			if self.brokerVersion > 0 and self._heartbeatIntervalMillis > 0 :
 				self.sock.settimeout ( ( 3 * self._heartbeatIntervalMillis ) / 1000 )
@@ -621,10 +686,7 @@ class Client:
 			print ( e )
 
 		while True:
-			try:
-				c = self.sock.recv(1)
-			except Exception as e:
-				print ( e )
+			c = self.sock.recv(1)
 			if c == b'':
 				self.connected = False
 				exc = IOError ( "socket connection broken" )
@@ -658,8 +720,16 @@ class Client:
 	def _worker(self):
 		while True:
 			try:
-				e = self.readNextJSON()
-				# print ( e )
+				e = None
+				try:
+					e = self.readNextJSON()
+				except Exception as e:
+					print ( e )
+					self._emit ( "disconnect", e )
+					if self._reconnect:
+						print ( "missing ping request --> try reconnect." )
+						self.startReconnections()
+					break
 				if e.getName() == 'system':
 					if e.getType() != None and e.getType() == "shutdown":
 						self._emit ( "shutdown", None, None )
@@ -678,7 +748,7 @@ class Client:
 					if e.getType() == "acquireSemaphoreResult":
 						body = e.getBody()
 						resourceId = body.get ( "resourceId" )
-						sem = self.semaphores.get ( resourceId )
+						sem = self._semaphores.get ( resourceId )
 						if sem.hasCallback():
 							sem._isSemaphoreOwner = True
 							sem.callback ( sem )
@@ -733,7 +803,7 @@ class Client:
 		if self._NQ_semaphoreEvents.isWaiting ( sem.resourceId ):
 			try:
 				sem.release()
-				del self.semaphores[sem.resourceId]
+				del self._semaphores[sem.resourceId]
 				e = Event ( "system", "acquireSemaphoreResult" )
 				body = e.getBody()
 				body["resourceId"] = sem.resourceId
@@ -745,15 +815,15 @@ class Client:
 				print ( e )
 
 	def acquireSemaphore ( self, sem ):
-		if sem.resourceId in self.semaphores:
-			s = self.semaphores.get ( sem.resourceId )
+		if sem.resourceId in self._semaphores:
+			s = self._semaphores.get ( sem.resourceId )
 			if s.isOwner():
 				print ( "Client.acquireSemaphore: already owner of resourceId=" + sem.resourceId )
 			else:
 				print ( "Client.acquireSemaphore: already waiting for ownership owner of resourceId=" + sem.resourceId )
 			return
 
-		self.semaphores[sem.resourceId] = sem
+		self._semaphores[sem.resourceId] = sem
 		e = Event ( "system", "acquireSemaphoreRequest" )
 		body = e.getBody()
 		body["resourceId"] = sem.resourceId
@@ -771,14 +841,36 @@ class Client:
 			sem._isSemaphoreOwner = body.get ( "isSemaphoreOwner" )
 
 	def releaseSemaphore ( self, sem ):
-		if sem.resourceId not in self.semaphores:
+		if sem.resourceId not in self._semaphores:
 			print ( "release semaphore: not owner of resourceId=" + sem.resourceId )
 			return
 		e = Event ( "system", "releaseSemaphoreRequest" )
 		body = e.getBody()
 		body["resourceId"] = sem.resourceId
-		del self.semaphores[sem.resourceId]
+		del self._semaphores[sem.resourceId]
 		self._send ( e )
+
+	def _checkReconnect(self):
+		try:
+			self.closing = False
+			print ( "------------------- _checkReconnect ---------------" )
+		# getWriter ( true ) ;
+		# Set<String> keySet = eventListenerFunctions.keySet() ;
+		# ArrayList<String> list = new ArrayList<String>() ;
+		# for ( String key : keySet )
+		# {
+		# 	list.add ( key ) ;
+		# }
+		# String[] eventNameList = list.toArray ( new String[0] ) ;
+		# _Timer.stop() ;
+		# Event e = new Event ( "system", "addEventListener" ) ;
+	 #  e.body.put ( "eventNameList", eventNameList ) ;
+  #   e.setUniqueId ( createUniqueId() ) ;
+  #    LOGGER.info ( "re-connect in progress with events: " + list.toString() + "\n" ) ;
+  #    _emit ( "reconnect", list.toString() ) ;
+  #   _send ( e ) ;
+		except Exception as exc:
+			print ( exc )
 
 class Lock:
 	def __init__ ( self, resourceId, port=None, host=None ):
@@ -1183,6 +1275,179 @@ class FileContainer(object):
 		fd = open ( name, "wb" )
 		fd.write ( data )
 		fd.close()
+
+# MutableTimer
+
+class MutableTimer:
+	def __init__(self,isDaemon=None):
+		self.maxperiod          = 24*3600
+		self.period             = self.maxperiod
+		self.isDaemon           = isDaemon == True
+		self._lock              = threading.Lock()
+		self._runnerlock        = threading.Lock()
+		self._condition         = threading.Condition ( self._lock )
+		self.runnerList         = []
+		self.canceled           = False
+		self.indexForNextAction = -1
+		self.thread             = threading.Thread(target=self.run)
+		self.thread.setDaemon ( self.isDaemon )
+		self.thread.start()
+
+	def run(self):
+		while True:
+			runContext = None
+			self._condition.acquire()
+			self._calculateTimes()
+			if self.indexForNextAction == -1:
+				self._condition.wait()
+				if self.canceled:
+					break
+				self._condition.release()
+			else:
+				runContext = self.runnerList[self.indexForNextAction]
+				period     = runContext.get ( "period" )
+				lastTic    = runContext.get ( "lastTic" )
+				nextTic    = lastTic + period
+				waitsec    = nextTic - time.time()
+				if waitsec < 0:
+					waitsec = 0
+				self._condition.wait ( waitsec )
+				if self.canceled:
+					break
+				self._runnerlock.acquire()
+				
+				if self.indexForNextAction >= 0:
+					runContext = self.runnerList[self.indexForNextAction]
+					canceled   = runContext.get ( "canceled" )
+					stopped    = runContext.get ( "stopped" )
+					if canceled or stopped:
+						continue
+					runContext["lastTic"] = time.time()
+				self._runnerlock.release()
+				self._condition.release()
+				runContext["runner"]()
+
+	def start ( self, period=None, name=None, runner=None ):
+		if runner == None and isinstance ( name, types.FunctionType ):
+			runner = name
+			name   = None
+		if period == None and name == None and runner == None:
+			self._runnerlock.acquire()
+			for i in range ( 0, len ( self.runnerList ) ):
+				runContext = self.runnerList[i]
+				if runContext["canceled"]:
+					continue
+				runContext["stopped"] = False
+				runContext["lastTic"] = time.time()
+			self._runnerlock.release()
+		elif period != None and runner != None:
+			runContext = self.add ( period, name, runner )
+			self._runnerlock.acquire()
+			runContext["lastTic"] = time.time()
+			runContext["stopped"] = False
+			self._runnerlock.release()
+		elif period != None:
+			self.stop ( name )
+			self._runnerlock.acquire()
+			if name != None:
+				for i in range ( 0, len ( self.runnerList ) ):
+					runContext = self.runnerList[i]
+					if runContext["canceled"]:
+						continue
+					if runContext["stopped"] != True:
+						continue
+					if runContext.get ( "name" ) == name:
+						runContext["lastTic"] = time.time()
+						runContext["stopped"] = False
+			self._runnerlock.release()
+		self._notify()
+
+	def stop ( self, name=None ):
+		if name == None:
+			self._runnerlock.acquire()
+			for i in range ( 0, len ( self.runnerList ) ):
+				runContext = self.runnerList[i]
+				runContext["stopped"] = True
+			self._runnerlock.release()
+			self._notify()
+			return
+		else:
+			self._runnerlock.acquire()
+			for i in range ( 0, len ( self.runnerList ) ):
+				runContext = self.runnerList[i]
+				if name == runContext.get ( "name" ):
+					runContext["stopped"] = True
+			self._runnerlock.release()
+			self._notify()
+			return
+		self._notify()
+
+	def add ( self, period=None, name=None, runner=None ):
+		if runner == None and not isinstance ( name, str ):
+			runner = name
+			name   = None
+			print ( "runner=" + str ( runner ) )
+		if name == None:
+			name = ""
+		runContext             = {}
+		runContext["period"]   = period
+		runContext["canceled"] = False
+		runContext["stopped"]  = False
+		runContext["lastTic"]  = time.time()
+		runContext[name]     = name
+		runContext["runner"] = runner
+		self._runnerlock.acquire()
+		self.runnerList.append ( runContext )
+		self._runnerlock.release()
+		return runContext
+
+	def cancel(self,name=None):
+		if name == None:
+			self.canceled = True
+			self._notify()
+			return
+		self._runnerlock.acquire()
+		for i in range ( 0, len ( self.runnerList ) ):
+			if name == runContext.get ( "name" ):
+				runContext["canceled"] = True
+		self._runnerlock.release()
+		self._notify()
+		
+	def _calculateTimes(self):
+		self.indexForNextAction = -1
+		toBeRemoved = []
+		min_nextTic = time.time() + self.maxperiod
+		for i in range ( 0, len ( self.runnerList ) ):
+			runContext = self.runnerList[i]
+			canceled = runContext.get ( "canceled" )
+			stopped = runContext.get ( "stopped" )
+			if canceled:
+				toBeRemoved.append ( runContext )
+				continue
+			if stopped:
+				continue
+			period  = runContext.get ( "period" )
+			lastTic = runContext.get ( "lastTic" )
+			nextTic = lastTic + period
+			if nextTic < min_nextTic:
+				min_nextTic = nextTic
+				self.indexForNextAction = i
+		self._runnerlock.acquire()
+		for i in range ( 0, len ( toBeRemoved ) ):
+			self.runnerList.remove ( toBeRemoved[i] )
+		self._runnerlock.release()
+		del toBeRemoved[:]
+
+	def _notify(self):
+		try:
+			self._condition.acquire()
+			self.indexForNextAction = -1
+			self._condition.notify()
+		except Exception as e:
+			print ( e )
+		finally:
+			self._condition.release()
+
 
 def __LINE__():
         try:

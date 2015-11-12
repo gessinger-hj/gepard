@@ -9,6 +9,7 @@ import json
 import threading
 import time
 import types
+import time
 
 try:
 	from cStringIO import StringIO
@@ -56,76 +57,26 @@ from glob import glob
 # print ( str ( FR ) )
 
 
-# MutableTimer
 
+mt = gepard.MutableTimer ( )
+
+i = 0
 def runner():
+	global i
+	i = i + 1
+	print ( "i=" + str ( i ) )
+	if i >= 5:
+		global mt
+		mt.stop()
+		return
 	print ( "I am the runner" )
 
-class MutableTimer:
-	def __init__(self,deamon=None):
-		self.maxperiod = 24*3600
-		self.period     = self.maxperiod
-		self.daemon     = deamon == True
-		self._lock      = threading.Lock()
-		self._condition = threading.Condition ( self._lock )
-		self.runnerList = []
-		self.stopped = False
-		self.indexForNextAction = -1
-		self.thread = threading.Thread(target=self.run)
-		self.thread.setDaemon ( self.daemon )
-		self.thread.start()
-	def run(self):
-		while True:
-			self._condition.acquire()
-			self._condition.wait ( self.period )
-			if self.indexForNextAction >= 0:
-				runContext = self.runnerList[self.indexForNextAction]
-				print ( runContext )
-				runContext["runner"]()
-			self._condition.release()
-
-	def start ( self, period=None, name=None, runner=None ):
-		if period == None:
-			self._start()
-			return
-		runContext = {}
-		runContext["period"] = period
-		runContext["active"] = True
-		if isinstance ( name, str ):
-			runContext[name] = name
-			runContext["runner"] = runner
-		elif isinstance ( name, types.FunctionType ):
-			runContext["name"] = ""
-			runContext["runner"] = name
-		self.runnerList.append ( runContext )
-		self._start()
-
-	def _start(self):
-		self.indexForNextAction = -1
-		min_period = self.maxperiod
-		for i in range ( 0, len ( self.runnerList ) ):
-			runContext = self.runnerList[i]
-			period = runContext.get ( "period" )
-			active = runContext.get ( "active" )
-			if not active:
-				continue
-			if period < min_period:
-				min_period = period
-				self.indexForNextAction = i
-		if self.indexForNextAction == -1:
-			self.period = self.maxperiod
-		else:
-			self.period = min_period
-		try:
-			self._condition.acquire()
-			self._condition.notify()
-		except Exception as e:
-			pass
-		finally:
-			self._condition.release()
-
-mt = MutableTimer ( )
-mt.start ( 5, runner )
+mt.start ( 1, runner )
+time.sleep(10)
+i = 0
+mt.start() ;
+time.sleep(10)
+mt.cancel()
 
 # _NQ = gepard.NamedQueue() ;
 

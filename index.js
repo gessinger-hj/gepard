@@ -28,6 +28,10 @@ gepard.getClient = function ( port, host )
 	{
 		delete thiz._Instances["" + host + ":" + port] ;
 	} ) ;
+	c.on ( "disconnect", function ondisconnect()
+	{
+		delete thiz._Instances["" + host + ":" + port] ;
+	} ) ;
 	c.on ( "shutdown", function onend()
 	{
 		delete thiz._Instances["" + host + ":" + port] ;

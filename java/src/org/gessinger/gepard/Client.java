@@ -29,7 +29,7 @@ public class Client
   MultiMap<String,EventListener> eventListenerFunctions = new MultiMap<String,EventListener>() ;
   Hashtable<String,EventCallback> callbacks = new Hashtable<String,EventCallback>() ;
 
-  HashMap<String,Semaphore> semaphores = new HashMap<String,Semaphore>() ;
+  HashMap<String,Semaphore> _semaphores = new HashMap<String,Semaphore>() ;
   NamedQueue<Event> _NQ_semaphoreEvents = new NamedQueue<Event>() ;
   HashMap<String,Lock> _ownedResources = new HashMap<String,Lock>() ;
   NamedQueue<Event> _NQ_lockEvents = new NamedQueue<Event>() ;
@@ -289,6 +289,12 @@ public class Client
 				LOGGER.info ( Util.toString ( exc ) ) ;
 			}
 		}
+		callbacks.clear() ;
+		_ownedResources.clear() ;
+		_semaphores.clear() ;
+		_NQ_semaphoreEvents.awakeAll() ;
+		_NQ_lockEvents.awakeAll() ;
+  	_Instances.remove ( "" + this.host + ":" + this.port ) ;
 		socket = null ;
 		_in    = null ;
 		_out   = null ;
@@ -323,6 +329,11 @@ public class Client
 		_out   = null ;
 
 		infoCallbacks.clear() ;
+		callbacks.clear() ;
+		_ownedResources.clear() ;
+		_semaphores.clear() ;
+		_NQ_semaphoreEvents.awakeAll() ;
+		_NQ_lockEvents.awakeAll() ;
 		eventListenerFunctions.clear() ;
   	_Instances.remove ( "" + this.host + ":" + this.port ) ;
 		_CallbackIsolator.awakeAll() ;
@@ -463,7 +474,6 @@ public class Client
   		}
   	}
   }
-  // TODO: eventName as Array of String
 	public void on ( String eventName, EventListener el )
 	throws IOException
 	{
@@ -766,7 +776,7 @@ public class Client
 		          {
 		          	Map<String,Object> body = e.getBody() ;
 								String resourceId = (String) body.get ( "resourceId" ) ;
-								Semaphore sem = semaphores.get ( resourceId ) ;
+								Semaphore sem = _semaphores.get ( resourceId ) ;
 								if ( sem.hasCallback() )
 								{
 									sem._isSemaphoreOwner = true ;
@@ -913,7 +923,7 @@ public class Client
 					{
 						LOGGER.info ( Util.toString ( exc ) ) ; ;
 					}
-					semaphores.remove ( sem.resourceId ) ;
+					_semaphores.remove ( sem.resourceId ) ;
 					Event e = new Event ( "system", "acquireSemaphoreResult" ) ;
 					Map<String,Object> body = e.getBody() ;
 					body.put ( "resourceId", sem.resourceId ) ;
@@ -927,9 +937,9 @@ public class Client
 	void acquireSemaphore ( Semaphore sem )
 	throws IOException
 	{
-		if ( semaphores.containsKey ( sem.resourceId ) )
+		if ( _semaphores.containsKey ( sem.resourceId ) )
 		{
-			Semaphore s = semaphores.get ( sem.resourceId ) ;
+			Semaphore s = _semaphores.get ( sem.resourceId ) ;
 			if ( s.isOwner() )
 			{
 		    LOGGER.info ( "Client.acquireSemaphore: already owner of resourceId=" + sem.resourceId + "\n" ) ;
@@ -940,7 +950,7 @@ public class Client
 			}
     	return ;
 		}
-		semaphores.put ( sem.resourceId, sem ) ;
+		_semaphores.put ( sem.resourceId, sem ) ;
 		Event e = new Event ( "system", "acquireSemaphoreRequest" ) ;
 		Map<String,Object> body = e.getBody() ;
   	body.put ( "resourceId", sem.resourceId ) ;
@@ -967,7 +977,7 @@ public class Client
 	void releaseSemaphore ( Semaphore sem )
 	throws IOException
 	{
-		if ( ! semaphores.containsKey ( sem.resourceId ) )
+		if ( ! _semaphores.containsKey ( sem.resourceId ) )
 		{
 	    LOGGER.info ( "release semaphore: not owner of resourceId=" + sem.resourceId + "\n" ) ;
     	return ;
@@ -975,13 +985,13 @@ public class Client
 		Event e = new Event ( "system", "releaseSemaphoreRequest" ) ;
 		Map<String,Object> body = e.getBody() ;
   	body.put ( "resourceId", sem.resourceId ) ;
-		semaphores.remove ( sem.resourceId ) ;
+		_semaphores.remove ( sem.resourceId ) ;
   	_send ( e ) ;
 	}
 	void acquireLock ( Lock lock )
 	throws IOException
 	{
-		if ( _ownedResources.containsKey ( lock.resourceId ) )
+		if ( _ownedResources.containsKey ( lock.resourceId ) ) // TODO: clear with reconnect
 		{
 	    LOGGER.info ( "acquire lock: already owner of resourceId=" + lock.resourceId + "\n" ) ;
     	return ;

@@ -634,6 +634,7 @@ Client.prototype._checkHeartbeat = function()
       if  ( this.intervalId ) clearInterval ( this.intervalId ) ;
       this.intervalId = setInterval ( this._checkHeartbeat.bind ( this ), this._reconnectIntervalMillis ) ;
       this.end ( true ) ;
+      this._private_emit ( "disconnect" ) ;
     }
   }
 } ;
@@ -966,6 +967,7 @@ Client.prototype.on = function ( eventName, callback )
         || eventName === "end"
         || eventName === "error"
         || eventName === "reconnect"
+        || eventName === "disconnect"
         )
      )
   {

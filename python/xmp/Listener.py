@@ -18,6 +18,12 @@ def on_error ( err, success ):
 def on_shutdown ( err, success ):
 	print ( "shutdown called" )
 	print ( err )
+def on_reconnect ( err, success ):
+	print ( "on_reconnect" )
+	print ( err )
+def on_disconnect ( err, success ):
+	print ( "on_disconnect" )
+	print ( err )
 
 def failure ( event ):
 	print ( event.getStatusReason() )
@@ -27,6 +33,8 @@ def failure ( event ):
 client.onClose ( on_close )
 client.onError ( on_error )
 client.onShutdown ( on_shutdown )
+client.onReconnect ( on_reconnect )
+client.onDisconnect ( on_disconnect )
 
 def on_ABLARM ( event ):
 	print	( "on_ABLARM" )
@@ -36,4 +44,5 @@ def on_ABLARM ( event ):
 
 print ( "Listening for ALARM and BLARM" )
 client.on ( ["ALARM", "BLARM"], on_ABLARM )
+time.sleep(int('0x7FFFFFFF',16))
 
