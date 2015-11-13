@@ -1205,6 +1205,7 @@ Broker.prototype._closeAllSockets = function ( exceptSocket )
     }
     conn.write ( e ) ;
     conn.socket.end() ;
+    conn.socket.unref() ;
   }
 };
 

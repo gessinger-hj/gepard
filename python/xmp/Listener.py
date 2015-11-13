@@ -17,18 +17,13 @@ def on_error ( err, success ):
 	print ( err )
 def on_shutdown ( err, success ):
 	print ( "shutdown called" )
-	print ( err )
+	client.setReconnect ( False )
+	os._exit(0)
 def on_reconnect ( err, success ):
-	print ( "on_reconnect" )
-	print ( err )
+	print ( "reconnect/" + err )
 def on_disconnect ( err, success ):
 	print ( "on_disconnect" )
 	print ( err )
-
-def failure ( event ):
-	print ( event.getStatusReason() )
-	c.close()
-	sys.exit()
 
 client.onClose ( on_close )
 client.onError ( on_error )

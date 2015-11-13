@@ -363,6 +363,11 @@ class CallbackWorker:
 					e._Client = None
 					del e._Client
 
+def decoratedTimerCallback(_self):
+	def deco ():
+		_self._checkReconnect()
+	return deco
+
 class Client:
 	counter = 0
 	_Instances = {}
@@ -384,7 +389,7 @@ class Client:
 		self.infoCallbacks          = MultiMap()
 		self.eventListenerFunctions = MultiMap()
 		self.connected              = False
-		self.sock                   = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.sock                   = None
 		if host == None: host = util.getProperty ( "gepard.host", "localhost" )
 		if port == None: port = util.getProperty ( "gepard.port", 17501 )
 		port = int ( port )
@@ -416,35 +421,32 @@ class Client:
 		self._reconnect               = util.getProperty ( "gepard.reconnect", "false" ) == "true"
 		self._Timer                   = MutableTimer ( True )
 		self._reconnectIntervalMillis = 5000
-		self._Timer.add ( self._reconnectIntervalMillis/1000, self.timerCallback )
+		cb = decoratedTimerCallback ( self )
+		self._Timer.add ( self._reconnectIntervalMillis/1000, cb )
 		self._callbackWorkerRunning   = False
 
-# def decorateTimerCallback(_self):
-# 	def deco ()
-# 	_self.timerCallback()
-
-	def timerCallback(self):
-		self._checkReconnect()
+	def _checkReconnect(self):
 		try:
-			self.connect()
-      # var keyList = this.eventNameToListener.getKeys() ;
-      # if ( keyList.length )
-      # {
-      #   var e = new Event ( "system", "addEventListener" ) ;
-      #   if ( thiz.user )
-      #   {
-      #     e.setUser ( thiz.user ) ;
-      #   }
-      #   e.body.eventNameList = keyList ;
-      #   thiz.pendingEventListenerList.push ( { e:e } ) ;
-      #   thiz.getSocket() ;
-      #   Log.logln ( "re-connect in progress." ) ;
-      #   Log.logln ( e.body.eventNameList ) ;
-      #   thiz._private_emit ( "reconnect", e ) ;
-      # }
-			self._emit ( "reconnect" ) #, e ) ;
-		except Exception as e:
-			print ( e )
+			self.closing = False
+			fortest = True
+			self.connect ( fortest )
+
+			nameList = []
+			keys = self.eventListenerFunctions.getKeys()
+			for name in keys:
+				nameList.append ( name )
+			e = Event ( "system", "addEventListener" )
+			e.body["eventNameList"] = nameList
+			e.setUniqueId ( self.createUniqueId() )
+
+			self._Timer.stop()
+			print ( "re-connect in progress with events: " + str ( nameList ) )
+			self._emit ( "reconnect", str ( nameList ) )
+			self._send ( e )
+		except Exception as exc:
+			pass
+			# print ( exc )
+
 	def setReconnect ( self, state ):
 		self._reconnect = state == True
 
@@ -523,12 +525,18 @@ class Client:
 		if value == None: value = ""
 		function_list = self.infoCallbacks.get ( event_name )
 		for fn in function_list:
-			fn(err,value)
+			try:
+				fn(err,value)
+			except Exception as e:
+				print ( e )
+				# raise e
 		return
 
-	def connect(self):
+	def connect(self,fortest=False):
 		if self.connected: return
 		try:
+			if self.sock == None:
+				self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			self.sock.connect((self.host, self.port))
 			self.connected = True
 			l_onoff = 1                                                                                                                                                           
@@ -542,8 +550,10 @@ class Client:
 				self._callbackWorkerRunning = True
 			self._startWorker()
 		except IOError as e:
-			self.connected = False
-			self._emit ( "error", e )
+			if not fortest:
+				self.connected = False
+				self.sock = None
+				self._emit ( "error", e )
 			raise
 		event                        = Event ( "system", "client_info" )
 		event.body["language"]       = "python"
@@ -673,9 +683,6 @@ class Client:
 		except Exception as e:
 			print ( e )
 
-	def _checkReconnect(self):
-		print ( self )
-
 	def readNextJSON(self):
 		uid = self.createUniqueId()
 		bytes = BytesIO()
@@ -731,12 +738,19 @@ class Client:
 					print ( e )
 					self._emit ( "disconnect", e )
 					if self._reconnect:
-						print ( "missing ping request --> try reconnect." )
+						print ( "socket disconnected" )
 						self.startReconnections()
+					else:
+						self._Timer.cancel()
 					break
 				if e.getName() == 'system':
 					if e.getType() != None and e.getType() == "shutdown":
 						self._emit ( "shutdown", None, None )
+						print ( "shutdown called" )
+						if self._reconnect:
+							self.startReconnections()
+						else:
+							self._Timer.cancel()
 						break
 					if e.getType() != None and e.getType() == "PING":
 						e.setType ( "PONG" )
@@ -853,28 +867,6 @@ class Client:
 		body["resourceId"] = sem.resourceId
 		del self._semaphores[sem.resourceId]
 		self._send ( e )
-
-	def _checkReconnect(self):
-		try:
-			self.closing = False
-			print ( "------------------- _checkReconnect ---------------" )
-		# getWriter ( true ) ;
-		# Set<String> keySet = eventListenerFunctions.keySet() ;
-		# ArrayList<String> list = new ArrayList<String>() ;
-		# for ( String key : keySet )
-		# {
-		# 	list.add ( key ) ;
-		# }
-		# String[] eventNameList = list.toArray ( new String[0] ) ;
-		# _Timer.stop() ;
-		# Event e = new Event ( "system", "addEventListener" ) ;
-	 #  e.body.put ( "eventNameList", eventNameList ) ;
-  #   e.setUniqueId ( createUniqueId() ) ;
-  #    LOGGER.info ( "re-connect in progress with events: " + list.toString() + "\n" ) ;
-  #    _emit ( "reconnect", list.toString() ) ;
-  #   _send ( e ) ;
-		except Exception as exc:
-			print ( exc )
 
 class Lock:
 	def __init__ ( self, resourceId, port=None, host=None ):
@@ -1390,7 +1382,6 @@ class MutableTimer:
 		if runner == None and not isinstance ( name, str ):
 			runner = name
 			name   = None
-			print ( "runner=" + str ( runner ) )
 		if name == None:
 			name = ""
 		runContext             = {}

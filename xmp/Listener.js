@@ -30,7 +30,7 @@ if ( require.main === module )
 		c.setReconnect ( true ) ;
 		c.on ( "reconnect", function on_reconnect ( e )
 		{
-			console.log ( e.body ) ;
+			console.log ( "reconnect/" + e.body.eventNameList ) ;
 		});
 		console.log ( "Listen for events with name=" + name ) ;
 		c.on ( name, function(e)
