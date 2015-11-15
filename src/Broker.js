@@ -382,25 +382,25 @@ TPStoreClass.prototype.tracePointAction = function ( tracePointAction )
   {
     for ( i = 0 ; i < tracePointAction.points.length ; i++ )
     {
-      var item = tracePointAction.points[i] ;
-      if ( item.name === '*' )
+      var actionItem = tracePointAction.points[i] ;
+      if ( actionItem.name === '*' )
       {
         for ( k in this.store )
         {
-          if ( item.state === 'on' ) this.store[k].active = true ;
-          if ( item.state === 'off' ) this.store[k].active = false ;
-          if ( item.state === 'toggle' ) this.store[k].active = ! this.store[k].active ;
-          this.store[k].mode = item.mode ;
+          if ( actionItem.state === 'on' ) this.store[k].active = true ;
+          if ( actionItem.state === 'off' ) this.store[k].active = false ;
+          if ( actionItem.state === 'toggle' ) this.store[k].active = ! this.store[k].active ;
+          this.store[k].mode = actionItem.mode ;
         }
         continue ;
       }
-      var tp = this.store[item.name] ;
+      var tp = this.store[actionItem.name] ;
       if ( tp )
       {
-        if ( item.state === 'on' ) tp.active = true ;
-        if ( item.state === 'off' ) tp.active = false ;
-        if ( item.state === 'toggle' ) tp.active = ! tp.active ;
-        tp.mode = item.mode ;
+        if ( actionItem.state === 'on' ) tp.active = true ;
+        if ( actionItem.state === 'off' ) tp.active = false ;
+        if ( actionItem.state === 'toggle' ) tp.active = ! tp.active ;
+        tp.mode = actionItem.mode ;
       }
     }
   }

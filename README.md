@@ -6,8 +6,9 @@ General purpose communication and synchronization layer for distributed applicat
 
 - [Overview](#overview)
 - [What is new](#what-is-new)
-  - [New FileContainer class for JavaScript and Java to simplify file-transfer.](#new-filecontainer-class-for-javascript-and-java-to-simplify-file-transfer)
-  - [Let's talk about Python](#lets-talk-about-python)
+  - [Release 1.4.0 New Heartbeat Protocol to ensure the Availability of Connections](#release-140-new-heartbeat-protocol-to-ensure-the-availability-of-connections)
+  - [Release 1.3.3 New FileContainer class for JavaScript and Java to simplify file-transfer.](#release-133-new-filecontainer-class-for-javascript-and-java-to-simplify-file-transfer)
+  - [Release 1.3.0 Let's talk about Python](#release-130-lets-talk-about-python)
   - [Controlling Connections and Actions with a Hook](#controlling-connections-and-actions-with-a-hook)
   - [Perfect load balanced message handling.](#perfect-load-balanced-message-handling)
   - [Java bindings for all features:](#java-bindings-for-all-features)
@@ -43,7 +44,10 @@ General purpose communication and synchronization layer for distributed applicat
 - [File Transfer with the FileContainer Class](#file-transfer-with-the-filecontainer-class)
   - [FileSender](#filesender)
   - [ileReceiver](#ilereceiver)
-- [Technical Aspekts of the Client](#technical-aspekts-of-the-client)
+- [Heartbeat and Reconnection Capability Parameterization](#heartbeat-and-reconnection-capability-parameterization)
+  - [Broker Side](#broker-side)
+  - [Client Side](#client-side)
+- [Technical Aspects of the Client](#technical-aspects-of-the-client)
 - [Found a bug? Help us fix it...](#found-a-bug-help-us-fix-it)
 - [https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md](#httpsgithubcomgessinger-hjgepardblobmasterchangelogmd)
 - [Contributors](#contributors)
@@ -112,7 +116,35 @@ node_modules/.bin/gp.admin [ --help ]
 ```
 # What is new
 
-## New FileContainer class for JavaScript and Java to simplify file-transfer.
+## Release 1.4.0 New Heartbeat Protocol to ensure the Availability of Connections
+
+Gepard is based on fast communication by means of always-open sockets. Therefore it is crucial to monitor these connections.
+This is achieved by a mechanism which exchanges packets between the broker and all connected clients in fixed time intervals defined
+by the broker. This interval is transmitted to clients as they connect.
+
+<br/>
+The broker sends a __PING__ message to the connected clients in each interval to which all clients are expected to respond with a __PONG__
+message within the three next intervals. If no such response is received by the end of the third interval, the broker closes the connection-socket.
+
+<br/>
+On the other end, after dispatching a __PONG__ message, the client waits for the next __PING__ from the broker to arrive within 3 intervals.
+In case the subsequent __PING__ is not received, the client closes the connection socket and emits a __"disconnect"__ event to signal the status to the application.
+
+<br/>
+If the client is configured to re-connect, it will try to establish a new connection to the broker in a pre-defined interval. On success, the client
+will emit a __"reconnect"__ event to the application. All gepard-event-listeners which had been registered at the time of disconnect will then automatically be registered
+with the broker again.
+
+Example time-out conditions are:
+
+- Broker restart after maintenance
+- Backup time of a virtual machine
+- Restart of a firewall
+
+[Parameter and details](#heartbeat-and-reconnection-capability)
+
+## Release 1.3.3 New FileContainer class for JavaScript and Java to simplify file-transfer.
+
 An instance of the __FileContainer__ class may be inserted at any place inside the body of an Event.
 <br/>
 If the client runs on the same machine as the broker only the full path-name of the file will be transferred.
@@ -124,7 +156,8 @@ If the broker detects a target on a different machine the file is read in and pu
 This is done on a per connection basis.
 <br/>
 [Details](#file-transfer-with-the-filecontainer-class)
-## Let's talk about Python
+
+## Release 1.3.0 Let's talk about Python
 
 In this release a full featured Python client is included. The implementation is __pure generic Python code__.
 The features are:
@@ -1058,6 +1091,7 @@ c.emit ( event,
 <script type="text/javascript" src="MultiHash.js" ></script>
 <script type="text/javascript" src="GPWebClient.js" ></script>
 ```
+
 ```js
 var wc = gepard.getWebClient ( 17502 ) ;
 var event = new gepard.Event ( "CONFIG-CHANGED" ) ;
@@ -1224,7 +1258,20 @@ client.on ( "__FILE__", new EventListener()
 } ) ;
 
 ```
-# Technical Aspekts of the Client
+
+# Heartbeat and Reconnection Capability Parameterization
+
+## Broker Side
+
+The default ping interval for the broker is 180000 mili-sec aor 3 minutes. This value can be changed in three ways:
+
+1.  Startup parameter: --gepard.heartbeat.millis=<nnn>
+1.  Evironment variable: GEPARD_HEARTBEAT_MILLIS=<nnn>
+1.  Varaible in configuration-file: { "heartbeatMillis":<nnn>
+
+## Client Side
+
+# Technical Aspects of the Client
 
 NodeJS clients use the powerful but simple framework for asynchronously callbacks.
 <br/>

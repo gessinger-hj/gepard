@@ -384,11 +384,11 @@ Client.prototype.connect = function()
             thiz.brokerVersion = e.body.brokerVersion ;
             if ( thiz.brokerVersion > 0 )
             {
-              if ( this.intervalId )
+              if ( thiz.intervalId )
               {
-                clearInterval ( this.intervalId ) ;
+                clearInterval ( thiz.intervalId ) ;
               }
-              if ( thiz.reconnect )
+              if ( thiz._reconnect )
               {
                 thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._heartbeatIntervalMillis ) ;
               }
@@ -402,11 +402,11 @@ Client.prototype.connect = function()
             if ( thiz._heartbeatIntervalMillis !== e.body._heartbeatIntervalMillis )
             {
               thiz._heartbeatIntervalMillis = e.body._heartbeatIntervalMillis ;
-              if ( this.intervalId )
+              if ( thiz.intervalId )
               {
-                clearInterval ( this.intervalId ) ;
+                clearInterval ( thiz.intervalId ) ;
               }
-              if ( thiz.reconnect )
+              if ( thiz._reconnect )
               {
                 thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._heartbeatIntervalMillis ) ;
               }
