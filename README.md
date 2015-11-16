@@ -141,7 +141,7 @@ Example time-out conditions are:
 - Backup time of a virtual machine
 - Restart of a firewall
 
-[Parameter and details](#hheartbeat-and-reconnection-capability-parameterization)
+[Parameter and details](#heartbeat-and-reconnection-capability-parameterization)
 
 ## Release 1.3.3 New FileContainer class for JavaScript and Java to simplify file-transfer.
 
