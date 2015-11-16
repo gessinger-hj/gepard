@@ -2,18 +2,18 @@
 - Java, Python: Introduce re-connection and re-installation af all client's listeners in case Broker was down/not reachable and is available again.
 
 - JavaScript, Java, Python: configure reconnection-policy for a client with either
-	* option: --gepard.reconnect
-	* environment variable GEPARD_RECONNECT
-	* client.setRecconnect ( true ) before any socket connection is active
+	* option: --gepard.reconnect=true
+	* environment variable: export GEPARD_RECONNECT=true
+	* client.setReconnect ( true ) before any socket connection is active
 	* gepard.setProperty ( 'gepard.reconnect', 'true' )
 
 	Default is reconnect=off
 
 ## 1.4.0 (2015-11-10)
 - Java: configure reconnection-policy for a client with either
-	* option: --gepard.reconnect
-	* environment variable GEPARD_RECONNECT
-	* client.setRecconnect ( true ) before any socket connection is active
+	* option: --gepard.reconnect=true
+	* environment variable: export GEPARD_RECONNECT=true
+	* client.setRecconnect ( "true" ) before any socket connection is active
 
 	Default is reconnect=off
 
@@ -26,8 +26,8 @@
 
 ## 1.4.0 (2015-11-05)
 - JavaScript: configure reconnection-policy for a client with either
-	* option: --gepard.reconnect
-	* environment variable GEPARD_RECONNECT
+	* option: --gepard.reconnect=true
+	* environment variable: export GEPARD_RECONNECT=true
 	* client.setRecconnect ( true ) before any socket connection is active
 
 	Default is reconnect=off

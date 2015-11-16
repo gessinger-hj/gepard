@@ -1386,6 +1386,14 @@ Broker.prototype.setConfig = function ( configuration )
   }
   this._heartbeatIntervalMillis = T.getInt ( "gepard.heartbeat.millis", this._heartbeatIntervalMillis ) ;
 };
+Broker.prototype.setHeartbeatIntervalMillis = function ( millis )
+{
+  if ( isNaN ( millis ) || millis < 10 )
+  {
+    throw new Error ( "Invalid value for parameter millis:" + millis ) ;
+  }
+  this._heartbeatIntervalMillis = millis ;
+};
 module.exports = Broker ;
 
 if ( require.main === module )

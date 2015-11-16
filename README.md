@@ -65,7 +65,7 @@ This is very useful in the area of semaphores and locks.
 A client uses only one socket for all interactions with the broker. Thus a program needs only 1 client for all features.
 In order to use only 1 Client instance it is suggested to use the static method
 
-* JavaScript: 
+* JavaScript:
 
 ```js
 gepard = require  ( "gepard" )  :
@@ -1263,13 +1263,23 @@ client.on ( "__FILE__", new EventListener()
 
 ## Broker Side
 
-The default ping interval for the broker is 180000 milli-sec or 3 minutes. This value can be changed in three ways:
+The default ping interval for the broker is 180000 milli-sec or 3 minutes. This value can be changed in different ways:
 
 1.  Startup parameter: --gepard.heartbeat.millis=&lt;nnn>
 1.  Evironment variable: GEPARD_HEARTBEAT_MILLIS=&lt;nnn>
-1.  Variable in configuration-file: { "heartbeatMillis":&lt;nnn>
+1.  Variable in configuration-file: { "heartbeatMillis":&lt;nnn> }
+1.  In program: broker.setHeartbeatMillis ( &lt;nnn> )
 
 ## Client Side
+
+The default is reconnect=false
+
+ This value can be changed in different ways:
+ 
+1.  Startup parameter: --gepard.reconnect=true
+1.  environment variable: export GEPARD_RECONNECT=true
+1.  client.setReconnect ( true ) before any socket connection is active
+1.  gepard.setProperty ( 'gepard.reconnect', 'true' )
 
 # Technical Aspects of the Client
 
@@ -1322,7 +1332,7 @@ https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md
 # Features
 * High performance
 * Minimal configuration with
-  - __GEPARD_PORT__ 
+  - __GEPARD_PORT__
 	- __GEPARD_HOST__
 * All JavaScript client features like event listener, event emitter, semaphores, locks and messages
 	are available in any web-browser apps.
