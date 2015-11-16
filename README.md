@@ -1265,9 +1265,9 @@ client.on ( "__FILE__", new EventListener()
 
 The default ping interval for the broker is 180000 milli-sec or 3 minutes. This value can be changed in three ways:
 
-1.  Startup parameter: --gepard.heartbeat.millis=<nnn>
-1.  Evironment variable: GEPARD_HEARTBEAT_MILLIS=<nnn>
-1.  Variable in configuration-file: { "heartbeatMillis":<nnn>
+1.  Startup parameter: --gepard.heartbeat.millis=&lt;nnn>
+1.  Evironment variable: GEPARD_HEARTBEAT_MILLIS=&lt;nnn>
+1.  Variable in configuration-file: { "heartbeatMillis":&lt;nnn>
 
 ## Client Side
 
