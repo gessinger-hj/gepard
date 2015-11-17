@@ -384,6 +384,7 @@ Client.prototype.connect = function()
             thiz.brokerVersion = e.body.brokerVersion ;
             if ( thiz.brokerVersion > 0 )
             {
+              thiz._heartbeatIntervalMillis = e.body._heartbeatIntervalMillis ;
               if ( thiz.intervalId )
               {
                 clearInterval ( thiz.intervalId ) ;
@@ -633,8 +634,8 @@ Client.prototype._checkHeartbeat = function()
     {
       if  ( this.intervalId ) clearInterval ( this.intervalId ) ;
       this.intervalId = setInterval ( this._checkHeartbeat.bind ( this ), this._reconnectIntervalMillis ) ;
-      this.end ( true ) ;
       this._private_emit ( "disconnect" ) ;
+      this.end ( true ) ;
     }
   }
 } ;

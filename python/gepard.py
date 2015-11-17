@@ -693,8 +693,9 @@ class Client:
 		try:
 			if self.brokerVersion > 0 and self._heartbeatIntervalMillis > 0 :
 				self.sock.settimeout ( ( 3 * self._heartbeatIntervalMillis ) / 1000 )
-		except Exception as e:
-			print ( e )
+		except Exception as exc:
+			# print ( exc )
+			raise
 
 		while True:
 			c = self.sock.recv(1)
@@ -735,10 +736,9 @@ class Client:
 				try:
 					e = self.readNextJSON()
 				except Exception as e:
-					print ( e )
+					# print ( e )
 					self._emit ( "disconnect", e )
 					if self._reconnect:
-						print ( "socket disconnected" )
 						self.startReconnections()
 					else:
 						self._Timer.cancel()

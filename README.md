@@ -47,6 +47,7 @@ General purpose communication and synchronization layer for distributed applicat
 - [Heartbeat and Reconnection Capability Parameterization](#heartbeat-and-reconnection-capability-parameterization)
   - [Broker Side](#broker-side)
   - [Client Side](#client-side)
+    - [Example to test](#example-to-test)
 - [Technical Aspects of the Client](#technical-aspects-of-the-client)
 - [Found a bug? Help us fix it...](#found-a-bug-help-us-fix-it)
 - [https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md](#httpsgithubcomgessinger-hjgepardblobmasterchangelogmd)
@@ -141,7 +142,7 @@ Example time-out conditions are:
 - Backup time of a virtual machine
 - Restart of a firewall
 
-[Parameter and details](#heartbeat-and-reconnection-capability-parameterization)
+[Parameter, details and example](#heartbeat-and-reconnection-capability-parameterization)
 
 ## Release 1.3.3 New FileContainer class for JavaScript and Java to simplify file-transfer.
 
@@ -1300,6 +1301,15 @@ There are two new callbacks available signaling the state-change to the owner-ap
   1.  client.on ( "reconnect", &lt;callback> )
   1.  client.on ( "disconnect", &lt;callback> )
 
+### Example to test
+
+1.  open a terminal, execute: node_modules/.bin/gp.broker or node node_modules/gepard/src/Broker.js
+1.  open a terminal, execute: node node_modules/gepard/xmp/Listener.js
+1.  open a terminal, execute: python node_modules/gepard/python/xmp/Listener.py
+1.  open a terminal, goto node_modules/gepard/java
+    <br/> execute: java -cp lib/Gepard.jar:lib/gson-2.3.1.jar org.gessinger.gepard.xmp.Listener
+
+Then goto terminal one and kill the Broker either with ^C ( ctrl+C ) or with kill -9 &lt;pid> or with the taskmanger on windows. 
 # Technical Aspects of the Client
 
 NodeJS clients use the powerful but simple framework for asynchronously callbacks.

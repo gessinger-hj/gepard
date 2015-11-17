@@ -22,8 +22,7 @@ def on_shutdown ( err, success ):
 def on_reconnect ( err, success ):
 	print ( "reconnect/" + err )
 def on_disconnect ( err, success ):
-	print ( "on_disconnect" )
-	print ( err )
+	print ( "disconnect" )
 
 client.onClose ( on_close )
 client.onError ( on_error )
