@@ -301,7 +301,7 @@ The examples show the nice and easy interaction between programs written in thes
     Start the gepard broker with websocket proxy
 
 1.  __gp.shutdown<br/>__
-    Stop the broker
+    Send a __shutdown__ event to all clients an stop the broker
 
 1.  __gp.info<br/>__
     Show basic information from the broker
@@ -1280,6 +1280,25 @@ The default is reconnect=false
 1.  environment variable: export GEPARD_RECONNECT=true
 1.  client.setReconnect ( true ) before any socket connection is active
 1.  gepard.setProperty ( 'gepard.reconnect', 'true' )
+
+If the boker is shut down all clients receive a __shutdown event__.
+If __reconnect==true__ the appropriate callback in the client is called and the client api tries to reconnect.
+<br/>
+At this place a call to __client.setReconnect(false|False)__ initiates a Client-shutdown without reconnection.
+<br/>
+There are two new callbacks available signaling the state-change to the owner-application:
+
+* Java
+  1.  client.onReconnect ( InfoCallback icb )
+  1.  client.onDisconnect ( InfoCallback icb )
+
+* Python
+  1.  client.onReconnect ( &lt;callback> )
+  1.  client.onDisconnect ( &lt;callback> )
+
+* JavaScript
+  1.  client.on ( "reconnect", &lt;callback> )
+  1.  client.on ( "disconnect", &lt;callback> )
 
 # Technical Aspects of the Client
 
