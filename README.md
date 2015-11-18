@@ -1310,6 +1310,11 @@ There are two new callbacks available signaling the state-change to the owner-ap
     <br/> execute: java -cp lib/Gepard.jar:lib/gson-2.3.1.jar org.gessinger.gepard.xmp.Listener
 
 Then goto terminal one and kill the Broker either with ^C ( ctrl+C ) or with kill -9 &lt;pid> or with the taskmanger on windows. 
+<br/>
+Appropriate output is visible.
+<br/>
+Then start the Broker again and all clients reconnect again. Check with gp.info that all event-listener are registered again.
+
 # Technical Aspects of the Client
 
 NodeJS clients use the powerful but simple framework for asynchronously callbacks.
