@@ -6,9 +6,9 @@ General purpose communication and synchronization layer for distributed applicat
 
 - [Overview](#overview)
 - [What is new](#what-is-new)
-  - [Release 1.4.0 New Heartbeat Protocol to ensure the Availability of Connections](#release-140-new-heartbeat-protocol-to-ensure-the-availability-of-connections)
-  - [Release 1.3.3 New FileContainer class for JavaScript and Java to simplify file-transfer.](#release-133-new-filecontainer-class-for-javascript-and-java-to-simplify-file-transfer)
-  - [Release 1.3.0 Let's talk about Python](#release-130-lets-talk-about-python)
+  - [Release 1-4-0 New Heartbeat Protocol to ensure the Availability of Connections](#release-1-4-0-new-heartbeat-protocol-to-ensure-the-availability-of-connections)
+  - [Release 1-3-3 New FileContainer class for JavaScript and Java to simplify file-transfer.](#release-1-3-3-new-filecontainer-class-for-javascript-and-java-to-simplify-file-transfer)
+  - [Release 1-3-0 Let's talk about Python](#release-1-3-0-lets-talk-about-python)
   - [Controlling Connections and Actions with a Hook](#controlling-connections-and-actions-with-a-hook)
   - [Perfect load balanced message handling.](#perfect-load-balanced-message-handling)
   - [Java bindings for all features:](#java-bindings-for-all-features)
@@ -117,7 +117,7 @@ node_modules/.bin/gp.admin [ --help ]
 ```
 # What is new
 
-## Release 1.4.0 New Heartbeat Protocol to ensure the Availability of Connections
+## Release 1-4-0 New Heartbeat Protocol to ensure the Availability of Connections
 
 Gepard is based on fast communication by means of always-open sockets. Therefore it is crucial to monitor these connections.
 This is achieved by a mechanism which exchanges packets between the broker and all connected clients in fixed time intervals defined
@@ -144,7 +144,7 @@ Example time-out conditions are:
 
 [Parameter, details and example](#heartbeat-and-reconnection-capability-parameterization)
 
-## Release 1.3.3 New FileContainer class for JavaScript and Java to simplify file-transfer.
+## Release 1-3-3 New FileContainer class for JavaScript and Java to simplify file-transfer.
 
 An instance of the __FileContainer__ class may be inserted at any place inside the body of an Event.
 <br/>
@@ -158,7 +158,7 @@ This is done on a per connection basis.
 <br/>
 [Details](#file-transfer-with-the-filecontainer-class)
 
-## Release 1.3.0 Let's talk about Python
+## Release 1-3-0 Let's talk about Python
 
 In this release a full featured Python client is included. The implementation is __pure generic Python code__.
 The features are:
