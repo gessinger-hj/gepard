@@ -1090,6 +1090,15 @@ class NamedQueue:
 		finally:
 			self._condition.release()
 
+	def clear():
+		self._condition.acquire()
+		try:
+			pass
+		except Exception as e:
+			raise
+		finally:
+			self._condition.release()
+
 	def awakeAll ( self ):
 		self._AwakeAll = True
 		self._condition.acquire()
