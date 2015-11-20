@@ -480,13 +480,15 @@ class Client:
 		else:
 			raise Exception ( "eventNameList must be a string or an array of strings." )
 		if len ( eventNameList ) == 0:
-			raise  Exception ( "eventNameList must not be empty." )
+			raise Exception ( "eventNameList must not be empty." )
 
 		if not isinstance ( callback, types.FunctionType ):
 			raise Exception ( "callback must be a function, not:" + str ( callback ) )
 
     # TDOO: synchronized ( "_LOCK" )
 		for n in eventNameList:
+			if n == "system":
+				raise Exception ( "Client.on: eventName must not be 'system'" )
 			self.eventListenerFunctions.put ( n, callback )
 
 		e = Event ( "system", "addEventListener" )
@@ -619,6 +621,9 @@ class Client:
 				elif key == "result" : e.setResultRequested()
 				elif key == "error"  : e.setResultRequested()
 				callback[key] = map.get ( key )
+			if e.getName() == "system":
+				raise Exception ( "Client.emit: eventName must not be 'system'" )
+
 		self._send ( e )
 		# print	( e )
 		if callback != None:

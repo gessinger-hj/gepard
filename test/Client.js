@@ -700,6 +700,32 @@ Client.prototype.broadcast = function ( params, callback )
   }
   this.emit ( params, callback, { isBroadcast:true } ) ;
 };
+Client.prototype.log = function ( str )
+{
+  var e = new Event ( "system", "log" ) ;
+  var logObject = { message: String ( str ) } ;
+  e.putValue ( "logObject", logObject ) ;
+  e.setInUse() ;
+  e.setUser ( this.user ) ;
+
+  var socketExists = !! this.socket ;
+  var ctx = {} ;
+    if ( this.pendingEventList.length || ! socketExists )
+  {
+    ctx.e = e ;
+    this.pendingEventList.push ( ctx ) ;
+  }
+  var s = this.getSocket() ;
+  if ( ! this.pendingEventList.length )
+  {
+    counter++ ;
+    var uid = os.hostname() + "_" + this.socket.localPort + "_" + new Date().getTime() + "_" + counter ;
+    e.setUniqueId ( uid ) ;
+    var json = e.serialize() ;
+    this._timeStamp = new Date().getTime() ;
+    s.write ( json ) ;
+  }
+};
 /**
  * Description
  * @method fire

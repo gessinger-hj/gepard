@@ -477,14 +477,7 @@ public class Client
 	public void on ( String eventName, EventListener el )
 	throws IOException
 	{
-		Event e = new Event ( "system", "addEventListener" ) ;
-	  e.body.put ( "eventNameList", new String[] { eventName } ) ;
-    e.setUniqueId ( createUniqueId() ) ;
-    synchronized ( _LOCK )
-    {
-	    eventListenerFunctions.put ( eventName, el ) ;
-    }
-    _send ( e ) ;
+		on ( new String[] { eventName }, el ) ;
 	}
 	public void on ( String[] eventNameList, EventListener el )
 	throws IOException
@@ -496,6 +489,10 @@ public class Client
     {
     	for ( String name : eventNameList )
     	{
+    		if ( "system".equals ( name ) )
+    		{
+    			throw new IOException ( "Client.on(): eventName must not be 'system'" ) ;
+    		}
 		    eventListenerFunctions.put ( name, el ) ;
     	}
     }
