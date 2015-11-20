@@ -1090,7 +1090,7 @@ class NamedQueue:
 		finally:
 			self._condition.release()
 
-	def clear():
+	def clear(self):
 		self._condition.acquire()
 		try:
 			pass
