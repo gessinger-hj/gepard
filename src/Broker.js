@@ -667,6 +667,18 @@ Broker.prototype.toString = function()
 {
   return "(Broker)[]" ;
 };
+Broker.prototype.logMessageTemplate = "[%date-rfc3339% %HOSTNAME% %app-name%] %msg%" ;
+Broker.prototype._logMessage = function ( conn, e )
+{
+  var date = new Date ( e.body.message.timeMillis ) ;
+  var map = { "date-rfc3339": date.toRFC3339String()
+            , "HOSTNAME": conn.getHostName()
+            , "app-name": conn.getApplicationName()
+            , "msg": e.body.message.text
+            } ;
+  var line = T.resolve ( this.logMessageTemplate, map ) ;
+  Log.info ( line ) ;
+};
 /**
  * Description
  * @method _sendMessageToClient
@@ -808,6 +820,12 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
   {
     return ;
   }
+  if ( e.getType() === "log" )
+  {
+    this._logMessage ( conn, e ) ;
+    return ;
+  }
+
   if ( e.getType() === "PONG" )
   {
     Log.info ( "Heartbeat PONG received from: " + conn.sid ) ;

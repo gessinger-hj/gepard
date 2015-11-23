@@ -48,32 +48,6 @@ var LogFile = function()
   this._LEVEL_NAME = "info" ;
   this._LogCallback = null ;
 
-  this._monthNames = {} ;
-  this._monthNames["en"] = new Array (
-    'January',   'February', 'March',    'April'
-  , 'May',       'June',     'July',     'August'
-  , 'September', 'October',  'November', 'December'
-  , 'Jan',       'Feb',      'Mar',      'Apr'
-  , 'May',       'Jun',      'Jul',      'Aug'
-  , 'Sep',       'Oct',      'Nov',      'Dec'
-  );
-  this._monthNames["de"] = new Array (
-    'Januar',    'Februar',  'März',     'April'
-  , 'Mai',       'Juni',     'Juli',     'August'
-  , 'September', 'Oktober',  'November', 'Dezember'
-  , 'Jan',       'Feb',      'Mrz',      'Apr'
-  , 'Mai',       'Jun',      'Jul',      'Aug'
-  , 'Sep',       'Okt',      'Nov',      'Dez'
-  ) ;
-  this._dayNames = {} ;
-  this._dayNames["en"] = new Array(
-    'Sunday' ,'Monday' ,'Tuesday' ,'Wednesday' ,'Thursday' ,'Friday' ,'Saturday'
-  , 'Sun' ,'Mon' ,'Tue' ,'Wed' ,'Thu' ,'Fri' ,'Sat'
-  );
-  this._dayNames["de"] = new Array(
-    'Sonntag' ,'Montag' ,'Dienstag' ,'Mittwoch' ,'Donnerstag' ,'Freitag' ,'Samstag'
-  , 'So' ,'Mo' ,'Di' ,'Mi' ,'Do' ,'Fr' ,'Sa'
-  );
 };
 LogFile.prototype.createInstance = function()
 {
@@ -500,7 +474,8 @@ LogFile.prototype._writeToOutputBuffer = function ( s
 LogFile.prototype.getDatePrefix = function()
 {
   var d = new Date() ;
-  return "[" + this._formatDate ( d, "yyyy-MM-ddTHH:mm:ss.SSS" ) + "]" ;
+  // return "[" + T.formatDate ( d, "yyyy-MM-ddTHH:mm:ss.SSS" ) + "]" ;
+  return "[" + d.toRFC3339String() + "]" ;
 };
 /**
  * Description
@@ -569,7 +544,7 @@ LogFile.prototype.openNewFileIntern = function()
 
     this._MaxTime = d2.getTime() ;
 
-    var s = this._formatDate ( d, sdf ) ;
+    var s = T.formatDate ( d, sdf ) ;
 
     this._file = new File ( this._LogFilePrefix + s + this._LogFilePostfix ) ;
     try
@@ -958,150 +933,6 @@ LogFile.prototype.unredirectOutput = function ( channelFlags )
     }
   }
 };
-LogFile.prototype._formatDate = function ( date, format )
-{
-  if ( typeof format === 'string' && format.indexOf ( "'" ) >= 0 )
-  {
-    var aa = format.split ( "'" ) ;
-    var tt = "" ;
-    for ( var ii = 0 ; ii < aa.length ; ii++ )
-    {
-      if ( ! aa[ii] )
-      {
-        continue ;
-      }
-      if ( ii & 0x01 )
-      {
-        tt += aa[ii] ;
-      }
-      else
-      {
-        tt += this._formatDate ( date, aa[ii] ) ;
-      }
-    }
-    return tt ;
-  }
-  var language = "en" ;
-  var mn = this._monthNames[language] ;
-  var dn = this._dayNames[language] ;
-
-  if ( ! format ) format = "yyyy-MM-ddTHH:mm:ss.SSS" ;
-
-  format=format+"";
-  var result="";
-  var i_format=0;
-  var c="";
-  var token="";
-  var y=date.getFullYear()+"";
-  var M=date.getMonth()+1;
-  var d=date.getDate();
-  var E=date.getDay();
-  var H=date.getHours();
-  var m=date.getMinutes();
-  var s=date.getSeconds();
-  var milliRest = date.getTime() % 1000 ;
-  var yyyy,yy,MMMM,MMM,MM,dd,hh,h,mm,ss,ampm,HH,H,KK,K,kk,k;
-  var value=new Object();
-  if ( y.length < 4 )
-  {
-    y=""+(y-0+1900);
-  }
-  value["y"]=""+y;
-  value["yyyy"]=y;
-  value["yy"]=y.substring(2,4);
-  value["M"]=M;
-  value["MM"]=this._LZ(M);
-  value["MMM"]=mn[M+11];
-  value["MMMM"]=mn[M-1];
-  value["d"]=d;
-  value["dd"]=this._LZ(d);
-  value["E"]=dn[E+7];
-  value["EE"]=dn[E];
-  value["H"]=H;
-  value["HH"]=this._LZ(H);
-  if ( H == 0 )
-  {
-    value["h"]=12;
-  }
-  else
-  if ( H>12 )
-  {
-    value["h"]=H-12;
-  }
-  else
-  {
-    value["h"]=H;
-  }
-  value["hh"]=this._LZ(value["h"]);
-  if ( H>11 )
-  {
-    value["K"]=H-12;
-  }
-  else
-  {
-    value["K"]=H;
-  }
-  value["k"]=H+1;
-  value["KK"]=this._LZ(value["K"]);
-  value["kk"]=this._LZ(value["k"]);
-  if ( H > 11)
-  {
-    value["a"]="PM";
-  }
-  else
-  {
-    value["a"]="AM";
-  }
-  value["m"]=m;
-  value["mm"]=this._LZ(m);
-  value["s"]=s;
-  value["ss"]=this._LZ(s);
-  value["SSS"]=this._LZ2(milliRest);
-  while ( i_format < format.length )
-  {
-    c = format.charAt ( i_format ) ;
-    token="";
-    while (  ( format.charAt ( i_format ) == c )
-          && ( i_format < format.length )
-          )
-    {
-      token += format.charAt ( i_format++ ) ;
-    }
-    if ( value[token] != null )
-    {
-      result += value[token];
-    }
-    else
-    {
-      result += token;
-    }
-  }
-  return result;
-};
-LogFile.prototype._LZ = function (x){return(x<0||x>9?"":"0")+x;} ;
-LogFile.prototype._LZ2 = function (x)
-{
-  if ( x < 0 || x >= 100 ) return "" + x ;
-  if ( x >= 10 || x < 100 ) return "0" + x ;
-  return "00" + x ;
-} ;
-LogFile.prototype._MLZ = function (x)
-{
-  if ( x == "" ) return 0 ;
-  if ( x == "0" ) return 0 ;
-  if ( x == "00" ) return 0 ;
-  var i = 0 ;
-  var rc = "" ;
-  var found = false ;
-  for ( i = 0 ; i < x.length ; i++ )
-  {
-    if ( ! found && x.charAt ( i ) == '0' ) continue ;
-    found = true ;
-    rc += x.charAt ( i ) ;
-  }
-  return rc ;
-};
-
 var File = function ( path, name )
 {
   if ( path instanceof File )

@@ -654,9 +654,9 @@ class Client:
 				print ( exc )
 		self.infoCallbacks.clear()
 		self._semaphores         = {}
-		self._NQ_semaphoreEvents.clear()
+		self._NQ_semaphoreEvents.awakeAll()
 		self._ownedResources     = {}
-		self._NQ_lockEvents.clear()
+		self._NQ_lockEvents.awakeAll()
 
 		# eventListenerFunctions.clear()
 		key = str(self.port) + ":" + str(self.host)
