@@ -1,6 +1,5 @@
 package org.gessinger.gepard.xmp ;
 import org.gessinger.gepard.* ;
-import java.util.Map ;
 public class Emitter
 {
   static public void main ( String[] args )

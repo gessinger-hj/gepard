@@ -8,6 +8,19 @@ import com.google.gson.* ;
 
 public class Client
 {
+  public static class LogLevel
+  {
+		static public int LOG       = 0x00001000 ;
+		static public int EMERGENCY = 0x00000100 ;
+		static public int ALERT     = 0x00000080 ;
+		static public int CRITICAL  = 0x00000040 ;
+		static public int ERROR     = 0x00000020 ;
+		static public int WARNING   = 0x00000010 ;
+		static public int NOTICE    = 0x00000008 ;
+		static public int INFO      = 0x00000004 ;
+		static public int DEBUG     = 0x00000002 ;
+		static public int OFF       = 0x00000000 ;
+  }
 	private static Logger LOGGER = Logger.getLogger ( "org.gessinger.gepard" ) ;
 	static int counter             = 0 ;
 	int port                       = -1 ;
@@ -409,6 +422,17 @@ public class Client
 		{
 			callbacks.put ( e.getUniqueId(), ecb ) ;
 		}
+	}
+	public void log ( String messageText )
+	throws IOException
+	{
+		Event e = new Event ( "system", "log" ) ;
+		Map<String,Object> message = new HashMap<String,Object>() ;
+		message.put ( "text", messageText ) ;
+		message.put ( "severity", "INFO" ) ;
+		message.put ( "date", new Date() ) ;
+		e.putValue ( "message", message ) ;
+		_send ( e ) ;
 	}
 	void _send ( Event e )
 	throws IOException

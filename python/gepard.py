@@ -629,6 +629,15 @@ class Client:
 		if callback != None:
 			self.callbacks[e.getUniqueId()] = callback
 
+	def log(self, messageText):
+		e = Event ( "system", "log" )
+		message = {}
+		message["text"] = messageText
+		message["severity"] = "INFO"
+		message["date"] = util.formatDateAsRFC3339()
+		e.putValue ( "message", message )
+		self._send ( e )
+
 	def _startWorker ( self ):
 		t = threading.Thread(target=self._worker )
 		t.setDaemon ( self._workerIsDaemon )
@@ -1227,6 +1236,24 @@ class util ( object ):
 		if v == None:
 			return defaultProperty
 		return v
+
+	@classmethod
+	def formatDateAsRFC3339 ( clazz, date=None ):
+		if date == None:
+			date = datetime.datetime.now()
+		now = datetime.datetime.now()
+		utc = datetime.datetime.utcnow()
+
+		tdelta   = utc - now
+		tzoffset = tdelta.days * 3600 * 24 + tdelta.seconds
+		
+		sdate    = ( "%04d-%02d-%02dT%02d:%02d:%02d.%03d" ) % ( date.year, date.month, date.day, date.hour, date.minute, date.second, date.microsecond//1000 )
+		
+		hours    = abs(tzoffset) // 3600
+		minutes  = abs(tzoffset) % 3600 // 60
+		sign     = (tzoffset < 0 and '+') or '-'
+		rfc3339  = sdate + '%c%02d:%02d' % (sign, hours, minutes)
+		return rfc3339
 
 class FileContainer(object):
 	"""docstring for FileContainer"""

@@ -670,12 +670,20 @@ Broker.prototype.toString = function()
 Broker.prototype.logMessageTemplate = "[%date-rfc3339% %HOSTNAME% %app-name%] %msg%" ;
 Broker.prototype._logMessage = function ( conn, e )
 {
-  var date = new Date ( e.body.message.timeMillis ) ;
-  var map = { "date-rfc3339": date.toRFC3339String()
-            , "HOSTNAME": conn.getHostName()
+console.log ( e.body.message ) ;
+  var map = { "HOSTNAME": conn.getHostName()
             , "app-name": conn.getApplicationName()
-            , "msg": e.body.message.text
             } ;
+  var message = e.getValue ( "message" ) ;
+  if ( message )
+  {
+    map.msg = message.text ;
+    if ( message.date )
+    {
+      var date = new Date ( e.body.message.date ) ;
+      map["date-rfc3339"] = date.toRFC3339String() ;
+    }
+  }
   var line = T.resolve ( this.logMessageTemplate, map ) ;
   Log.info ( line ) ;
 };
@@ -1044,12 +1052,12 @@ Broker.prototype._shutdown = function ( conn, e )
       {
         clearInterval ( this.intervallId ) ;
       }
-      Log.notice ( 'server shutting down' ) ;
+      Log.info ( 'server shutting down' ) ;
       e.control.status = { code:0, name:"ack" } ;
       conn.write ( e ) ;
       this._closeAllSockets() ;
       this.server.unref() ;
-      Log.notice ( 'server shut down' ) ;
+      Log.info ( 'server shut down' ) ;
       this.emit ( "shutdown" ) ;
     }
     catch ( exc )
@@ -1251,7 +1259,7 @@ Broker.prototype.listen = function ( port, callback )
      */
     callback = function()
                {
-                 Log.notice ( 'server bound to port=' + thiz.port ) ;
+                 Log.info ( 'server bound to port=' + thiz.port ) ;
                  thiz.intervallId = setInterval ( thiz._checkHeartbeat_bind, thiz._heartbeatIntervalMillis ) ;
                } ;
   }

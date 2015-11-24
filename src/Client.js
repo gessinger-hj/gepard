@@ -702,10 +702,10 @@ Client.prototype.broadcast = function ( params, callback )
 };
 Client.prototype.log = function ( messageText, callback )
 {
-  var e = new Event ( "system", "log" ) ;
+  var e            = new Event ( "system", "log" ) ;
   var message      = { text: String ( messageText ) } ;
   message.severity = "INFO" ;
-  message.timeMillis = new Date().getTime() ;
+  message.date     = new Date().toRFC3339String() ;
   e.putValue ( "message", message ) ;
   e.setInUse() ;
   e.setUser ( this.user ) ;

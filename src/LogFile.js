@@ -47,6 +47,11 @@ var LogFile = function()
   this._LEVEL = this.LogLevel.INFO ;
   this._LEVEL_NAME = "info" ;
   this._LogCallback = null ;
+  this.LogLevelValueToName = {} ;
+  for ( var key in this.LogLevel )
+  {
+    this.LogLevelValueToName["" + this.LogLevel[key]] = key ;
+  }
 
 };
 LogFile.prototype.createInstance = function()
