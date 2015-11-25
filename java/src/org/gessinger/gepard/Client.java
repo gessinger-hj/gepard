@@ -42,10 +42,10 @@ public class Client
   MultiMap<String,EventListener> eventListenerFunctions = new MultiMap<String,EventListener>() ;
   Hashtable<String,EventCallback> callbacks = new Hashtable<String,EventCallback>() ;
 
-  HashMap<String,Semaphore> _semaphores = new HashMap<String,Semaphore>() ;
-  NamedQueue<Event> _NQ_semaphoreEvents = new NamedQueue<Event>() ;
-  HashMap<String,Lock> _ownedResources = new HashMap<String,Lock>() ;
-  NamedQueue<Event> _NQ_lockEvents = new NamedQueue<Event>() ;
+	HashMap<String,Semaphore> _semaphores = new HashMap<String,Semaphore>() ;
+	NamedQueue<Event> _NQ_semaphoreEvents = new NamedQueue<Event>() ;
+	HashMap<String,Lock> _ownedResources  = new HashMap<String,Lock>() ;
+	NamedQueue<Event> _NQ_lockEvents      = new NamedQueue<Event>() ;
   
   SyncedQueue<Event> _CallbackIsolator = new SyncedQueue<Event>() ;
 

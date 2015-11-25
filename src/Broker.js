@@ -670,7 +670,6 @@ Broker.prototype.toString = function()
 Broker.prototype.logMessageTemplate = "[%date-rfc3339% %HOSTNAME% %app-name%] %msg%" ;
 Broker.prototype._logMessage = function ( conn, e )
 {
-console.log ( e.body.message ) ;
   var map = { "HOSTNAME": conn.getHostName()
             , "app-name": conn.getApplicationName()
             } ;
