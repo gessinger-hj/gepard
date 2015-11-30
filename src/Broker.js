@@ -650,6 +650,11 @@ Broker.prototype._ondata = function ( socket, chunk )
       }
       if ( e.getName() === 'system' )
       {
+        if ( e.getType().indexOf ( "client::" ) === 0 )
+        {
+          this._handleSystemClientMessages ( conn, e ) ;
+          continue ;
+        }
         this._handleSystemMessages ( conn, e ) ;
         continue ;
       }
@@ -743,8 +748,12 @@ Broker.prototype._sendEventToClients = function ( conn, e )
     }
     else
     {
+      var number = 1 ;
+      e.control.clone = {} ;
       for ( i = 0 ; i < socketList.length ; i++ )
       {
+        e.control.clone.number = number++ ;
+        e.control.clone.of = socketList.length ;
         var target_conn = this._connections[socketList[i].sid] ;
         if ( target_conn.isLocalHost() )
         {
@@ -812,6 +821,23 @@ Broker.prototype._sendEventToClients = function ( conn, e )
     }
     Log.info ( "No listener found for " + e.getName() ) ;
   }
+};
+Broker.prototype._handleSystemClientMessages = function ( conn, e )
+{
+  var i = 0 ;
+  var number = 1 ;
+  e.control.clone = {} ;
+  e.setSourceIdentifier ( conn.sid ) ;
+  for ( i = 0 ; i < this._connectionList.length ; i++ )
+  {
+    if ( conn === this._connectionList[i] )
+    {
+      continue ;
+    }
+    e.control.clone.number = number++ ;
+    e.control.clone.of = this._connectionList.length - 1 ;
+    this._connectionList[i].write ( e ) ;
+  };
 };
 /**
  * Description

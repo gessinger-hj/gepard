@@ -629,6 +629,15 @@ class Client:
 		if callback != None:
 			self.callbacks[e.getUniqueId()] = callback
 
+	def _handleSystemClientMessages(self,e):
+		try:
+			print ( e )
+			e.setStatus ( 0, "success", "ack" )
+			e.setIsResult()
+			self._send ( e )
+		except Exception as exc:
+			print ( exc )
+
 	def log(self, messageText):
 		e = Event ( "system", "log" )
 		message = {}
@@ -750,7 +759,7 @@ class Client:
 				try:
 					e = self.readNextJSON()
 				except Exception as e:
-					# print ( e )
+					print ( e )
 					self._emit ( "disconnect", e )
 					if self._reconnect:
 						self.startReconnections()
@@ -766,6 +775,9 @@ class Client:
 						else:
 							self._Timer.cancel()
 						break
+					if e.getType().find ( "client::" ) == 0:
+						self._handleSystemClientMessages ( e )
+						continue
 					if e.getType() != None and e.getType() == "PING":
 						e.setType ( "PONG" )
 						if e.__dict__["control"].get ( "_heartbeatIntervalMillis" ) != None:

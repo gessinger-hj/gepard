@@ -764,6 +764,11 @@ public class Client
 	  						}
 	  						continue ;
 			    		}
+		          if ( e.getType().indexOf ( "client::" ) == 0 )
+		          {
+		            _handleSystemClientMessages ( e ) ;
+		            continue ;
+		          }
 			    		if ( e.getType().equals ( "PING" ) )
 			    		{
 			    			e.setType ( "PONG" ) ;
@@ -1075,5 +1080,19 @@ public class Client
 		{
 			LOGGER.info ( Util.toString ( exc ) ) ;
 		}
+	}
+	private void _handleSystemClientMessages ( Event e )
+	{
+	LOGGER.info ( Util.toString ( e ) ) ;
+	  try
+	  {
+		  e.setStatus ( 0, "success", "ack" ) ;
+	    e.setIsResult() ;
+	    _send ( e ) ;
+	  }
+	  catch ( Exception exc )
+	  {
+	    LOGGER.info ( Util.toString ( exc ) ) ;
+	  }
 	}
 }

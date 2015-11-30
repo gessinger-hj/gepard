@@ -382,6 +382,11 @@ Client.prototype.connect = function()
             else                   thiz.end()
             return ;
           }
+          if ( e.getType().indexOf ( "client::" ) === 0 )
+          {
+            thiz._handleSystemClientMessages ( e ) ;
+            return ;
+          }
           if ( e.getType() === "broker_info" )
           {
             thiz.brokerVersion = e.body.brokerVersion ;
@@ -584,6 +589,20 @@ Client.prototype.isRunning = function ( callback )
   {
   }
 };
+Client.prototype._handleSystemClientMessages = function ( e )
+{
+console.log ( e ) ;
+  try
+  {
+    e.control.status = { code:0, name:"success", reason:"ack" } ;
+    e.setIsResult() ;
+    this.send ( e ) ;
+  }
+  catch ( exc )
+  {
+    Log.log ( exc ) ;
+  }
+};
 Client.prototype._checkHeartbeat = function()
 {
   var i ;
@@ -700,6 +719,19 @@ Client.prototype.broadcast = function ( params, callback )
   }
   this.emit ( params, callback, { isBroadcast:true } ) ;
 };
+Client.prototype.systemInfo = function ( callback )
+{
+  if ( typeof callback === 'function' )
+  {
+    callback = { result: callback } ;
+  }
+  if ( typeof callback.result !== 'function' )
+  {
+    throw new Error ( "Missing result function.")
+  }
+  var e = new Event ( "system", "client::info" ) ;
+  this.emit ( e, callback, { isBroadcast:true, internal: true } ) ;
+};
 Client.prototype.log = function ( messageText, callback )
 {
   var e            = new Event ( "system", "log" ) ;
@@ -779,7 +811,7 @@ Client.prototype.emit = function ( params, callback, opts )
     e.setUser ( params.user ) ;
   }
   if ( ! e.getUser() ) e.setUser ( this.user )
-  if ( e.getName() === "system" )
+  if ( e.getName() === "system" && ! opts.internal )
   {
     throw new Error ( "Client.emit: eventName must not be 'system'" ) ;
   }

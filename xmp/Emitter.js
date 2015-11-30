@@ -36,6 +36,7 @@ if ( require.main === module )
       {
         write: function()
         {
+          this.setReconnect ( false ) ;
           this.end() ;
         }
       });
@@ -46,6 +47,7 @@ if ( require.main === module )
       {
         write: function() // The event is sent -> end connection and exit
         {
+          this.setReconnect ( false ) ;
           this.end() ;
         }
       });
