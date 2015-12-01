@@ -110,7 +110,7 @@ Admin.prototype._execute = function ( action, what, callback )
 	{
 		this.socket.on ( "connect", function()
 		{
-		  var e = new Event ( "system", "shutdown" ) ;
+		  var e = new gepard.Event ( "system", "shutdown" ) ;
 		  if ( what )
 		  {
 		  	e.body.shutdown_sid = what ;
@@ -128,7 +128,7 @@ Admin.prototype._execute = function ( action, what, callback )
 	{
 		this.socket.on ( "connect", function()
 		{
-		  var e = new Event ( "system", "tracePoint" ) ;
+		  var e = new gepard.Event ( "system", "tracePoint" ) ;
 		  e.body.tracePointAction = what ;
 		  this.write ( e.serialize() ) ;
 		});
@@ -138,7 +138,7 @@ Admin.prototype._execute = function ( action, what, callback )
 	{
 		this.socket.on ( "connect", function()
 		{
-		  var e = new Event ( "system", "setSystemParameter" ) ;
+		  var e = new gepard.Event ( "system", "setSystemParameter" ) ;
 		  e.body.systemParameter = what ;
 		  this.write ( e.serialize() ) ;
 		});
@@ -147,7 +147,7 @@ Admin.prototype._execute = function ( action, what, callback )
 	{
 		this.socket.on ( "connect", function()
 		{
-		  var e = new Event ( "system", "getInfoRequest" ) ;
+		  var e = new gepard.Event ( "system", "getInfoRequest" ) ;
 		  e.body.info_type = what ;
 		  this.write ( e.serialize() ) ;
 		});
@@ -205,7 +205,7 @@ Admin.prototype._execute = function ( action, what, callback )
       }
       if ( m.charAt ( 0 ) === '{' )
 		  {
-		    var e = gepard.prototype.deserialize ( m ) ;
+		    var e = gepard.Event.prototype.deserialize ( m ) ;
 		    if ( e.getType() === "getInfoResult" )
 		    {
 		    	if ( what === "conn" )
