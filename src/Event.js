@@ -768,6 +768,28 @@ gepard.Event.prototype =
 		if ( ! this.control.status ) return ;
 		return this.control.status.name ;
 	},
+	setStatus: function ( code, name, reason )
+	{
+		if ( ! this.control ) this.control = {} ;
+		if ( ! this.control.status ) this.control.status = {} ;
+		if ( code )
+		{
+			code = parseInt ( code ) ;
+		}
+		if ( ! code )
+		{
+			code = 0 ;
+		}
+		this.control.status.code = code ;
+		if ( name )
+		{
+			this.control.status.name = name ;
+		}
+		if ( reason )
+		{
+			this.control.status.reason = reason ;
+		}
+	},
 	sendBack: function()
 	{
 		var c = this._Client ;

@@ -18,6 +18,7 @@ import threading
 import types
 import numbers
 import collections
+import resource
 
 dateutil_exists = False
 try:
@@ -631,12 +632,34 @@ class Client:
 
 	def _handleSystemClientMessages(self,e):
 		try:
-			print ( e )
-			e.setStatus ( 0, "success", "ack" )
-			e.setIsResult()
-			self._send ( e )
+			if e.getType().find ( "client/info/" ) == 0:
+				info = {}
+				e.putValue ( "info", info )
+				if e.getType().find ( "/where/" ) >= 0:
+					where = {}
+					info["where"] = where
+				elif e.getType().find ( "/env/" ) >= 0:
+					env = {}
+					info["env"] = env
+					for k, v in os.environ.items():
+						env[k] = v
+				else:
+					osys = {}
+					info["os"] = osys
+					osys["uname"] = os.uname()
+					proc = {}
+					info["process"] = proc
+
+					mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+					proc["maxrss"] = mem
+				e.setStatus ( 0, "success", "ack" )
+				e.setIsResult()
+				self._send ( e )
 		except Exception as exc:
 			print ( exc )
+			e.setStatus ( 1, "error", "reject" ) ;
+			e.setIsResult() ;
+			self._send ( e )
 
 	def log(self, messageText):
 		e = Event ( "system", "log" )
@@ -775,7 +798,7 @@ class Client:
 						else:
 							self._Timer.cancel()
 						break
-					if e.getType().find ( "client::" ) == 0:
+					if e.getType().find ( "client/" ) == 0:
 						self._handleSystemClientMessages ( e )
 						continue
 					if e.getType() != None and e.getType() == "PING":

@@ -1,5 +1,18 @@
 var util = require  ( "util" ) ;
 var path = require  ( "path" ) ;
+if ( ! String.prototype.contains )
+{
+  /*
+   * Description
+   * @param {} needle
+   * @return BinaryExpression
+   */
+  String.prototype.contains = function ( needle )
+  {
+    if ( ! needle ) return false ;
+    return this.indexOf ( needle ) >= 0 ;
+  } ;
+}
 if ( ! String.prototype.startsWith )
 {
   /*

@@ -382,7 +382,7 @@ Client.prototype.connect = function()
             else                   thiz.end()
             return ;
           }
-          if ( e.getType().indexOf ( "client::" ) === 0 )
+          if ( e.getType().indexOf ( "client/" ) === 0 )
           {
             thiz._handleSystemClientMessages ( e ) ;
             return ;
@@ -591,9 +591,43 @@ Client.prototype.isRunning = function ( callback )
 };
 Client.prototype._handleSystemClientMessages = function ( e )
 {
-console.log ( e ) ;
   try
   {
+    if ( e.getType().startsWith ( "client/info/" ) )
+    {
+      var info = e.body.info = {} ;
+      if ( e.getType().contains ( "/info/where/" ) )
+      {
+        info.where = {} ;
+      }
+      else
+      if ( e.getType().contains ( "/info/env/" ) )
+      {
+        info.env = process.env ;
+      }
+      else
+      {
+        info.process =
+        {
+          arch        : process.arch
+        , cwd         : process.cwd()
+        , memoryUsage : process.memoryUsage()
+        , pid         : process.pid
+        , platform    : process.platform
+        , release     : process.release
+        , uptime      : process.uptime()
+        } ;
+        info.os =
+        {
+          freemem   : os.freemem()
+        , cpus      : os.cpus()
+        , totalmem  : os.totalmem()
+        , loadavg   : os.loadavg()
+        , release   : os.release()
+        , uptime    : os.uptime()
+        } ;
+      }
+    }
     e.control.status = { code:0, name:"success", reason:"ack" } ;
     e.setIsResult() ;
     this.send ( e ) ;
@@ -601,6 +635,9 @@ console.log ( e ) ;
   catch ( exc )
   {
     Log.log ( exc ) ;
+    e.control.status = { code:1, name:"error", reason:"reject" } ;
+    e.setIsResult() ;
+    this.send ( e ) ;
   }
 };
 Client.prototype._checkHeartbeat = function()
@@ -719,7 +756,7 @@ Client.prototype.broadcast = function ( params, callback )
   }
   this.emit ( params, callback, { isBroadcast:true } ) ;
 };
-Client.prototype.systemInfo = function ( callback )
+Client.prototype.systemInfo = function ( callback, queryString, sid )
 {
   if ( typeof callback === 'function' )
   {
@@ -729,7 +766,15 @@ Client.prototype.systemInfo = function ( callback )
   {
     throw new Error ( "Missing result function.")
   }
-  var e = new Event ( "system", "client::info" ) ;
+  if ( ! queryString )
+  {
+    queryString = "client/info/"
+  }
+  var e = new Event ( "system", queryString ) ;
+  if ( sid )
+  {
+    e.putValue ( "sid", sid ) ;
+  }
   this.emit ( e, callback, { isBroadcast:true, internal: true } ) ;
 };
 Client.prototype.log = function ( messageText, callback )

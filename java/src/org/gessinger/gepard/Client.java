@@ -6,6 +6,9 @@ import java.net.* ;
 import java.util.logging.* ;
 import com.google.gson.* ;
 
+import java.lang.management.* ;
+import javax.management.* ;
+
 public class Client
 {
   public static class LogLevel
@@ -764,7 +767,7 @@ public class Client
 	  						}
 	  						continue ;
 			    		}
-		          if ( e.getType().indexOf ( "client::" ) == 0 )
+		          if ( e.getType().indexOf ( "client/" ) == 0 )
 		          {
 		            _handleSystemClientMessages ( e ) ;
 		            continue ;
@@ -1083,9 +1086,60 @@ public class Client
 	}
 	private void _handleSystemClientMessages ( Event e )
 	{
-	LOGGER.info ( Util.toString ( e ) ) ;
 	  try
 	  {
+	    Map<String,Object> info = new HashMap<String,Object>() ;
+	    e.putValue ( "info", info ) ;
+
+	    if ( e.getType().indexOf ( "/info/" ) > 0 )
+	    {
+		    if ( e.getType().indexOf ( "/info/where/" ) > 0 )
+		    {
+			    List<HashMap<String,Object>> where = getStackTraces() ;
+			    info.put ( "where", where ) ;
+		    }
+		    else
+		    if ( e.getType().indexOf ( "/info/env/" ) > 0 )
+		    {
+			    Map<String,Object> env = new HashMap<String,Object>() ;
+			    info.put ( "env", env ) ;
+		    	Map<String,String> p = System.getenv() ;
+			    for ( String k : p.keySet() )
+			    {
+			    	env.put ( k, p.get ( k ) ) ;
+			    }
+		    }
+		    else
+		    {
+		      MBeanServer mbs = ManagementFactory.getPlatformMBeanServer() ;
+		      ObjectName on = new ObjectName ( "java.lang:type=OperatingSystem" ) ;
+			    Map<String,Object> process = new HashMap<String,Object>() ;
+			    info.put ( "process", process ) ;
+			    Map<String,Object> os = new HashMap<String,Object>() ;
+			    info.put ( "os", os ) ;
+		
+		      Runtime r = Runtime.getRuntime() ;
+		      long totalMemory = r.totalMemory() ;
+		      long maxMemory = r.maxMemory() ;
+		      long freeMemory = r.freeMemory() ;
+
+		      long committedMemory = r.totalMemory() ;
+		      long usedMemory = r.totalMemory() - r.freeMemory() ;
+	        process.put ( "usedMemory", new Long ( usedMemory ) ) ;
+	        process.put ( "committedMemory", new Long ( committedMemory ) ) ;
+	        process.put ( "maxMemory", new Long ( maxMemory ) ) ;
+
+	        os.put ( "name", mbs.getAttribute ( on, "Name" ) + " " + mbs.getAttribute ( on, "Version" ) ) ;
+	        os.put ( "arch", "" + mbs.getAttribute ( on, "Arch" ) ) ;
+	        os.put ( "cpus", "" + mbs.getAttribute ( on, "AvailableProcessors" ) ) ;
+	        os.put ( "committed_virtual_memory", "" + mbs.getAttribute ( on, "CommittedVirtualMemorySize" ) ) ;
+	        os.put ( "totalmem", "" + mbs.getAttribute ( on, "TotalPhysicalMemorySize" ) ) ;
+	        os.put ( "freemem", "" + mbs.getAttribute ( on, "FreePhysicalMemorySize" ) ) ;
+	        os.put ( "totalswap", "" + mbs.getAttribute ( on, "TotalSwapSpaceSize" ) ) ;
+	        os.put ( "freeswap", "" + mbs.getAttribute ( on, "FreeSwapSpaceSize" ) ) ;
+	        os.put ( "loadavg", "" + mbs.getAttribute ( on, "SystemLoadAverage" ) ) ;
+		    }
+		  }
 		  e.setStatus ( 0, "success", "ack" ) ;
 	    e.setIsResult() ;
 	    _send ( e ) ;
@@ -1093,6 +1147,40 @@ public class Client
 	  catch ( Exception exc )
 	  {
 	    LOGGER.info ( Util.toString ( exc ) ) ;
+	    try
+	    {
+			  e.setStatus ( 1, "error", "reject" ) ;
+		    e.setIsResult() ;
+		    _send ( e ) ;
+	    }
+	    catch ( Exception exc2 )
+	    {
+	    	LOGGER.info ( Util.toString ( exc2 ) ) ;
+	    }
 	  }
 	}
+  private List<HashMap<String,Object>> getStackTraces()
+  {
+  	List<HashMap<String,Object>> list = new ArrayList<HashMap<String,Object>>() ;
+    Map<Thread,StackTraceElement[]> stackTraceMap = Thread.getAllStackTraces() ;
+    for ( Thread t : stackTraceMap.keySet() )
+    {
+      ThreadGroup tg = t.getThreadGroup() ;
+      if ( tg.getName().equals ( "system" ) )
+      {
+      	continue ;
+      }
+      HashMap<String,Object> hm = new HashMap<String,Object>() ;
+      list.add ( hm ) ;
+      ArrayList<String> l = new ArrayList<String>() ;
+      hm.put ( "name", t.toString() ) ;
+      hm.put ( "stacktrace", l ) ;
+      StackTraceElement[] stackTrace = stackTraceMap.get(t);
+      for ( StackTraceElement element : stackTrace )
+      {
+	    	l.add ( element.toString() ) ;
+      }
+    }
+    return list ;
+  }
 }

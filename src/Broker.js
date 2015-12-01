@@ -650,7 +650,7 @@ Broker.prototype._ondata = function ( socket, chunk )
       }
       if ( e.getName() === 'system' )
       {
-        if ( e.getType().indexOf ( "client::" ) === 0 )
+        if ( e.getType().indexOf ( "client/" ) === 0 )
         {
           this._handleSystemClientMessages ( conn, e ) ;
           continue ;
@@ -828,16 +828,55 @@ Broker.prototype._handleSystemClientMessages = function ( conn, e )
   var number = 1 ;
   e.control.clone = {} ;
   e.setSourceIdentifier ( conn.sid ) ;
-  for ( i = 0 ; i < this._connectionList.length ; i++ )
+  var sid = e.getValue ( "sid" ) ;
+
+  var of = this._connectionList.length - 1 ;
+  if ( conn.sid === sid )
   {
-    if ( conn === this._connectionList[i] )
+    e.setStatus ( 1, "error", "not self" ) ;
+    e.setIsResult() ;
+    conn.write ( e ) ;
+    return ;
+  }
+  var numberOfEventsSent = 0 ;
+  if ( sid )
+  {
+    for ( i = 0 ; i < this._connectionList.length ; i++ )
     {
-      continue ;
+      if ( conn === this._connectionList[i] )
+      {
+        continue ;
+      }
+      if ( sid !== this._connectionList[i].sid )
+      {
+        continue ;
+      }
+      e.control.clone.number = number++ ;
+      e.control.clone.of = 1 ;
+      this._connectionList[i].write ( e ) ;
+      numberOfEventsSent++ ;
     }
-    e.control.clone.number = number++ ;
-    e.control.clone.of = this._connectionList.length - 1 ;
-    this._connectionList[i].write ( e ) ;
+  }
+  else
+  {
+    for ( i = 0 ; i < this._connectionList.length ; i++ )
+    {
+      if ( conn === this._connectionList[i] )
+      {
+        continue ;
+      }
+      e.control.clone.number = number++ ;
+      e.control.clone.of = this._connectionList.length - 1 ;
+      this._connectionList[i].write ( e ) ;
+      numberOfEventsSent++ ;
+    }
   };
+  if ( ! numberOfEventsSent )
+  {
+    e.setStatus ( 1, "warning", "no clients found" ) ;
+    e.setIsResult() ;
+    conn.write ( e ) ;
+  }
 };
 /**
  * Description
