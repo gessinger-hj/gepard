@@ -129,7 +129,7 @@ Admin.prototype._execute = function ( action, what, callback )
 		this.socket.on ( "connect", function()
 		{
 		  var e = new gepard.Event ( "system", "tracePoint" ) ;
-		  e.body.tracePointAction = what ;
+		  e.body.tracePointActionList = what ;
 		  this.write ( e.serialize() ) ;
 		});
 	}
@@ -365,18 +365,54 @@ Admin.prototype.getNumberOfApplications = function ( applicationName, callback )
 };
 Admin.prototype.client = function()
 {
-	var info = gepard.getProperty ( "info" ) ;
-	var name = "client/info/" ;
+	var i ;
+	var info   = gepard.getProperty ( "info" ) ;
+	var action = gepard.getProperty ( "action" ) ;
+	var value  = gepard.getProperty ( "value" ) ;
+	var name   = "client/info" ;
+
+	var parameter = {} ;
+	
 	if ( info )
 	{
-		name += info + "/" ;
+		name = "client/info/" + info + "/" ;
 	}
+	else
+	if ( action )
+	{
+		name = "client/action/" + action + "/" ;
+		if ( value )
+		{
+			value = value.trim() ;
+			if ( value.charAt ( 0 ) === '{' && value.charAt ( value.length - 1 ) === '}' )
+			{
+				parameter.value = JSON.parse ( value )
+			}
+			else
+			{
+			// what = '{"points":[{"name":"*","state":"toggle"}]}' ;
+				var l = value.split(',') ;
+				parameter.points = [] ;
+				for ( i = 0 ; i < l.length ; i++ )
+				{
+					parameter.points.push ( { "name": l[i], state:"on" } ) ;
+				}
+			}
+		}
+	}
+	else
+	{
+		name = "client/info/" ;
+	}
+
 	var util = require ( "util" ) ;
 	var c = gepard.getClient() ;
 	c.setReconnect ( false ) ;
   var n = 0 ;
 
   var sid = gepard.getProperty ( "sid" ) ;
+  parameter.name = name ;
+  parameter.sid = sid ;
   c.systemInfo ( function ( e )
   {
     if ( e.isBad() )
@@ -397,10 +433,9 @@ Admin.prototype.client = function()
     }
     if ( n === inst.of )
     {
-      this.setReconnect ( false ) ;
       this.end() ;
   	}
-  },name,sid);
+  }, parameter );
 };
 module.exports = Admin ;
 if ( require.main === module )
@@ -428,6 +463,13 @@ if ( require.main === module )
 		console.log ( "      with <connection-id>: send a shutdown event" ) ;
 		console.log ( "        to the specified client and close the connection." ) ;
 		console.log ( "      <connection-id> is an applicationName or an sid shown with --info" ) ;
+		console.log ( "  --client \tdisplay various information collected from each client" ) ;
+		console.log ( "    Optional:" ) ;
+		console.log ( "    --sid=<connection-id>" ) ;
+		console.log ( "    		use only connection-id (sid) of interest" ) ;
+		console.log ( "    --info=env|where" ) ;
+		console.log ( "      env \tdisplay remote environment variables." ) ;
+		console.log ( "      where \tdisplay stacktraces. Aplicable only for Java clients." ) ;
 		console.log ( "The form -D<name>[=<value> or --<name>[=<value>] are aquivalent." ) ;
 		console.log ( "Gepard-options are:" ) ;
 		console.log ( "  --gepard.port=<port> \t tcp connection port, default=17501" ) ;

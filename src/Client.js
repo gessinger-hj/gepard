@@ -9,8 +9,14 @@ var MultiHash     = require ( "./MultiHash" ) ;
 var Log           = require ( "./LogFile" ) ;
 var User          = require ( "./User" ) ;
 var FileContainer = require ( "./FileContainer" ) ;
+var TracePoints   = require ( "./TracePoints" ) ;
 
 var counter = 0 ;
+
+var TPStore = TracePoints.getStore ( "client" ) ;
+TPStore.add ( "EVENT_IN" ) ;
+TPStore.add ( "EVENT_OUT" ) ;
+
 var Stats = function()
 {
   this.sum = { out: 0, in:0 } ;
@@ -306,7 +312,16 @@ Client.prototype.connect = function()
     if ( ! this.partialMessage ) this.partialMessage = "" ;
     mm = this.partialMessage + mm ;
     this.partialMessage = "" ;
-    var result = T.splitJSONObjects ( mm ) ;
+
+    var result ;
+    try
+    {
+      result = T.splitJSONObjects ( mm ) ;
+    }
+    catch ( exc )
+    {
+      Log.log ( exc ) ;
+    }
     var messageList = result.list ;
     var i, j, k ;
     var ctx, uid, rcb, e, callbackList ;
@@ -333,6 +348,8 @@ Client.prototype.connect = function()
       if ( m.charAt ( 0 ) === '{' )
       {
         e = Event.prototype.deserialize ( m ) ;
+        TPStore.point["EVENT_IN"].log ( e ) ;
+
         if ( e.isResult() )
         {
           uid = e.getUniqueId() ;
@@ -593,12 +610,31 @@ Client.prototype._handleSystemClientMessages = function ( e )
 {
   try
   {
+    var info = e.body.info = {} ;
+    if ( e.getType().startsWith ( "client/action/" ) )
+    {
+      var tracePointResult = TPStore.action ( e.body.parameter ) ;
+      if ( tracePointResult )
+      {
+        info.tracePointStatus = tracePointResult ;
+      }
+      e.removeValue ( "parameter" ) ;
+    }
+    else
     if ( e.getType().startsWith ( "client/info/" ) )
     {
-      var info = e.body.info = {} ;
       if ( e.getType().contains ( "/info/where/" ) )
       {
         info.where = {} ;
+      }
+      else
+      if ( e.getType().contains ( "/info/tp/" ) )
+      {
+        var tracePointResult = TPStore.action ( e.body.tracePointActionList ) ;
+        if ( tracePointResult )
+        {
+          info.tracePointStatus = tracePointResult ;
+        }
       }
       else
       if ( e.getType().contains ( "/info/env/" ) )
@@ -756,8 +792,10 @@ Client.prototype.broadcast = function ( params, callback )
   }
   this.emit ( params, callback, { isBroadcast:true } ) ;
 };
-Client.prototype.systemInfo = function ( callback, queryString, sid )
+Client.prototype.systemInfo = function ( callback, parameter )
 {
+  if ( ! parameter ) parameter = {} ;
+  if ( ! parameter.name ) parameter.name = "client/info/" ;
   if ( typeof callback === 'function' )
   {
     callback = { result: callback } ;
@@ -766,47 +804,60 @@ Client.prototype.systemInfo = function ( callback, queryString, sid )
   {
     throw new Error ( "Missing result function.")
   }
-  if ( ! queryString )
+  var e = new Event ( "system", parameter.name ) ;
+  if ( parameter.sid )
   {
-    queryString = "client/info/"
+    e.putValue ( "sid", parameter.sid ) ;
   }
-  var e = new Event ( "system", queryString ) ;
-  if ( sid )
-  {
-    e.putValue ( "sid", sid ) ;
-  }
+  e.putValue ( "parameter", parameter ) ;
   this.emit ( e, callback, { isBroadcast:true, internal: true } ) ;
 };
 Client.prototype.log = function ( messageText, callback )
 {
-  var e            = new Event ( "system", "log" ) ;
-  var message      = { text: String ( messageText ) } ;
-  message.severity = "INFO" ;
-  message.date     = new Date().toRFC3339String() ;
-  e.putValue ( "message", message ) ;
-  e.setInUse() ;
-  e.setUser ( this.user ) ;
+  try
+  {
+    var e            = new Event ( "system", "log" ) ;
+    var message      = { text: T.toString ( messageText ) } ;
+    message.severity = "INFO" ;
+    message.date     = new Date().toRFC3339String() ;
+    e.putValue ( "message", message ) ;
+    e.setInUse() ;
+    e.setUser ( this.user ) ;
 
-  var socketExists = !! this.socket ;
-  var ctx = { write: callback } ;
-  if ( this.pendingEventList.length || ! socketExists )
-  {
-    ctx.e = e ;
-    this.pendingEventList.push ( ctx ) ;
-  }
-  var s = this.getSocket() ;
-  if ( ! this.pendingEventList.length )
-  {
-    counter++ ;
-    var uid = os.hostname() + "_" + this.socket.localPort + "_" + new Date().getTime() + "_" + counter ;
-    e.setUniqueId ( uid ) ;
-    var json = e.serialize() ;
-    this._timeStamp = new Date().getTime() ;
-    var thiz = this ;
-    s.write ( json, function()
+    var socketExists = !! this.socket ;
+    var ctx = { write: callback } ;
+    if ( this.pendingEventList.length || ! socketExists )
     {
-      if ( ctx.write ) ctx.write.apply ( thiz, arguments ) ;
-    } ) ;
+      ctx.e = e ;
+      this.pendingEventList.push ( ctx ) ;
+    }
+    var s = this.getSocket() ;
+    if ( ! this.pendingEventList.length )
+    {
+      counter++ ;
+      var uid = os.hostname() + "_" + this.socket.localPort + "_" + new Date().getTime() + "_" + counter ;
+      e.setUniqueId ( uid ) ;
+      var json = e.serialize() ;
+      this._timeStamp = new Date().getTime() ;
+      var thiz = this ;
+      s.write ( json, function()
+      {
+        if ( ctx.write ) ctx.write.apply ( thiz, arguments ) ;
+      } ) ;
+    }
+  }
+  catch ( exc )
+  {
+    Log.log ( exc ) ;
+    Log.logln ( messageText ) ;
+    try
+    {
+      callback.apply ( this, messageText ) ;
+    }
+    catch ( exc )
+    {
+      console.log ( exc ) ;
+    }
   }
 };
 /**

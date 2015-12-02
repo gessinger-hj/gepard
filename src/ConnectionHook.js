@@ -55,4 +55,8 @@ ConnectionHook.prototype.acquireSemaphore = function ( connection, resourceId )
 {
   return true ;
 };
+ConnectionHook.prototype.clientAction = function ( connection, event )
+{
+  return true ;
+};
 module.exports = ConnectionHook ;

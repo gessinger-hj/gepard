@@ -101,9 +101,36 @@ var TangoClass = function()
  * Description
  * @return BinaryExpression
  */
-TangoClass.prototype.toString = function()
+TangoClass.prototype.toString = function ( value )
 {
-  return "(" + this.jsClassName + ")" ;
+  if ( typeof value === 'undefined' )
+  {
+    return "(" + this.jsClassName + ")" ;
+  }
+  if ( value instanceof Error )
+  {
+    if ( util.isError ( value ) )
+    {
+      var str = value.toString() ;
+      var stackTrace = util.inspect ( value.stack ) ;
+      stackTrace = stackTrace.split ( "\\n" ) ;
+      if ( stackTrace.length > 0 )
+      {
+        stackTrace.splice ( 0, 1 ) ;
+      }
+      if ( stackTrace.length )
+      {
+        str += "\n" + stackTrace.join ( "\n" ) ;
+      }
+      return str ;
+    }
+  }
+  else
+  if ( typeof value === 'object' )
+  {
+    return util.inspect ( value, { showHidden: false, depth: null } )
+  }
+  return value ;
 };
 /**
  * Description
