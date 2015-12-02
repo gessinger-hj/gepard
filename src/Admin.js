@@ -405,7 +405,7 @@ Admin.prototype.client = function()
 module.exports = Admin ;
 if ( require.main === module )
 {
-	var port = gepard.getProperty ( "gepard.port", 17501 ) ;
+	var port = gepard.getProperty ( "gepard.port", 17501 ) ; 
 	var host = gepard.getProperty ( "gepard.host" ) ;
 
 	var ad = new Admin ( port, host ) ;
