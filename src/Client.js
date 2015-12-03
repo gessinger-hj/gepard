@@ -14,8 +14,8 @@ var TracePoints   = require ( "./TracePoints" ) ;
 var counter = 0 ;
 
 var TPStore = TracePoints.getStore ( "client" ) ;
-TPStore.add ( "EVENT_IN" ) ;
-TPStore.add ( "EVENT_OUT" ) ;
+TPStore.add ( "EVENT_IN" ).setTitle ( "--------------------------- EVENT_IN ---------------------------" ) ;
+TPStore.add ( "EVENT_OUT" ).setTitle ( "--------------------------- EVENT_OUT --------------------------" ) ;
 
 var Stats = function()
 {
@@ -117,6 +117,11 @@ var Client = function ( port, host )
   this._reconnect               = T.getBool ( "gepard.reconnect", false ) ;
   this.version                  = 1 ;
   this.brokerVersion            = 0 ;
+  this.tracePointLogToBroker    = true ;
+  if ( this.tracePointLogToBroker )
+  {
+    TPStore.logger = this.log.bind ( this ) ;
+  }
 } ;
 util.inherits ( Client, EventEmitter ) ;
 Client.prototype.toString = function()
@@ -348,7 +353,13 @@ Client.prototype.connect = function()
       if ( m.charAt ( 0 ) === '{' )
       {
         e = Event.prototype.deserialize ( m ) ;
-        TPStore.point["EVENT_IN"].log ( e ) ;
+        if ( e.getName() !== "system" )
+        {
+          if ( TPStore.point["EVENT_IN"].isActive )
+          {
+            TPStore.point["EVENT_IN"].log ( e ) ;
+          }
+        }
 
         if ( e.isResult() )
         {
@@ -395,8 +406,8 @@ Client.prototype.connect = function()
           if ( e.getType() === "shutdown" )
           {
             thiz._private_emit ( "shutdown" ) ;
-            if ( thiz._reconnect ) thiz.end ( true ) ;
-            else                   thiz.end()
+            if ( thiz._reconnect ) thiz._end ( true ) ;
+            else                   thiz._end()
             return ;
           }
           if ( e.getType().indexOf ( "client/" ) === 0 )
@@ -722,7 +733,7 @@ Client.prototype._checkHeartbeat = function()
     Log.logln ( "missing ping request -> end()" ) ;
     if ( ! this._reconnect )
     {
-      this.end() ;
+      this._end() ;
       if  ( this.intervalId ) clearInterval ( this.intervalId ) ;
     }
     else
@@ -730,7 +741,7 @@ Client.prototype._checkHeartbeat = function()
       if  ( this.intervalId ) clearInterval ( this.intervalId ) ;
       this.intervalId = setInterval ( this._checkHeartbeat.bind ( this ), this._reconnectIntervalMillis ) ;
       this._private_emit ( "disconnect" ) ;
-      this.end ( true ) ;
+      this._end ( true ) ;
     }
   }
 } ;
@@ -821,30 +832,7 @@ Client.prototype.log = function ( messageText, callback )
     message.severity = "INFO" ;
     message.date     = new Date().toRFC3339String() ;
     e.putValue ( "message", message ) ;
-    e.setInUse() ;
-    e.setUser ( this.user ) ;
-
-    var socketExists = !! this.socket ;
-    var ctx = { write: callback } ;
-    if ( this.pendingEventList.length || ! socketExists )
-    {
-      ctx.e = e ;
-      this.pendingEventList.push ( ctx ) ;
-    }
-    var s = this.getSocket() ;
-    if ( ! this.pendingEventList.length )
-    {
-      counter++ ;
-      var uid = os.hostname() + "_" + this.socket.localPort + "_" + new Date().getTime() + "_" + counter ;
-      e.setUniqueId ( uid ) ;
-      var json = e.serialize() ;
-      this._timeStamp = new Date().getTime() ;
-      var thiz = this ;
-      s.write ( json, function()
-      {
-        if ( ctx.write ) ctx.write.apply ( thiz, arguments ) ;
-      } ) ;
-    }
+    this.emit ( e, callback, { internal: true } ) ;
   }
   catch ( exc )
   {
@@ -852,7 +840,7 @@ Client.prototype.log = function ( messageText, callback )
     Log.logln ( messageText ) ;
     try
     {
-      callback.apply ( this, messageText ) ;
+      callback.call ( this, messageText ) ;
     }
     catch ( exc )
     {
@@ -1020,7 +1008,13 @@ Client.prototype.emit = function ( params, callback, opts )
  * @method end
  * @return 
  */
-Client.prototype.end = function ( keepDataForReconnect )
+
+Client.prototype.end = function()
+{
+  this.setReconnect ( false ) ;
+  this._end() ;
+};
+Client.prototype._end = function ( keepDataForReconnect )
 {
   this.alive = false ;
   if ( this.socket ) { this.socket.end() ; this.socket.keepDataForReconnect = keepDataForReconnect ; }
@@ -1046,7 +1040,7 @@ Client.prototype.stop = function()
 {
   this.alive = false ;
   this.stopImediately = true ;
-  this.end() ;
+  this._end() ;
 };
 /**
  * Description
@@ -1427,6 +1421,13 @@ Client.prototype.send = function ( e )
   var json = e.serialize() ;
   this._stats.incrementOut ( json.length )
   this.getSocket().write ( json ) ;
+  if ( e.getName() !== "system" )
+  {
+    if ( TPStore.point["EVENT_IN"].isActive )
+    {
+      TPStore.point["EVENT_OUT"].log ( e ) ;
+    }
+  }
   this._timeStamp = new Date().getTime() ;
 };
 /**
@@ -1438,4 +1439,16 @@ Client.prototype.error = function ( what )
   Log.error ( what ) ;
 };
 
+Client.prototype.registerTracePoint = function ( tp, isActive )
+{
+  return TPStore.add ( tp, isActive ) ;
+};
+Client.prototype.removeTracePoint = function ( name )
+{
+  TPStore.remove ( name ) ;
+};
+Client.prototype.getTracePoint = function ( name )
+{
+  return TPStore.point[name] ;
+};
 module.exports = Client ;

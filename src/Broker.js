@@ -143,6 +143,7 @@ Connection.prototype.write = function ( data )
 
         if ( data.getName() !== 'system' )
         {
+          TPStore.point["EVENT_OUT"].log ( "--------------------------- EVENT_OUT --------------------------" ) ;
           TPStore.point["EVENT_OUT"].log ( data.getName() + "/" + data.getType() + "-->" + t + "(" + this.sid + ")" ) ;
           if ( data.isResult() )
           {
@@ -531,6 +532,7 @@ Broker.prototype._ondata = function ( socket, chunk )
       }
       if ( e.getName() !== 'system' )
       {
+        TPStore.point["EVENT_IN"].log ( "--------------------------- EVENT_IN ---------------------------" ) ;
         TPStore.point["EVENT_IN"].log ( e ) ;
       }
 
@@ -600,11 +602,12 @@ Broker.prototype.toString = function()
 {
   return "(Broker)[]" ;
 };
-Broker.prototype.logMessageTemplate = "[%date-rfc3339% %HOSTNAME% %app-name%] %msg%" ;
+Broker.prototype.logMessageTemplate = "[%date-rfc3339% %HOSTNAME% %app-name% %sid%] %msg%" ;
 Broker.prototype._logMessage = function ( conn, e )
 {
   var map = { "HOSTNAME": conn.getHostName()
             , "app-name": conn.getApplicationName()
+            , "sid": conn.sid
             } ;
   var message = e.getValue ( "message" ) ;
   if ( message )
@@ -631,7 +634,6 @@ Broker.prototype._sendMessageToClient = function ( e, socketList )
   var socket, i = false ;
   var uid                          = e.getUniqueId() ;
   this._messagesToBeProcessed[uid] = e ;
-
   for ( i = 0 ; i < socketList.length ; i++ )
   {
     socket = socketList[i] ;
@@ -767,21 +769,24 @@ Broker.prototype._handleSystemClientMessages = function ( conn, e )
     return ;
   }
   var numberOfEventsSent = 0 ;
+  var targetConn ;
   if ( sid )
   {
     for ( i = 0 ; i < this._connectionList.length ; i++ )
     {
-      if ( conn === this._connectionList[i] )
+      targetConn = this._connectionList[i] ;
+      if ( conn.sid === targetConn.sid )
       {
         continue ;
       }
-      if ( sid !== this._connectionList[i].sid )
+      if ( sid !== targetConn.sid )
       {
         continue ;
       }
+      targetConn._numberOfPendingRequests++ ;
       e.control.clone.number = number++ ;
       e.control.clone.of = 1 ;
-      this._connectionList[i].write ( e ) ;
+      targetConn.write ( e ) ;
       numberOfEventsSent++ ;
     }
   }
@@ -789,13 +794,15 @@ Broker.prototype._handleSystemClientMessages = function ( conn, e )
   {
     for ( i = 0 ; i < this._connectionList.length ; i++ )
     {
-      if ( conn === this._connectionList[i] )
+      targetConn = this._connectionList[i] ;
+      if ( conn.sid === targetConn.sid )
       {
         continue ;
       }
+      targetConn._numberOfPendingRequests++ ;
       e.control.clone.number = number++ ;
       e.control.clone.of = this._connectionList.length - 1 ;
-      this._connectionList[i].write ( e ) ;
+      targetConn.write ( e ) ;
       numberOfEventsSent++ ;
     }
   };

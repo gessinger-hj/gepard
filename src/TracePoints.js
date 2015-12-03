@@ -5,10 +5,15 @@ var Log   = require ( "./LogFile" ) ;
 var TracePoint = function ( name, active )
 {
   this.active = !! active ;
-  this.active = T.getProperty ( name, this.active ) ;
 
   this.name = name ;
   this.mode = "" ;
+  this.store = null ;
+  this.title = "" ;
+};
+TracePoint.prototype.setTitle = function ( title )
+{
+  this.title = title ;
 };
 TracePoint.prototype.log = function ( value )
 {
@@ -18,17 +23,25 @@ TracePoint.prototype.log = function ( value )
   }
   if ( value instanceof Event )
   {
+    if ( this.title )
+    {
+      this.store.logger ( title ) ;
+    }
     var mode = this.mode ;
     if ( ! mode ) mode = 'b' ; //body
-    if ( mode === 'a' ) Log.log ( value ) ;
-    if ( mode.indexOf ( 'u' ) >= 0 ) Log.logln ( value.user ) ;
-    if ( mode.indexOf ( 'c' ) >= 0 ) Log.logln ( value.control ) ;
-    if ( mode.indexOf ( 'b' ) >= 0 ) Log.logln ( value.body ) ;
+    if ( mode === 'a' ) this.store.logger ( value ) ;
+    if ( mode.indexOf ( 'u' ) >= 0 ) this.store.logger ( value.user ) ;
+    if ( mode.indexOf ( 'c' ) >= 0 ) this.store.logger ( value.control ) ;
+    if ( mode.indexOf ( 'b' ) >= 0 ) this.store.logger ( value.body ) ;
   }
   else
   {
     var str = T.toString ( value ) ;
-    Log.logln ( str ) ;
+    if ( this.title )
+    {
+      this.store.logger ( title ) ;
+    }
+    this.store.logger ( str ) ;
   }
 };
 TracePoint.prototype.isActive = function()
@@ -39,6 +52,7 @@ var TracePointStore = function ( name )
 {
   this.point = {} ;
   this.name = name ? name : "" ;
+  this.logger = Log.logln.bind ( Log ) ;
 };
 TracePointStore.prototype.getName = function()
 {
@@ -49,14 +63,24 @@ TracePointStore.prototype.add = function ( tp, isActive )
   if ( tp instanceof TracePoint )
   {
     this.point[tp.name] = tp ;
+    tp.active = T.getProperty ( tp.name, tp.active ) ;
   }
   else
   {
-    this.point[tp] = new TracePoint ( tp, !!isActive ) ;
+    var name  = tp ;
+    tp        = new TracePoint ( name, !!isActive ) ;
+    tp.active = T.getProperty ( name, tp.active ) ;
+    this.point[name] = tp ;
   }
+  tp.store = this ;
+  return tp ;
 };
 TracePointStore.prototype.remove = function ( name )
 {
+  if ( this.point[name] )
+  {
+    this.point[name].store = null ; 
+  }
   delete this.point[name] ;
 };
 TracePointStore.prototype.action = function ( action )

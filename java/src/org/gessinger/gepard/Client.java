@@ -1110,6 +1110,7 @@ public class Client
 			    }
 		    }
 		    else
+		    if ( e.getType().equals ( "client/info" ) )
 		    {
 		      MBeanServer mbs = ManagementFactory.getPlatformMBeanServer() ;
 		      ObjectName on = new ObjectName ( "java.lang:type=OperatingSystem" ) ;
@@ -1139,7 +1140,21 @@ public class Client
 	        os.put ( "freeswap", "" + mbs.getAttribute ( on, "FreeSwapSpaceSize" ) ) ;
 	        os.put ( "loadavg", "" + mbs.getAttribute ( on, "SystemLoadAverage" ) ) ;
 		    }
+				else
+				{
+					e.setStatus ( 1, "error", "no " + e.getType() ) ;
+					e.setIsResult() ;
+					_send ( e ) ;
+					return ;
+				}
 		  }
+			else
+			{
+				e.setStatus ( 1, "error", "no " + e.getType() ) ;
+				e.setIsResult() ;
+				_send ( e ) ;
+				return ;
+			}
 		  e.setStatus ( 0, "success", "ack" ) ;
 	    e.setIsResult() ;
 	    _send ( e ) ;

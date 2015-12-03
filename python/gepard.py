@@ -469,9 +469,9 @@ class Client:
 	def onError ( self, callback ):
 		self.infoCallbacks.put ( "error", callback )
 	def onReconnect ( self, icb ):
-		self.infoCallbacks.put ( "reconnect", icb ) ;
+		self.infoCallbacks.put ( "reconnect", icb )
 	def onDisconnect ( self, icb ):
-		self.infoCallbacks.put ( "disconnect", icb ) ;
+		self.infoCallbacks.put ( "disconnect", icb )
 
 	def on ( self, eventNameList, callback ):
 		if isinstance ( eventNameList, str ):
@@ -643,7 +643,7 @@ class Client:
 					info["env"] = env
 					for k, v in os.environ.items():
 						env[k] = v
-				else:
+				elif e.getType() == "client/info/":
 					osys = {}
 					info["os"] = osys
 					osys["uname"] = os.uname()
@@ -652,13 +652,22 @@ class Client:
 
 					mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 					proc["maxrss"] = mem
+				else:
+					e.setStatus ( 1, "error", "no " + e.getType() )
+					e.setIsResult()
+					self._send ( e )
+					return
 				e.setStatus ( 0, "success", "ack" )
+				e.setIsResult()
+				self._send ( e )
+			else:
+				e.setStatus ( 1, "error", "no " + e.getType() )
 				e.setIsResult()
 				self._send ( e )
 		except Exception as exc:
 			print ( exc )
-			e.setStatus ( 1, "error", "reject" ) ;
-			e.setIsResult() ;
+			e.setStatus ( 1, "error", "reject" )
+			e.setIsResult()
 			self._send ( e )
 
 	def log(self, messageText):
@@ -744,6 +753,8 @@ class Client:
 			raise
 
 		while True:
+			if self.closing:
+				break
 			c = self.sock.recv(1)
 			if c == b'':
 				self.connected = False
@@ -770,6 +781,8 @@ class Client:
 					break
 			if ( c == b'\\' ):
 				lastWasBackSlash = True
+		if self.closing:
+			return None
 		s = bytes.getvalue().decode ( 'utf-8' )
 		e = Event.deserialize ( s )
 		# print ( e )
@@ -782,7 +795,8 @@ class Client:
 				try:
 					e = self.readNextJSON()
 				except Exception as e:
-					print ( e )
+					if not self.closing:
+						print ( e )
 					self._emit ( "disconnect", e )
 					if self._reconnect:
 						self.startReconnections()
@@ -1266,7 +1280,7 @@ class util ( object ):
 			name = name.replace ( '.', '_' )
 			v = os.environ.get ( name )
 			if v != None: return v
-			name = name.upper() ;
+			name = name.upper()
 			v = os.environ.get ( name )
 		if v == None:
 			return defaultProperty

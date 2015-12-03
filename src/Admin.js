@@ -363,40 +363,46 @@ Admin.prototype.getNumberOfApplications = function ( applicationName, callback )
 	  thiz.socket.end() ;
 	});
 };
-Admin.prototype.client = function()
+Admin.prototype.client = function ( p )
 {
 	var i ;
-	var info   = gepard.getProperty ( "info" ) ;
-	var action = gepard.getProperty ( "action" ) ;
-	var value  = gepard.getProperty ( "value" ) ;
 	var name   = "client/info" ;
-
 	var parameter = {} ;
 	
-	if ( info )
+	if ( p.info )
 	{
-		name = "client/info/" + info + "/" ;
+		name = "client/info/" + p.info + "/" ;
 	}
 	else
-	if ( action )
+	if ( p.action )
 	{
-		name = "client/action/" + action + "/" ;
-		if ( value )
+		name = "client/action/" + p.action + "/" ;
+		if ( p.action.startsWith ( "tp" ) )
 		{
-			value = value.trim() ;
-			if ( value.charAt ( 0 ) === '{' && value.charAt ( value.length - 1 ) === '}' )
+			if ( ! p.value ) p.value = "*" ;
+		}
+		else
+		{
+			if ( ! p.value ) p.value = "" ;
+		}
+
+		p.value = p.value.trim() ;
+		if ( p.value.charAt ( 0 ) === '{' && p.value.charAt ( p.value.length - 1 ) === '}' )
+		{
+			parameter.p.value = JSON.parse ( p.value )
+		}
+		else
+		{
+		// what = '{"points":[{"name":"*","state":"toggle"}]}' ;
+			var what = "toggle"
+			if ( action === "tpon" ) what = "on" ;
+			if ( action === "tpoff" ) what = "off" ;
+			if ( action === "tp" ) what = "toggle" ;
+			var l = p.value.split(',') ;
+			parameter.points = [] ;
+			for ( i = 0 ; i < l.length ; i++ )
 			{
-				parameter.value = JSON.parse ( value )
-			}
-			else
-			{
-			// what = '{"points":[{"name":"*","state":"toggle"}]}' ;
-				var l = value.split(',') ;
-				parameter.points = [] ;
-				for ( i = 0 ; i < l.length ; i++ )
-				{
-					parameter.points.push ( { "name": l[i], state:"on" } ) ;
-				}
+				parameter.points.push ( { "name": l[i], state: what } ) ;
 			}
 		}
 	}
@@ -530,7 +536,10 @@ console.log ( "n=" + n ) ;
 	}
 	if ( gepard.getProperty ( "client" ) )
 	{
-		ad.client() ;
+		var info   = gepard.getProperty ( "info" ) ;
+		var action = gepard.getProperty ( "action" ) ;
+		var value  = gepard.getProperty ( "value" ) ;
+		ad.client ( { info:info, action:action, value:value } ) ;
 		return ;
 	}
 	what = gepard.getProperty ( "tp" ) ;
