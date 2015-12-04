@@ -122,11 +122,20 @@ var Client = function ( port, host )
   {
     TPStore.logger = this.log.bind ( this ) ;
   }
+  this.nameToDirectCallbackListener = new MultiHash() ;
 } ;
 util.inherits ( Client, EventEmitter ) ;
 Client.prototype.toString = function()
 {
   return "(Client)[connected=" + ( this.socket ? true : false ) + "]" ;
+};
+Client.prototype.registerTracePoint = function ( name )
+{
+  return TPStore.add ( name ) ;
+};
+Client.prototype.getTracePoint = function ( name )
+{
+  return TPStore.point[name] ;
 };
 Client.prototype.setReconnect = function ( state )
 {
@@ -617,17 +626,87 @@ Client.prototype.isRunning = function ( callback )
   {
   }
 };
+ActionInfo = function ()
+{
+  this.list = [] ;
+};
+ActionInfo.prototype =
+{
+  add: function ( cmd, desc )
+  {
+    this.list.push ( { cmd: cmd, desc: desc } ) ;
+  }
+};
+ActionCmd = function ( cmd )
+{
+  this.cmd = cmd ;
+  this.parameter = {} ;
+  this.result = "" ;
+};
+ActionCmd.prototype =
+{
+  setResult: function ( text )
+  {
+    this.result = text ;
+  },
+  getArgs: function()
+  {
+    return this.parameter.args ;
+  }
+};
 Client.prototype._handleSystemClientMessages = function ( e )
 {
   try
   {
     var info = e.body.info = {} ;
+    var i ;
     if ( e.getType().startsWith ( "client/action/" ) )
     {
-      var tracePointResult = TPStore.action ( e.body.parameter ) ;
-      if ( tracePointResult )
+      if ( e.body.parameter.actionName === "tp" )
       {
-        info.tracePointStatus = tracePointResult ;
+        var tracePointResult = TPStore.action ( e.body.parameter ) ;
+        if ( tracePointResult )
+        {
+          info.tracePointStatus = tracePointResult ;
+        }
+      }
+      else
+      if ( e.body.parameter.actionName === "info" )
+      {
+        var cl = this.nameToDirectCallbackListener.get ( "action-info" ) ;
+        if ( cl )
+        {
+          var al = info.actionInfo = [] ;
+          for ( i = 0 ; i < cl.length ; i++ )
+          {
+            var ai = new ActionInfo() ;
+            al.push ( ai ) ;
+            cl[i].call ( this, e.body.parameter, ai ) ;
+          }
+        }
+      }
+      else
+      if ( e.body.parameter.actionName === "execute" )
+      {
+        var cl = this.nameToDirectCallbackListener.get ( "action-execute" ) ;
+        if ( cl )
+        {
+          var al = info.actionResult = [] ;
+          for ( i = 0 ; i < cl.length ; i++ )
+          {
+            var ai = new ActionCmd ( e.body.parameter.cmd ) ;
+            ai.parameter = e.body.parameter ;
+            al.push ( ai ) ;
+            cl[i].call ( this, e.body.parameter, ai ) ;
+          }
+        }
+      }
+      else
+      {
+        e.control.status = { code:1, name:"error", reason:"invalid: " + e.getType() } ;
+        e.setIsResult() ;
+        this.send ( e ) ;
+        return ;
       }
       e.removeValue ( "parameter" ) ;
     }
@@ -750,7 +829,7 @@ Client.prototype._writeCallback = function()
 } ;
 Client.prototype._private_emit = function ( eventName )
 {
-  EventEmitter.prototype.emit.apply ( this, arguments ) ;
+  return EventEmitter.prototype.emit.apply ( this, arguments ) ;
 } ;
 /**
  * Description
@@ -1140,20 +1219,23 @@ Client.prototype.addEventListener = function ( eventNameList, callback )
  */
 Client.prototype.on = function ( eventName, callback )
 {
-  if ( typeof eventName === "string"
-     && (  eventName === "shutdown"
-        || eventName === "end"
-        || eventName === "error"
-        || eventName === "reconnect"
-        || eventName === "disconnect"
-        )
-     )
+  if ( typeof eventName === "string" )
   {
-    EventEmitter.prototype.on.apply ( this, arguments ) ;
-    return ;
+    if (  eventName === "shutdown"
+       || eventName === "end"
+       || eventName === "error"
+       || eventName === "reconnect"
+       || eventName === "disconnect"
+       )
+    {
+      EventEmitter.prototype.on.apply ( this, arguments ) ;
+      return ;
+    }
   }
   this.addEventListener ( eventName, callback ) ;
 };
+Client.prototype.onActionInfo = function ( callback ) { this.nameToDirectCallbackListener.put ( "action-info", callback ) ; };
+Client.prototype.onActionExecute = function ( callback ) {this.nameToDirectCallbackListener.put ( "action-execute", callback ) ; };
 /**
  * Description
  * @method remove

@@ -28,6 +28,7 @@ if ( require.main === module )
 		var name = [ "ALARM", "BLARM" ] ;
 		var c = gepard.getClient() ;
 		c.setReconnect ( true ) ; // Reconnection requested
+		var tp = c.registerTracePoint ( "BLARM_REMOVED" ) ;
 		c.on ( "reconnect", function on_reconnect ( e )
 		{
 			console.log ( "reconnect/" + e.body.eventNameList ) ;
@@ -38,6 +39,7 @@ if ( require.main === module )
 			if ( e.getName() === "BLARM" )
 			{
 				this.remove ( "BLARM" ) ;
+				tp.log ( "BLARM is removed." ) ;
 			}
 			console.log ( e ) ;
 		});
@@ -57,6 +59,14 @@ if ( require.main === module )
 		c.on('reconnect', function()
 		{
 			console.log('reconnect');
+		});
+		c.onActionInfo ( function ( parameter, info )
+		{
+			info.add ( "kill", "Shut down this client." ) ;
+		});
+		c.onActionExecute ( function ( parameter, cmd )
+		{
+			cmd.setResult ( "I don't " + cmd.cmd + "!!")
 		});
 	}
 }

@@ -377,23 +377,18 @@ Admin.prototype.client = function ( p )
 	if ( p.action )
 	{
 		name = "client/action/" + p.action + "/" ;
+		if ( ! p.value ) p.value = "" ;
+		if ( p.value ) p.value = p.value.trim() ;
+		if ( p.action === "tp" && p.value.charAt ( 0 ) === '{' && p.value.charAt ( p.value.length - 1 ) === '}' )
+		{
+			parameter.actionName = "tp" ;
+			parameter.points = JSON.parse ( p.value )
+		}
+		else
 		if ( p.action.startsWith ( "tp" ) )
 		{
+			parameter.actionName = "tp" ;
 			if ( ! p.value ) p.value = "*" ;
-		}
-		else
-		{
-			if ( ! p.value ) p.value = "" ;
-		}
-
-		p.value = p.value.trim() ;
-		if ( p.value.charAt ( 0 ) === '{' && p.value.charAt ( p.value.length - 1 ) === '}' )
-		{
-			parameter.p.value = JSON.parse ( p.value )
-		}
-		else
-		{
-		// what = '{"points":[{"name":"*","state":"toggle"}]}' ;
 			var what = "toggle"
 			if ( action === "tpon" ) what = "on" ;
 			if ( action === "tpoff" ) what = "off" ;
@@ -403,6 +398,20 @@ Admin.prototype.client = function ( p )
 			for ( i = 0 ; i < l.length ; i++ )
 			{
 				parameter.points.push ( { "name": l[i], state: what } ) ;
+			}
+		}
+		else
+		{
+			parameter.actionName = p.action ;
+			parameter.cmd = gepard.getProperty ( "cmd" ) ;
+			if ( ! p.args ) p.args = "" ;
+			if ( p.args.charAt ( 0 ) === '{' && p.args.charAt ( p.args.length - 1 ) === '}' )
+			{
+				parameter.args = JSON.parse ( p.args ) ;
+			}
+			else
+			{
+				parameter.args = p.args ;
 			}
 		}
 	}
@@ -539,7 +548,8 @@ console.log ( "n=" + n ) ;
 		var info   = gepard.getProperty ( "info" ) ;
 		var action = gepard.getProperty ( "action" ) ;
 		var value  = gepard.getProperty ( "value" ) ;
-		ad.client ( { info:info, action:action, value:value } ) ;
+		var args  = gepard.getProperty ( "args" ) ;
+		ad.client ( { info:info, action:action, value:value, args: args } ) ;
 		return ;
 	}
 	what = gepard.getProperty ( "tp" ) ;

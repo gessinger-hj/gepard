@@ -940,6 +940,7 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
   if ( e.getType() === "removeEventListener" )
   {
     conn.removeEventListener ( e ) ;
+    return ;
   }
   if ( e.getType() === "lockResourceRequest" )
   {
