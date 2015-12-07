@@ -390,9 +390,9 @@ Admin.prototype.client = function ( p )
 			parameter.actionName = "tp" ;
 			if ( ! p.value ) p.value = "*" ;
 			var what = "toggle"
-			if ( action === "tpon" ) what = "on" ;
-			if ( action === "tpoff" ) what = "off" ;
-			if ( action === "tp" ) what = "toggle" ;
+			if ( p.action === "tpon" ) what = "on" ;
+			if ( p.action === "tpoff" ) what = "off" ;
+			if ( p.action === "tp" ) what = "toggle" ;
 			var l = p.value.split(',') ;
 			parameter.points = [] ;
 			for ( i = 0 ; i < l.length ; i++ )
@@ -404,6 +404,11 @@ Admin.prototype.client = function ( p )
 		{
 			parameter.actionName = p.action ;
 			parameter.cmd = gepard.getProperty ( "cmd" ) ;
+			if ( p.action !== "info" && ! parameter.cmd )
+			{
+				console.log ( "Missing --cmd=<cmd-name> option for execute." ) ;
+				return ;
+			}
 			if ( ! p.args ) p.args = "" ;
 			if ( p.args.charAt ( 0 ) === '{' && p.args.charAt ( p.args.length - 1 ) === '}' )
 			{
@@ -452,14 +457,8 @@ Admin.prototype.client = function ( p )
   	}
   }, parameter );
 };
-module.exports = Admin ;
-if ( require.main === module )
+Admin.prototype.main = function ()
 {
-	var port = gepard.getProperty ( "gepard.port", 17501 ) ; 
-	var host = gepard.getProperty ( "gepard.host" ) ;
-
-	var ad = new Admin ( port, host ) ;
-
 	var what = gepard.getProperty ( "help" ) ;
 	if ( what )
 	{
@@ -498,7 +497,7 @@ if ( require.main === module )
 	if ( what )
 	{
 		if ( what === "true" ) what = null ;
-		ad.shutdown ( what ) ;
+		this.shutdown ( what ) ;
 		return ;
 	}
 	what = gepard.getProperty ( "run" ) ;
@@ -509,11 +508,11 @@ if ( require.main === module )
 			console.log ( "Missing application name for -Drun=<" ) ;
 			return ;
 		}
-		ad.getNumberOfApplications ( what, function getNumberOfApplications ( n )
+		this.getNumberOfApplications ( what, function getNumberOfApplications ( n )
 		{
 console.log ( "n=" + n ) ;
 		} ) ;
-// 		ad.getInfoForApplication ( what, function getInfoForApplication ( list )
+// 		this.getInfoForApplication ( what, function getInfoForApplication ( list )
 // 		{
 // console.log ( list ) ;
 // 		} ) ;
@@ -522,7 +521,7 @@ console.log ( "n=" + n ) ;
 	what = gepard.getProperty ( "isRunning" ) ;
 	if ( what  )
 	{
-		ad.isRunning ( function admin_is_running ( state )
+		this.isRunning ( function admin_is_running ( state )
 		{
 			if ( state )
 			{
@@ -539,7 +538,7 @@ console.log ( "n=" + n ) ;
 	{
 		if ( gepard.getProperty ( cmds[i] ) )
 		{
-			ad.info ( cmds[i] ) ;
+			this.info ( cmds[i] ) ;
 			return ;
 		}
 	}
@@ -549,7 +548,7 @@ console.log ( "n=" + n ) ;
 		var action = gepard.getProperty ( "action" ) ;
 		var value  = gepard.getProperty ( "value" ) ;
 		var args  = gepard.getProperty ( "args" ) ;
-		ad.client ( { info:info, action:action, value:value, args: args } ) ;
+		this.client ( { info:info, action:action, value:value, args: args } ) ;
 		return ;
 	}
 	what = gepard.getProperty ( "tp" ) ;
@@ -561,7 +560,7 @@ console.log ( "n=" + n ) ;
 		}
 
 		what = JSON.parse ( what ) ;
-		ad.tracePoint ( what ) ;
+		this.tracePoint ( what ) ;
 		return ;
 	}
 	what = gepard.getProperty ( "tpon" ) ;
@@ -578,7 +577,7 @@ console.log ( "n=" + n ) ;
 		{
 			a.push ( { "name": l[i], state:"on" } ) ;
 		}
-		ad.tracePoint ( what ) ;
+		this.tracePoint ( what ) ;
 		return ;
 	}
 	what = gepard.getProperty ( "tpoff" ) ;
@@ -595,14 +594,14 @@ console.log ( "n=" + n ) ;
 		{
 			a.push ( { "name": l[i], state:"off" } ) ;
 		}
-		ad.tracePoint ( what ) ;
+		this.tracePoint ( what ) ;
 		return ;
 	}
 	what = gepard.getProperty ( "tpl" ) ;
 	if ( what )
 	{
 		what = { "list": [] } ;
-		ad.tracePoint ( what ) ;
+		this.tracePoint ( what ) ;
 		return ;
 	}
 	what = parseInt ( gepard.getProperty ( "hbm" ) ) ;
@@ -617,7 +616,7 @@ console.log ( "n=" + n ) ;
 		{
 			what = what * 1000 ;
 		}
-		ad.setSystemParameter ( { _heartbeatIntervalMillis: what } ) ;
+		this.setSystemParameter ( { _heartbeatIntervalMillis: what } ) ;
 		return ;
 	}
 	what = gepard.getProperty ( "info", "true" ) ;
@@ -625,13 +624,21 @@ console.log ( "n=" + n ) ;
 	{
 		if ( what !== "true" )
 		{
-			ad.info ( what ) ;
+			this.info ( what ) ;
 		}
 		else
 		{
-			ad.info() ;
+			this.info() ;
 		}
 		return ;
 	}
 	return ;
+}
+module.exports = Admin ;
+if ( require.main === module )
+{
+	var port = gepard.getProperty ( "gepard.port", 17501 ) ; 
+	var host = gepard.getProperty ( "gepard.host" ) ;
+	var ad = new Admin ( port, host ) ;
+	ad.main() ;
 }

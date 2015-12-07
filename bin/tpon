@@ -1,0 +1,4 @@
+#!/usr/bin/env node
+process.env.tpon = "true"
+if ( process.argv.length > 2 ) process.env.tpon = process.argv[2] ;
+new (require ( "../src/Admin" ))().main() ;

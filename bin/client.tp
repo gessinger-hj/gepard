@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+process.env.client = "true" ;
+process.env.action = "tp" ;
+if ( process.argv.length > 2 ) process.env.sid = process.argv[2] ;
+new (require ( "../src/Admin" ))().main() ;

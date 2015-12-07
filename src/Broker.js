@@ -808,7 +808,7 @@ Broker.prototype._handleSystemClientMessages = function ( conn, e )
   };
   if ( ! numberOfEventsSent )
   {
-    e.setStatus ( 1, "warning", "no clients found" ) ;
+    e.setStatus ( 1, "warning", "no clients found for sid=" + ( sid ? sid : "*" ) ) ;
     e.setIsResult() ;
     conn.write ( e ) ;
   }
