@@ -143,11 +143,11 @@ Connection.prototype.write = function ( data )
 
         if ( data.getName() !== 'system' )
         {
-          TPStore.point["EVENT_OUT"].log ( "--------------------------- EVENT_OUT --------------------------" ) ;
-          TPStore.point["EVENT_OUT"].log ( data.getName() + "/" + data.getType() + "-->" + t + "(" + this.sid + ")" ) ;
+          TPStore.points["EVENT_OUT"].log ( "--------------------------- EVENT_OUT --------------------------" ) ;
+          TPStore.points["EVENT_OUT"].log ( data.getName() + "/" + data.getType() + "-->" + t + "(" + this.sid + ")" ) ;
           if ( data.isResult() )
           {
-            TPStore.point["EVENT_OUT"].log ( data ) ;
+            TPStore.points["EVENT_OUT"].log ( data ) ;
           }
         }
       }
@@ -532,8 +532,8 @@ Broker.prototype._ondata = function ( socket, chunk )
       }
       if ( e.getName() !== 'system' )
       {
-        TPStore.point["EVENT_IN"].log ( "--------------------------- EVENT_IN ---------------------------" ) ;
-        TPStore.point["EVENT_IN"].log ( e ) ;
+        TPStore.points["EVENT_IN"].log ( "--------------------------- EVENT_IN ---------------------------" ) ;
+        TPStore.points["EVENT_IN"].log ( e ) ;
       }
 
       if ( ! e.body )
@@ -1285,7 +1285,7 @@ Broker.prototype._send_PING_to_all = function()
 };
 Broker.prototype._checkHeartbeat = function()
 {
-  if ( ! TPStore.point["HEARTBEAT"].isActive() )
+  if ( ! TPStore.points["HEARTBEAT"].isActive() )
   {
     return ;
   }

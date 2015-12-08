@@ -50,7 +50,7 @@ TracePoint.prototype.isActive = function()
 };
 var TracePointStore = function ( name )
 {
-  this.point = {} ;
+  this.points = {} ;
   this.name = name ? name : "" ;
   this.logger = Log.logln.bind ( Log ) ;
 };
@@ -62,7 +62,7 @@ TracePointStore.prototype.add = function ( tp, isActive )
 {
   if ( tp instanceof TracePoint )
   {
-    this.point[tp.name] = tp ;
+    this.pointss[tp.name] = tp ;
     tp.active = T.getProperty ( tp.name, tp.active ) ;
   }
   else
@@ -70,39 +70,39 @@ TracePointStore.prototype.add = function ( tp, isActive )
     var name  = tp ;
     tp        = new TracePoint ( name, !!isActive ) ;
     tp.active = T.getProperty ( name, tp.active ) ;
-    this.point[name] = tp ;
+    this.pointss[name] = tp ;
   }
   tp.store = this ;
   return tp ;
 };
 TracePointStore.prototype.remove = function ( name )
 {
-  if ( this.point[name] )
+  if ( this.pointss[name] )
   {
-    this.point[name].store = null ; 
+    this.pointss[name].store = null ; 
   }
-  delete this.point[name] ;
+  delete this.pointss[name] ;
 };
 TracePointStore.prototype.action = function ( action )
 {
   var i, j, k ;
-  if ( action && action.points )
+  if ( action && action.pointsss )
   {
-    for ( i = 0 ; i < action.points.length ; i++ )
+    for ( i = 0 ; i < action.pointsss.length ; i++ )
     {
-      var item = action.points[i] ;
+      var item = action.pointsss[i] ;
       if ( item.name === '*' )
       {
-        for ( k in this.point )
+        for ( k in this.pointss )
         {
-          if ( item.state === 'on' ) this.point[k].active = true ;
-          if ( item.state === 'off' ) this.point[k].active = false ;
-          if ( item.state === 'toggle' ) this.point[k].active = ! this.point[k].active ;
-          this.point[k].mode = item.mode ;
+          if ( item.state === 'on' ) this.pointss[k].active = true ;
+          if ( item.state === 'off' ) this.pointss[k].active = false ;
+          if ( item.state === 'toggle' ) this.pointss[k].active = ! this.pointss[k].active ;
+          this.pointss[k].mode = item.mode ;
         }
         continue ;
       }
-      var tp = this.point[item.name] ;
+      var tp = this.points[item.name] ;
       if ( tp )
       {
         if ( item.state === 'on' ) tp.active = true ;
@@ -115,9 +115,9 @@ TracePointStore.prototype.action = function ( action )
   var result ;
   {
     result = { name: this.getName(), list: [] } ;
-    for ( k in this.point )
+    for ( k in this.points )
     {
-      result.list.push ( { name:this.point[k].name, active:this.point[k].active })
+      result.list.push ( { name:this.points[k].name, active:this.points[k].active })
     }
   }
   return result ;

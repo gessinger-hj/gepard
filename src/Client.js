@@ -135,7 +135,7 @@ Client.prototype.registerTracePoint = function ( name )
 };
 Client.prototype.getTracePoint = function ( name )
 {
-  return TPStore.point[name] ;
+  return TPStore.points[name] ;
 };
 Client.prototype.setReconnect = function ( state )
 {
@@ -364,9 +364,9 @@ Client.prototype.connect = function()
         e = Event.prototype.deserialize ( m ) ;
         if ( e.getName() !== "system" )
         {
-          if ( TPStore.point["EVENT_IN"].isActive )
+          if ( TPStore.points["EVENT_IN"].isActive )
           {
-            TPStore.point["EVENT_IN"].log ( e ) ;
+            TPStore.points["EVENT_IN"].log ( e ) ;
           }
         }
 
@@ -1505,9 +1505,9 @@ Client.prototype.send = function ( e )
   this.getSocket().write ( json ) ;
   if ( e.getName() !== "system" )
   {
-    if ( TPStore.point["EVENT_IN"].isActive )
+    if ( TPStore.points["EVENT_IN"].isActive )
     {
-      TPStore.point["EVENT_OUT"].log ( e ) ;
+      TPStore.points["EVENT_OUT"].log ( e ) ;
     }
   }
   this._timeStamp = new Date().getTime() ;
@@ -1531,6 +1531,6 @@ Client.prototype.removeTracePoint = function ( name )
 };
 Client.prototype.getTracePoint = function ( name )
 {
-  return TPStore.point[name] ;
+  return TPStore.points[name] ;
 };
 module.exports = Client ;
