@@ -30,34 +30,30 @@ public class TracePoint
   {
     return name ;
   }
-  public void log = function ( Object value )
+  public void log ( Object value )
   {
     if ( ! this.active )
     {
       return ;
     }
+    StringBuilder sb = new StringBuilder() ;
+    if ( this.title != null )
+    {
+      this.store.tracer.log ( title + "\n" ) ;
+    }
     if ( value instanceof Event )
     {
       Event e = (Event) value ;
-      if ( this.title != null )
-      {
-        this.store.logger ( title ) ;
-      }
       String mode = this.mode ;
-      if ( mode == null ) mode = 'b' ; //body
-      if ( mode === 'a' ) this.store.logger ( value ) ;
-      if ( mode.indexOf ( 'u' ) >= 0 ) this.store.logger ( e.user ) ;
-      if ( mode.indexOf ( 'c' ) >= 0 ) this.store.logger ( e.control ) ;
-      if ( mode.indexOf ( 'b' ) >= 0 ) this.store.logger ( e.body ) ;
+      if ( mode == null ) mode = "b" ; //body
+      if ( mode.equals ( "a" ) ) this.store.tracer.log ( value ) ;
+      if ( mode.indexOf ( 'u' ) >= 0 ) this.store.tracer.log ( e.user ) ;
+      if ( mode.indexOf ( 'c' ) >= 0 ) this.store.tracer.log ( e.control ) ;
+      if ( mode.indexOf ( 'b' ) >= 0 ) this.store.tracer.log ( e.body ) ;
     }
     else
     {
-      String str = Util.toString ( value ) ;
-      if ( this.title != null )
-      {
-        this.store.logger ( title ) ;
-      }
-      this.store.logger ( str ) ;
+      this.store.tracer.log ( value ) ;
     }
   }
   public boolean isActive()

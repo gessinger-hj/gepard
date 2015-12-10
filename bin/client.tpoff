@@ -1,5 +1,13 @@
 #!/usr/bin/env node
 process.env.client = "true" ;
 process.env.action = "tpoff" ;
-if ( process.argv.length > 2 ) process.env.sid = process.argv[2] ;
+var i = 2
+if ( process.argv.length > 2 )
+{
+	if ( process.argv[2].indexOf ( "--" ) === 0 )
+	{
+		i++ ;
+	}
+}
+if ( process.argv.length > i ) process.env.value = process.argv[i] ;
 new (require ( "../src/Admin" ))().main() ;

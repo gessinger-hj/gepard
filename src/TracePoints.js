@@ -25,23 +25,23 @@ TracePoint.prototype.log = function ( value )
   {
     if ( this.title )
     {
-      this.store.logger ( title ) ;
+      this.store.tracer ( title ) ;
     }
     var mode = this.mode ;
     if ( ! mode ) mode = 'b' ; //body
-    if ( mode === 'a' ) this.store.logger ( value ) ;
-    if ( mode.indexOf ( 'u' ) >= 0 ) this.store.logger ( value.user ) ;
-    if ( mode.indexOf ( 'c' ) >= 0 ) this.store.logger ( value.control ) ;
-    if ( mode.indexOf ( 'b' ) >= 0 ) this.store.logger ( value.body ) ;
+    if ( mode === 'a' ) this.store.tracer ( value ) ;
+    if ( mode.indexOf ( 'u' ) >= 0 ) this.store.tracer ( value.user ) ;
+    if ( mode.indexOf ( 'c' ) >= 0 ) this.store.tracer ( value.control ) ;
+    if ( mode.indexOf ( 'b' ) >= 0 ) this.store.tracer ( value.body ) ;
   }
   else
   {
     var str = T.toString ( value ) ;
     if ( this.title )
     {
-      this.store.logger ( title ) ;
+      this.store.tracer ( title ) ;
     }
-    this.store.logger ( str ) ;
+    this.store.tracer ( str ) ;
   }
 };
 TracePoint.prototype.isActive = function()
@@ -52,7 +52,7 @@ var TracePointStore = function ( name )
 {
   this.points = {} ;
   this.name = name ? name : "" ;
-  this.logger = Log.logln.bind ( Log ) ;
+  this.tracer = Log.logln.bind ( Log ) ;
 };
 TracePointStore.prototype.getName = function()
 {
@@ -62,7 +62,7 @@ TracePointStore.prototype.add = function ( tp, isActive )
 {
   if ( tp instanceof TracePoint )
   {
-    this.pointss[tp.name] = tp ;
+    this.points[tp.name] = tp ;
     tp.active = T.getProperty ( tp.name, tp.active ) ;
   }
   else
@@ -70,35 +70,39 @@ TracePointStore.prototype.add = function ( tp, isActive )
     var name  = tp ;
     tp        = new TracePoint ( name, !!isActive ) ;
     tp.active = T.getProperty ( name, tp.active ) ;
-    this.pointss[name] = tp ;
+    this.points[name] = tp ;
   }
   tp.store = this ;
   return tp ;
 };
+TracePointStore.prototype.getTracePoint = function ( name )
+{
+  return this.points[name] ;
+};
 TracePointStore.prototype.remove = function ( name )
 {
-  if ( this.pointss[name] )
+  if ( this.points[name] )
   {
-    this.pointss[name].store = null ; 
+    this.points[name].store = null ; 
   }
-  delete this.pointss[name] ;
+  delete this.points[name] ;
 };
 TracePointStore.prototype.action = function ( action )
 {
   var i, j, k ;
-  if ( action && action.pointsss )
+  if ( action && action.pointss )
   {
-    for ( i = 0 ; i < action.pointsss.length ; i++ )
+    for ( i = 0 ; i < action.pointss.length ; i++ )
     {
-      var item = action.pointsss[i] ;
+      var item = action.pointss[i] ;
       if ( item.name === '*' )
       {
-        for ( k in this.pointss )
+        for ( k in this.points )
         {
-          if ( item.state === 'on' ) this.pointss[k].active = true ;
-          if ( item.state === 'off' ) this.pointss[k].active = false ;
-          if ( item.state === 'toggle' ) this.pointss[k].active = ! this.pointss[k].active ;
-          this.pointss[k].mode = item.mode ;
+          if ( item.state === 'on' ) this.points[k].active = true ;
+          if ( item.state === 'off' ) this.points[k].active = false ;
+          if ( item.state === 'toggle' ) this.points[k].active = ! this.points[k].active ;
+          this.points[k].mode = item.mode ;
         }
         continue ;
       }

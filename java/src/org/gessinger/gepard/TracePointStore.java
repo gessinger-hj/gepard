@@ -5,6 +5,29 @@ import java.util.logging.* ;
 
 public class TracePointStore
 {
+  static HashMap<String,TracePointStore> store = new HashMap<String,TracePointStore>() ;
+  static public TracePointStore getStore ( String name )
+  {
+    if ( name == null ) name = "" ;
+    if ( ! store.containsKey ( name ) )
+    {
+      store.put ( name, new TracePointStore ( name ) ) ;
+    }
+    return store.get ( name ) ;
+  }
+
+  private static Logger LOGGER = Logger.getLogger ( "org.gessinger.gepard" ) ;
+
+  class MyTracer implements Tracer 
+  {
+    public void log ( Object o )
+    {
+      LOGGER.info ( Util.toString ( o ) ) ;
+    }
+  }
+
+  String name = "" ;
+  Tracer tracer = new MyTracer() ;
   HashMap<String,TracePoint> points = new HashMap<String,TracePoint>() ;
   public TracePointStore()
   {
@@ -12,23 +35,22 @@ public class TracePointStore
   }
   public TracePointStore ( String name )
   {
-    this.name = name ? name : "" ;
-    this.logger = null ; //Log.logln.bind ( Log ) ;
-  };
+    this.name = name != null ? name : "" ;
+  }
   public String getName()
   {
-    return this.name ;
+    return name ;
   }
-  public TracePoint add function ( String name )
+  public TracePoint add ( String name )
   {
     return add ( name, false ) ;
   }
-  public TracePoint add function ( String name, boolean isActive )
+  public TracePoint add ( String name, boolean isActive )
   {
     TracePoint tp = new TracePoint ( name, isActive ) ;
-    return add ( tp, isActive ) ;
+    return add ( tp ) ;
   }
-  public TracePoint add function ( TracePoint tp )
+  public TracePoint add ( TracePoint tp )
   {
     points.put ( tp.getName(), tp ) ;
     tp.setActive ( Util.getBool ( tp.getName(), tp.isActive() ) ) ;
@@ -39,64 +61,72 @@ public class TracePointStore
   {
     return points.remove ( name ) ;
   }
-TracePointStore.prototype.action = function ( action )
-{
-  var i, j, k ;
-  if ( action && action.points )
+  public TracePoint getTracePoint ( String name )
   {
-    for ( i = 0 ; i < action.points.length ; i++ )
+    return points.get ( name ) ;
+  }
+  public Map<String,Object> action ( Map<String,Object> action )
+  {
+    if ( action != null && action.containsKey ( "points" ) )
     {
-      var item = action.points[i] ;
-      if ( item.name === '*' )
+      List<Map<String,Object>> list = (List<Map<String,Object>>) action.get ( "points" ) ;
+      for ( Map<String,Object> item : list )
       {
-        for ( k in this.point )
+        if ( "*".equals ( item.get ( "name" ) ) )
         {
-          if ( item.state === 'on' ) this.point[k].active = true ;
-          if ( item.state === 'off' ) this.point[k].active = false ;
-          if ( item.state === 'toggle' ) this.point[k].active = ! this.point[k].active ;
-          this.point[k].mode = item.mode ;
+          for ( String key : points.keySet() )
+          {
+            TracePoint tp = points.get ( key ) ;
+            if ( "on".equals ( item.get ( "state" ) ) ) tp.active = true ;
+            if ( "off".equals ( item.get ( "state" ) ) ) tp.active = false ;
+            if ( "toggle".equals ( item.get ( "state" ) ) ) tp.active = ! tp.active ;
+            tp.mode = (String) item.get ( "mode" ) ;
+          }
+          continue ;
         }
-        continue ;
-      }
-      var tp = this.point[item.name] ;
-      if ( tp )
-      {
-        if ( item.state === 'on' ) tp.active = true ;
-        if ( item.state === 'off' ) tp.active = false ;
-        if ( item.state === 'toggle' ) tp.active = ! tp.active ;
-        tp.mode = item.mode ;
+        TracePoint tp = points.get ( item.get ( "name" ) ) ;
+        if ( tp != null )
+        {
+          if ( "on".equals ( item.get ( "state" ) ) ) tp.active = true ;
+          if ( "off".equals ( item.get ( "state" ) ) ) tp.active = false ;
+          if ( "toggle".equals ( item.get ( "state" ) ) ) tp.active = ! tp.active ;
+          tp.mode = (String) item.get ( "mode" ) ;
+        }
       }
     }
-  }
-  var result ;
-  {
-    result = { name: this.getName(), list: [] } ;
-    for ( k in this.point )
+    Map<String,Object> result = new HashMap<String,Object>() ;
+    result.put ( "name", getName() ) ;
+    ArrayList<Map<String,Object>> list = new ArrayList<Map<String,Object>>() ;
+    result.put ( "list", list ) ;
+    for ( String key : points.keySet() )
     {
-      result.list.push ( { name:this.point[k].name, active:this.point[k].active })
+      Map<String,Object> m = new HashMap<String,Object>() ;
+      TracePoint tp = points.get ( key ) ;
+      m.put ( tp.getName(), new Boolean ( tp.active ) ) ;
+      list.add ( m ) ;
     }
+    return result ;
   }
-  return result ;
-};
-if ( typeof org === 'undefined' ) org = {} ;
-if ( typeof org.gessinger === 'undefined' ) org.gessinger = {} ;
-if ( typeof org.gessinger.tangojs === 'undefined' ) org.gessinger.tangojs = {} ;
+  static public void main ( String[] args )
+  {
+    try
+    {
+      TracePointStore tps = TracePointStore.getStore ( "XXXX" ) ;
 
-if ( ! org.gessinger.tangojs.TracePoints )
-{
-  org.gessinger.tangojs.TracePoints =
-  { list: []
-  , store: {}
-  , getStore: function getStore ( name )
-  {
-    if ( ! name ) name = "" ;
-    if ( ! this.store[name] )
-    {
-      this.store[name] = new TracePointStore ( name ) ;
+      TracePoint tp1 = tps.add ( "EVENT_IN" ) ;
+      tp1.setTitle ( "--------------------------- EVENT_IN ---------------------------" ) ;
+
+      TracePoint tp2 = tps.add ( "EVENT_OUT" ) ;
+      tp2.setTitle ( "--------------------------- EVENT_OUT --------------------------" ) ;
+
+      Map<String,Object> result = tps.action ( null ) ;
+      System.out.println ( Util.toString ( result ) ) ;
+      tp1.log ( "TP1 --------------------" ) ;
+      tp2.log ( "TP2 --------------------" ) ;
     }
-    return this.store[name] ;
+    catch ( Throwable exc )
+    {
+      LOGGER.info ( Util.toString ( exc ) ) ;
+    }
   }
-  , TracePoint: TracePoint
-  } ;
 }
-module.exports = org.gessinger.tangojs.TracePoints ;

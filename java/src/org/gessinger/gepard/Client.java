@@ -11,6 +11,13 @@ import javax.management.* ;
 
 public class Client
 {
+	static TracePointStore TPStore = null ;
+	static
+	{
+		TPStore = TracePointStore.getStore ( "client" ) ;
+		TPStore.add ( "EVENT_IN" ).setTitle ( "--------------------------- EVENT_IN ---------------------------" ) ;
+		TPStore.add ( "EVENT_OUT" ).setTitle ( "--------------------------- EVENT_OUT --------------------------" ) ;
+	}
   public static class LogLevel
   {
 		static public int LOG       = 0x00001000 ;
@@ -25,6 +32,25 @@ public class Client
 		static public int OFF       = 0x00000000 ;
   }
 	private static Logger LOGGER = Logger.getLogger ( "org.gessinger.gepard" ) ;
+  class MyTracer implements Tracer 
+  {
+  	Client client ;
+  	MyTracer ( Client client )
+  	{
+  		this.client = client ;
+  	}
+    public void log ( Object o )
+    {
+    	try
+    	{
+    		client.log ( Util.toString ( o ) ) ;
+    	}
+    	catch ( Exception exc )
+    	{
+    		LOGGER.info ( Util.toString ( o ) ) ;
+    	}
+    }
+  }
 	static int counter             = 0 ;
 	int port                       = -1 ;
 	String host                    = "localhost" ;
@@ -42,8 +68,12 @@ public class Client
 	int numberOfCallbackWorker     = 3 ;
 	boolean callbackWorkerCreated  = false ;
 
-  MultiMap<String,EventListener> eventListenerFunctions = new MultiMap<String,EventListener>() ;
-  Hashtable<String,EventCallback> callbacks = new Hashtable<String,EventCallback>() ;
+	MultiMap<String,EventListener> eventListenerFunctions = new MultiMap<String,EventListener>() ;
+	Hashtable<String,EventCallback> callbacks             = new Hashtable<String,EventCallback>() ;
+	ArrayList<ActionInfoCallback> actionInfoCallbackList  = new ArrayList<ActionInfoCallback>() ;
+	ArrayList<ActionCmdCallback> actionCmdCallbackList    = new ArrayList<ActionCmdCallback>() ;
+	public void onActionInfo ( ActionInfoCallback cb ) { actionInfoCallbackList.add ( cb ) ; };
+	public void onActionCmd ( ActionCmdCallback cb ) { actionCmdCallbackList.add ( cb ) ; } ;
 
 	HashMap<String,Semaphore> _semaphores = new HashMap<String,Semaphore>() ;
 	NamedQueue<Event> _NQ_semaphoreEvents = new NamedQueue<Event>() ;
@@ -144,6 +174,7 @@ public class Client
 				}
 			}
 		} ) ;
+		TPStore.tracer = new MyTracer ( this ) ;
 	}
 	public String getUSERNAME()
 	{
@@ -455,6 +486,10 @@ public class Client
 		    _out.write ( t, 0, t.length() ) ;
 		    _out.flush() ;
 			}
+      if ( ! e.getName().equals ( "system" ) )
+      {
+        TPStore.points.get ( "EVENT_OUT" ).log ( e ) ;
+      }
 		}
 		catch ( IOException exc )
 		{
@@ -622,6 +657,10 @@ public class Client
   			}
   			try
   			{
+	        if ( ! e.getName().equals ( "system" ) )
+	        {
+            TPStore.points.get ( "EVENT_IN" ).log ( e ) ;
+	        }
 		    	if ( e.isStatusInfo() )
 		    	{
 						EventCallback ecb = callbacks.get ( e.getUniqueId() ) ;
@@ -1084,6 +1123,26 @@ public class Client
 			LOGGER.info ( Util.toString ( exc ) ) ;
 		}
 	}
+	public TracePoint registerTracePoint ( String name )
+	{
+	  return TPStore.add ( name ) ;
+	}
+	public TracePoint registerTracePoint ( String name, boolean isActive )
+	{
+	  return TPStore.add ( name, isActive ) ;
+	}
+	public TracePoint registerTracePoint ( TracePoint tp )
+	{
+	  return TPStore.add ( tp ) ;
+	}
+	public void removeTracePoint ( String name )
+	{
+	  TPStore.remove ( name ) ;
+	}
+	public TracePoint getTracePoint ( String name )
+	{
+	  return TPStore.getTracePoint ( name ) ;
+	}
 	private void _handleSystemClientMessages ( Event e )
 	{
 	  try
@@ -1091,7 +1150,53 @@ public class Client
 	    Map<String,Object> info = new HashMap<String,Object>() ;
 	    e.putValue ( "info", info ) ;
 
-	    if ( e.getType().indexOf ( "/info/" ) > 0 )
+	    if ( e.getType().startsWith ( "client/action/" ) )
+	    {
+				Map<String,Object> parameter = (Map<String,Object>) e.getValue ( "parameter" ) ;
+				if ( "tp".equals ( parameter.get ( "actionName" ) ) )
+				{
+	        Map<String,Object> tracePointResult = TPStore.action ( parameter ) ;
+          info.put ( "tracePointStatus", tracePointResult ) ;
+				}
+	      else
+	      if ( "info".equals ( parameter.get ( "actionName" ) ) )
+	      {
+          ActionInfo ai = new ActionInfo() ;
+          ArrayList<Map<String,Object>> list = new ArrayList<Map<String,Object>>() ;
+					ai.list = list ;	          
+          info.put ( "actionInfo", list ) ;
+          Map<String,String> args = (Map<String,String>) parameter.get ( "args" ) ;
+          if ( args != null ) ai.args = args ;
+					for ( ActionInfoCallback cb : actionInfoCallbackList )
+					{
+            cb.info ( ai ) ;
+	        }
+	      }
+	      else
+	      if ( "execute".equals ( parameter.get ( "actionName" ) ) )
+	      {
+          ActionCmd ac = new ActionCmd ( (String) parameter.get ( "cmd" ) )  ;
+          ArrayList<String> list = new ArrayList<String>() ;
+          info.put ( "actionResult", list ) ;
+          Map<String,String> args = (Map<String,String>) parameter.get ( "args" ) ;
+          if ( args != null ) ac.args = args ;
+					for ( ActionCmdCallback cb : actionCmdCallbackList )
+					{
+            cb.execute ( ac ) ;
+            list.add ( ac.result ) ;
+	        }
+	      }
+	      else
+	      {
+	        e.setStatus ( 1, "error", "invalid: " + e.getType() ) ;
+	        e.setIsResult() ;
+	        _send ( e ) ;
+	        return ;
+	      }
+	      e.removeValue ( "parameter" ) ;
+	    }
+	    else
+	    if ( e.getType().startsWith ( "client/info/" ) )
 	    {
 		    if ( e.getType().indexOf ( "/info/where/" ) > 0 )
 		    {
@@ -1108,6 +1213,12 @@ public class Client
 			    {
 			    	env.put ( k, p.get ( k ) ) ;
 			    }
+		    }
+		    else
+		    if ( e.getType().indexOf ( "/info/tp/" ) > 0 )
+		    {
+	        Map<String,Object> tracePointResult = TPStore.action ( null ) ;
+          info.put ( "tracePointStatus", tracePointResult ) ;
 		    }
 		    else
 		    if ( e.getType().equals ( "client/info" ) )

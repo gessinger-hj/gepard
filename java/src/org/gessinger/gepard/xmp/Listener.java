@@ -19,6 +19,8 @@ public class Listener
   throws Exception
   {
     final Client client = Client.getInstance() ;
+    final TracePoint tp = client.registerTracePoint ( "BLARM_REMOVED" ) ;
+
     client.onShutdown ( new InfoCallback()
     {
       public void info ( Client c, Event e )
@@ -49,12 +51,38 @@ public class Listener
         System.out.println ( e.getName() + "/" + e.getType() ) ;
       }
     });
-    String name = Util.getProperty ( "name", "ALARM" ) ;
-    System.out.println ( "Listen for events with name=" + name ) ;
+    client.onActionInfo ( new ActionInfoCallback()
+    {
+      public void info ( ActionInfo info )
+      {
+        info.add ( "kill", "Shut down this client." ) ;
+      }
+    });
+    client.onActionCmd ( new ActionCmdCallback()
+    {
+      public void execute ( ActionCmd cmd )
+      {
+        cmd.setResult ( "I don't " + cmd.getCmd() + "!!" ) ;
+      }
+    });
+    String[] name = new String[] { "ALARM", "BLARM" } ;
+    System.out.println ( "Listen for events with name=ALARM,BLARM" ) ;
     client.on ( name, new EventListener()
     {
       public void event ( Event e )
       {
+        if ( e.getName().equals ( "BLARM" ) )
+        {
+          try
+          {
+            client.remove ( "BLARM" ) ;
+            tp.log ( "BLARM is removed." ) ;
+          }
+          catch ( Exception exc )
+          {
+            System.out.println ( Util.toString ( exc ) ) ;
+          }
+        }
         System.out.println ( e ) ;
       }
     } ) ;

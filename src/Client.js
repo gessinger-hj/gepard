@@ -364,7 +364,7 @@ Client.prototype.connect = function()
         e = Event.prototype.deserialize ( m ) ;
         if ( e.getName() !== "system" )
         {
-          if ( TPStore.points["EVENT_IN"].isActive )
+          if ( TPStore.points["EVENT_IN"].isActive() )
           {
             TPStore.points["EVENT_IN"].log ( e ) ;
           }
@@ -624,146 +624,6 @@ Client.prototype.isRunning = function ( callback )
   }
   catch ( exc )
   {
-  }
-};
-ActionInfo = function ()
-{
-  this.list = [] ;
-};
-ActionInfo.prototype =
-{
-  add: function ( cmd, desc )
-  {
-    this.list.push ( { cmd: cmd, desc: desc } ) ;
-  }
-};
-ActionCmd = function ( cmd )
-{
-  this.cmd = cmd ;
-  this.parameter = {} ;
-  this.result = "" ;
-};
-ActionCmd.prototype =
-{
-  setResult: function ( text )
-  {
-    this.result = text ;
-  },
-  getArgs: function()
-  {
-    return this.parameter.args ;
-  }
-};
-Client.prototype._handleSystemClientMessages = function ( e )
-{
-  try
-  {
-    var info = e.body.info = {} ;
-    var i ;
-    if ( e.getType().startsWith ( "client/action/" ) )
-    {
-      if ( e.body.parameter.actionName === "tp" )
-      {
-        var tracePointResult = TPStore.action ( e.body.parameter ) ;
-        if ( tracePointResult )
-        {
-          info.tracePointStatus = tracePointResult ;
-        }
-      }
-      else
-      if ( e.body.parameter.actionName === "info" )
-      {
-        var cl = this.nameToDirectCallbackListener.get ( "action-info" ) ;
-        if ( cl )
-        {
-          var al = info.actionInfo = [] ;
-          for ( i = 0 ; i < cl.length ; i++ )
-          {
-            var ai = new ActionInfo() ;
-            al.push ( ai ) ;
-            cl[i].call ( this, e.body.parameter, ai ) ;
-          }
-        }
-      }
-      else
-      if ( e.body.parameter.actionName === "execute" )
-      {
-        var cl = this.nameToDirectCallbackListener.get ( "action-execute" ) ;
-        if ( cl )
-        {
-          var al = info.actionResult = [] ;
-          for ( i = 0 ; i < cl.length ; i++ )
-          {
-            var ai = new ActionCmd ( e.body.parameter.cmd ) ;
-            ai.parameter = e.body.parameter ;
-            al.push ( ai ) ;
-            cl[i].call ( this, e.body.parameter, ai ) ;
-          }
-        }
-      }
-      else
-      {
-        e.control.status = { code:1, name:"error", reason:"invalid: " + e.getType() } ;
-        e.setIsResult() ;
-        this.send ( e ) ;
-        return ;
-      }
-      e.removeValue ( "parameter" ) ;
-    }
-    else
-    if ( e.getType().startsWith ( "client/info/" ) )
-    {
-      if ( e.getType().contains ( "/info/where/" ) )
-      {
-        info.where = {} ;
-      }
-      else
-      if ( e.getType().contains ( "/info/tp/" ) )
-      {
-        var tracePointResult = TPStore.action ( e.body.tracePointActionList ) ;
-        if ( tracePointResult )
-        {
-          info.tracePointStatus = tracePointResult ;
-        }
-      }
-      else
-      if ( e.getType().contains ( "/info/env/" ) )
-      {
-        info.env = process.env ;
-      }
-      else
-      {
-        info.process =
-        {
-          arch        : process.arch
-        , cwd         : process.cwd()
-        , memoryUsage : process.memoryUsage()
-        , pid         : process.pid
-        , platform    : process.platform
-        , release     : process.release
-        , uptime      : process.uptime()
-        } ;
-        info.os =
-        {
-          freemem   : os.freemem()
-        , cpus      : os.cpus()
-        , totalmem  : os.totalmem()
-        , loadavg   : os.loadavg()
-        , release   : os.release()
-        , uptime    : os.uptime()
-        } ;
-      }
-    }
-    e.control.status = { code:0, name:"success", reason:"ack" } ;
-    e.setIsResult() ;
-    this.send ( e ) ;
-  }
-  catch ( exc )
-  {
-    Log.log ( exc ) ;
-    e.control.status = { code:1, name:"error", reason:"reject" } ;
-    e.setIsResult() ;
-    this.send ( e ) ;
   }
 };
 Client.prototype._checkHeartbeat = function()
@@ -1235,7 +1095,7 @@ Client.prototype.on = function ( eventName, callback )
   this.addEventListener ( eventName, callback ) ;
 };
 Client.prototype.onActionInfo = function ( callback ) { this.nameToDirectCallbackListener.put ( "action-info", callback ) ; };
-Client.prototype.onActionExecute = function ( callback ) {this.nameToDirectCallbackListener.put ( "action-execute", callback ) ; };
+Client.prototype.onActionCmd = function ( callback ) {this.nameToDirectCallbackListener.put ( "action-execute", callback ) ; };
 /**
  * Description
  * @method remove
@@ -1505,10 +1365,7 @@ Client.prototype.send = function ( e )
   this.getSocket().write ( json ) ;
   if ( e.getName() !== "system" )
   {
-    if ( TPStore.points["EVENT_IN"].isActive )
-    {
-      TPStore.points["EVENT_OUT"].log ( e ) ;
-    }
+    TPStore.points["EVENT_OUT"].log ( e ) ;
   }
   this._timeStamp = new Date().getTime() ;
 };
@@ -1532,5 +1389,151 @@ Client.prototype.removeTracePoint = function ( name )
 Client.prototype.getTracePoint = function ( name )
 {
   return TPStore.points[name] ;
+};
+ActionInfo = function ()
+{
+  this.list = [] ;
+  this.parameter = {} ;
+};
+ActionInfo.prototype =
+{
+  add: function ( cmd, desc )
+  {
+    this.list.push ( { cmd: cmd, desc: desc } ) ;
+  },
+  getArgs: function()
+  {
+    return this.parameter.args ;
+  }
+};
+ActionCmd = function ( cmd )
+{
+  this.cmd = cmd ;
+  this.parameter = {} ;
+  this.result = "" ;
+};
+ActionCmd.prototype =
+{
+  setResult: function ( text )
+  {
+    this.result = text ;
+  },
+  getArgs: function()
+  {
+    return this.parameter.args ;
+  }
+};
+Client.prototype._handleSystemClientMessages = function ( e )
+{
+  try
+  {
+    var info = e.body.info = {} ;
+    var i ;
+    if ( e.getType().startsWith ( "client/action/" ) )
+    {
+      if ( e.body.parameter.actionName === "tp" )
+      {
+        var tracePointResult = TPStore.action ( e.body.parameter ) ;
+        if ( tracePointResult )
+        {
+          info.tracePointStatus = tracePointResult ;
+        }
+      }
+      else
+      if ( e.body.parameter.actionName === "info" )
+      {
+        var cl = this.nameToDirectCallbackListener.get ( "action-info" ) ;
+        if ( cl )
+        {
+          var al = info.actionInfo = [] ;
+          for ( i = 0 ; i < cl.length ; i++ )
+          {
+            var ai = new ActionInfo() ;
+            ai.parameter = e.body.parameter ;
+            al.push ( ai ) ;
+            cl[i].call ( this, ai ) ;
+          }
+        }
+      }
+      else
+      if ( e.body.parameter.actionName === "execute" )
+      {
+        var cl = this.nameToDirectCallbackListener.get ( "action-execute" ) ;
+        if ( cl )
+        {
+          var al = info.actionResult = [] ;
+          for ( i = 0 ; i < cl.length ; i++ )
+          {
+            var ai = new ActionCmd ( e.body.parameter.cmd ) ;
+            ai.parameter = e.body.parameter ;
+            al.push ( ai ) ;
+            cl[i].call ( this, ai ) ;
+          }
+        }
+      }
+      else
+      {
+        e.control.status = { code:1, name:"error", reason:"invalid: " + e.getType() } ;
+        e.setIsResult() ;
+        this.send ( e ) ;
+        return ;
+      }
+      e.removeValue ( "parameter" ) ;
+    }
+    else
+    if ( e.getType().startsWith ( "client/info/" ) )
+    {
+      if ( e.getType().contains ( "/info/where/" ) )
+      {
+        info.where = {} ;
+      }
+      else
+      if ( e.getType().contains ( "/info/tp/" ) )
+      {
+        var tracePointResult = TPStore.action ( e.body.tracePointActionList ) ;
+        if ( tracePointResult )
+        {
+          info.tracePointStatus = tracePointResult ;
+        }
+      }
+      else
+      if ( e.getType().contains ( "/info/env/" ) )
+      {
+        info.env = process.env ;
+      }
+      else
+      {
+        info.process =
+        {
+          arch        : process.arch
+        , cwd         : process.cwd()
+        , memoryUsage : process.memoryUsage()
+        , pid         : process.pid
+        , platform    : process.platform
+        , release     : process.release
+        , uptime      : process.uptime()
+        } ;
+        info.os =
+        {
+          freemem   : os.freemem()
+        , cpus      : os.cpus()
+        , totalmem  : os.totalmem()
+        , loadavg   : os.loadavg()
+        , release   : os.release()
+        , uptime    : os.uptime()
+        } ;
+      }
+    }
+    e.control.status = { code:0, name:"success", reason:"ack" } ;
+    e.setIsResult() ;
+    this.send ( e ) ;
+  }
+  catch ( exc )
+  {
+    Log.log ( exc ) ;
+    e.control.status = { code:1, name:"error", reason:"reject" } ;
+    e.setIsResult() ;
+    this.send ( e ) ;
+  }
 };
 module.exports = Client ;

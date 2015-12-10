@@ -9,5 +9,5 @@ if ( process.argv.length > 2 )
 		i++ ;
 	}
 }
-if ( process.argv.length > i ) process.env.cmd = process.argv[2] ;
+if ( process.argv.length > i ) process.env.cmd = process.argv[i] ;
 new (require ( "../src/Admin" ))().main() ;

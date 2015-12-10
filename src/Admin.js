@@ -416,7 +416,7 @@ Admin.prototype.client = function ( p )
 			}
 			else
 			{
-				parameter.args = p.args ;
+				parameter.args = { text: p.args } ;
 			}
 		}
 	}

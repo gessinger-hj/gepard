@@ -64,7 +64,7 @@ if ( require.main === module )
 		{
 			info.add ( "kill", "Shut down this client." ) ;
 		});
-		c.onActionExecute ( function ( parameter, cmd )
+		c.onActionCmd ( function ( parameter, cmd )
 		{
 			cmd.setResult ( "I don't " + cmd.cmd + "!!")
 		});
