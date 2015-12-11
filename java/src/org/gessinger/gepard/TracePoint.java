@@ -10,6 +10,7 @@ public class TracePoint
   String mode           = "" ;
   TracePointStore store = null ;
   String title          = null ;
+  Tracer tracer         = null ;
   public TracePoint ( String name )
   {
     this ( name, false ) ;
@@ -36,24 +37,29 @@ public class TracePoint
     {
       return ;
     }
-    StringBuilder sb = new StringBuilder() ;
+    Tracer tracer = this.tracer ;
+    if ( tracer == null )
+    {
+      tracer = this.store.tracer ;
+    }
     if ( this.title != null )
     {
-      this.store.tracer.log ( title + "\n" ) ;
+      tracer.log ( title + "\n" ) ;
     }
     if ( value instanceof Event )
     {
       Event e = (Event) value ;
       String mode = this.mode ;
-      if ( mode == null ) mode = "b" ; //body
-      if ( mode.equals ( "a" ) ) this.store.tracer.log ( value ) ;
-      if ( mode.indexOf ( 'u' ) >= 0 ) this.store.tracer.log ( e.user ) ;
-      if ( mode.indexOf ( 'c' ) >= 0 ) this.store.tracer.log ( e.control ) ;
-      if ( mode.indexOf ( 'b' ) >= 0 ) this.store.tracer.log ( e.body ) ;
+      if ( mode == null ) mode = "hb" ; // header and body
+      if ( mode.equals ( "a" ) ) tracer.log ( e ) ;
+      if ( mode.indexOf ( 'h' ) >= 0 ) tracer.log ( e.getName() + "/" + e.getType() ) ;
+      if ( mode.indexOf ( 'u' ) >= 0 ) tracer.log ( e.user ) ;
+      if ( mode.indexOf ( 'c' ) >= 0 ) tracer.log ( e.control ) ;
+      if ( mode.indexOf ( 'b' ) >= 0 ) tracer.log ( e.body ) ;
     }
     else
     {
-      this.store.tracer.log ( value ) ;
+      tracer.log ( value ) ;
     }
   }
   public boolean isActive()

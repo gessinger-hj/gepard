@@ -18,7 +18,7 @@ public class TracePointStore
 
   private static Logger LOGGER = Logger.getLogger ( "org.gessinger.gepard" ) ;
 
-  class MyTracer implements Tracer 
+  class LocalTracer implements Tracer 
   {
     public void log ( Object o )
     {
@@ -26,8 +26,12 @@ public class TracePointStore
     }
   }
 
-  String name = "" ;
-  Tracer tracer = new MyTracer() ;
+  String name            = "" ;
+  Tracer remoteTracer    = null ;
+  Tracer localTracer     = new LocalTracer() ;
+  Tracer tracer          = localTracer ;
+  Boolean isRemoteTracer = false ;
+
   HashMap<String,TracePoint> points = new HashMap<String,TracePoint>() ;
   public TracePointStore()
   {
@@ -67,6 +71,19 @@ public class TracePointStore
   }
   public Map<String,Object> action ( Map<String,Object> action )
   {
+     if ( action != null && action.containsKey ( "output" ) )
+    {
+      if ( "remote".equals ( action.get ( "output" ) ) )
+      {
+        this.isRemoteTracer = true ;
+        this.tracer = this.remoteTracer ;
+      }
+      else
+      {
+        this.isRemoteTracer = false ;
+        this.tracer = this.localTracer ;
+      }
+    }
     if ( action != null && action.containsKey ( "points" ) )
     {
       List<Map<String,Object>> list = (List<Map<String,Object>>) action.get ( "points" ) ;
@@ -96,13 +113,15 @@ public class TracePointStore
     }
     Map<String,Object> result = new HashMap<String,Object>() ;
     result.put ( "name", getName() ) ;
+    result.put ( "output", this.isRemoteTracer ? "remote" : "local" ) ;
     ArrayList<Map<String,Object>> list = new ArrayList<Map<String,Object>>() ;
     result.put ( "list", list ) ;
     for ( String key : points.keySet() )
     {
       Map<String,Object> m = new HashMap<String,Object>() ;
       TracePoint tp = points.get ( key ) ;
-      m.put ( tp.getName(), new Boolean ( tp.active ) ) ;
+      m.put ( "name", tp.getName() ) ;
+      m.put ( "state", new Boolean ( tp.active ) ) ;
       list.add ( m ) ;
     }
     return result ;

@@ -110,19 +110,15 @@ var Client = function ( port, host )
   {
     this.USERNAME = "guest" ;
   }
-  this.user                     = new User ( this.USERNAME ) ;
-  this._timeStamp               = 0 ;
-  this._heartbeatIntervalMillis = 10000 ;
-  this._reconnectIntervalMillis = 5000 ;
-  this._reconnect               = T.getBool ( "gepard.reconnect", false ) ;
-  this.version                  = 1 ;
-  this.brokerVersion            = 0 ;
-  this.tracePointLogToBroker    = true ;
-  if ( this.tracePointLogToBroker )
-  {
-    TPStore.logger = this.log.bind ( this ) ;
-  }
+  this.user                         = new User ( this.USERNAME ) ;
+  this._timeStamp                   = 0 ;
+  this._heartbeatIntervalMillis     = 10000 ;
+  this._reconnectIntervalMillis     = 5000 ;
+  this._reconnect                   = T.getBool ( "gepard.reconnect", false ) ;
+  this.version                      = 1 ;
+  this.brokerVersion                = 0 ;
   this.nameToDirectCallbackListener = new MultiHash() ;
+  TPStore.remoteTracer              = this.log.bind ( this ) ;
 } ;
 util.inherits ( Client, EventEmitter ) ;
 Client.prototype.toString = function()

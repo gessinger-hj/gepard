@@ -379,15 +379,18 @@ Admin.prototype.client = function ( p )
 		name = "client/action/" + p.action + "/" ;
 		if ( ! p.value ) p.value = "" ;
 		if ( p.value ) p.value = p.value.trim() ;
-		if ( p.action === "tp" && p.value.charAt ( 0 ) === '{' && p.value.charAt ( p.value.length - 1 ) === '}' )
+		if ( p.action === "tp" && p.value.charAt ( 0 ) === '[' && p.value.charAt ( p.value.length - 1 ) === ']' )
 		{
 			parameter.actionName = "tp" ;
-			parameter.points = JSON.parse ( p.value )
+			parameter.output     = p.output ;
+			parameter.points     = JSON.parse ( p.value )
+// gp.client.tp '[{"name":"BLARM_REMOVED","state":"on"},{"name":"EVENT_IN","state":"on"}]' --output=remote --sid=::ffff:127.0.0.1_30551_1449856585669
 		}
 		else
 		if ( p.action.startsWith ( "tp" ) )
 		{
 			parameter.actionName = "tp" ;
+			parameter.output     = p.output ;
 			if ( ! p.value ) p.value = "*" ;
 			var what = "toggle"
 			if ( p.action === "tpon" ) what = "on" ;
@@ -547,8 +550,9 @@ console.log ( "n=" + n ) ;
 		var info   = gepard.getProperty ( "info" ) ;
 		var action = gepard.getProperty ( "action" ) ;
 		var value  = gepard.getProperty ( "value" ) ;
-		var args  = gepard.getProperty ( "args" ) ;
-		this.client ( { info:info, action:action, value:value, args: args } ) ;
+		var args   = gepard.getProperty ( "args" ) ;
+		var output = gepard.getProperty ( "output" ) ;
+		this.client ( { info:info, action:action, value:value, args: args, output: output } ) ;
 		return ;
 	}
 	what = gepard.getProperty ( "tp" ) ;

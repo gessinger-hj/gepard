@@ -32,10 +32,10 @@ public class Client
 		static public int OFF       = 0x00000000 ;
   }
 	private static Logger LOGGER = Logger.getLogger ( "org.gessinger.gepard" ) ;
-  class MyTracer implements Tracer 
+  class RemoteTracer implements Tracer 
   {
   	Client client ;
-  	MyTracer ( Client client )
+  	RemoteTracer ( Client client )
   	{
   		this.client = client ;
   	}
@@ -174,7 +174,7 @@ public class Client
 				}
 			}
 		} ) ;
-		TPStore.tracer = new MyTracer ( this ) ;
+		TPStore.remoteTracer = new RemoteTracer ( this ) ;
 	}
 	public String getUSERNAME()
 	{

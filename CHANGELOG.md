@@ -1,3 +1,13 @@
+## 1.4.3 (2015-12-06)
+- Java, JavaScript: TracePoint concept on client side: EVENT_IN, EVENT_OUT. Configurable at runtime.
+	Trace-output optional to central log-file on the Broker side.
+
+## 1.4.3 (2015-12-4)
+- Java, JavaScript, Python: Client.log() available for logging in a central log-file on Broker side.
+
+## 1.4.3 (2015-12-2)
+- Broker: TracePoint concept: EVENT_IN, EVENT_OUT. Configurable at runtime. 
+
 ## 1.4.0 (2015-11-15)
 - Java, Python: Introduce re-connection and re-installation af all client's listeners in case Broker was down/not reachable and is available again.
 

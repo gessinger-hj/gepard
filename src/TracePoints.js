@@ -6,10 +6,11 @@ var TracePoint = function ( name, active )
 {
   this.active = !! active ;
 
-  this.name = name ;
-  this.mode = "" ;
-  this.store = null ;
-  this.title = "" ;
+  this.name   = name ;
+  this.mode   = "" ;
+  this.store  = null ;
+  this.title  = "" ;
+  this.tracer = null ;
 };
 TracePoint.prototype.setTitle = function ( title )
 {
@@ -21,27 +22,33 @@ TracePoint.prototype.log = function ( value )
   {
     return ;
   }
+  var tracer = this.tracer ;
+  if ( ! tracer )
+  {
+    tracer = this.store.tracer ;
+  }
   if ( value instanceof Event )
   {
     if ( this.title )
     {
-      this.store.tracer ( title ) ;
+      tracer ( this.title ) ;
     }
     var mode = this.mode ;
-    if ( ! mode ) mode = 'b' ; //body
-    if ( mode === 'a' ) this.store.tracer ( value ) ;
-    if ( mode.indexOf ( 'u' ) >= 0 ) this.store.tracer ( value.user ) ;
-    if ( mode.indexOf ( 'c' ) >= 0 ) this.store.tracer ( value.control ) ;
-    if ( mode.indexOf ( 'b' ) >= 0 ) this.store.tracer ( value.body ) ;
+    if ( ! mode ) mode = 'hb' ; // header and body
+    if ( mode === 'a' ) tracer ( value ) ;
+    if ( mode.indexOf ( 'h' ) >= 0 ) tracer ( value.getName() + "/" + value.getType() ) ;
+    if ( mode.indexOf ( 'u' ) >= 0 ) tracer ( value.user ) ;
+    if ( mode.indexOf ( 'c' ) >= 0 ) tracer ( value.control ) ;
+    if ( mode.indexOf ( 'b' ) >= 0 ) tracer ( value.body ) ;
   }
   else
   {
     var str = T.toString ( value ) ;
     if ( this.title )
     {
-      this.store.tracer ( title ) ;
+      tracer ( this.title ) ;
     }
-    this.store.tracer ( str ) ;
+    tracer ( str ) ;
   }
 };
 TracePoint.prototype.isActive = function()
@@ -50,9 +57,11 @@ TracePoint.prototype.isActive = function()
 };
 var TracePointStore = function ( name )
 {
-  this.points = {} ;
-  this.name = name ? name : "" ;
-  this.tracer = Log.logln.bind ( Log ) ;
+  this.points       = {} ;
+  this.name         = name ? name : "" ;
+  this.localTracer  = Log.logln.bind ( Log ) ;
+  this.remoteTracer = null ;
+  this.tracer       = this.localTracer ;
 };
 TracePointStore.prototype.getName = function()
 {
@@ -89,12 +98,23 @@ TracePointStore.prototype.remove = function ( name )
 };
 TracePointStore.prototype.action = function ( action )
 {
-  var i, j, k ;
-  if ( action && action.pointss )
+  if ( action && action.output )
   {
-    for ( i = 0 ; i < action.pointss.length ; i++ )
+    if ( action.output === 'remote' )
     {
-      var item = action.pointss[i] ;
+      this.tracer = this.remoteTracer ;
+    }
+    else
+    {
+      this.tracer = this.localTracer ;
+    }
+  }
+  var i, j, k ;
+  if ( action && action.points )
+  {
+    for ( i = 0 ; i < action.points.length ; i++ )
+    {
+      var item = action.points[i] ;
       if ( item.name === '*' )
       {
         for ( k in this.points )
