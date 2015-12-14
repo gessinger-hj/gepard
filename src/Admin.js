@@ -5,11 +5,11 @@ var gepard = require ( "gepard" ) ;
 
 /**
  * @constructor
- * @class Admin tool for Gepard
- * @method Admin
- * @param {} port
- * @param {} host
- * @return 
+ *
+ * @class      Admin tool for Gepard
+ * @method     Admin
+ * @param      {}    port    { description }
+ * @param      {}    host    { description }
  */
 var Admin = function ( port, host )
 {
@@ -61,17 +61,22 @@ Admin.prototype.setSystemParameter = function ( what )
 {
 	this._execute ( "setSystemParameter", what ) ;
 };
-/**
- * Display an info from GPBroker
- * @method info
- * @param {} what
- * @return 
- */
+ /**
+  * Display an info from GPBroker
+  *
+  * @method     info
+  * @param      {<type>}    what      { description }
+  * @param      {Function}  callback  { description }
+  */
 Admin.prototype.info = function ( what, callback )
 {
 	this._execute ( "info", what, callback ) ;
 };
-/*
+/**
+ * Check if is running
+ *
+ * @method     isRunning
+ * @param      {Function}  callback  { description }
  */
 Admin.prototype.isRunning = function ( callback )
 {
@@ -93,7 +98,14 @@ Admin.prototype.isRunning = function ( callback )
 	{
 	}
 };
-
+/**
+ * execute command in client
+ *
+ * @method     _execute
+ * @param      {String}    action    { description }
+ * @param      {String}    what      { description }
+ * @param      {Function}  callback  { description }
+ */
 Admin.prototype._execute = function ( action, what, callback )
 {
 	var thiz = this ;

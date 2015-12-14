@@ -24,10 +24,10 @@ var _Event_replace_Buffer_toJSON = null ;
 /**
  * Description
  * @constructor
- * @param {} name
- * @param {} type
- * @param {} data
- * @return 
+ * @class    Event
+ * @param      {}    name    { description }
+ * @param      {}    type    { description }
+ * @param      {}    data    { description }
  */
 gepard.Event = function ( name, type, data )
 {

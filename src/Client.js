@@ -54,10 +54,11 @@ Stats.prototype =
 };
 /**
  * @constructor
- * @extends EventEmitter
- * @param {} port
- * @param {} host
- * @return 
+ * @extends    EventEmitter
+ *
+ * @class      Client
+ * @param      {}    port    { description }
+ * @param      {}    host    { description }
  */
 var Client = function ( port, host )
 {
@@ -1218,7 +1219,6 @@ Client.prototype.lockResource = function ( resourceId, callback )
  * Description
  * @method unlockResource
  * @param {} resourceId
- * @return 
  */
 Client.prototype.unlockResource = function ( resourceId )
 {
@@ -1373,11 +1373,26 @@ Client.prototype.error = function ( what )
 {
   Log.error ( what ) ;
 };
-
+/**
+ * Register a TracePoint for the application
+ *
+ * @method     registerTracePoint
+ * @param      {string|TracePoint}  tp        name for new TracePoint or
+ *                                            TracePoint object
+ * @param      {boolean}            isActive  initial activation state
+ * @return     {TracePoint}         given TracePoint or newly created
+ *                                  TracePoint
+ */
 Client.prototype.registerTracePoint = function ( tp, isActive )
 {
   return TPStore.add ( tp, isActive ) ;
 };
+/**
+ * Remove a TracePoint
+ *
+ * @method     removeTracePoint
+ * @param      {string}  name    name of TP
+ */
 Client.prototype.removeTracePoint = function ( name )
 {
   TPStore.remove ( name ) ;
@@ -1386,6 +1401,11 @@ Client.prototype.getTracePoint = function ( name )
 {
   return TPStore.points[name] ;
 };
+/**
+ * Action info populated by a client
+ *
+ * @class
+ */
 ActionInfo = function ()
 {
   this.list = [] ;
@@ -1393,6 +1413,13 @@ ActionInfo = function ()
 };
 ActionInfo.prototype =
 {
+  /**
+   * add
+   *
+   * @method     add
+   * @param      {string}  cmd     valid command
+   * @param      {string}  desc    description
+   */
   add: function ( cmd, desc )
   {
     this.list.push ( { cmd: cmd, desc: desc } ) ;

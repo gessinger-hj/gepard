@@ -2,6 +2,13 @@ var T     = require ( "./Tango" ) ;
 var Event = require ( "./Event" ) ;
 var Log   = require ( "./LogFile" ) ;
 
+/**
+ * { function_description }
+ *
+ * @class      TracePoint
+ * @param      {<type>}  name    { description }
+ * @param      {<type>}  active  { description }
+ */
 var TracePoint = function ( name, active )
 {
   this.active = !! active ;
@@ -12,10 +19,22 @@ var TracePoint = function ( name, active )
   this.title  = "" ;
   this.tracer = null ;
 };
+/**
+ * { function_description }
+ *
+ * @method     setTitle
+ * @param      {<type>}  title   { description }
+ */
 TracePoint.prototype.setTitle = function ( title )
 {
   this.title = title ;
 };
+/**
+ * { function_description }
+ *
+ * @method     log
+ * @param      {String}  value   { description }
+ */
 TracePoint.prototype.log = function ( value )
 {
   if ( ! this.active )
@@ -55,6 +74,12 @@ TracePoint.prototype.isActive = function()
 {
   return this.active ;
 };
+/**
+ * { function_description }
+ *
+ * @class      TracePointStore
+ * @param      {<type>}  name    { description }
+ */
 var TracePointStore = function ( name )
 {
   this.points       = {} ;
