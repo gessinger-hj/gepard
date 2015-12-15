@@ -21,21 +21,19 @@ except ImportError:
 
 from glob import glob
 
-from TracePoints import TracePoint, Event, TracePointStore
-
 def remoteTracer(t):
   print ( "----------REMOTE-----------" )
   print ( t )
 
 
-tps = TracePointStore ( "client" )
+tps = gepard.TracePointStore.getStore ( "client" )
 tps.remoteTracer = remoteTracer
 
 tps.tracer = tps.remoteTracer
 tp = tps.add ( "EVENT_IN" ) #TracePoint()
 
 tp.active = True
-e = Event ( "AAA", "BBB" )
+e = gepard.Event ( "AAA", "BBB" )
 tp.log ( e )
 
 result = tps.action ( { "output":"local" })
