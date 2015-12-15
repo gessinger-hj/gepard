@@ -21,6 +21,32 @@ except ImportError:
 
 from glob import glob
 
+from TracePoints import TracePoint, Event, TracePointStore
+
+def remoteTracer(t):
+  print ( "----------REMOTE-----------" )
+  print ( t )
+
+
+tps = TracePointStore ( "client" )
+tps.remoteTracer = remoteTracer
+
+tps.tracer = tps.remoteTracer
+tp = tps.add ( "EVENT_IN" ) #TracePoint()
+
+tp.active = True
+e = Event ( "AAA", "BBB" )
+tp.log ( e )
+
+result = tps.action ( { "output":"local" })
+print ( result )
+tp.log ( e )
+
+list = [ {"name":"EVENT_IN","state":"off"} ]
+result = tps.action ( { "points":list } )
+print ( result )
+tp.log ( e )
+
 # from os import listdir
 # from os.path import isfile, join
 # onlyfiles = [ f for f in listdir('.') if isfile(join('.',f)) ]
@@ -57,26 +83,26 @@ from glob import glob
 # print ( str ( FR ) )
 
 
+#------------------------ MutableTimer ---------------------------
+# mt = gepard.MutableTimer ( )
 
-mt = gepard.MutableTimer ( )
+# i = 0
+# def runner():
+# 	global i
+# 	i = i + 1
+# 	print ( "i=" + str ( i ) )
+# 	if i >= 5:
+# 		global mt
+# 		mt.stop()
+# 		return
+# 	print ( "I am the runner" )
 
-i = 0
-def runner():
-	global i
-	i = i + 1
-	print ( "i=" + str ( i ) )
-	if i >= 5:
-		global mt
-		mt.stop()
-		return
-	print ( "I am the runner" )
-
-mt.start ( 1, runner )
-time.sleep(10)
-i = 0
-mt.start() ;
-time.sleep(10)
-mt.cancel()
+# mt.start ( 1, runner )
+# time.sleep(10)
+# i = 0
+# mt.start() ;
+# time.sleep(10)
+# mt.cancel()
 
 # _NQ = gepard.NamedQueue() ;
 
