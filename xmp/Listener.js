@@ -60,11 +60,11 @@ if ( require.main === module )
 		{
 			console.log('reconnect');
 		});
-		c.onActionInfo ( function ( parameter, info )
+		c.onActionInfo ( function ( cl, info )
 		{
 			info.add ( "kill", "Shut down this client." ) ;
 		});
-		c.onActionCmd ( function ( parameter, cmd )
+		c.onActionCmd ( function ( cl, cmd )
 		{
 			cmd.setResult ( "I don't " + cmd.cmd + "!!")
 		});

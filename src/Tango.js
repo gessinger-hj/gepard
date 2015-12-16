@@ -521,7 +521,7 @@ TangoClass.prototype.getConfigPath = function()
  * @param {} str
  * @return list
  */
-TangoClass.prototype.splitJSONObjects = function ( str )
+TangoClass.prototype.splitJSONObjects = function ( str, max )
 {
   var list = [] ;
   var pcounter = 1 ;
@@ -530,12 +530,20 @@ TangoClass.prototype.splitJSONObjects = function ( str )
   var i = 1 ;
   for ( i = 1 ; i < str.length ; i++ )
   {
+    if ( max && i - i0 > max )
+    {
+      return { invalid: true, size: true, max: max, actual: i - i0 } ;
+    }
     var c = str.charAt ( i ) ;
     if ( c === '"' || c === "'" )
     {
       q = c ;
       for ( var j = i+1 ; j < str.length ; j++ )
       {
+        if ( max && j - i0 > max )
+        {
+          return { invalid: true, size: true, max: max, actual: j - i0 } ;
+        }
         c = str.charAt ( j ) ;
         if ( c === q )
         {

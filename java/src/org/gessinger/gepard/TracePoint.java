@@ -38,29 +38,51 @@ public class TracePoint
       return ;
     }
     Tracer tracer = this.tracer ;
+    StringBuilder sb = new StringBuilder() ;
     if ( tracer == null )
     {
       tracer = this.store.tracer ;
     }
     if ( this.title != null )
     {
-      tracer.log ( title + "\n" ) ;
+      sb.append ( title + "\n" ) ;
     }
     if ( value instanceof Event )
     {
       Event e = (Event) value ;
       String mode = this.mode ;
       if ( mode == null ) mode = "hb" ; // header and body
-      if ( mode.equals ( "a" ) ) tracer.log ( e ) ;
-      if ( mode.indexOf ( 'h' ) >= 0 ) tracer.log ( e.getName() + "/" + e.getType() ) ;
-      if ( mode.indexOf ( 'u' ) >= 0 ) tracer.log ( e.user ) ;
-      if ( mode.indexOf ( 'c' ) >= 0 ) tracer.log ( e.control ) ;
-      if ( mode.indexOf ( 'b' ) >= 0 ) tracer.log ( e.body ) ;
+      if ( mode.equals ( "a" ) )
+      {
+        sb.append ( Util.toString ( e ) ) ;
+        sb.append ( "\n" ) ;
+      }
+      if ( mode.indexOf ( 'h' ) >= 0 )
+      {
+        sb.append ( e.getName() + "/" + e.getType() ) ;
+        sb.append ( "\n" ) ;
+      }
+      if ( mode.indexOf ( 'u' ) >= 0 )
+      {
+        sb.append ( Util.toString ( e.user ) ) ;
+        sb.append ( "\n" ) ;
+      }
+      if ( mode.indexOf ( 'c' ) >= 0 )
+      {
+        sb.append ( Util.toString ( e.control ) ) ;
+        sb.append ( "\n" ) ;
+      }
+      if ( mode.indexOf ( 'b' ) >= 0 )
+      {
+        sb.append ( Util.toString ( e.body ) ) ;
+        sb.append ( "\n" ) ;
+      }
     }
     else
     {
-      tracer.log ( value ) ;
+      sb.append ( Util.toString ( value ) ) ;
     }
+    tracer.log ( sb.toString() ) ;
   }
   public boolean isActive()
   {

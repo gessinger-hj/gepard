@@ -46,29 +46,52 @@ TracePoint.prototype.log = function ( value )
   {
     tracer = this.store.tracer ;
   }
+  s = "" ;
   if ( value instanceof Event )
   {
     if ( this.title )
     {
-      tracer ( this.title ) ;
+      s += this.title ;
+      s += "\n" ;
     }
     var mode = this.mode ;
     if ( ! mode ) mode = 'hb' ; // header and body
-    if ( mode === 'a' ) tracer ( value ) ;
-    if ( mode.indexOf ( 'h' ) >= 0 ) tracer ( value.getName() + "/" + value.getType() ) ;
-    if ( mode.indexOf ( 'u' ) >= 0 ) tracer ( value.user ) ;
-    if ( mode.indexOf ( 'c' ) >= 0 ) tracer ( value.control ) ;
-    if ( mode.indexOf ( 'b' ) >= 0 ) tracer ( value.body ) ;
+    if ( mode === 'a' )
+    {
+      s += T.toString ( value ) ;
+      s += "\n" ;
+    }
+    if ( mode.indexOf ( 'h' ) >= 0 )
+    {
+      s += value.getName() + "/" + value.getType() ;
+      s += "\n" ;
+    }
+    if ( mode.indexOf ( 'u' ) >= 0 )
+    {
+      s += T.toString ( value.user ) ;
+      s += "\n" ;
+    }
+    if ( mode.indexOf ( 'c' ) >= 0 )
+    {
+      s += T.toString ( value.control ) ;
+      s += "\n" ;
+    }
+    if ( mode.indexOf ( 'b' ) >= 0 )
+    {
+      s += T.toString ( value.body ) ;
+      s += "\n" ;
+    }
   }
   else
   {
-    var str = T.toString ( value ) ;
     if ( this.title )
     {
-      tracer ( this.title ) ;
+      s += this.title ;
+      s += "\n" ;
     }
-    tracer ( str ) ;
+    s += T.toString ( value ) ;
   }
+  tracer ( s ) ;
 };
 TracePoint.prototype.isActive = function()
 {
@@ -164,6 +187,7 @@ TracePointStore.prototype.action = function ( action )
   var result ;
   {
     result = { name: this.getName(), list: [] } ;
+    result["output"] = this.tracer == this.localTracer ? "local" : "remote" ;
     for ( k in this.points )
     {
       result.list.push ( { name:this.points[k].name, active:this.points[k].active })

@@ -369,6 +369,36 @@ def decoratedTimerCallback(_self):
 		_self._checkReconnect()
 	return deco
 
+def localTracer(t):
+	print ( t )
+
+def remoteTracer(_self):
+	def log ( t ):
+		try:
+			_self.log ( t )
+		except Exception as exc:
+			print ( exc )
+	return log
+
+class ActionInfo:
+	def __init__(self):
+		self.list = []
+		self.parameter = {}
+	def add ( self, cmd, desc ):
+		self.list.append ( { "cmd":cmd, "desc":desc })
+	def getArgs(self):
+		return self.parameter.get ( "args" )
+
+class ActionCmd:
+	def __init__(self,cmd):
+		self.cmd = cmd
+		self.parameter = {}
+		self.result = ""
+	def setResult(self,text):
+		self.result = text
+	def getArgs(self):
+		return self.parameter.get ( "args" )
+
 class Client:
 	counter = 0
 	_Instances = {}
@@ -432,6 +462,20 @@ class Client:
 		cb = decoratedTimerCallback ( self )
 		self._Timer.add ( self._reconnectIntervalMillis/1000, cb )
 		self._callbackWorkerRunning   = False
+		self.actionInfoCallbackList   = []
+		self.actionCmdCallbackList    = []
+		self.TPStore.remoteTracer     = remoteTracer ( self )
+	def onActionInfo ( self, cb ):
+		self.actionInfoCallbackList.append ( cb )
+	def onActionCmd ( self, cb ):
+		self.actionCmdCallbackList.append ( cb )
+
+	def registerTracePoint ( self, tp, isActive=False ):
+			return self.TPStore.add ( tp, isActive )
+	def removeTracePoint ( self, name ):
+			self.TPStore.remove ( name )
+	def getTracePoint ( self, name ):
+			return self.TPStore.points.get ( name )
 
 	def _checkReconnect(self):
 		try:
@@ -581,6 +625,8 @@ class Client:
 			event.setUser ( self.user )
 		event.setUniqueId ( self.createUniqueId() )
 		self.sock.sendall ( event.serialize().encode ( "utf-8" ) )
+		if event.getName() != "system":
+			self.TPStore.points["EVENT_OUT"].log ( event )
 
 	def request ( self, event, callback ):
 		if isinstance ( callback, types.FunctionType ):
@@ -639,13 +685,63 @@ class Client:
 
 	def _handleSystemClientMessages(self,e):
 		try:
-			if e.getType().find ( "client/info/" ) == 0:
-				info = {}
-				e.putValue ( "info", info )
-				if e.getType().find ( "/where/" ) >= 0:
+			info = {}
+			e.putValue ( "info", info )
+			if e.getType().find ( "client/action/" ) == 0:
+				parameter = e.getValue ( "parameter" )
+				if parameter == None:
+					e.setStatus ( 1, "error", "missing 'parameter'" )
+					e.setIsResult()
+					self._send ( e )
+					return ;
+				e.removeValue ( "parameter" ) ;
+				actionName = parameter.get ( "actionName" )
+				if "tp" == actionName:
+					tracePointResult = self.TPStore.action ( parameter )
+					info["tracePointStatus"] = tracePointResult
+				elif actionName == "info":
+					ai = ActionInfo()
+					list = []
+					ai.list = list
+					info["actionInfo"] = list
+					args = parameter.get ( "args" )
+					if args != None: ai.args = args
+					for i in range ( 0, len ( self.actionInfoCallbackList ) ):
+						cb = self.actionInfoCallbackList[i]
+						cb ( self, ai )
+				elif actionName == "execute":
+					cmd = parameter.get ( "cmd" )
+					if cmd == None:
+						e.setStatus ( 1, "error", "missing 'cmd'" )
+						e.setIsResult()
+						self._send ( e )
+						return ;
+					ac = ActionCmd ( cmd )
+					list = []
+					info["actionResult"] = list
+					args = parameter.get ( "args" )
+					if args != None: ac.args = args
+					for i in range ( 0, len ( self.actionCmdCallbackList ) ):
+						cb = self.actionCmdCallbackList[i]
+						cb ( self, ac )
+						list.append ( ac.result )
+				else:
+					e.setStatus ( 1, "error", "invalid: " + e.getType() )
+					e.setIsResult()
+					self._send ( e )
+					return
+				e.setStatus ( 0, "success", "ack" )
+				e.setIsResult()
+				self._send ( e )
+				return
+			elif e.getType().find ( "client/info/" ) == 0:
+				if e.getType().find ( "/where/" ) > 0:
 					where = {}
 					info["where"] = where
-				elif e.getType().find ( "/env/" ) >= 0:
+				elif e.getType().find ( "/tp/" ) > 0:
+					tracePointResult = self.TPStore.action ( None )
+					info["tracePointStatus"] = tracePointResult
+				elif e.getType().find ( "/env/" ) > 0:
 					env = {}
 					info["env"] = env
 					for k, v in os.environ.items():
@@ -673,14 +769,14 @@ class Client:
 				self._send ( e )
 		except Exception as exc:
 			print ( exc )
-			e.setStatus ( 1, "error", "reject" )
+			e.setStatus ( 1, "error", str ( exc ) )
 			e.setIsResult()
 			self._send ( e )
 
 	def log(self, messageText):
 		e = Event ( "system", "log" )
 		message = {}
-		message["text"] = messageText
+		message["text"] = str ( messageText )
 		message["severity"] = "INFO"
 		message["date"] = util.formatDateAsRFC3339()
 		e.putValue ( "message", message )
@@ -810,6 +906,9 @@ class Client:
 					else:
 						self._Timer.cancel()
 					break
+				if e.getName() != "system":
+					self.TPStore.points["EVENT_IN"].log ( e )
+
 				if e.getName() == 'system':
 					if e.getType() != None and e.getType() == "shutdown":
 						self._emit ( "shutdown", None, None )
@@ -1549,33 +1648,6 @@ def __LINE__():
 def __FILE__():
         return inspect.currentframe().f_code.co_filename
 
-#!/usr/bin/env python
-
-try:
-  from cStringIO import StringIO
-except ImportError:
-  from io import StringIO
-
-from io import BytesIO
-
-import json
-import inspect
-import time
-import datetime
-import socket
-import sys
-import os
-import threading
-import types
-import numbers
-import collections
-import resource
-
-from gepard import Event, util
-
-def localTracer(t):
-  print ( t )
-
 class TracePoint ( object ):
   def __init__ ( self, name="", active=False ):
     self.active = active
@@ -1592,26 +1664,37 @@ class TracePoint ( object ):
     if not self.active:
       return
     tracer = self.tracer
+    s = StringIO()
     if tracer == None:
       tracer = self.store.tracer
     if isinstance ( value, Event ):
       e = value
       if self.title != None:
-        tracer ( self.title )
+      	s.write ( self.title )
+      	s.write ( "\n" )
       mode = self.mode
       if mode == None:
         mode = 'hb'
       if mode == 'a':
         tracer ( e )
-      if mode.find ( 'h' ) >= 0: tracer ( e.getName() + "/" + e.getType() )
-      if mode.find ( 'u' ) >= 0: tracer ( e.user )
-      if mode.find ( 'c' ) >= 0: tracer ( e.control )
-      if mode.find ( 'b' ) >= 0: tracer ( e.body )
+      if mode.find ( 'h' ) >= 0:
+      	s.write ( e.getName() + "/" + e.getType() )
+      	s.write ( "\n" )
+      if mode.find ( 'u' ) >= 0:
+      	s.write ( str ( e.user ) )
+      	s.write ( "\n" )
+      if mode.find ( 'c' ) >= 0:
+      	s.write ( str ( e.control ) )
+      	s.write ( "\n" )
+      if mode.find ( 'b' ) >= 0:
+      	s.write ( str ( e.body ) )
+      	s.write ( "\n" )
     else:
-      t = str ( value ) ;
       if self.title != None:
-        tracer ( self.title )
-      tracer ( t )
+      	s.write ( self.title )
+      	s.write ( "\n" )
+      s.write ( str ( value ) )
+    tracer ( s.getvalue() )
   def isActive ( self ):
     return self.active
 
@@ -1699,6 +1782,10 @@ class TracePointStore ( object ):
 						point.mode = mode
 		result = {}
 		result["name"] = self.getName()
+		if self.tracer == self.localTracer:
+			result["output"] = "local"
+		else:
+			result["output"] = "remote"
 		list = []
 		result["list"] = list
 		for k in self.points:

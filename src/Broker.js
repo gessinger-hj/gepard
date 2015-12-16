@@ -176,12 +176,13 @@ Connection.prototype._sendInfoResult = function ( e )
 {
   var i, first, str, key, conn, key2 ;
   e.setType ( "getInfoResult" ) ;
-  e.control.status = { code:0, name:"ack" } ;
-  e.body.gepardVersion = Gepard.getVersion() ;
-  e.body.brokerVersion = this.broker.brokerVersion ;
+  e.control.status               = { code:0, name:"ack" } ;
+  e.body.gepardVersion           = Gepard.getVersion() ;
+  e.body.brokerVersion           = this.broker.brokerVersion ;
   e.body.heartbeatIntervalMillis = this.broker._heartbeatIntervalMillis ;
-  e.body.log = { levelName: Log.getLevelName(), level:Log.getLevel(), file: Log.getCurrentLogFileName() } ;
-  e.body.currentEventNames = this.broker._eventNameToSockets.getKeys() ;
+  e.body.maxMessageSize          = this.broker._maxMessageSize ;
+  e.body.log                     = { levelName: Log.getLevelName(), level:Log.getLevel(), file: Log.getCurrentLogFileName() } ;
+  e.body.currentEventNames       = this.broker._eventNameToSockets.getKeys() ;
   for ( i = 0 ; i < this.broker._connectionList.length ; i++ )
   {
     list = this.broker._connectionList[i]._regexpList ;
@@ -410,6 +411,7 @@ var Broker = function ( port, ip )
   this._heartbeatIntervalMillis = T.getInt ( "gepard.heartbeat.millis", this._heartbeatIntervalMillis ) ;
 
   this.brokerVersion = 1 ;
+  this._maxMessageSize = 200000 ;
 };
 
 util.inherits ( Broker, EventEmitter ) ;
@@ -498,9 +500,23 @@ Broker.prototype._ondata = function ( socket, chunk )
   if ( ! conn.partialMessage ) conn.partialMessage = "" ;
   mm = conn.partialMessage + mm ;
   conn.partialMessage = "" ;
-  var result = T.splitJSONObjects ( mm ) ;
+  var result = T.splitJSONObjects ( mm, this._maxMessageSize ) ;
+  if ( result.invalid )
+  {
+    if ( result.size )
+    {
+      str = "Message size exceeds maximum.\nsid=" + conn.sid + "\nmax=" + this._maxMessageSize + "\nactual size=" + result.actual ;
+      Log.log ( str ) ;
+      e = new Event ( "ERROR" ) ;
+      e.setStatus ( 1, "error", str ) ;
+      conn.write ( e ) ;
+      socket.end() ;
+      return ;
+    }
+  }
   var messageList = result.list ;
   var j = 0 ;
+  var e = null ;
   for ( j = 0 ; j < messageList.length ; j++ )
   {
     var m = messageList[j] ;
@@ -508,17 +524,36 @@ Broker.prototype._ondata = function ( socket, chunk )
     {
       continue ;
     }
+    if ( m.length > this._maxMessageSize )
+    {
+      str = "Message size exceeds maximum.\nsid=" + conn.sid + "\nmax=" + this._maxMessageSize + "\nactual size=" + m.length ;
+      Log.log ( str ) ;
+      e = new Event ( "ERROR" ) ;
+      e.setStatus ( 1, "error", str ) ;
+      conn.write ( e ) ;
+      socket.end() ;
+      return ;
+    }
     if ( j === messageList.length - 1 )
     {
       if ( result.lastLineIsPartial )
       {
         conn.partialMessage = m ;
+        if ( conn.partialMessage > this._maxMessageSize )
+        {
+          str = "Message size exceeds maximum.\nsid=" + conn.sid + "\nmax=" + this._maxMessageSize + "\nactual size=" + conn.partialMessage.length ;
+          Log.log ( str ) ;
+          e = new Event ( "ERROR" ) ;
+          e.setStatus ( 1, "error", str ) ;
+          conn.write ( e ) ;
+          socket.end() ;
+          return ;
+        }
         break ;
       }
     }
     if ( m.charAt ( 0 ) === '{' )
     {
-      var e = null ;
       try
       {
         e = Event.prototype.deserialize ( m ) ;
@@ -1407,6 +1442,28 @@ Broker.prototype.setConfig = function ( configuration )
     if ( ! isNaN ( hbm ) ) this._heartbeatIntervalMillis = hbm ;
   }
   this._heartbeatIntervalMillis = T.getInt ( "gepard.heartbeat.millis", this._heartbeatIntervalMillis ) ;
+  var factor = 1 ;
+  if ( configuration.maxMessageSize )
+  {
+    if ( configuration.maxMessageSize.endsWith ( "k" ) ) factor = 1000 ;
+    if ( configuration.maxMessageSize.endsWith ( "m" ) ) factor = 1000000 ;
+    var hbm = parseInt ( configuration.maxMessageSize ) ;
+    if ( ! isNaN ( hbm ) )
+    {
+      this._maxMessageSize = hbm * factor ;
+    }
+  }
+  var v = T.getProperty ( "gepard.max.message.size" ) ;
+  if ( v )
+  {
+    if ( v.endsWith ( "k" ) ) factor = 1000 ;
+    if ( v.endsWith ( "m" ) ) factor = 1000000 ;
+    hbm = parseInt ( v ) ;
+    if ( ! isNaN ( hbm ) )
+    {
+      this._maxMessageSize = hbm * factor ;
+    }
+  }
 };
 Broker.prototype.setHeartbeatIntervalMillis = function ( millis )
 {

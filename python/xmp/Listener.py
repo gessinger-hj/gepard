@@ -11,6 +11,9 @@ import sys
 
 client = gepard.Client.getInstance()
 # client.setDaemon ( True )
+client.setReconnect ( True ) # // Reconnection requested
+tp = client.registerTracePoint ( "BLARM_REMOVED" )
+
 def on_close ( err, success ):
 	print ( err )
 def on_error ( err, success ):
@@ -30,11 +33,20 @@ client.onShutdown ( on_shutdown )
 client.onReconnect ( on_reconnect )
 client.onDisconnect ( on_disconnect )
 
+def onActionInfo ( client, info ):
+	info.add ( "kill", "Shut down this client." )
+def onActionCmd ( client, cmd ):
+	cmd.setResult ( "I don't " + str ( cmd.cmd ) + "!!")
+
+client.onActionInfo ( onActionInfo )
+client.onActionCmd ( onActionCmd )
+
 def on_ABLARM ( event ):
 	print	( "on_ABLARM" )
+	if event.getName() == "BLARM":
+		client.remove ( "BLARM" )
+		tp.log ( "BLARM is removed." )
 	print ( event )
-	date = event.getValue ( "DATE" )
-	print ( date )
 
 print ( "Listening for ALARM and BLARM" )
 client.on ( ["ALARM", "BLARM"], on_ABLARM )
