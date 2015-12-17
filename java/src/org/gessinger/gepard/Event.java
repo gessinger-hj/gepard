@@ -319,12 +319,10 @@ public class Event
   public void sendBack()
   throws Exception
   {
-    if ( _Client == null )
-    {
-      throw new Exception ( "Not a result." ) ;
-    }
-    Client c = _Client ;
-    _Client = null ;
-    c.sendResult ( this ) ;
+    _Client.sendResult ( this ) ;
+  }
+  public Client getClient()
+  {
+    return _Client ;
   }
 }

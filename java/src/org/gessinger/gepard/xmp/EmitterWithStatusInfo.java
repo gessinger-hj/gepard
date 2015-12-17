@@ -28,9 +28,8 @@ public class EmitterWithStatusInfo
       {
         System.out.println ( "status=" + e.getStatusName() ) ;
         System.out.println ( e.getStatusReason() ) ;
+        e.getClient().close() ;
       }
     } ) ;
-    Thread.sleep ( 1000 ) ;
-    client.close() ;
   }
 }

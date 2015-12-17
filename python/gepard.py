@@ -1058,8 +1058,12 @@ class Lock:
 		if self._isLockOwner:
 			self.client.releaseLock ( self )
 		if self.client._first:
-			self.client.close()
-			self.client = None
+			try:
+				if self.client != None:
+					self.client.close()
+					self.client = None
+			except Exception as exc:
+				print ( exc )
 	def __str__(self):
 		s = StringIO()
 		s.write("(")

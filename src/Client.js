@@ -170,6 +170,10 @@ Client.prototype.holdsLocksOrSemaphores = function()
  * @param {} user
  * @return 
  */
+// var index = this.socket.remoteAddress.indexOf ( this._networkAddresses[i]
+//                                         ^
+// TypeError: Cannot read property 'indexOf' of undefined
+
 Client.prototype.setUser = function ( user )
 {
   this.user = user ;
@@ -293,7 +297,7 @@ Client.prototype.connect = function()
         var ctx = thiz._pendingLockList[i] ;
         ctx.e.setUniqueId ( uid ) ;
         thiz.send ( ctx.e ) ;
-        thiz._acquiredResources[e.body.resourceId] = ctx;
+        thiz._acquiredResources[ctx.e.body.resourceId] = ctx;
       }
       thiz._pendingLockList.length = 0 ;
     }
@@ -306,7 +310,7 @@ Client.prototype.connect = function()
         var ctx = thiz._pendingAcquireSemaphoreList[i] ;
         ctx.e.setUniqueId ( uid ) ;
         thiz.send ( ctx.e ) ;
-        thiz._acquiredSemaphores[e.body.resourceId] = ctx;
+        thiz._acquiredSemaphores[ctx.e.body.resourceId] = ctx;
       }
       thiz._pendingAcquireSemaphoreList.length = 0 ;
     }
@@ -1196,16 +1200,22 @@ Client.prototype.lockResource = function ( resourceId, callback )
 
   var e = new Event ( "system", "lockResourceRequest" ) ;
   e.body.resourceId = resourceId ;
-  var s = this.getSocket() ;
   var ctx = {} ;
   ctx.resourceId = resourceId ;
   ctx.callback = callback ;
   ctx.e = e ;
 
+  if ( ! this.socket )
+  {
+    this._pendingLockList.push ( ctx ) ;
+  }
+  else
   if ( this._pendingLockList.length )
   {
     this._pendingLockList.push ( ctx ) ;
   }
+
+  var s = this.getSocket() ;
   if ( ! this._pendingLockList.length )
   {
     counter++ ;
@@ -1271,16 +1281,21 @@ Client.prototype.acquireSemaphore = function ( resourceId, callback )
 
   var e = new Event ( "system", "acquireSemaphoreRequest" ) ;
   e.body.resourceId = resourceId ;
-  var s = this.getSocket() ;
   var ctx = {} ;
   ctx.resourceId = resourceId ;
   ctx.callback = callback ;
   ctx.e = e ;
-
+  if ( ! this.socket )
+  {
+    this._pendingAcquireSemaphoreList.push ( ctx ) ;
+  }
+  else
   if ( this._pendingAcquireSemaphoreList.length )
   {
     this._pendingAcquireSemaphoreList.push ( ctx ) ;
   }
+
+  var s = this.getSocket() ;
   if ( ! this._pendingAcquireSemaphoreList.length )
   {
     counter++ ;

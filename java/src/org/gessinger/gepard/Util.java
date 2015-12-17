@@ -1021,7 +1021,7 @@ final public class Util
       out.write( buffer, 0, r );
     }
   }
-  static byte[] getBytes ( File file )
+  static public byte[] getBytes ( File file )
   throws IOException
   {
     InputStream in = null ;

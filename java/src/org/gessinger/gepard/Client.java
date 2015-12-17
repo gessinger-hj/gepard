@@ -471,6 +471,7 @@ public class Client
 	void _send ( Event e )
 	throws IOException
 	{
+		e._Client = null ;
 		try
 		{
 			synchronized ( _lock1 )
@@ -630,7 +631,6 @@ public class Client
   	{
     	throw new Exception ( "No result requested for:\n" + e ) ;
     }
-		e._Client = null ;
   	e.setIsResult() ;
     _send ( e ) ;
   }
@@ -655,6 +655,7 @@ public class Client
   				LOGGER.info ( Util.toString ( exc ) ) ;
   				break ;
   			}
+				e._Client = Client.this ;
   			try
   			{
 	        if ( ! e.getName().equals ( "system" ) )
@@ -729,7 +730,6 @@ public class Client
 								if ( e.isResultRequested() )
 								{
 									toBeSentBack.put ( e.getUniqueId(), e ) ;
-									e._Client = Client.this ;
 									l.event ( e ) ;
 									break ;
 								}

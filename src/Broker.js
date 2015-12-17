@@ -411,7 +411,7 @@ var Broker = function ( port, ip )
   this._heartbeatIntervalMillis = T.getInt ( "gepard.heartbeat.millis", this._heartbeatIntervalMillis ) ;
 
   this.brokerVersion = 1 ;
-  this._maxMessageSize = 200000 ;
+  this._maxMessageSize = 20 * 1024 * 1024 ;
 };
 
 util.inherits ( Broker, EventEmitter ) ;
