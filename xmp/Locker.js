@@ -31,11 +31,10 @@ if ( require.main === module )
       if ( lock.isOwner() )
       {
         console.log ( "Sleep for 10 seconds" ) ;
-        setInterval ( function sleep ()
+        setTimeout ( function sleep ()
         {
           lock.release() ;
           console.log ( "Lock released." ) ;
-          process.exit() ;
         }, 10000 ) ;
       }
     } ) ;

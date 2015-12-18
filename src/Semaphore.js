@@ -75,6 +75,10 @@ Semaphore.prototype.isOwner = function()
 Semaphore.prototype.release = function()
 {
   this._isSemaphoreOwner = false ;
+  if ( ! this._client )
+  {
+    return ;
+  }
   this._client.releaseSemaphore ( this._resourceId ) ;
   if ( this._isClientOwner && this._client )
   {

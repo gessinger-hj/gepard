@@ -32,10 +32,11 @@ if ( require.main === module )
     {
       console.log ( this.toString() ) ;
       console.log ( "Is owner: " + this.isOwner() ) ;
-      if ( auto )
+      setTimeout ( function sleep ()
       {
-        this.release() ;
-      }
+        sem.release() ;
+        console.log ( "Semaphore released." ) ;
+      }, 10000 ) ;
     } ) ;
   }
 }

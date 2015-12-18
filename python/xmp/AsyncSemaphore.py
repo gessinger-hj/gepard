@@ -16,16 +16,13 @@ client.onError ( on_error )
 
 name = "user:4711"
 
-print ( "Acquire semaphore=" + name )
-print ( "  asynchronous mode" )
-
 def on_acquired(sem):
 	print ( sem )
 	print ( "Sleep for 10 seconds" )
 	time.sleep(10)
-	sem.release()
 	print ( "sem released." )
-
+	client.close()
+	
 print ( "Acquire semaphore=" + name )
 print ( "  asynchronous mode" )
 

@@ -37,14 +37,13 @@ if ( require.main === module )
 				n++ ;
 				if ( n >= 2 )
 				{
-					var inter = setInterval ( function intervalFunction()
+					setTimeout ( function intervalFunction()
 					{
 						console.log ( "Request in" ) ;
 						console.log ( "DELAYED File list out:" ) ;
 						console.log ( fileList ) ;
 						e.body.file_list = fileList ;
 						e.sendBack() ;
-						clearInterval ( inter ) ;
 					}
 					, 5000 ) ;
 					return ;
