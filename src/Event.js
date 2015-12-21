@@ -826,7 +826,9 @@ else
 {
 	module.exports = gepard.Event ;
  	gepard.Event.prototype._classNameToConstructor["Event"] = gepard.Event ;
+console.log ( gepard ) ;
 	gepard.Event.prototype._classNameToConstructor.User = require ( "./User" ) ;
+console.log ( gepard ) ;
 	if ( require.main === module )
 	{
 		var e = new gepard.Event ( 'ALARM', "TEST" ) ;
