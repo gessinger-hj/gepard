@@ -1045,4 +1045,20 @@ final public class Util
       if ( out != null ) try { out.close() ; } catch ( Exception e ) {}
     }
   }
+  // System.out.println ( "int.class.isPrimitive()=" + int.class.isPrimitive() ) ;
+  private static final Set<Class> PRIMITIVE_TYPES = new HashSet ( Arrays.asList (
+    Boolean.class
+  , Character.class
+  , Byte.class
+  , Short.class
+  , Integer.class
+  , Long.class
+  , Float.class
+  , Double.class
+  , Void.class
+  ));
+  public static boolean isScalar ( Class clazz )
+  {
+    return PRIMITIVE_TYPES.contains ( clazz ) ;
+  }
 }
