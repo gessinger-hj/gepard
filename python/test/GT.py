@@ -21,29 +21,29 @@ except ImportError:
 
 from glob import glob
 
-def remoteTracer(t):
-  print ( "----------REMOTE-----------" )
-  print ( t )
+# def remoteTracer(t):
+#   print ( "----------REMOTE-----------" )
+#   print ( t )
 
 
-tps = gepard.TracePointStore.getStore ( "client" )
-tps.remoteTracer = remoteTracer
+# tps = gepard.TracePointStore.getStore ( "client" )
+# tps.remoteTracer = remoteTracer
 
-tps.tracer = tps.remoteTracer
-tp = tps.add ( "EVENT_IN" ) #TracePoint()
+# tps.tracer = tps.remoteTracer
+# tp = tps.add ( "EVENT_IN" ) #TracePoint()
 
-tp.active = True
-e = gepard.Event ( "AAA", "BBB" )
-tp.log ( e )
+# tp.active = True
+# e = gepard.Event ( "AAA", "BBB" )
+# tp.log ( e )
 
-result = tps.action ( { "output":"local" })
-print ( result )
-tp.log ( e )
+# result = tps.action ( { "output":"local" })
+# print ( result )
+# tp.log ( e )
 
-list = [ {"name":"EVENT_IN","state":"off"} ]
-result = tps.action ( { "points":list } )
-print ( result )
-tp.log ( e )
+# list = [ {"name":"EVENT_IN","state":"off"} ]
+# result = tps.action ( { "points":list } )
+# print ( result )
+# tp.log ( e )
 
 # from os import listdir
 # from os.path import isfile, join

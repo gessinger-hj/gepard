@@ -46,6 +46,7 @@ gepard.Event.prototype =
 		var Date_toJSON, Buffer_toJSON ;
 		if ( ! obj )
 		{
+			if ( this._Client ) delete this["_Client"] ;
 			obj = this ;
 		}
  		if ( typeof Buffer !== 'undefined' )
@@ -768,6 +769,12 @@ gepard.Event.prototype =
 		if ( ! this.control.status ) return ;
 		return this.control.status.name ;
 	},
+	getStatusCode: function()
+	{
+		if ( ! this.control ) return ;
+		if ( ! this.control.status ) return ;
+		return this.control.status.code ;
+	},
 	setStatus: function ( code, name, reason )
 	{
 		if ( ! this.control ) this.control = {} ;
@@ -796,6 +803,10 @@ gepard.Event.prototype =
 		this._Client = null ;
 		delete this._Client ;
 		c.sendResult ( this ) ;
+	},
+	getClient: function()
+	{
+		return this._Client ;
 	},
 	_setHostname: function ( hostName )
 	{
@@ -826,9 +837,7 @@ else
 {
 	module.exports = gepard.Event ;
  	gepard.Event.prototype._classNameToConstructor["Event"] = gepard.Event ;
-console.log ( gepard ) ;
 	gepard.Event.prototype._classNameToConstructor.User = require ( "./User" ) ;
-console.log ( gepard ) ;
 	if ( require.main === module )
 	{
 		var e = new gepard.Event ( 'ALARM', "TEST" ) ;

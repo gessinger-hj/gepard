@@ -1,6 +1,7 @@
 package org.gessinger.gepard ;
 
 import java.util.* ;
+import com.google.gson.* ;
 
 public class JSAcc
 {
@@ -90,7 +91,7 @@ public class JSAcc
   {
     if ( path.indexOf ( "/" ) == -1 )
     {
-      Object o = map.get ( path ) ;
+      Object o = m.get ( path ) ;
       return o == null ? def : o ;
     }
 
@@ -99,6 +100,10 @@ public class JSAcc
     for ( int i = 0 ; i < plist.length ; i++ )
     {
       String p = plist[i] ;
+      if ( p.length() == 0 )
+      {
+        continue ;
+      }
       Object o = mm.get ( p ) ;
       if ( o == null )
       {
@@ -137,6 +142,10 @@ public class JSAcc
     for ( int i = 0 ; i < plist.length ; i++ )
     {
       String p = plist[i] ;
+      if ( p.length() == 0 )
+      {
+        continue ;
+      }
       Object o = m.get ( p ) ;
       if ( i < plist.length - 1 )
       {
@@ -159,22 +168,71 @@ public class JSAcc
     }
     return obj ;
   }
-  public Object remove ( Map m, String path )
+  public Object remove ( String path )
   {
-    
+    return remove  ( map, path ) ;
+  }
+  static public Object remove ( Map m, String path )
+  {
+    if ( path.indexOf ( "/" ) == -1 )
+    {
+      return m.remove  ( path ) ;
+    }
+    String[] plist = path.split ( "/" ) ;
+    Map mm = m ;
+    for ( int i = 0 ; i < plist.length ; i++ )
+    {
+      String p = plist[i] ;
+      if ( p.length() == 0 )
+      {
+        continue ;
+      }
+      Object o = mm.get ( p ) ;
+      if ( o == null )
+      {
+        return null ;
+      }
+      if ( i == plist.length - 1 )
+      {
+        mm.remove ( p ) ;
+        return o ;
+      }
+      if ( o instanceof Map )
+      {
+        mm = (Map) o ;
+        continue ;
+      }
+    }
+    return null ;
   }
   public static void main(String[] args)
   throws Exception
   {
+    Gson gson = new Gson() ;
     JSAcc a = new JSAcc () ;
-
     a.add ( "M1/M2/N", 11 ) ;
-System.out.println ( Util.toString ( a.value ( "M1/M2" ) ) ) ;
-    a.add ( "A/B/C", new String[] { "D", "E" } ) ;
-    a.add ( "A/B/D", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" ) ;
-    a.add ( "A/X", "-----------------" ) ;
-    a.add ( "X", "-----------------" ) ;
-System.out.println ( a ) ;
-System.out.println ( Util.toString ( a.value ( "A/B" ) ) ) ;
+// System.out.println ( "1 ----------------------" ) ;
+  System.out.println ( gson.toJson ( a.value ( "M1/M2/N" ) ) ) ;
+  System.out.println ( gson.toJson ( a.value ( "M1/M2" ) ) ) ;
+    a.add ( "A/B/C", new String[] { "ABCD", "ABCE" } ) ;
+    a.add ( "A/B/D", "ABCD" ) ;
+    a.add ( "A/AX", "AX" ) ;
+    a.add ( "X", "X" ) ;
+// System.out.println ( "2 ----------------------" ) ;
+  System.out.println ( gson.toJson ( a.map ) ) ;
+// System.out.println ( "3 ----------------------" ) ;
+  System.out.println ( gson.toJson ( a.value ( "A/B" ) ) ) ;
+    a.remove ( "X" ) ;
+// System.out.println ( "4 -- a.remove ( 'X' )" ) ;
+  System.out.println ( gson.toJson ( a.map ) ) ;
+    a.remove ( "A/B/D" ) ;
+// System.out.println ( "5 -- a.remove ( 'A/B/D' )" ) ;
+  System.out.println ( gson.toJson ( a.map ) ) ;
+    a.remove ( "A" ) ;
+// System.out.println ( "6 -- a.remove ( 'A' )" ) ;
+  System.out.println ( gson.toJson ( a.map ) ) ;
+    a.remove ( "M1/M2/N" ) ;
+// System.out.println ( "7 -- a.remove ( 'M1/M2/N' )" ) ;
+  System.out.println ( gson.toJson ( a.map ) ) ;
   }
 }

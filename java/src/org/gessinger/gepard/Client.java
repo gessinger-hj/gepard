@@ -655,7 +655,6 @@ public class Client
   				LOGGER.info ( Util.toString ( exc ) ) ;
   				break ;
   			}
-				e._Client = Client.this ;
   			try
   			{
 	        if ( ! e.getName().equals ( "system" ) )
@@ -792,7 +791,7 @@ public class Client
 			    	break ;
 			    }
 			    Event e = Event.fromJSON ( t ) ;
-
+					e._Client = Client.this ;
 			    synchronized ( _LOCK )
 			    {
 			    	if ( e.getName().equals ( "system" ) )

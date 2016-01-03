@@ -48,6 +48,7 @@ public class Event
   User user = null ;
   boolean targetIsLocalHost = false ;
   transient Client _Client = null ;
+  transient JSAcc _JSAcc = null ;
   HashMap<String,Object> control = new HashMap<String,Object>() ;
   Map<String,Object> body = new HashMap<String,Object>() ;
   private Event()
@@ -71,6 +72,14 @@ public class Event
     {
       this.body = body ;
     }
+  }
+  JSAcc jsa()
+  {
+    if ( _JSAcc == null )
+    {
+      _JSAcc = new JSAcc ( body ) ;
+    }
+    return _JSAcc ;
   }
   public String toString()
   {

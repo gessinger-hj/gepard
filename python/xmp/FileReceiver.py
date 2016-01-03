@@ -25,14 +25,12 @@ def on___FILE__ ( e ):
 	try:
 		data.write ( fname ) ;
 		print ( fname + " written.")
-		# e.setStatus ( 0, "success", "File accepted.")
+		e.setStatus ( 0, "success", "File accepted.")
 	except Exception as exc:
 		print ( exc )
-		# e.setStatus ( 1, "error", "File not accepted.")
+		e.setStatus ( 1, "error", "File not accepted.")
 	try:
-		print ( "1 -----------")
 		e.sendBack() ;
-		print ( "2 -----------")
 	except Exception as e:
 		print ( e )
 

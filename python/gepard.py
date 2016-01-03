@@ -36,11 +36,11 @@ import inspect
 
 class Event ( object ):
 	def __init__ (self,name,type=None,body=None):
-		self.name		= None
-		self.type		= None
-		self.user		= None
+		self.name    = None
+		self.type    = None
+		self.user    = None
 		self.control = None
-		self.body		= None
+		self.body    = None
 		if isinstance ( name, dict ):
 			obj = name
 			self.className = self.__class__.__name__
@@ -67,6 +67,12 @@ class Event ( object ):
 			raise ValueError ( "body must be None or a dict, not: " + str(body) + "(" + body.__class__.__name__ + ")" )
 		self.user = None
 		self.control = { "createdAt": datetime.datetime.now(), "hostname": socket.gethostname(), "plang": "python" }
+
+	def jsa(self):
+		if "_JSAcc" in self.__dict__:
+			return self._JSAcc
+		self._JSAcc = JSAcc ( self.__dict__ )
+		return self._JSAcc
 
 	def __str__(self):
 		s = StringIO()
@@ -122,12 +128,13 @@ class Event ( object ):
 	def getClient(self):
 		return self._Client
 	def sendBack(self):
-		c = self._Client
-		self._Client = None
-		del self._Client
-		c.sendResult ( self )
+		self._Client.sendResult ( self )
 
 	def serialize(self):
+		if "_Client" in self.__dict__:
+			del self._Client
+		if "_JSAcc" in self.__dict__:
+			del self._JSAcc
 		s = json.dumps ( self, default=self.toJSON )
 		return s
 	def setUniqueId ( self, uid ):
@@ -140,34 +147,25 @@ class Event ( object ):
 		return None
 
 	def isBad ( self ):
-		if "control" not in self.__dict__: return False
-		if "status" not in self.control: return False
-		if "code" not in self.control["status"]: return False
-		return self.control["status"]["code"] != 0
+		code = self.getStatusCode()
+		if code == None: return False
+		return code != 0
 	def getStatus ( self ):
-		if "control" not in self.__dict__: return None
-		return self.control["status"]
+		return self.jsa().value ( "control/status" )
+	def getStatusCode ( self ):
+		return self.jsa().value ( "control/status/code" )
 	def getStatusReason ( self ):
-		if "control" not in self.__dict__: return None
-		if "status" not in self.control: return None
-		return self.control["status"]["reason"]
+		return self.jsa().value ( "control/status/reason" )
 	def getStatusName ( self ):
-		if "control" not in self.__dict__: return None
-		if "status" not in self.control: return None
-		return self.control["status"]["name"]
+		return self.jsa().value ( "control/status/name" )
 	def setStatus ( self, code=0, name="success", reason=""):
-		if "control" not in self.__dict__:
-			self.control = {}
-		if "status" not in self.control:
-			self.control["status"] = {}
-		self.control["status"]["code"] = code
-		self.control["status"]["name"] = name
-		self.control["status"]["reason"] = reason
+		self.jsa().add ( "control/status/code", code )
+		self.jsa().add ( "control/status/name", name )
+		self.jsa().add ( "control/status/reason", reason )
 	def setIsResult ( self ):
 		self.control["_isResult"] = True
 	def isResult ( self ):
-		if "_isResult" not in self.control: return False
-		return self.control["_isResult"]
+		return self.jsa().value ( "control/_isResult", False )
 	def setResultRequested ( self ):
 		self.control["_isResultRequested"] = True
 	def isResultRequested ( self ):
@@ -312,7 +310,6 @@ class CallbackWorker:
 				print ( exc )
 				break
 			try:
-				e._Client = self.client
 				if e.isStatusInfo():
 					callback = self.client.callbacks.get ( e.getUniqueId() )
 					if callback == None:
@@ -359,10 +356,6 @@ class CallbackWorker:
 					print ( e )
 			except Exception as exc:
 				print ( exc )
-			finally:
-				if "_Client" in e.__dict__:
-					e._Client = None
-					del e._Client
 
 def decoratedTimerCallback(_self):
 	def deco ():
@@ -402,7 +395,7 @@ class ActionCmd:
 class Client:
 	counter = 0
 	_Instances = {}
-	TPStore = None ;
+	TPStore = None
 
 	@classmethod
 	def getInstance ( clazz, port=None, host=None ):
@@ -419,9 +412,9 @@ class Client:
 
 	def __init__(self, port=None, host=None):
 		if self.TPStore == None:
-			self.TPStore = TracePointStore.getStore ( "client" ) ;
-			self.TPStore.add ( "EVENT_IN" ).setTitle ( "--------------------------- EVENT_IN ---------------------------" ) ;
-			self.TPStore.add ( "EVENT_OUT" ).setTitle ( "--------------------------- EVENT_OUT --------------------------" ) ;
+			self.TPStore = TracePointStore.getStore ( "client" )
+			self.TPStore.add ( "EVENT_IN" ).setTitle ( "--------------------------- EVENT_IN ---------------------------" )
+			self.TPStore.add ( "EVENT_OUT" ).setTitle ( "--------------------------- EVENT_OUT --------------------------" )
 
 		self._first                 = False
 		self.infoCallbacks          = MultiMap()
@@ -644,8 +637,6 @@ class Client:
 			print ( event )
 			raise Exception ( "No result requested" )
 		event.setIsResult()
-		event._Client = None
-		del event._Client
 		self._send ( event )
 
 	def emit ( self, event, type=None, **kwargs ):
@@ -693,8 +684,8 @@ class Client:
 					e.setStatus ( 1, "error", "missing 'parameter'" )
 					e.setIsResult()
 					self._send ( e )
-					return ;
-				e.removeValue ( "parameter" ) ;
+					return
+				e.removeValue ( "parameter" )
 				actionName = parameter.get ( "actionName" )
 				if "tp" == actionName:
 					tracePointResult = self.TPStore.action ( parameter )
@@ -715,7 +706,7 @@ class Client:
 						e.setStatus ( 1, "error", "missing 'cmd'" )
 						e.setIsResult()
 						self._send ( e )
-						return ;
+						return
 					ac = ActionCmd ( cmd )
 					list = []
 					info["actionResult"] = list
@@ -888,6 +879,7 @@ class Client:
 			return None
 		s = bytes.getvalue().decode ( 'utf-8' )
 		e = Event.deserialize ( s )
+		e._Client = self
 		# print ( e )
 		return e
 
@@ -1773,7 +1765,7 @@ class TracePointStore ( object ):
 								point.mode = mode
 						continue
 
-					tp = self.points[name] ;
+					tp = self.points[name]
 					if tp == None:
 						continue
 					state = item.get ( "state" )
@@ -1796,3 +1788,74 @@ class TracePointStore ( object ):
 			point = self.points[k]
 			list.append ( { "name":point.name, "active":point.active } )
 		return result
+
+class JSAcc:
+	def __init__ ( self, map={} ):
+		self.map = map
+	def __str__(self):
+		return str(self.map)
+	def map(self):
+		return self.map
+	def value ( self, path, dflt=None ):
+		if path.find ( "/" ) < 0:
+			o = self.map.get ( path )
+			return o == o if o != None else dflt
+		plist = path.split ( "/" )
+		mm = self.map
+		for i in range ( 0, len(plist) ):
+			p = plist[i]
+			if len ( p ) == 0:
+				continue
+			o = mm.get ( p )
+			if o == None:
+				return dflt
+			if i == len ( plist ) - 1:
+				return o
+			if isinstance ( o, dict ):
+				mm = o
+			continue
+		return dflt
+
+	def add ( self, path, obj ):
+		if ( path.find ( "/" ) == -1 ):
+			self.map[path] = obj
+			return obj
+		plist = path.split ( "/" )
+		m = self.map
+		for i in range ( 0, len(plist) ):
+			p = plist[i]
+			if ( len ( p ) == 0 ):
+				continue
+			o = m.get ( p )
+			if i < len ( plist ) - 1:
+				if not isinstance ( o, dict ):
+					mm = {}
+					m[p] = mm
+					m = mm
+				if isinstance ( o, dict ):
+					m = o
+					continue
+			if i == len ( plist ) - 1:
+				m[p] = obj
+		return obj
+	def remove ( self, path ):
+		if ( path.find ( "/" ) == -1 ):
+			o = self.map.get ( path )
+			if o != None: del self.map[path]
+			return o
+		plist = path.split ( "/" )
+		mm = self.map
+		for i in range ( 0, len(plist) ):
+			p = plist[i]
+			if ( len ( p ) == 0 ):
+				continue
+			o = mm.get ( p )
+			if o == None:
+				return None
+			if i == len ( plist ) - 1:
+				del mm[p]
+				return o
+			if isinstance ( o, dict ):
+				mm = o
+				continue 
+		return None

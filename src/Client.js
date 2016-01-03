@@ -370,7 +370,7 @@ Client.prototype.connect = function()
             TPStore.points["EVENT_IN"].log ( e ) ;
           }
         }
-
+        e._Client = thiz ;
         if ( e.isResult() )
         {
           uid = e.getUniqueId() ;
@@ -560,7 +560,6 @@ Client.prototype.connect = function()
             {
               if ( e.isResultRequested() )
               {
-                e._Client = thiz ;
                 callbackList[k].call ( thiz, e ) ;
                 break ;
               }
@@ -580,7 +579,6 @@ Client.prototype.connect = function()
               found = true ;
               if ( e.isResultRequested() )
               {
-                e._Client = thiz ;
                 thiz.listenerFunctionsList[k].call ( thiz, e ) ;
                 break ;
               }
@@ -1361,7 +1359,6 @@ Client.prototype.sendResult = function ( message )
     return ;
   }
   message.setIsResult() ;
-  delete message["_Client"] ;
   this.send ( message ) ;
 };
 /**

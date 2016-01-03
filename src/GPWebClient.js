@@ -118,6 +118,7 @@ gepard.WebClient.prototype._connect = function()
       if ( m.charAt ( 0 ) === '{' )
       {
         var e = gepard.deserialize ( m ) ;
+        e._Client = thiz ;
         var wid = e.getWebIdentifier() ;
         if ( e.isResult() )
         {

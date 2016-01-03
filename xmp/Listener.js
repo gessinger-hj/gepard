@@ -25,7 +25,11 @@ if ( require.main === module )
 	});
 	function execute()
 	{
-		var name = [ "ALARM", "BLARM" ] ;
+		var name =
+		[
+			"ALARM"
+		, "BLARM"
+		] ;
 		var c = gepard.getClient() ;
 		c.setReconnect ( true ) ; // Reconnection requested
 		var tp = c.registerTracePoint ( "BLARM_REMOVED" ) ;
