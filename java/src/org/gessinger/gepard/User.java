@@ -10,7 +10,7 @@ public class User
 {
   String className = "User" ;
   String id        = null ;
-  String key       = null ;
+  int key          = -1 ;
   String _pwd      = null ;
   HashMap<String,String> rights = new HashMap<String,String>() ;
   private User ()
@@ -18,13 +18,13 @@ public class User
   }
   public User ( String id )
   {
-    this ( id, null, null ) ;
+    this ( id, -1, null ) ;
   }
   public User ( String id, String pwd )
   {
-    this ( id, pwd, null ) ;
+    this ( id, -1, pwd ) ;
   }
-  public User ( String id, String pwd, String key )
+  public User ( String id, int key, String pwd )
   {
     this.id  = id ;
     this.key = key ;
@@ -42,11 +42,11 @@ public class User
   {
     return _pwd ;
   }
-  public String getKey()
+  public int getKey()
   {
     return key ;
   }
-  public void setKey ( String key )
+  public void setKey ( int key )
   {
     this.key = key ;
   }

@@ -25,12 +25,11 @@ public class Event
   public String toJSON()
   throws IOException
   {
-    Gson gson = new Gson() ;
     if ( _mapByteArrayToJavaScriptBuffer )
     {
       Util.convertJavaTypedDataToNodeJS ( this ) ;
     }
-    String json = gson.toJson ( this ) ;
+    String json = _gson.toJson ( this ) ;
     return json ;
   }
   public static Event fromJSON ( String json )
@@ -47,8 +46,9 @@ public class Event
   String type = "" ;
   User user = null ;
   boolean targetIsLocalHost = false ;
-  transient Client _Client = null ;
-  transient JSAcc _JSAcc = null ;
+  transient Client _Client  = null ;
+  transient JSAcc _JSAcc    = null ;
+  transient JSAcc c_JSAcc   = null ;
   HashMap<String,Object> control = new HashMap<String,Object>() ;
   Map<String,Object> body = new HashMap<String,Object>() ;
   private Event()
@@ -80,6 +80,14 @@ public class Event
       _JSAcc = new JSAcc ( body ) ;
     }
     return _JSAcc ;
+  }
+  JSAcc cjsa()
+  {
+    if ( c_JSAcc == null )
+    {
+      c_JSAcc = new JSAcc ( control ) ;
+    }
+    return c_JSAcc ;
   }
   public String toString()
   {
@@ -234,7 +242,6 @@ public class Event
   }
   public boolean isInUse()
   {
-    if ( this.control == null ) return false ;
     if ( ! this.control.containsKey ( "isInUse" ) ) return false ;
     Boolean b = (Boolean)this.control.get ( "isInUse" ) ;
     return true ;
@@ -245,11 +252,6 @@ public class Event
   }
   public boolean isBad()
   {
-    if ( this.control == null ) return false ;
-    if ( ! this.control.containsKey ( "status" ) ) return false ;
-    Map<String,Object> status = (Map<String,Object>)this.control.get ( "status" ) ;
-    if ( status == null ) return false ;
-    if ( ! status.containsKey ( "code" ) ) return false ;
     int code = getStatusCode() ;
     return code != 0 ;
   }
@@ -258,48 +260,24 @@ public class Event
     if ( this.control == null ) return null ;
     return (Map<String,Object>)this.control.get ( "status" ) ;
   }
-  public boolean hasStatus()
-  {
-    if ( this.control == null ) return false ;
-    if ( ! this.control.containsKey ( "status" ) ) return false ;
-    return true ;
-  }
   public String getStatusReason()
   {
-    if ( ! hasStatus() ) return "" ;
-    Map<String,Object> status = (Map<String,Object>)this.control.get ( "status" ) ;
-    return "" + status.get ( "reason" ) ;
+    return (String) cjsa().value ( "status/reson", "" ) ;
   }
   public String getStatusName()
   {
-    if ( ! hasStatus() ) return "" ;
-    Map<String,Object> status = (Map<String,Object>)this.control.get ( "status" ) ;
-    return "" + status.get ( "name" ) ;
+    return (String) cjsa().value ( "status/name", "" ) ;
   }
   public int getStatusCode()
   {
-    if ( ! hasStatus() ) return 0 ;
-    Map<String,Object> status = (Map<String,Object>)this.control.get ( "status" ) ;
-    try
-    {
-      return (int)Double.parseDouble ( "" + status.get ( "code" ) ) ;
-    }
-    catch ( Exception exc )
-    {
-    }
-    return 0 ;
+    Number d = (Number)cjsa().value ( "status/code", 0 ) ;
+    return d.intValue() ;
   }
   public void setStatus ( int code, String name, String reason )
   {
-    Map<String,Object> status = (Map<String,Object>)this.control.get ( "status" ) ;
-    if ( status == null )
-    {
-      status = new HashMap<String,Object>() ;
-      this.control.put ( "status", status ) ;
-      status.put ( "code",  new Integer  (  code ) ) ;
-      if ( name != null ) status.put ( "name",  name ) ;
-      if ( reason != null ) status.put ( "reason",  reason ) ;
-    }
+    cjsa().add ( "status/code", code ) ;
+    if ( name != null ) cjsa().add ( "status/name", name ) ;
+    if ( reason != null ) cjsa().add ( "status/reason", reason ) ;
   }
   public Object getValue ( String name )
   {
@@ -333,5 +311,29 @@ public class Event
   public Client getClient()
   {
     return _Client ;
+  }
+  public static void main ( String[] args)
+  throws Exception
+  {
+    Event e = new Event ( "__FILE__" ) ;
+    e.putValue ( "STRING", "TEXT" ) ;
+    e.putValue ( "BINARY", new byte[] { 64, 65, 66, 67 } ) ;
+    e.putValue ( "DATE", new Date() ) ;
+    e.putValue ( "STRING/IN/PATH", "AAA" ) ;
+    e.putValue ( "STRING/IN/PATH2", "BBB" ) ;
+    e.setStatus ( 0, "success", "File accepted." ) ;
+    e.setIsResult() ;
+    System.out.println ( e.getStatus() ) ;
+    System.out.println ( e.getStatusReason() ) ;
+    System.out.println ( e.getStatusName() ) ;
+    System.out.println ( e.getStatusCode() ) ;
+    System.out.println ( e.isBad() ) ;
+    System.out.println ( "e.isResult()=" + e.isResult() ) ;
+
+    String str = e.toJSON() ;
+    System.out.println ( "str=" + str ) ;
+    Event ee = (Event)Event.fromJSON ( str ) ;
+    System.out.println ( ee ) ;
+    System.out.println ( ee.getStatus() ) ;
   }
 }

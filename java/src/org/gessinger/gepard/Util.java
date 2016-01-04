@@ -25,6 +25,8 @@ final public class Util
                     = new SimpleDateFormat ( "yyyy-MM-dd HH:mm:ss", Locale.US ) ;
 
   static HashMap<String,String> _globals = new HashMap<String,String>() ;
+  static Gson _gson = new Gson() ;
+
   private Util() {} ;
   static public String getMainClassName()
   {
@@ -42,6 +44,25 @@ final public class Util
       }
     }
     return className ;
+  }
+  static public String toJSON ( Object o )
+  throws IOException
+  {
+    if ( o instanceof Map )
+    {
+      convertJavaTypedDataToNodeJS ( false, (Map)o ) ;
+    }
+    String json = _gson.toJson ( o ) ;
+    return json ;
+  }
+  static public Object fromJSON ( String json, Class clazz )
+  {
+    Object o = _gson.fromJson ( json, clazz ) ;
+    if ( o instanceof Map )
+    {
+      convertNodeJSTypedDataToJava ( (Map)o ) ;
+    }
+    return o ;
   }
   static void convertJavaTypedDataToNodeJS ( Event e )
   throws IOException
