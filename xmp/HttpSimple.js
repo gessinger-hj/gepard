@@ -35,6 +35,7 @@ if ( require.main === module )
       try
       {
         client = gepard.getClient() ;
+        client.setReconnect ( true ) ;
         client.on ( "shutdown", function client_onshutdown()
         {
           process.exit ( 0 ) ;

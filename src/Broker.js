@@ -176,13 +176,13 @@ Connection.prototype._sendInfoResult = function ( e )
 {
   var i, first, str, key, conn, key2 ;
   e.setType ( "getInfoResult" ) ;
-  e.control.status               = { code:0, name:"ack" } ;
-  e.body.gepardVersion           = Gepard.getVersion() ;
-  e.body.brokerVersion           = this.broker.brokerVersion ;
-  e.body.heartbeatIntervalMillis = this.broker._heartbeatIntervalMillis ;
-  e.body.maxMessageSize          = this.broker._maxMessageSize ;
-  e.body.log                     = { levelName: Log.getLevelName(), level:Log.getLevel(), file: Log.getCurrentLogFileName() } ;
-  e.body.currentEventNames       = this.broker._eventNameToSockets.getKeys() ;
+  e.control.status                     = { code:0, name:"ack" } ;
+  e.body.gepardVersion                 = Gepard.getVersion() ;
+  e.body.brokerVersion                 = this.broker.brokerVersion ;
+  e.body.heartbeatIntervalMillis       = this.broker._heartbeatIntervalMillis ;
+  e.body.maxMessageSize                = this.broker._maxMessageSize ;
+  e.body.log                           = { levelName: Log.getLevelName(), level:Log.getLevel(), file: Log.getCurrentLogFileName() } ;
+  e.body.currentEventNames             = this.broker._eventNameToSockets.getKeys() ;
   for ( i = 0 ; i < this.broker._connectionList.length ; i++ )
   {
     list = this.broker._connectionList[i]._regexpList ;
@@ -592,6 +592,7 @@ Broker.prototype._ondata = function ( socket, chunk )
           {
             if ( ! e.body.info ) e.body.info = {} ;
             e.body.info.sid = responderConnection.sid ;
+            e.body.info.applicationName = responderConnection.client_info.applicationName ;
           }
           requesterConnection.write ( e ) ;
           uid = responderConnection._getNextMessageUidToBeProcessed() ;
@@ -881,9 +882,8 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
   if ( e.getType() === "setSystemParameter" )
   {
     var sp = e.body.systemParameter ;
-    if ( ! isNaN ( sp._heartbeatIntervalMillis ) )
+    if ( sp._heartbeatIntervalMillis >= 3000 )
     {
-      e.removeValue ( "systemParameter" ) ;
       if ( this._heartbeatIntervalMillis !== sp._heartbeatIntervalMillis )
       {
         this._heartbeatIntervalMillis = sp._heartbeatIntervalMillis ;
@@ -895,6 +895,7 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
         this._send_PING_to_all() ;
       }
     }
+    e.removeValue ( "systemParameter" ) ;
     conn._sendInfoResult ( e ) ;
     return ;
   }
