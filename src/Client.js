@@ -370,7 +370,7 @@ Client.prototype.connect = function()
             TPStore.points["EVENT_IN"].log ( e ) ;
           }
         }
-        e._Client = thiz ;
+        // e._Client = thiz ;
         if ( e.isResult() )
         {
           uid = e.getUniqueId() ;
@@ -446,7 +446,7 @@ Client.prototype.connect = function()
           {
             e.setType ( "PONG" ) ;
             thiz.send ( e ) ;
-            if ( thiz._heartbeatIntervalMillis !== e.body._heartbeatIntervalMillis )
+            if ( e.body._heartbeatIntervalMillis && thiz._heartbeatIntervalMillis !== e.body._heartbeatIntervalMillis )
             {
               thiz._heartbeatIntervalMillis = e.body._heartbeatIntervalMillis ;
               if ( thiz.intervalId )
@@ -606,19 +606,25 @@ Client.prototype.isRunning = function ( callback )
   var p = {} ;
   if ( this.port  ) p.port = this.port ;
   if ( this.host  ) p.host = this.host ;
-
   try
   {
     socket = net.connect ( p ) ;
     socket.on ( 'error', function socket_on_error( data )
     {
+      socket.removeAllListeners() ;
       callback.call ( thiz, false ) ;
       socket.end() ;
     });
-    socket.on ( "connect", function()
+    socket.on ( "connect", function socket_on_connect()
     {
+      socket.removeAllListeners() ;
       callback.call ( thiz, true ) ;
       socket.end() ;
+    });
+    socket.on ( "end", function socket_on_end()
+    {
+      socket.removeAllListeners() ;
+      socket.unref() ;
     });
   }
   catch ( exc )
@@ -639,6 +645,10 @@ Client.prototype._checkHeartbeat = function()
     this.isRunning ( function test_isRunning ( isRunning )
     {
       if ( ! isRunning )
+      {
+        return ;
+      }
+      if ( thiz.socket )
       {
         return ;
       }
@@ -934,9 +944,9 @@ Client.prototype.emit = function ( params, callback, opts )
     }
     var json = e.serialize() ;
     this._stats.incrementOut ( json.length ) ;
-    this._timeStamp = new Date().getTime() ;
     s.write ( json, function()
     {
+      thiz._timeStamp = new Date().getTime() ;
       if ( ctx.write ) ctx.write.apply ( thiz, arguments ) ;
     } ) ;
   }
