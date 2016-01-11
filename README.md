@@ -122,16 +122,22 @@ node_modules/.bin/gp.admin [ --help ]
 
 The new logging features are configurable at run-time:
 
-- Client Logging into Central Log-File on Broker side by calling the method
+- Client Logging into central Log-File on Broker side by calling the method
   <br/>
   __client.log ( {object} o )__
   <br/>
+  The above {object} is converted to a user-friendly readable string, sent to the Broker which logs it to the default log-file.
+  <br/>
+  For all exception type objects an appropriate stack-trace is generated. 
+  <br/>
+
   Examples:
   * JavaScript: [gepard/xmp/XmpLog.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/XmpLog.js)
-  * Java: [gepard/java/org.gessinger/gepard/xmp/EmitterWithBody.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/XmpLog.java)
+  * Java: [gepard/java/org.gessinger/gepard/xmp/XmpLog.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/XmpLog.java)
   * Python: [gepard/python/xmp/XmpLog.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/XmpLog.py)
 
 - Logging with the concept of trace-points for Broker in/out and client in/out.
+  <br/>
   In addition to the built-in TracePoints __EVENT_IN__ and __EVENT_OUT__ on the client-side application-specific trace-points can be easily defined and used:
   <br/>
 
@@ -154,14 +160,6 @@ JavaScript:
   tracePoint.log ( "Action ended" ) ;
 ```
   <br/>
-
-
-In order to collect all log-information at one centralized place a client-application may log strings with the new method:
-into the central log-file written by the Broker.
-<br/>
-The above {object} is converted to a user-friendly readable string, sent to the Broker which logs it to the default log-file.
-<br/>
-For all exception type objects an appropriate stack-trace is generated. 
 
 ## Release 1-4-0 New Heartbeat Protocol to ensure the Availability of Connections
 

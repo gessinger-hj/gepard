@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 
-import os, sys, datetime, calendar
+import os, sys
 
 sys.path.insert ( 0, os.path.dirname(os.path.abspath(__file__) ) + "/../" )
-from gepard import Client, util
+import gepard
 
-client = Client.getInstance()
+client = gepard.Client.getInstance()
 
 client.log ( "SYSTEM LOG TEST PYTHON" )
 client.close()
-
-date = datetime.datetime.now()
-print ( util.formatDateAsRFC3339 ( date ) )
