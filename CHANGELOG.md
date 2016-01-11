@@ -1,3 +1,6 @@
+## 1.4.3 (2016-01-08)
+- Access, create and edit JSON-objects in all language flavors with the class __JSAcc__.
+
 ## 1.4.3 (2015-12-06)
 - Java, JavaScript: TracePoint concept on client side: EVENT_IN, EVENT_OUT. Configurable at runtime.
 	Trace-output optional to central log-file on the Broker side.

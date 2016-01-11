@@ -19,7 +19,7 @@ public class Listener
   throws Exception
   {
     final Client client = Client.getInstance() ;
-    final TracePoint tp = client.registerTracePoint ( "BLARM_REMOVED" ) ;
+    final TracePoint tracePoint = client.registerTracePoint ( "BLARM_REMOVED" ) ;
 
     client.onShutdown ( new InfoCallback()
     {
@@ -76,7 +76,7 @@ public class Listener
           try
           {
             client.remove ( "BLARM" ) ;
-            tp.log ( "BLARM is removed." ) ;
+            tracePoint.log ( "BLARM is removed." ) ;
           }
           catch ( Exception exc )
           {

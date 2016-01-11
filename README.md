@@ -6,8 +6,9 @@ General purpose communication and synchronization layer for distributed applicat
 
 - [Overview](#overview)
 - [What is new](#what-is-new)
+  - [Release 1-4-3 Logging](#release-1-4-3-logging)
   - [Release 1-4-0 New Heartbeat Protocol to ensure the Availability of Connections](#release-1-4-0-new-heartbeat-protocol-to-ensure-the-availability-of-connections)
-  - [Release 1-3-3 New FileContainer class for JavaScript and Java to simplify file-transfer.](#release-1-3-3-new-filecontainer-class-for-javascript-and-java-to-simplify-file-transfer)
+  - [Release 1-3-3 New FileContainer class for Python, JavaScript and Java to simplify file-transfer.](#release-1-3-3-new-filecontainer-class-for-python-javascript-and-java-to-simplify-file-transfer)
   - [Release 1-3-0 Let's talk about Python](#release-1-3-0-lets-talk-about-python)
   - [Controlling Connections and Actions with a Hook](#controlling-connections-and-actions-with-a-hook)
   - [Perfect load balanced message handling.](#perfect-load-balanced-message-handling)
@@ -117,6 +118,51 @@ node_modules/.bin/gp.admin [ --help ]
 ```
 # What is new
 
+## Release 1-4-3 Logging
+
+The new logging features are configurable at run-time:
+
+- Client Logging into Central Log-File on Broker side by calling the method
+  <br/>
+  __client.log ( {object} o )__
+  <br/>
+  Examples:
+  * JavaScript: [gepard/xmp/XmpLog.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/XmpLog.js)
+  * Java: [gepard/java/org.gessinger/gepard/xmp/EmitterWithBody.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/XmpLog.java)
+  * Python: [gepard/python/xmp/XmpLog.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/XmpLog.py)
+
+- Logging with the concept of trace-points for Broker in/out and client in/out.
+  In addition to the built-in TracePoints __EVENT_IN__ and __EVENT_OUT__ on the client-side application-specific trace-points can be easily defined and used:
+  <br/>
+
+JavaScript:
+
+```js
+  var tracePoint = client.registerTracePoint ( "MY_TRACE_POINT" ) ;
+  tracePoint.log ( "Action ended" ) ;
+```
+  Python:
+
+```python
+  tracePoint = client.registerTracePoint ( "MY_TRACE_POINT" )
+  tracePoint.log ( "Action ended" )
+```
+  Java:
+
+```java
+  TracePoint tp = client.registerTracePoint ( "MY_TRACE_POINT" ) ;
+  tracePoint.log ( "Action ended" ) ;
+```
+  <br/>
+
+
+In order to collect all log-information at one centralized place a client-application may log strings with the new method:
+into the central log-file written by the Broker.
+<br/>
+The above {object} is converted to a user-friendly readable string, sent to the Broker which logs it to the default log-file.
+<br/>
+For all exception type objects an appropriate stack-trace is generated. 
+
 ## Release 1-4-0 New Heartbeat Protocol to ensure the Availability of Connections
 
 Gepard is based on fast communication by means of always-open sockets. Therefore it is crucial to monitor these connections.
@@ -144,7 +190,7 @@ Example time-out conditions are:
 
 [Parameter, details and example](#heartbeat-and-reconnection-capability-parameterization)
 
-## Release 1-3-3 New FileContainer class for JavaScript and Java to simplify file-transfer.
+## Release 1-3-3 New FileContainer class for Python, JavaScript and Java to simplify file-transfer.
 
 An instance of the __FileContainer__ class may be inserted at any place inside the body of an Event.
 <br/>
