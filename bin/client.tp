@@ -4,7 +4,7 @@ process.env.action = "tp" ;
 var i = 2
 if ( process.argv.length > 2 )
 {
-	if ( process.argv[2].indexOf ( "--" ) === 0 )
+	if ( process.argv[i].indexOf ( "--" ) === 0 )
 	{
 		i++ ;
 	}

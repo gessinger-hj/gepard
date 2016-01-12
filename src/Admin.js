@@ -439,7 +439,6 @@ Admin.prototype.client = function ( p )
 	{
 		name = "client/info/" ;
 	}
-
 	var util = require ( "util" ) ;
 	var c = gepard.getClient() ;
 	c.setReconnect ( false ) ;
@@ -562,6 +561,10 @@ console.log ( "n=" + n ) ;
 		var info   = gepard.getProperty ( "info" ) ;
 		var action = gepard.getProperty ( "action" ) ;
 		var value  = gepard.getProperty ( "value" ) ;
+		if ( value && value.startsWith ( "--" ) )
+		{
+			value = "" ;
+		}
 		var args   = gepard.getProperty ( "args" ) ;
 		var output = gepard.getProperty ( "output" ) ;
 		this.client ( { info:info, action:action, value:value, args: args, output: output } ) ;
@@ -613,7 +616,7 @@ console.log ( "n=" + n ) ;
 		this.tracePoint ( what ) ;
 		return ;
 	}
-	what = gepard.getProperty ( "tpl" ) ;
+	what = gepard.getProperty ( "tplist" ) ;
 	if ( what )
 	{
 		what = { "list": [] } ;

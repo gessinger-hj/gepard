@@ -59,4 +59,8 @@ ConnectionHook.prototype.clientAction = function ( connection, event )
 {
   return true ;
 };
+ConnectionHook.prototype.system = function ( connection, event )
+{
+  return true ;
+};
 module.exports = ConnectionHook ;

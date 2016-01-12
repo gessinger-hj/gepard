@@ -344,7 +344,7 @@ var TPStore = TracePoints.getStore ( "broker" ) ;
 
 TPStore.add ( "EVENT_IN" ) ;
 TPStore.add ( "EVENT_OUT" ) ;
-TPStore.add ( "HEARTBEAT", true ) ;
+// TPStore.add ( "HEARTBEAT", true ) ;
 
 /**
  * @constructor
@@ -638,6 +638,36 @@ Broker.prototype.toString = function()
 {
   return "(Broker)[]" ;
 };
+Broker.prototype._setSystemParameter = function ( conn, e )
+{
+  var sp = e.body.systemParameter ;
+  if ( sp._heartbeatIntervalMillis >= 3000 )
+  {
+  if ( this._heartbeatIntervalMillis !== sp._heartbeatIntervalMillis )
+    {
+      this._heartbeatIntervalMillis = sp._heartbeatIntervalMillis ;
+      if ( this.intervallId )
+      {
+        clearInterval ( this.intervallId ) ;
+      }
+      this.intervallId = setInterval ( this._checkHeartbeat_bind, this._heartbeatIntervalMillis ) ;
+      this._send_PING_to_all() ;
+    }
+  }
+  e.removeValue ( "systemParameter" ) ;
+  conn._sendInfoResult ( e ) ;
+};
+Broker.prototype._tracePoint = function ( conn, e )
+{
+  var tracePointResult = TPStore.action ( e.body.tracePointActionList ) ;
+  e.control.status = { code:0, name:"ack" } ;
+  if ( tracePointResult )
+  {
+    e.body.tracePointStatus = tracePointResult ;
+  }
+  e.removeValue ( "tracePointActionList" ) ;
+  conn.write ( e ) ;
+};
 Broker.prototype.logMessageTemplate = "[%date-rfc3339% %HOSTNAME% %app-name% %sid%] %msg%" ;
 Broker.prototype._logMessage = function ( conn, e )
 {
@@ -865,7 +895,7 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
   }
   if ( e.getType() === "log" )
   {
-    this._logMessage ( conn, e ) ;
+    this.validateAction ( this._connectionHook.system, [ conn, e ], this, this._logMessage, [ conn, e ] ) ;
     return ;
   }
 
@@ -881,34 +911,12 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
   }
   if ( e.getType() === "setSystemParameter" )
   {
-    var sp = e.body.systemParameter ;
-    if ( sp._heartbeatIntervalMillis >= 3000 )
-    {
-      if ( this._heartbeatIntervalMillis !== sp._heartbeatIntervalMillis )
-      {
-        this._heartbeatIntervalMillis = sp._heartbeatIntervalMillis ;
-        if ( this.intervallId )
-        {
-          clearInterval ( this.intervallId ) ;
-        }
-        this.intervallId = setInterval ( this._checkHeartbeat_bind, this._heartbeatIntervalMillis ) ;
-        this._send_PING_to_all() ;
-      }
-    }
-    e.removeValue ( "systemParameter" ) ;
-    conn._sendInfoResult ( e ) ;
+    this.validateAction ( this._connectionHook.system, [ conn, e ], this, this._setSystemParameter, [ conn, e ] ) ;
     return ;
   }
   if ( e.getType() === "tracePoint" )
   {
-    var tracePointResult = TPStore.action ( e.body.tracePointActionList ) ;
-    e.control.status = { code:0, name:"ack" } ;
-    if ( tracePointResult )
-    {
-      e.body.tracePointStatus = tracePointResult ;
-    }
-    e.removeValue ( "tracePointActionList" ) ;
-    conn.write ( e ) ;
+    this.validateAction ( this._connectionHook.system, [ conn, e ], this, this._tracePoint, [ conn, e ] ) ;
     return ;
   }
   if ( e.getType() === "client_info" )
@@ -1321,10 +1329,10 @@ Broker.prototype._send_PING_to_all = function()
 };
 Broker.prototype._checkHeartbeat = function()
 {
-  if ( ! TPStore.points["HEARTBEAT"].isActive() )
-  {
-    return ;
-  }
+  // if ( ! TPStore.points["HEARTBEAT"].isActive() )
+  // {
+  //   return ;
+  // }
 
   var socketsToBeClosed = [] ;
   var socketsToBePINGed = [] ;

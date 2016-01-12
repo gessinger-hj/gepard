@@ -49,6 +49,9 @@ General purpose communication and synchronization layer for distributed applicat
   - [Broker Side](#broker-side)
   - [Client Side](#client-side)
     - [Example to test](#example-to-test)
+- [The TracePoint Concept](#the-tracepoint-concept)
+  - [TracePoints in the Broker](#tracepoints-in-the-broker)
+  - [TracePoints in the Client](#tracepoints-in-the-client)
 - [Technical Aspects of the Client](#technical-aspects-of-the-client)
 - [Found a bug? Help us fix it...](#found-a-bug-help-us-fix-it)
 - [https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md](#httpsgithubcomgessinger-hjgepardblobmasterchangelogmd)
@@ -120,8 +123,6 @@ node_modules/.bin/gp.admin [ --help ]
 
 ## Release 1-4-3 Logging
 
-The new logging features are configurable at run-time:
-
 - Client Logging into central Log-File on Broker side by calling the method
   <br/>
   __client.log ( {object} o )__
@@ -136,7 +137,15 @@ The new logging features are configurable at run-time:
   * Java: [gepard/java/org.gessinger/gepard/xmp/XmpLog.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/XmpLog.java)
   * Python: [gepard/python/xmp/XmpLog.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/XmpLog.py)
 
+  This function can be rejected by overwriting the system method in the ConnectionHook class.
+  <br/>
+  Event.getName() is 'system'
+  <br/>
+  Event.getType() is 'log'
+
 - Logging with the concept of trace-points for Broker in/out and client in/out.
+  <br/>
+  The TracePoint logging features is configurable at run-time.
   <br/>
   In addition to the built-in TracePoints __EVENT_IN__ and __EVENT_OUT__ on the client-side application-specific trace-points can be easily defined and used:
   <br/>
@@ -160,6 +169,16 @@ JavaScript:
   tracePoint.log ( "Action ended" ) ;
 ```
   <br/>
+  Each TracePoint can be activated and deactivated at runtime.
+  <br/>
+  [Details](#the-tracepoint-concept)
+  <br/>
+  This function can be rejected by overwriting the system method in the ConnectionHook class.
+  <br/>
+  Event.getName() is 'system'
+  <br/>
+  Event.getType() is 'log'
+
 
 ## Release 1-4-0 New Heartbeat Protocol to ensure the Availability of Connections
 
@@ -228,6 +247,8 @@ addEventListener ( connection, eventNameList )
 sendEvent ( connection, eventName )
 lockResource ( connection, resourceId )
 acquireSemaphore ( connection, resourceId )
+clientAction ( connection, resourceId )
+system ( connection, resourceId )
 ```
 Each of these methods must return an answer wether to allow or reject the corresponding action.
 <br/>
@@ -1358,6 +1379,139 @@ Then goto terminal one and kill the Broker either with ^C ( ctrl+C ) or with kil
 Appropriate output is visible.
 <br/>
 Then start the Broker again and all clients reconnect again. Check with gp.info that all event-listener are registered again.
+
+# The TracePoint Concept
+
+TracePoints or short __TP__ are used to monitor a data flow at specific places in an application. The combination of all traced-data
+helps to analyze and control the behaviour especially within a distributed system..
+<br/>
+It is very important to use these TracePoints immediately in a running system without changing static configuration
+and system-restart.
+<br/>
+All defined TracePoints in a Gepard-based distributed application can be switched on/off and reconfigured at runtime on behalf of the Admin programm.
+TracePoint commands are sent to the running Broker and forwarded to all or selected clients.
+
+## TracePoints in the Broker
+
+There are 2 predefined __TPs__ in the Broker. Each TP in the context of a program has a unique name to address commands to.
+<br/>
+
+1.  __EVENT_IN__
+  If this TP is switched on all incoming events are logged to the Broker's log-file.
+1.  __EVENT_OUT__
+  If this TP is switched on all outgoing events are logged to the Broker's log-file.
+
+The status of these __TPs__ can be viewed with the command: __gp.tplist__
+<br/>
+The output reads as:
+```js
+{ tracePointStatus:
+   { name: 'broker',
+     list:
+      [ { name: 'EVENT_IN', active: false },
+        { name: 'EVENT_OUT', active: false } ],
+     output: 'local' } }
+```
+Switching the __TPs__ is done with the commands:
+
+- __gp.tpon__ [ &lt;tp-name> { , &lt;tp-name> }] 
+  switch on all or given __TPs__
+- __gp.tpoff__ [ &lt;tp-name> { , &lt;tp-name> }] 
+  switch off all or given __TPs__
+- __gp.tp__
+  toggle all __TPs__
+
+In all cases the current status of the __TPs__ is shown.
+
+## TracePoints in the Client
+
+There are 2 predefined __TPs__ in each client. Each TP in the context of a program has a unique name to address commands to.
+<br/>
+
+1.  __EVENT_IN__
+  If this TP is switched on all incoming events are logged.
+1.  __EVENT_OUT__
+  If this TP is switched on all outgoing events are logged.
+
+The status of these __TPs__ can be viewed with the command: __gp.tplist__
+<br/>
+The output reads as:
+
+```js
+{ tracePointStatus:
+   { name: 'broker',
+     list:
+      [ { name: 'EVENT_IN', active: false },
+        { name: 'EVENT_OUT', active: false } ],
+     output: 'local' } }
+```
+
+Switching the __TPs__ is done with the commands:
+
+- __gp.client.tpon__ [ &lt;tp-name> { , &lt;tp-name> }] [ --output=remote|local ] [ --sid=&lt;sid-of-specific-client> ]
+  <br/>
+  switch on all or given TPs
+  <br/>
+  optional: direct output to local or remote to the Broker.
+- __gp.client.tpoff__ [ &lt;tp-name> { , &lt;tp-name> }]  [ --output=remote|local ] [ --sid=&lt;sid-of-specific-client> ]
+  <br/>
+  switch off all or given TPs
+  <br/>
+  optional: direct output to local or remote to the Broker.
+- __gp.client.tp__  [ --output=remote|local ] [ --sid=&lt;sid-of-specific-client> ]
+  <br/>
+  toggle all TPs
+  <br/>
+  optional: direct output to local or remote to the Broker.
+
+In all cases the current status of the __TPs__ is shown.
+
+Examples with 2 clients:
+- __gp.client.tplist__
+
+```js
+{ tracePointStatus:
+   { name: 'client',
+     list:
+      [ { name: 'EVENT_IN', active: false },
+        { name: 'EVENT_OUT', active: false },
+     output: 'local' },
+  sid: '::ffff:127.0.0.1_44109_1452621748330',
+  applicationName: 'Listener' }
+{ tracePointStatus:
+   { name: 'client',
+     list:
+      [ { name: 'EVENT_IN', state: false },
+        { name: 'EVENT_OUT', state: false } ],
+     output: 'local' },
+  sid: '::ffff:127.0.0.1_44246_1452621873697',
+  applicationName: 'org.gessinger.gepard.xmp.Listener' }
+```
+- __gp.client.tplist --sid=::ffff:127.0.0.1_44246_1452621873697__
+
+```js
+{ tracePointStatus:
+   { name: 'client',
+     list:
+      [ { name: 'EVENT_IN', state: false },
+        { name: 'EVENT_OUT', state: false } ],
+     output: 'local' },
+  sid: '::ffff:127.0.0.1_44246_1452621873697',
+  applicationName: 'org.gessinger.gepard.xmp.Listener' }
+```
+
+- __gp.client.tp --sid=::ffff:127.0.0.1_44246_1452621873697 --output=remote__
+
+```js
+{ tracePointStatus:
+   { name: 'client',
+     list:
+      [ { name: 'EVENT_IN', state: true },
+        { name: 'EVENT_OUT', state: true } ],
+     output: 'remote' },
+  sid: '::ffff:127.0.0.1_44246_1452621873697',
+  applicationName: 'org.gessinger.gepard.xmp.Listener' }
+```
 
 # Technical Aspects of the Client
 
