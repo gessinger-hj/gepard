@@ -9,7 +9,6 @@ if ( require.main === module )
       "Gepard example: Semaphore, acquire a given semaphore.\n"
     + "Usage: node Semaphore [options]\n"
     + "  Options are: -Dname=<semaphore-name>, default <semaphore-name>=user:4711\n"
-    + "               -Dname=<auto>, release semaphore imediately after aquiring ownership owner.\n"
     ) ;
     process.exit() ;
   }
@@ -25,13 +24,13 @@ if ( require.main === module )
   function execute()
   {
     var key = gepard.getProperty ( "name", "user:4711" ) ;
-    var auto = gepard.getProperty ( "auto" ) ;
     var sem = new gepard.Semaphore ( key ) ;
     console.log ( "Aquiring semaphor=" + key ) ;
     sem.acquire ( function ( err )
     {
       console.log ( this.toString() ) ;
       console.log ( "Is owner: " + this.isOwner() ) ;
+      console.log ( "sleep for 10 seconds" ) ;
       setTimeout ( function sleep ()
       {
         sem.release() ;

@@ -1015,9 +1015,12 @@ class Client:
 			if sem._Timer != None:
 				sem._Timer.cancel()
 				sem._Timer = None
-			body = e.getBody()
-			resourceId = body.get ( "resourceId" )
-			sem._isSemaphoreOwner = body.get ( "isSemaphoreOwner" )
+			if e != None:
+				body = e.getBody()
+				resourceId = body.get ( "resourceId" )
+				sem._isSemaphoreOwner = body.get ( "isSemaphoreOwner" )
+			else:
+				sem._isSemaphoreOwner = False
 
 	def releaseSemaphore ( self, sem ):
 		if sem.resourceId not in self._semaphores:
@@ -1405,6 +1408,14 @@ class util ( object ):
 		sign     = (tzoffset < 0 and '+') or '-'
 		rfc3339  = sdate + '%c%02d:%02d' % (sign, hours, minutes)
 		return rfc3339
+
+	@classmethod
+	def exitWithSIGINT ( clazz ):
+		import signal
+		def signal_handler(signal, frame):
+			# print('You pressed Ctrl+C!')
+			os._exit(0)
+		signal.signal(signal.SIGINT, signal_handler)
 
 class FileContainer(object):
 	"""docstring for FileContainer"""

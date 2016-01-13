@@ -2,12 +2,12 @@
 
 import os, sys
 sys.path.insert ( 0, os.path.dirname(os.path.abspath(__file__) ) + "/../" )
-from gepard import Client, Semaphore
+import gepard
 import time
 
 # ==========================================================================
 
-client = Client.getInstance()
+client = gepard.Client.getInstance()
 
 def on_error ( err, info ):
 	print ( err )
@@ -26,5 +26,6 @@ def on_acquired(sem):
 print ( "Acquire semaphore=" + name )
 print ( "  asynchronous mode" )
 
-sem = Semaphore ( name )
+sem = gepard.Semaphore ( name )
 sem.acquire ( on_acquired )
+gepard.util.exitWithSIGINT()

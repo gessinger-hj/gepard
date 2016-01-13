@@ -3,9 +3,9 @@
 import os, sys
 sys.path.insert ( 0, os.path.dirname(os.path.abspath(__file__) ) + "/../" )
 
-from gepard import Event, Client
+import gepard
 
-client = Client.getInstance()
+client = gepard.Client.getInstance()
 # client.setDaemon ( True )
 def on_close ( err, info ):
 	print ( err )
@@ -30,3 +30,4 @@ def on_getFileList ( event ):
 
 client.on ( "getFileList", on_getFileList )
 
+gepard.util.exitWithSIGINT()

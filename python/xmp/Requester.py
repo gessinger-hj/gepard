@@ -27,10 +27,5 @@ def getFileList ( e ):
 		print ( e.getValue ( "file_list" ) )
 	e.getClient().close()
 
-# Using a name only
 client.request ( "getFileList", getFileList )
-
-# Using an Event for possibel additional data
-# event = Event ( "getFileList" )
-# client.request ( event, getFileList )
 

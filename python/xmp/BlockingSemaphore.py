@@ -5,11 +5,11 @@ sys.path.insert ( 0, os.path.dirname(os.path.abspath(__file__) ) + "/../" )
 
 import time
 sys.path.insert(0,"../")
-from gepard import Client, Semaphore
+import gepard
 
 # ==========================================================================
 
-client = Client.getInstance()
+client = gepard.Client.getInstance()
 
 def on_error ( err, info ):
 	print ( err )
@@ -21,7 +21,8 @@ name = "user:4711"
 print ( "Acquire semaphore=" + name )
 print ( "  blocking mode" )
 
-sem = Semaphore ( name, client )
+gepard.util.exitWithSIGINT()
+sem = gepard.Semaphore ( name, client )
 
 print ( "  acquire with timeout=5" )
 sem.acquire ( 5 )

@@ -58,11 +58,11 @@ if ( require.main === module )
 		});
 		c.on('disconnect', function()
 		{
-			console.log('disconnect');
+			console.log('disconnect: connection closed because heart-beat is missing' );
 		});
 		c.on('reconnect', function()
 		{
-			console.log('reconnect');
+			console.log('reconnect: connection re-established');
 		});
 		c.onActionInfo ( function ( cl, info )
 		{
@@ -70,7 +70,16 @@ if ( require.main === module )
 		});
 		c.onActionCmd ( function ( cl, cmd )
 		{
-			cmd.setResult ( "I don't " + cmd.cmd + "!!")
+			var args = cmd.getArgs() ;
+			if ( cmd.getCmd() === 'kill' )
+			{
+				cmd.setResult ( "done") ;
+				cl.end() ;
+			}
+			else
+			{
+				cmd.setResult ( "I don't " + cmd.cmd + "!!")
+			}
 		});
 	}
 }

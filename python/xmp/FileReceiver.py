@@ -35,4 +35,4 @@ def on___FILE__ ( e ):
 		print ( e )
 
 client.on ( "__FILE__", on___FILE__ )
-
+gepard.util.exitWithSIGINT()

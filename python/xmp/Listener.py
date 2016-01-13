@@ -50,5 +50,7 @@ def on_ABLARM ( event ):
 
 print ( "Listening for ALARM and BLARM" )
 client.on ( ["ALARM", "BLARM"], on_ABLARM )
+
+gepard.util.exitWithSIGINT()
 time.sleep(int('0x7FFFFFFF',16))
 

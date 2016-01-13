@@ -262,7 +262,7 @@ public class Event
   }
   public String getStatusReason()
   {
-    return (String) cjsa().value ( "status/reson", "" ) ;
+    return (String) cjsa().value ( "status/reason", "" ) ;
   }
   public String getStatusName()
   {

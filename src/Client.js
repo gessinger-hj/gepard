@@ -560,6 +560,7 @@ Client.prototype.connect = function()
             {
               if ( e.isResultRequested() )
               {
+                e._Client = thiz ;
                 callbackList[k].call ( thiz, e ) ;
                 break ;
               }
@@ -579,6 +580,7 @@ Client.prototype.connect = function()
               found = true ;
               if ( e.isResultRequested() )
               {
+                e._Client = thiz ;
                 thiz.listenerFunctionsList[k].call ( thiz, e ) ;
                 break ;
               }
@@ -1463,6 +1465,10 @@ ActionCmd.prototype =
   {
     this.result = text ;
   },
+  getCmd: function()
+  {
+    return this.cmd ;
+  },
   getArgs: function()
   {
     return this.parameter.args ;
@@ -1496,7 +1502,8 @@ Client.prototype._handleSystemClientMessages = function ( e )
             var ai = new ActionInfo() ;
             ai.parameter = e.body.parameter ;
             al.push ( ai ) ;
-            cl[i].call ( this, ai ) ;
+            cl[i].call ( this, this, ai ) ;
+            delete ai["parameter"] ;
           }
         }
       }
@@ -1512,7 +1519,8 @@ Client.prototype._handleSystemClientMessages = function ( e )
             var ai = new ActionCmd ( e.body.parameter.cmd ) ;
             ai.parameter = e.body.parameter ;
             al.push ( ai ) ;
-            cl[i].call ( this, ai ) ;
+            cl[i].call ( this, this, ai ) ;
+            delete ai["parameter"] ;
           }
         }
       }

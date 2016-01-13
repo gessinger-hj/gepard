@@ -407,7 +407,7 @@ var Broker = function ( port, ip )
   });
   var ee = new Event() ;
   ee.addClassNameToConstructor ( "FileContainer", FileContainer ) ;
-  this._heartbeatIntervalMillis = 180000 ;
+  this._heartbeatIntervalMillis = 30000 ;
   this._heartbeatIntervalMillis = T.getInt ( "gepard.heartbeat.millis", this._heartbeatIntervalMillis ) ;
 
   this.brokerVersion = 1 ;
@@ -571,60 +571,76 @@ Broker.prototype._ondata = function ( socket, chunk )
         TPStore.points["EVENT_IN"].log ( e ) ;
       }
 
-      if ( ! e.body )
+      try
       {
-        this._ejectSocket ( socket ) ;
-        continue ;
-      }
-      if ( e.isResult() )
-      {
-        responderConnection = conn ;
-        responderConnection._numberOfPendingRequests-- ;
-        sid                 = e.getSourceIdentifier() ;
-        uid                 = e.getUniqueId() ;
-        requesterConnection = this._connections[sid] ;
-
-        delete this._messagesToBeProcessed[uid] ;
-        responderConnection._setCurrentlyProcessedMessageUid ( "" ) ;
-        if ( requesterConnection )
+        if ( ! e.body )
         {
-          if ( e.getName() === "system" && e.getType().startsWith ( "client/" ) )
-          {
-            if ( ! e.body.info ) e.body.info = {} ;
-            e.body.info.sid = responderConnection.sid ;
-            e.body.info.applicationName = responderConnection.client_info.applicationName ;
-          }
-          requesterConnection.write ( e ) ;
-          uid = responderConnection._getNextMessageUidToBeProcessed() ;
-          if ( uid )
-          {
-            for ( i = 0 ; i < this._connectionList.length  ; i++ )
-            {
-              this._connectionList[i]._messageUidsToBeProcessed.remove ( uid ) ;
-            }
-            e  = this._messagesToBeProcessed[uid] ;
-            responderConnection.write ( e ) ;
-            responderConnection._numberOfPendingRequests++ ;
-            responderConnection._setCurrentlyProcessedMessageUid ( uid ) ;
-          }
-        }
-        else
-        {
-          Log.log ( "Requester not found for result:\n" + e.toString() ) ;
-        }
-        continue ;
-      }
-      if ( e.getName() === 'system' )
-      {
-        if ( e.getType().indexOf ( "client/" ) === 0 )
-        {
-          this.validateAction ( this._connectionHook.clientAction, [ conn, e ], this, this._handleSystemClientMessages, [ conn, e ] ) ;
+          this._ejectSocket ( socket ) ;
           continue ;
         }
-        this._handleSystemMessages ( conn, e ) ;
-        continue ;
+        if ( e.isResult() )
+        {
+          responderConnection = conn ;
+          responderConnection._numberOfPendingRequests-- ;
+          sid                 = e.getSourceIdentifier() ;
+          uid                 = e.getUniqueId() ;
+          requesterConnection = this._connections[sid] ;
+
+          delete this._messagesToBeProcessed[uid] ;
+          responderConnection._setCurrentlyProcessedMessageUid ( "" ) ;
+          if ( requesterConnection )
+          {
+            if ( e.getName() === "system" && e.getType().startsWith ( "client/" ) )
+            {
+              if ( ! e.body.info ) e.body.info = {} ;
+              try
+              {
+                e.body.info.sid = responderConnection.sid ;
+                e.body.info.applicationName = responderConnection.client_info.applicationName ;
+              }
+              catch ( exc )
+              {
+                Log.log ( exc ) ;
+                socket.end() ;
+              }
+            }
+            requesterConnection.write ( e ) ;
+            uid = responderConnection._getNextMessageUidToBeProcessed() ;
+            if ( uid )
+            {
+              for ( i = 0 ; i < this._connectionList.length  ; i++ )
+              {
+                this._connectionList[i]._messageUidsToBeProcessed.remove ( uid ) ;
+              }
+              e  = this._messagesToBeProcessed[uid] ;
+              responderConnection.write ( e ) ;
+              responderConnection._numberOfPendingRequests++ ;
+              responderConnection._setCurrentlyProcessedMessageUid ( uid ) ;
+            }
+          }
+          else
+          {
+            Log.log ( "Requester not found for result:\n" + e.toString() ) ;
+          }
+          continue ;
+        }
+        if ( e.getName() === 'system' )
+        {
+          if ( e.getType().indexOf ( "client/" ) === 0 )
+          {
+            this.validateAction ( this._connectionHook.clientAction, [ conn, e ], this, this._handleSystemClientMessages, [ conn, e ] ) ;
+            continue ;
+          }
+          this._handleSystemMessages ( conn, e ) ;
+          continue ;
+        }
+        this.validateAction ( this._connectionHook.sendEvent, [ conn, e ], this, this._sendEventToClients, [ conn, e ] ) ;
       }
-      this.validateAction ( this._connectionHook.sendEvent, [ conn, e ], this, this._sendEventToClients, [ conn, e ] ) ;
+      catch ( exc )
+      {
+        Log.log ( exc ) ;
+        socket.end() ;
+      }
     }
   }
 };

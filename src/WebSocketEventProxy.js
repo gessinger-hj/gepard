@@ -85,7 +85,10 @@ WebSocketEventProxy.prototype.generalEventListenerFunction = function ( e )
 		for ( i = 0 ; i < list.length ; i++ )
 		{
 			conn = list[i] ;
-			conn.socket.sendText ( se ) ;
+			if ( conn.socket.key !== e.getProxyIdentifier() )
+			{
+				conn.socket.sendText ( se ) ;
+			}
 	    // if ( e.isResultRequested() ) TODO for request / result
 	    // {
 	    //   break ;
@@ -119,9 +122,17 @@ WebSocketEventProxy.prototype._create = function()
 		var index = 0 ;
 
 		Log.info ( 'web connects' ) ;
+		var e ;
 		socket.on ( "text", function ( message )
 		{
-			var e = Event.prototype.deserialize ( message ) ;
+			try
+			{
+				e = Event.prototype.deserialize ( message ) ;
+			}
+			catch ( exc )
+			{
+				Log.log ( exc ) ;
+			}
 			e.setProxyIdentifier ( socket.key ) ;
 			var conn = thiz._sockets[this.key] ;
 			if ( ! conn )
@@ -135,12 +146,12 @@ WebSocketEventProxy.prototype._create = function()
 				{
 					// thiz.client.removeAllListeners() ;
 				  thiz.client = null ;
-					Log.notice ( 'gepard connection closed.' ) ;
+					Log.info ( 'gepard connection closed.' ) ;
 				});
 				thiz.client.on ( 'shutdown', function()
 				{
 					// thiz.client.removeAllListeners() ;
-					Log.notice ( 'gepard shutdown.' ) ;
+					Log.info ( 'gepard shutdown.' ) ;
 					thiz.closeAllWebsockets() ;
 				});
 			}
@@ -280,14 +291,17 @@ WebSocketEventProxy.prototype.handleSystemMessages = function ( conn, e )
 	    Log.error ( "eventNameList must not be empty." ) ; return ;
 	  }
 		var currentKeys = this._eventNameToSocketContext.getKeys() ;
-		for ( i = 0 ; i < eventNameList.length ; i++ )
+		if ( conn.eventNameList )
 		{
-	  	index = conn.eventNameList.indexOf ( eventNameList[i] ) ;
-	  	if ( index >= 0 )
-	  	{
-        conn.eventNameList.splice ( index, 1 ) ;
-				this._eventNameToSocketContext.remove ( eventNameList[i], conn ) ;
-	  	}
+			for ( i = 0 ; i < eventNameList.length ; i++ )
+			{
+		  	index = conn.eventNameList.indexOf ( eventNameList[i] ) ;
+		  	if ( index >= 0 )
+		  	{
+	        conn.eventNameList.splice ( index, 1 ) ;
+					this._eventNameToSocketContext.remove ( eventNameList[i], conn ) ;
+		  	}
+			}
 		}
 	  var eventNamesToBeRemoved = [] ;
 		for ( i = 0 ; i < currentKeys.length ; i++ )
@@ -352,7 +366,7 @@ WebSocketEventProxy.prototype.listen = function ( port )
  */
 WebSocketEventProxy.prototype.listenSocketBound = function()
 {
-	Log.notice ( "WebSocketEventProxy bound to port=" + this.port ) ;
+	Log.info ( "WebSocketEventProxy bound to port=" + this.port ) ;
 };
 WebSocketEventProxy.prototype.shutdown = function()
 {

@@ -118,7 +118,7 @@ gepard.WebClient.prototype._connect = function()
       if ( m.charAt ( 0 ) === '{' )
       {
         var e = gepard.deserialize ( m ) ;
-        e._Client = thiz ;
+        // e._Client = thiz ;
         var wid = e.getWebIdentifier() ;
         if ( e.isResult() )
         {
@@ -215,7 +215,16 @@ gepard.WebClient.prototype._connect = function()
           }
           for  ( j = 0 ; j < callbackList.length ; j++ )
           {
-            callbackList[j].call ( thiz, e ) ;
+            if ( e.isResultRequested() )
+            {
+              e._Client = thiz ;
+              callbackList[j].call ( thiz, e ) ;
+              break ;
+            }
+            else
+            {
+              callbackList[j].call ( thiz, e ) ;
+            }
           }
         }
       }

@@ -28,4 +28,12 @@ XmpConnectionHook.prototype.shutdown = function ( connection )
   });
   return p ;
 };
+ConnectionHook.prototype.clientAction = function ( connection, event )
+{
+  if ( !connection.isLocalHost() )
+  {
+    return false ;
+  }
+  return true ;
+};
 module.exports = XmpConnectionHook ;
