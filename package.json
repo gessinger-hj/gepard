@@ -49,8 +49,6 @@
     , "gepard/gp.sem"            : "./xmp/AsyncSemaphore.js"
     , "gepard/gp.listen"         : "./xmp/Listener.js"
     , "gepard/gp.lock"           : "./xmp/Locker.js"
-    , "gp.client.action.info"    : "./bin/client.action.info"
-    , "gp.client.execute"        : "./bin/client.execute"
     , "gp.client.tp"             : "./bin/client.tp"
     , "gp.client.tplist"         : "./bin/client.tplist"
     , "gp.client.tpoff"          : "./bin/client.tpoff"
@@ -58,5 +56,6 @@
     , "gp.tplist"                : "./bin/tplist"
     , "gp.tpoff"                 : "./bin/tpoff"
     , "gp.tpon"                  : "./bin/tpon"
+    , "gp.tp"                  : "./bin/tp"
     }
 }
