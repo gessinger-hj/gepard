@@ -171,9 +171,9 @@ JavaScript:
   <br/>
   Each TracePoint can be activated and deactivated at runtime.
   <br/>
-  [Details](#the-tracepoint-concept)
+[Details](#the-tracepoint-concept)
   <br/>
-  This function can be rejected by overwriting the system method in the ConnectionHook class.
+  This function can be rejected by overwriting the __system() method__ in the ConnectionHook class.
   <br/>
   Event.getName() is 'system'
   <br/>

@@ -274,7 +274,7 @@ Connection.prototype._addEventListener = function ( e )
     else
     {
       this._patternList.push ( str ) ;
-      str = str.replace ( /\./g, "\\." ).replace ( /\*/g, ".*" ) ;
+      str = str.replace ( /\./g, "\\." ).replace ( /\*/g, ".*" ) ; //TODO
       regexp = new RegExp ( str ) ;
       this._regexpList.push ( regexp ) ;
     }

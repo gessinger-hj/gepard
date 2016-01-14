@@ -85,14 +85,10 @@ WebSocketEventProxy.prototype.generalEventListenerFunction = function ( e )
 		for ( i = 0 ; i < list.length ; i++ )
 		{
 			conn = list[i] ;
-			if ( conn.socket.key !== e.getProxyIdentifier() )
+			if ( conn.socket.key !== e.getProxyIdentifier() ) // TODO
 			{
 				conn.socket.sendText ( se ) ;
 			}
-	    // if ( e.isResultRequested() ) TODO for request / result
-	    // {
-	    //   break ;
-	    // }
 		}
 	}
 };

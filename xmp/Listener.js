@@ -9,7 +9,7 @@ if ( require.main === module )
 		console.log (
 			"Gepard Examples: Listener, listen to a given event.\n"
 		+ "Usage: node Listener [Options]\n"
-		+ "Options: -Dname=<event-name>, default <event-name>=ALARM\n"
+		+ "Options: -Dname=<event-name>, default <event-name>=ALARM,BLARM\n"
 		) ;
 		process.exit() ;
 	}
@@ -25,11 +25,12 @@ if ( require.main === module )
 	});
 	function execute()
 	{
-		var name =
-		[
-			"ALARM"
-		, "BLARM"
-		] ;
+		var name = gepard.getProperty ( "name" ) ;
+		if ( ! name )
+		{
+			name = "ALARM,BLARM" ;
+		}
+		name = name.split ( ',' ) ;
 		var c = gepard.getClient() ;
 		c.setReconnect ( true ) ; // Reconnection requested
 		var tracePoint = c.registerTracePoint ( "BLARM_REMOVED" ) ;

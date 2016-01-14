@@ -1,6 +1,7 @@
 package org.gessinger.gepard ;
 
 import java.util.* ;
+import java.util.regex.* ;
 import java.io.* ;
 import java.net.* ;
 import java.util.logging.* ;
@@ -68,10 +69,33 @@ public class Client
 	int numberOfCallbackWorker     = 3 ;
 	boolean callbackWorkerCreated  = false ;
 
+	class PatternContext
+	{
+		String originalEventName ;
+		Pattern p ;
+		Matcher m ;
+		EventListener el ;
+		PatternContext ( String eventName, EventListener el )
+		{
+			this.originalEventName = eventName ;
+			p = Pattern.compile ( eventName ) ;
+			m = p.matcher ( "aaa" ) ;
+			this.el = el ;
+		}
+		boolean matches ( String t )
+		{
+			m.reset ( t ) ;
+			return m.matches() ;
+		}
+	}
+
 	MultiMap<String,EventListener> eventListenerFunctions = new MultiMap<String,EventListener>() ;
 	Hashtable<String,EventCallback> callbacks             = new Hashtable<String,EventCallback>() ;
 	ArrayList<ActionInfoCallback> actionInfoCallbackList  = new ArrayList<ActionInfoCallback>() ;
 	ArrayList<ActionCmdCallback> actionCmdCallbackList    = new ArrayList<ActionCmdCallback>() ;
+
+	ArrayList<PatternContext> patternContextList = new ArrayList<PatternContext>() ;
+
 	public void onActionInfo ( ActionInfoCallback cb ) { actionInfoCallbackList.add ( cb ) ; };
 	public void onActionCmd ( ActionCmdCallback cb ) { actionCmdCallbackList.add ( cb ) ; } ;
 
@@ -556,7 +580,19 @@ public class Client
     		{
     			throw new IOException ( "Client.on(): eventName must not be 'system'" ) ;
     		}
-		    eventListenerFunctions.put ( name, el ) ;
+    		if ( name.indexOf ( '*') >= 0 )
+    		{
+    			String nuname = name ;
+	    		if ( name.indexOf ( ".*" ) < 0 )
+	    		{
+	    			nuname = nuname.replaceAll ( "\\.", "\\\\." ).replaceAll ( "\\*", ".*" ) ;
+	    		}
+	    		patternContextList.add ( new PatternContext ( nuname, el ) ) ;
+    		}
+    		else
+    		{
+			    eventListenerFunctions.put ( name, el ) ;
+    		}
     	}
     }
     _send ( e ) ;
@@ -741,6 +777,22 @@ public class Client
 						finally
 						{
 							clonedList.clear() ;
+						}
+					}
+					for ( PatternContext pc : patternContextList )
+					{
+						if ( pc.matches ( e.getName() ) )
+						{
+							if ( e.isResultRequested() )
+							{
+								toBeSentBack.put ( e.getUniqueId(), e ) ;
+								pc.el.event ( e ) ;
+								break ;
+							}
+							else
+							{
+								pc.el.event ( e ) ;
+							}
 						}
 					}
   			}

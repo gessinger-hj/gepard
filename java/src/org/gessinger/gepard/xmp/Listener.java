@@ -65,9 +65,14 @@ public class Listener
         cmd.setResult ( "I don't " + cmd.getCmd() + "!!" ) ;
       }
     });
-    String[] name = new String[] { "ALARM", "BLARM" } ;
-    System.out.println ( "Listen for events with name=ALARM,BLARM" ) ;
-    client.on ( name, new EventListener()
+    String name = Util.getProperty ( "name" ) ;
+    if ( name == null )
+    {
+      name = "ALARM,BLARM" ;
+    }
+    String[] nameArray = name.split ( "," ) ;
+    System.out.println ( "Listen for events with name=" + name ) ;
+    client.on ( nameArray, new EventListener()
     {
       public void event ( Event e )
       {
