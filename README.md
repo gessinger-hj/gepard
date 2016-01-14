@@ -1565,7 +1565,7 @@ https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md
 * High performance
 * Minimal configuration with
   - __GEPARD_PORT__
-	- __GEPARD_HOST__
+  - __GEPARD_HOST__
 * All JavaScript client features like event listener, event emitter, semaphores, locks and messages
 	are available in any web-browser apps.
 * All client features are also available for Java and Python
