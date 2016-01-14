@@ -1433,7 +1433,7 @@ There are 2 predefined __TPs__ in each client. Each TP in the context of a progr
 1.  __EVENT_OUT__
   If this TP is switched on all outgoing events are logged.
 
-The status of these __TPs__ can be viewed with the command: __gp.tplist__
+The status of these __TPs__ can be viewed with the command: __gp.client.tplist__
 <br/>
 The output reads as:
 
