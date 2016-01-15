@@ -39,7 +39,7 @@ if ( require.main === module )
 			console.log ( "reconnect/" + e.body.eventNameList ) ;
 		});
 		console.log ( "Listen for events with name=" + name ) ;
-		c.on ( name, function(e)
+		var func = function(e)
 		{
 			if ( e.getName() === "BLARM" )
 			{
@@ -47,7 +47,9 @@ if ( require.main === module )
 				tracePoint.log ( "BLARM is removed." ) ;
 			}
 			console.log ( e ) ;
-		});
+		};
+		c.on ( name, func ) ;
+
 		c.on('end', function()
 		{
 			console.log('socket disconnected');
@@ -65,22 +67,24 @@ if ( require.main === module )
 		{
 			console.log('reconnect: connection re-established');
 		});
-		c.onActionInfo ( function ( cl, info )
+		// c.onActionInfo ( function ( cl, info )
+		// {
+		// 	info.add ( "kill", "Shut down this client." ) ;
+		// });
+		c.onAction ( "kill", function ( cl, cmd )
 		{
-			info.add ( "kill", "Shut down this client." ) ;
+			cmd.setResult ( "done") ;
+			cl.end() ;
 		});
-		c.onActionCmd ( function ( cl, cmd )
+		c.onAction ( "rmname", function ( cl, cmd )
 		{
-			var args = cmd.getArgs() ;
-			if ( cmd.getCmd() === 'kill' )
-			{
-				cmd.setResult ( "done") ;
-				cl.end() ;
-			}
-			else
-			{
-				cmd.setResult ( "I don't " + cmd.cmd + "!!")
-			}
+			cmd.setResult ( "done") ;
+			cl.remove ( name ) ;
+		});
+		c.onAction ( "rmfunc", function ( cl, cmd )
+		{
+			cmd.setResult ( "done") ;
+			cl.remove ( func ) ;
 		});
 	}
 }

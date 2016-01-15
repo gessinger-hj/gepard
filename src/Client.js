@@ -111,15 +111,15 @@ var Client = function ( port, host )
   {
     this.USERNAME = "guest" ;
   }
-  this.user                         = new User ( this.USERNAME ) ;
-  this._timeStamp                   = 0 ;
-  this._heartbeatIntervalMillis     = 10000 ;
-  this._reconnectIntervalMillis     = 5000 ;
-  this._reconnect                   = T.getBool ( "gepard.reconnect", false ) ;
-  this.version                      = 1 ;
-  this.brokerVersion                = 0 ;
-  this.nameToDirectCallbackListener = new MultiHash() ;
-  TPStore.remoteTracer              = this.log.bind ( this ) ;
+  this.user                     = new User ( this.USERNAME ) ;
+  this._timeStamp               = 0 ;
+  this._heartbeatIntervalMillis = 10000 ;
+  this._reconnectIntervalMillis = 5000 ;
+  this._reconnect               = T.getBool ( "gepard.reconnect", false ) ;
+  this.version                  = 1 ;
+  this.brokerVersion            = 0 ;
+  this.nameToActionCallback     = new MultiHash() ;
+  TPStore.remoteTracer          = this.log.bind ( this ) ;
 } ;
 util.inherits ( Client, EventEmitter ) ;
 Client.prototype.toString = function()
@@ -1105,8 +1105,19 @@ Client.prototype.on = function ( eventName, callback )
   }
   this.addEventListener ( eventName, callback ) ;
 };
-Client.prototype.onActionInfo = function ( callback ) { this.nameToDirectCallbackListener.put ( "action-info", callback ) ; };
-Client.prototype.onActionCmd = function ( callback ) {this.nameToDirectCallbackListener.put ( "action-execute", callback ) ; };
+Client.prototype.onAction = function ( cmd, desc, callback )
+{
+  if ( typeof desc === 'function' )
+  {
+    callback = desc ;
+    desc = null ;
+  }
+  if ( !desc )
+  {
+    desc = cmd ;
+  }
+  this.nameToActionCallback.put ( cmd, { cmd:cmd, desc:desc, callback:callback } ) ;
+};
 /**
  * Description
  * @method remove
@@ -1425,34 +1436,6 @@ Client.prototype.getTracePoint = function ( name )
 {
   return TPStore.points[name] ;
 };
-/**
- * Action info populated by a client
- *
- * @class
- */
-ActionInfo = function ()
-{
-  this.list = [] ;
-  this.parameter = {} ;
-};
-ActionInfo.prototype =
-{
-  /**
-   * add
-   *
-   * @method     add
-   * @param      {string}  cmd     valid command
-   * @param      {string}  desc    description
-   */
-  add: function ( cmd, desc )
-  {
-    this.list.push ( { cmd: cmd, desc: desc } ) ;
-  },
-  getArgs: function()
-  {
-    return this.parameter.args ;
-  }
-};
 ActionCmd = function ( cmd )
 {
   this.cmd = cmd ;
@@ -1476,10 +1459,11 @@ ActionCmd.prototype =
 };
 Client.prototype._handleSystemClientMessages = function ( e )
 {
+console.log ( e ) ;
   try
   {
     var info = e.body.info = {} ;
-    var i ;
+    var i, j, ctx, list, ai, al ;
     if ( e.getType().startsWith ( "client/action/" ) )
     {
       if ( e.body.parameter.actionName === "tp" )
@@ -1493,33 +1477,48 @@ Client.prototype._handleSystemClientMessages = function ( e )
       else
       if ( e.body.parameter.actionName === "info" )
       {
-        var cl = this.nameToDirectCallbackListener.get ( "action-info" ) ;
-        if ( cl )
+        var keys = this.nameToActionCallback.getKeys() ;
+        if ( ! keys.length )
         {
-          var al = info.actionInfo = [] ;
-          for ( i = 0 ; i < cl.length ; i++ )
+          e.control.status = { code:1, name:"error", reason:"no actions available" } ;
+          e.setIsResult() ;
+          this.send ( e ) ;
+          return ;
+        }
+        else
+        {
+          al = info.actionInfo = [] ;
+          for ( i = 0 ; i < keys.length ; i++ )
           {
-            var ai = new ActionInfo() ;
-            ai.parameter = e.body.parameter ;
-            al.push ( ai ) ;
-            cl[i].call ( this, this, ai ) ;
-            delete ai["parameter"] ;
+            list = this.nameToActionCallback.get ( keys[i] ) ;
+            for ( j = 0 ; j < list.length ; j++ )
+            {
+              ctx = list[j] ;
+              al.push ( { cmd:ctx.cmd, desc:ctx.desc } ) ;
+            }
           }
         }
       }
       else
       if ( e.body.parameter.actionName === "execute" )
       {
-        var cl = this.nameToDirectCallbackListener.get ( "action-execute" ) ;
-        if ( cl )
+        var list = this.nameToActionCallback.get ( e.body.parameter.cmd ) ;
+        if ( ! list )
         {
-          var al = info.actionResult = [] ;
-          for ( i = 0 ; i < cl.length ; i++ )
+          e.control.status = { code:1, name:"error", reason:"no actions available for cmd=" + e.body.parameter.cmd } ;
+          e.setIsResult() ;
+          this.send ( e ) ;
+          return ;
+        }
+        else
+        {
+          al = info.actionResult = [] ;
+          for ( i = 0 ; i < list.length ; i++ )
           {
             var ai = new ActionCmd ( e.body.parameter.cmd ) ;
             ai.parameter = e.body.parameter ;
             al.push ( ai ) ;
-            cl[i].call ( this, this, ai ) ;
+            list[i].callback.call ( this, this, ai ) ;
             delete ai["parameter"] ;
           }
         }

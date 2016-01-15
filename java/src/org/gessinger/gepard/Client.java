@@ -78,6 +78,7 @@ public class Client
 		PatternContext ( String eventName, EventListener el )
 		{
 			this.originalEventName = eventName ;
+ 			eventName = eventName.replaceAll ( "\\.", "\\\\." ).replaceAll ( "\\*", ".*" ) ;
 			p = Pattern.compile ( eventName ) ;
 			m = p.matcher ( "aaa" ) ;
 			this.el = el ;
@@ -91,14 +92,30 @@ public class Client
 
 	MultiMap<String,EventListener> eventListenerFunctions = new MultiMap<String,EventListener>() ;
 	Hashtable<String,EventCallback> callbacks             = new Hashtable<String,EventCallback>() ;
-	ArrayList<ActionInfoCallback> actionInfoCallbackList  = new ArrayList<ActionInfoCallback>() ;
-	ArrayList<ActionCmdCallback> actionCmdCallbackList    = new ArrayList<ActionCmdCallback>() ;
+	MultiMap<String,ActionCmdCtx> nameToActionCallback    = new MultiMap<String,ActionCmdCtx>() ;
 
 	ArrayList<PatternContext> patternContextList = new ArrayList<PatternContext>() ;
 
-	public void onActionInfo ( ActionInfoCallback cb ) { actionInfoCallbackList.add ( cb ) ; };
-	public void onActionCmd ( ActionCmdCallback cb ) { actionCmdCallbackList.add ( cb ) ; } ;
-
+	public void onAction ( String cmd, ActionCmdCallback cb )
+	{
+		onAction ( cmd, null, cb ) ;
+	} ;
+	public void onAction ( String cmd, String desc, ActionCmdCallback cb )
+	{
+		nameToActionCallback.put ( cmd, new ActionCmdCtx ( cmd, desc, cb ) ) ;
+	} ;
+	class ActionCmdCtx
+	{
+		String cmd ;
+		String desc ;
+		ActionCmdCallback cb ;
+		ActionCmdCtx ( String cmd, String desc, ActionCmdCallback cb )
+		{
+			this.cmd = cmd ;
+			this.desc = desc != null ? desc : cmd ;
+			this.cb = cb ;
+		}
+	}
 	HashMap<String,Semaphore> _semaphores = new HashMap<String,Semaphore>() ;
 	NamedQueue<Event> _NQ_semaphoreEvents = new NamedQueue<Event>() ;
 	HashMap<String,Lock> _ownedResources  = new HashMap<String,Lock>() ;
@@ -582,12 +599,7 @@ public class Client
     		}
     		if ( name.indexOf ( '*') >= 0 )
     		{
-    			String nuname = name ;
-	    		if ( name.indexOf ( ".*" ) < 0 )
-	    		{
-	    			nuname = nuname.replaceAll ( "\\.", "\\\\." ).replaceAll ( "\\*", ".*" ) ;
-	    		}
-	    		patternContextList.add ( new PatternContext ( nuname, el ) ) ;
+	    		patternContextList.add ( new PatternContext ( name, el ) ) ;
     		}
     		else
     		{
@@ -616,10 +628,26 @@ public class Client
 	public void removeEventListener ( String[] nameList )
 	throws IOException
 	{
+		HashMap<String,String> m = new HashMap<String,String>() ;
 		for ( String name : nameList )
 		{
 			eventListenerFunctions.remove ( name ) ;
+			m.put ( name, null ) ;
 		}
+		ArrayList<PatternContext> toBeRemoved = new ArrayList<PatternContext>() ;
+		for ( PatternContext pc : patternContextList )
+		{
+			if ( m.containsKey ( pc.originalEventName ) )
+			{
+				toBeRemoved.add ( pc ) ;	
+			}			
+		}
+		m.clear() ;
+		for ( PatternContext pc : toBeRemoved )
+		{
+			patternContextList.remove ( pc ) ;
+		}
+		toBeRemoved.clear() ;
     Event e = new Event ( "system", "removeEventListener" ) ;
 	  e.body.put ( "eventNameList", nameList ) ;
     e.setUniqueId ( createUniqueId() ) ;
@@ -643,6 +671,7 @@ public class Client
 	public void removeEventListener ( EventListener[] elList )
 	throws IOException
 	{
+		HashMap<EventListener,String> m = new HashMap<EventListener,String>() ;
 		ArrayList<String> nameList = new ArrayList<String>() ; 
 		for ( EventListener el : elList )
 		{
@@ -652,7 +681,24 @@ public class Client
       	nameList.add ( name ) ;
       }
       eventListenerFunctions.removeValue ( el ) ;
+			m.put ( el, null ) ;
 		}
+		ArrayList<PatternContext> toBeRemoved = new ArrayList<PatternContext>() ;
+		for ( PatternContext pc : patternContextList )
+		{
+			if ( m.containsKey ( pc.el ) )
+			{
+      	nameList.add ( pc.originalEventName ) ;
+				toBeRemoved.add ( pc ) ;	
+			}			
+		}
+		m.clear() ;
+		for ( PatternContext pc : toBeRemoved )
+		{
+			patternContextList.remove ( pc ) ;
+		}
+		toBeRemoved.clear() ;
+
 		String[] nameArray = nameList.toArray(new String[0]);
     Event e = new Event ( "system", "removeEventListener" ) ;
 	  e.body.put ( "eventNameList", nameArray ) ;
@@ -1212,30 +1258,43 @@ public class Client
 	      else
 	      if ( "info".equals ( parameter.get ( "actionName" ) ) )
 	      {
-          ActionInfo ai = new ActionInfo() ;
-          ArrayList<Map<String,Object>> list = new ArrayList<Map<String,Object>>() ;
-					ai.list = list ;	          
-          info.put ( "actionInfo", list ) ;
-          Map<String,String> args = (Map<String,String>) parameter.get ( "args" ) ;
-          if ( args != null ) ai.args = args ;
-					for ( ActionInfoCallback cb : actionInfoCallbackList )
-					{
-            cb.info ( ai ) ;
+          ArrayList<Map<String,Object>> resultList = new ArrayList<Map<String,Object>>() ;
+          info.put ( "actionInfo", resultList ) ;
+          for ( String key : nameToActionCallback.keySet() )
+          {
+	          List<ActionCmdCtx> list = nameToActionCallback.get ( key ) ;
+	          HashMap<String,Object> m = new HashMap<String,Object>() ;
+	          resultList.add ( m ) ;
+	          for ( ActionCmdCtx ctx : list )
+	          {
+	          	m.put ( "ctx", ctx.cmd ) ;
+	          	m.put ( "desc", ctx.desc ) ;
+	          }
 	        }
 	      }
 	      else
 	      if ( "execute".equals ( parameter.get ( "actionName" ) ) )
 	      {
-          ActionCmd ac = new ActionCmd ( (String) parameter.get ( "cmd" ) )  ;
-          ArrayList<String> list = new ArrayList<String>() ;
-          info.put ( "actionResult", list ) ;
-          Map<String,String> args = (Map<String,String>) parameter.get ( "args" ) ;
-          if ( args != null ) ac.args = args ;
-					for ( ActionCmdCallback cb : actionCmdCallbackList )
+					ActionCmd cmd = new ActionCmd ( (String) parameter.get ( "cmd" ) )  ;
+					List<ActionCmdCtx> list = nameToActionCallback.get ( cmd.cmd ) ;
+					if ( list == null )
 					{
-            cb.execute ( ac ) ;
-            list.add ( ac.result ) ;
-	        }
+						e.setStatus ( 1, "error", "no actions available for cmd=" + cmd.cmd ) ;
+		        e.setIsResult() ;
+		        _send ( e ) ;
+		        return ;
+					}
+					else
+					{
+						ArrayList<String> resultList = new ArrayList<String>() ;
+						info.put ( "actionResult", resultList ) ;
+						cmd.args                     = (Map<String,String>) parameter.get ( "args" ) ;
+						for ( ActionCmdCtx ctx : list )
+						{
+  	          ctx.cb.execute ( cmd ) ;
+    	        resultList.add ( cmd.result ) ;
+	    	    }
+					}
 	      }
 	      else
 	      {
