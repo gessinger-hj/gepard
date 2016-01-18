@@ -9,6 +9,11 @@ import time
 import sys
 # ==========================================================================
 
+name = gepard.util.getProperty ( "name" ) ;
+if name == None:
+	name = "ALARM,BLARM"
+name = name.split ( ',' )
+
 client = gepard.Client.getInstance()
 # client.setDaemon ( True )
 client.setReconnect ( True ) # // Reconnection requested
@@ -27,20 +32,6 @@ def on_reconnect ( err, success ):
 def on_disconnect ( err, success ):
 	print ( "disconnect" )
 
-client.onClose ( on_close )
-client.onError ( on_error )
-client.onShutdown ( on_shutdown )
-client.onReconnect ( on_reconnect )
-client.onDisconnect ( on_disconnect )
-
-def onActionInfo ( client, info ):
-	info.add ( "kill", "Shut down this client." )
-def onActionCmd ( client, cmd ):
-	cmd.setResult ( "I don't " + str ( cmd.cmd ) + "!!")
-
-client.onActionInfo ( onActionInfo )
-client.onActionCmd ( onActionCmd )
-
 def on_ABLARM ( event ):
 	print	( "on_ABLARM" )
 	if event.getName() == "BLARM":
@@ -48,8 +39,27 @@ def on_ABLARM ( event ):
 		tp.log ( "BLARM is removed." )
 	print ( event )
 
-print ( "Listening for ALARM and BLARM" )
-client.on ( ["ALARM", "BLARM"], on_ABLARM )
+client.onClose ( on_close )
+client.onError ( on_error )
+client.onShutdown ( on_shutdown )
+client.onReconnect ( on_reconnect )
+client.onDisconnect ( on_disconnect )
+
+def on_kill ( client, cmd ):
+	cmd.setResult ( "Client killed!." )
+	os._exit ( 0 )
+client.onAction ( "kill", on_kill )
+def on_rmfunc ( client, cmd ):
+	cmd.setResult ( "function removed!." )
+	client.remove ( on_ABLARM )
+client.onAction ( "rmfunc", on_rmfunc )
+def on_rmname ( client, cmd ):
+	cmd.setResult ( "name removed!." )
+	client.remove ( name )
+client.onAction ( "rmname", on_rmname )
+
+print ( "Listening for " + str ( name ) )
+client.on ( name, on_ABLARM )
 
 gepard.util.exitWithSIGINT()
 time.sleep(int('0x7FFFFFFF',16))

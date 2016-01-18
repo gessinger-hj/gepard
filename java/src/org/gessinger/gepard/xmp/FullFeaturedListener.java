@@ -80,13 +80,6 @@ public class FullFeaturedListener
         System.out.println ( e.getName() + "/" + e.getType() ) ;
       }
     });
-    // client.onActionInfo ( new ActionInfoCallback()
-    // {
-    //   public void info ( ActionInfo info )
-    //   {
-    //     info.add ( "kill", "Shut down this client." ) ;
-    //   }
-    // });
     client.onAction ( "kill", new ActionCmdCallback()
     {
       public void execute ( ActionCmd cmd )

@@ -78,8 +78,20 @@ public class Client
 		PatternContext ( String eventName, EventListener el )
 		{
 			this.originalEventName = eventName ;
- 			eventName = eventName.replaceAll ( "\\.", "\\\\." ).replaceAll ( "\\*", ".*" ) ;
-			p = Pattern.compile ( eventName ) ;
+	    if ( eventName.charAt ( 0 ) == '/' && eventName.charAt ( eventName.length() - 1 ) == '/' )
+	    {
+	      p = Pattern.compile ( eventName.substring ( 1, eventName.length() - 1 ) ) ;
+	    }
+	    else
+	    if ( eventName.indexOf ( ".*" ) >= 0 )
+	    {
+	      p = Pattern.compile ( eventName ) ;
+	    }
+	    else
+	    if ( eventName.indexOf ( "*" ) >= 0 || eventName.indexOf ( "?" ) >= 0 )
+	    {
+	      p = Pattern.compile ( eventName.replaceAll ( "\\.", "\\." ).replaceAll ( "\\*", ".*" ).replaceAll ( "?", "." ) ) ;
+	    }
 			m = p.matcher ( "aaa" ) ;
 			this.el = el ;
 		}
@@ -591,20 +603,21 @@ public class Client
     e.setUniqueId ( createUniqueId() ) ;
     synchronized ( _LOCK )
     {
-    	for ( String name : eventNameList )
+    	for ( String eventName : eventNameList )
     	{
-    		if ( "system".equals ( name ) )
+    		if ( "system".equals ( eventName ) )
     		{
     			throw new IOException ( "Client.on(): eventName must not be 'system'" ) ;
     		}
-    		if ( name.indexOf ( '*') >= 0 )
+		    if (  ( eventName.charAt ( 0 ) == '/' && eventName.charAt ( eventName.length() - 1 ) == '/' )
+		    	 || eventName.indexOf ( ".*" ) >= 0
+					 || eventName.indexOf ( '*' ) >= 0
+					 || eventName.indexOf ( '?' ) >= 0
+		    	 )
     		{
-	    		patternContextList.add ( new PatternContext ( name, el ) ) ;
+	    		patternContextList.add ( new PatternContext ( eventName, el ) ) ;
     		}
-    		else
-    		{
-			    eventListenerFunctions.put ( name, el ) ;
-    		}
+		    eventListenerFunctions.put ( eventName, el ) ;
     	}
     }
     _send ( e ) ;
@@ -801,6 +814,7 @@ public class Client
 						continue ;
 					}
 					List<EventListener> list = eventListenerFunctions.get ( e.getName() ) ;
+					boolean found = false ;
 					if ( list != null )
 					{
 						List<EventListener> clonedList = new ArrayList(list) ;
@@ -812,6 +826,7 @@ public class Client
 								{
 									toBeSentBack.put ( e.getUniqueId(), e ) ;
 									l.event ( e ) ;
+									found = true ;
 									break ;
 								}
 								else
@@ -831,9 +846,13 @@ public class Client
 						{
 							if ( e.isResultRequested() )
 							{
-								toBeSentBack.put ( e.getUniqueId(), e ) ;
-								pc.el.event ( e ) ;
-								break ;
+								if ( ! found )
+								{
+									toBeSentBack.put ( e.getUniqueId(), e ) ;
+									pc.el.event ( e ) ;
+									found = true ;
+									break ;
+								}
 							}
 							else
 							{
@@ -1267,7 +1286,7 @@ public class Client
 	          resultList.add ( m ) ;
 	          for ( ActionCmdCtx ctx : list )
 	          {
-	          	m.put ( "ctx", ctx.cmd ) ;
+	          	m.put ( "cmd", ctx.cmd ) ;
 	          	m.put ( "desc", ctx.desc ) ;
 	          }
 	        }
@@ -1275,7 +1294,7 @@ public class Client
 	      else
 	      if ( "execute".equals ( parameter.get ( "actionName" ) ) )
 	      {
-					ActionCmd cmd = new ActionCmd ( (String) parameter.get ( "cmd" ) )  ;
+					ActionCmd cmd = new ActionCmd ( parameter ) ;
 					List<ActionCmdCtx> list = nameToActionCallback.get ( cmd.cmd ) ;
 					if ( list == null )
 					{
@@ -1288,7 +1307,6 @@ public class Client
 					{
 						ArrayList<String> resultList = new ArrayList<String>() ;
 						info.put ( "actionResult", resultList ) ;
-						cmd.args                     = (Map<String,String>) parameter.get ( "args" ) ;
 						for ( ActionCmdCtx ctx : list )
 						{
   	          ctx.cb.execute ( cmd ) ;

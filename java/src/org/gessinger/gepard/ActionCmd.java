@@ -4,13 +4,16 @@ import java.util.* ;
 
 public class ActionCmd
 {
+  Map<String,Object> parameter ;
   String cmd ;
-  Map<String,String> args = new HashMap<String,String>() ;
+  Map<String,String> args ;
   String result = "" ;
 
-  public ActionCmd ( String cmd )
+  public ActionCmd ( Map<String,Object> parameter )
   {
-    this.cmd = cmd ;
+    this.parameter = parameter ;
+    this.cmd       = (String) parameter.get ( "cmd" ) ;
+    this.args      = (Map<String,String>) parameter.get ( "args" ) ;
   }
   public String getCmd (  )
   {

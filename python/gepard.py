@@ -351,6 +351,16 @@ class CallbackWorker:
 					function ( e )
 					if e.isResultRequested():
 						break
+				for pc in self.client.patternContextList:
+					if pc.matches ( e.getName() ):
+						if e.isResultRequested():
+							if not found:
+								pc.cb ( e )
+								found = True
+								break
+						else:
+							pc.cb ( e )
+							found = True
 				if not found:
 					print ( "listener function list for " + e.getName() + " not found." )
 					print ( e )
@@ -373,24 +383,41 @@ def remoteTracer(_self):
 			print ( exc )
 	return log
 
-class ActionInfo:
-	def __init__(self):
-		self.list = []
-		self.parameter = {}
-	def add ( self, cmd, desc ):
-		self.list.append ( { "cmd":cmd, "desc":desc })
-	def getArgs(self):
-		return self.parameter.get ( "args" )
-
 class ActionCmd:
-	def __init__(self,cmd):
-		self.cmd = cmd
-		self.parameter = {}
-		self.result = ""
+	def __init__(self,parameter):
+		self.parameter = parameter
+		self.cmd       = parameter.get ( "cmd" )
+		self.args      = parameter.get ( "args" )
+		self.result    = ""
+	def getCmd ( self ):
+		return self.cmd
 	def setResult(self,text):
 		self.result = text
 	def getArgs(self):
-		return self.parameter.get ( "args" )
+		return self.args
+
+class ActionCmdCtx:
+	def __init__ ( self, cmd, desc, cb ):
+		self.cmd  = cmd
+		self.desc = desc
+		self.cb   = cb
+
+import re
+class PatternContext:
+	def __init__ ( self, eventName, cb ):
+		self.originalEventName = eventName
+		if eventName[0] == '/' and eventName[-1] == '/':
+			self.p = re.compile ( eventName[1:-2] ) ;
+		elif eventName.find ( '.*' ) >= 0:
+			self.p = re.compile ( eventName ) ;
+		elif eventName.find ( '*' ) >= 0 or eventName.find ( '?' ) >= 0:
+			self.eventName = eventName.replace ( ".", "\\." ).replace ( "*", ".*" ).replace ( '?', '.' )
+			self.p = re.compile ( eventName ) ;
+		else:
+			self.p = re.compile ( eventName ) ;
+		self.cb = cb ;
+	def matches ( self, t ):
+		return self.p.match ( t )
 
 class Client:
 	counter = 0
@@ -419,6 +446,7 @@ class Client:
 		self._first                 = False
 		self.infoCallbacks          = MultiMap()
 		self.eventListenerFunctions = MultiMap()
+		self.patternContextList			= []
 		self.connected              = False
 		self.sock                   = None
 		if host == None: host = util.getProperty ( "gepard.host", "localhost" )
@@ -455,13 +483,13 @@ class Client:
 		cb = decoratedTimerCallback ( self )
 		self._Timer.add ( self._reconnectIntervalMillis/1000, cb )
 		self._callbackWorkerRunning   = False
-		self.actionInfoCallbackList   = []
-		self.actionCmdCallbackList    = []
+		self.nameToActionCallback     = MultiMap()
 		self.TPStore.remoteTracer     = remoteTracer ( self )
-	def onActionInfo ( self, cb ):
-		self.actionInfoCallbackList.append ( cb )
-	def onActionCmd ( self, cb ):
-		self.actionCmdCallbackList.append ( cb )
+	def onAction ( self, cmd, desc, cb=None ):
+		if isinstance ( desc, types.FunctionType ):
+			cb = desc
+			desc = cmd
+		self.nameToActionCallback.put ( cmd, ActionCmdCtx ( cmd, desc, cb ) )
 
 	def registerTracePoint ( self, tp, isActive=False ):
 			return self.TPStore.add ( tp, isActive )
@@ -535,6 +563,12 @@ class Client:
 			if n == "system":
 				raise Exception ( "Client.on: eventName must not be 'system'" )
 			self.eventListenerFunctions.put ( n, callback )
+			if (  n.find ( '*' ) >= 0
+				 or n.find ( '?' ) >= 0
+				 or n.find ( '.*' ) >= 0
+				 or ( n[0] == '/' and n[-1] == '/' )
+				 ):
+				self.patternContextList.append ( PatternContext ( n, callback ) )
 
 		e = Event ( "system", "addEventListener" )
 		e.body["eventNameList"] = eventNameList
@@ -550,24 +584,39 @@ class Client:
 			eventNameOrFunction = [ eventNameOrFunction ]
 
 		if isinstance ( eventNameOrFunction[0], str ):
+			m = {}
 			for name in eventNameOrFunction:
 				self.eventListenerFunctions.remove ( name )
+				m[name] = name
+			toBeRemoved = []
+			for pc in self.patternContextList:
+				if pc.originalEventName in m: toBeRemoved.append ( pc )
+			for pc in toBeRemoved:
+				self.patternContextList.remove ( pc )
+			toBeRemoved[:] = []
+
 			e = Event ( "system", "removeEventListener" )
 			e.body["eventNameList"] = eventNameOrFunction
 			e.setUniqueId ( self.createUniqueId() )
 			self._send ( e )
 		elif isinstance ( eventNameOrFunction[0], types.FunctionType ):
 			nameList = []
+			toBeRemoved = []
 			for el in eventNameOrFunction:
 				keys = self.eventListenerFunctions.getKeysOf ( el )
 				for name in keys:
 					nameList.append ( name )
 					self.eventListenerFunctions.removeValue ( el )
+				for pc in self.patternContextList:
+					if pc.cb == el:
+						toBeRemoved.append ( pc )
+			for pc in toBeRemoved:
+				self.patternContextList.remove ( pc )
+			toBeRemoved[:] = []
 			e = Event ( "system", "removeEventListener" )
 			e.body["eventNameList"] = nameList
 			e.setUniqueId ( self.createUniqueId() )
 			self._send ( e )
-
 	def _emit ( self, event_name, err, value=None):
 		if value == None: value = ""
 		function_list = self.infoCallbacks.get ( event_name )
@@ -691,31 +740,30 @@ class Client:
 					tracePointResult = self.TPStore.action ( parameter )
 					info["tracePointStatus"] = tracePointResult
 				elif actionName == "info":
-					ai = ActionInfo()
-					list = []
-					ai.list = list
-					info["actionInfo"] = list
-					args = parameter.get ( "args" )
-					if args != None: ai.args = args
-					for i in range ( 0, len ( self.actionInfoCallbackList ) ):
-						cb = self.actionInfoCallbackList[i]
-						cb ( self, ai )
+					resultList = []
+					info["actionInfo"] = resultList
+					keys = self.nameToActionCallback.getKeys()
+					for key in keys:
+						list = self.nameToActionCallback.get ( key )
+						m = {}
+						resultList.append ( m )
+						for i in range ( 0, len ( list ) ):
+							m["ctx"] = list[i].cmd
+							m["desc"] = list[i].desc
 				elif actionName == "execute":
-					cmd = parameter.get ( "cmd" )
-					if cmd == None:
+					cmd = ActionCmd ( parameter )
+					if cmd.cmd == None:
 						e.setStatus ( 1, "error", "missing 'cmd'" )
 						e.setIsResult()
 						self._send ( e )
 						return
-					ac = ActionCmd ( cmd )
-					list = []
-					info["actionResult"] = list
-					args = parameter.get ( "args" )
-					if args != None: ac.args = args
-					for i in range ( 0, len ( self.actionCmdCallbackList ) ):
-						cb = self.actionCmdCallbackList[i]
-						cb ( self, ac )
-						list.append ( ac.result )
+					resultList = []
+					info["actionResult"] = resultList
+					list = self.nameToActionCallback.get ( cmd.cmd )
+					for i in range ( 0, len ( list ) ):
+						ctx = list[i]
+						ctx.cb ( self, cmd )
+						resultList.append ( cmd.result )
 				else:
 					e.setStatus ( 1, "error", "invalid: " + e.getType() )
 					e.setIsResult()

@@ -255,6 +255,7 @@ Connection.prototype._sendInfoResult = function ( e )
 Connection.prototype._addEventListener = function ( e )
 {
   var eventNameList = e.body.eventNameList ;
+  var str, regexp, eventName ;
   if ( ! eventNameList || ! eventNameList.length )
   {
     e.control.status = { code:1, name:"error", reason:"Missing eventNameList" } ;
@@ -266,25 +267,32 @@ Connection.prototype._addEventListener = function ( e )
 
   for  ( i = 0 ; i < eventNameList.length ; i++ )
   {
-    str = eventNameList[i] ;
-    if ( str.indexOf ( "*" ) < 0 )
+    eventName = eventNameList[i] ;
+    regexp = null ;
+    if ( eventName.charAt ( 0 ) === '/' && eventName.charAt ( eventName.length - 1 ) === '/' )
     {
-      this.eventNameList.push ( str ) ;
+      regexp = new RegExp ( eventName.substring ( 1, eventName.length - 1 ) ) ;
+    }
+    else
+    if ( eventName.indexOf ( '.*' ) >= 0 )
+    {
+      regexp = new RegExp ( eventName ) ;
+    }
+    else
+    if ( eventName.indexOf ( '*' ) >= 0 || eventName.indexOf ( '?' ) >= 0 )
+    {
+      regexp = new RegExp ( eventName.replace ( /\./, "\\." ).replace ( /\*/, ".*" ).replace ( '?', '.' ) ) ;
+    }
+
+    if ( ! regexp )
+    {
+      this.eventNameList.push ( eventName ) ;
+      this.broker._eventNameToSockets.put ( eventName, this.socket ) ;
     }
     else
     {
-      this._patternList.push ( str ) ;
-      str = str.replace ( /\./g, "\\." ).replace ( /\*/g, ".*" ) ; //TODO
-      regexp = new RegExp ( str ) ;
+      this._patternList.push ( eventName ) ;
       this._regexpList.push ( regexp ) ;
-    }
-  }
-  for  ( i = 0 ; i < eventNameList.length ; i++ )
-  {
-    str = eventNameList[i] ;
-    if ( str.indexOf ( "*" ) < 0 )
-    {
-      this.broker._eventNameToSockets.put ( str, this.socket ) ;
     }
   }
   e.control.status = { code:0, name:"ack" } ;

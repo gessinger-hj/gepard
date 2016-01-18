@@ -1018,31 +1018,40 @@ Client.prototype.addEventListener = function ( eventNameList, callback )
     e.setUser ( this.user ) ;
   }
   e.body.eventNameList = eventNameList ;
-  var i ;
+  var i, eventName, regexp ;
   for ( i = 0 ; i < eventNameList.length ; i++ )
   {
-    if ( eventNameList[i] === "system" )
+    eventName = eventNameList[i] ;
+    if ( eventName === "system" )
     {
       throw new Error ( "Client.addEventListener: eventName must not be 'system'" ) ;
     }
-    this.eventNameToListener.put ( eventNameList[i], callback ) ;
-  }
-  for ( i = 0 ; i < eventNameList.length ; i++ )
-  {
-    var pattern = eventNameList[i] ;
-    if ( pattern.indexOf ( "*" ) >= 0 )
+    this.eventNameToListener.put ( eventName, callback ) ;
+    regexp = null ;
+    if ( eventName.charAt ( 0 ) === '/' && eventName.charAt ( eventName.length - 1 ) === '/' )
+    {
+      regexp = new RegExp ( eventName.substring ( 1, eventName.length - 1 ) ) ;
+    }
+    else
+    if ( eventName.indexOf ( '.*' ) >= 0 )
+    {
+      regexp = new RegExp ( eventName ) ;
+    }
+    else
+    if ( eventName.indexOf ( '*' ) >= 0 || eventName.indexOf ( '?' ) >= 0 )
+    {
+      regexp = new RegExp ( eventName.replace ( /\./, "\\." ).replace ( /\*/, ".*" ).replace ( '?', '.' ) ) ;
+    }
+    if ( regexp )
     {
       if ( ! callback._regexpList )
       {
         callback._regexpList = [] ;
       }
-      pattern = pattern.replace ( /\./, "\\." ).replace ( /\*/, ".*" ) ;
-      var regexp = new RegExp ( pattern ) ;
       callback._regexpList.push ( regexp ) ;
       this.listenerFunctionsList.push ( callback ) ;
     }
   }
-
   if ( ! this.socket )
   {
     this.pendingEventListenerList.push ( { e:e } ) ;
