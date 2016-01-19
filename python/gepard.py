@@ -142,9 +142,7 @@ class Event ( object ):
 			return
 		self.control["uniqueId"] = uid
 	def getUniqueId ( self ):
-		if ( "uniqueId" in self.control ):
-			return self.control["uniqueId"]
-		return None
+		return self.control.get ("uniqueId")
 
 	def isBad ( self ):
 		code = self.getStatusCode()
@@ -184,6 +182,12 @@ class Event ( object ):
 	def isStatusInfo(self):
 		if "_isStatusInfo" not in self.control: return False
 		return self.control["_isStatusInfo"]
+	def setUUID ( self, UUID ):
+		if "uniqueId" in self.control and self.control["uniqueId"] != None:
+			return
+		self.control["UUID"] = UUID
+	def getUUID ( self ):
+		return self.control.get ("UUID")
 
 	@staticmethod
 	def deserialize ( s ):
@@ -485,6 +489,11 @@ class Client:
 		self._callbackWorkerRunning   = False
 		self.nameToActionCallback     = MultiMap()
 		self.TPStore.remoteTracer     = remoteTracer ( self )
+		self.UUID                     = None
+	def getUUID ( self ):
+		return self.UUID
+	def setUUID ( self, UUID ):
+		self.UUID = UUID
 	def onAction ( self, cmd, desc, cb=None ):
 		if isinstance ( desc, types.FunctionType ):
 			cb = desc
@@ -658,6 +667,7 @@ class Client:
 		event.body["application"]    = os.path.abspath(sys.argv[0])
 		event.body["USERNAME"]    	 = self.USERNAME
 		event.body["version"]    	   = self.version
+		event.body["UUID"]    	     = self.UUID
 		
 		self._send ( event ) 
 
@@ -666,6 +676,7 @@ class Client:
 		if event.getUser() == None:
 			event.setUser ( self.user )
 		event.setUniqueId ( self.createUniqueId() )
+		event.setUUID ( self.UUID )
 		self.sock.sendall ( event.serialize().encode ( "utf-8" ) )
 		if event.getName() != "system":
 			self.TPStore.points["EVENT_OUT"].log ( event )
@@ -968,9 +979,12 @@ class Client:
 						self._send ( e )
 						continue
 					if e.getType() != None and e.getType() == "broker_info":
-						if e.__dict__["body"].get ( "brokerVersion" ) != None:
-							self.brokerVersion = e.__dict__["body"]["brokerVersion"]
-							self._heartbeatIntervalMillis = e.__dict__["body"]["_heartbeatIntervalMillis"]
+						body = e.__dict__["body"]
+						if body.get ( "brokerVersion" ) != None:
+							self.brokerVersion = body.get ( "brokerVersion" )
+							self._heartbeatIntervalMillis = body.get ( "_heartbeatIntervalMillis" )
+						if self.UUID == None:
+							self.UUID = body.get ( "brokerVersion" )
 						continue
 					if e.getType() == "acquireSemaphoreResult":
 						body = e.getBody()

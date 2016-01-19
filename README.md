@@ -128,13 +128,13 @@ node_modules/.bin/gp.admin [ --help ]
 Up to now an event-handler is registered with one or more exact event-names, e.g.
 
 ```js
-client.on ( "config-changed", &lt;function-reference> )
+client.on ( "config-changed", <function-reference> )
 ```
 
 Now it is possible to use wildcard pattern for registering a listener, e.g.
 
 ```js
-client.on ( "*-changed", &lt;function-reference> )
+client.on ( "*-changed", <function-reference> )
 ```
 In this case all events matching the regular expression __.*-changed__ are routed to this listener.
 

@@ -522,6 +522,18 @@ gepard.Event.prototype =
 	{
   	this.control.sourceIdentifier = sourceIdentifier ;
 	},
+	setUUID: function ( UUID )
+	{
+		if ( this.control.UUID )
+		{
+			return ;
+		}
+  	this.control.UUID = UUID ;
+	},
+	getUUID: function()
+	{
+  	return this.control.UUID ;
+	},
 	/**
 	 * Description
 	 * @method getProxyIdentifier

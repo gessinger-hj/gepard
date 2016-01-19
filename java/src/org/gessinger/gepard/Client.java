@@ -141,10 +141,18 @@ public class Client
   boolean _reconnect            = Util.getBool ( "gepard.reconnect", false ) ;
   static Hashtable<String,Client> _Instances = new Hashtable<String,Client>() ;
 
-  MutableTimer _Timer = new MutableTimer ( true ) ;
-  int version = 1 ;
-  int brokerVersion = 0 ;
-
+	MutableTimer _Timer = new MutableTimer ( true ) ;
+	int version         = 1 ;
+	int brokerVersion   = 0 ;
+	String UUID         = null ;
+	public void setUUID ( String UUID )
+	{
+		this.UUID = UUID ;
+	}
+	public String getUUID()
+	{
+		return UUID ;		
+	}
   class LFormatter extends SimpleFormatter
   {
   	public String format ( LogRecord rec )
@@ -309,8 +317,10 @@ public class Client
 	    body.put ( "application", Util.getMainClassName() ) ;
 	    body.put ( "USERNAME", USERNAME ) ;
 	    body.put ( "version", new Integer ( version ) ) ;
+	    body.put ( "UUID", UUID ) ;
 
 	    e.setTargetIsLocalHost ( targetIsLocalHost ) ;
+	    e.setUUID ( UUID ) ;
 			String t = e.toJSON() ;
 	    _out.write ( t, 0, t.length() ) ;
 	    _out.flush() ;
@@ -536,6 +546,7 @@ public class Client
 				getWriter() ;
 	  	  e.setUniqueId ( createUniqueId() ) ;
 		    e.setTargetIsLocalHost ( targetIsLocalHost ) ;
+		    e.setUUID ( UUID ) ;
 				String t = e.toJSON() ;
 		    _out.write ( t, 0, t.length() ) ;
 		    _out.flush() ;
@@ -942,6 +953,10 @@ public class Client
 						      if ( vers != null )
 						      {
 							      brokerVersion = vers.intValue() ;
+						      }
+						      if ( UUID == null )
+						      {
+	            			UUID = (String)body.get ( "UUID" ) ;
 						      }
 						      Double heartbeatIntervalMillis = (Double) body.get ( "_heartbeatIntervalMillis" ) ;
 						      if ( heartbeatIntervalMillis != null )

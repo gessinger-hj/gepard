@@ -175,6 +175,18 @@ public class Event
   {
     this.control.put ( "sourceIdentifier", sourceIdentifier ) ;
   }
+  public String getUUID()
+  {
+    return "" + this.control.get ( "UUID" ) ;
+  }
+  public void setUUID ( String UUID )
+  {
+    if ( this.control.containsKey ( "UUID" ) )
+    {
+      return ;
+    }
+    this.control.put ( "UUID", UUID ) ;
+  }
   public String getProxyIdentifier()
   {
     return "" + this.control.get ( "proxyIdentifier" ) ;

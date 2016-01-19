@@ -38,7 +38,7 @@ var Connection = function ( broker, socket )
   this.client_info ;
   if ( ! this.socket.sid )
   {
-    this.sid        = socket.remoteAddress + "_" + socket.remotePort + "_" + new Date().getTime() ;
+    this.sid        = broker.hostname + "_" + process.pid + "_" + socket.remoteAddress + "_" + socket.remotePort + "_" + new Date().getTime() ;
     this.socket.sid = this.sid ;
   }
   else
@@ -573,6 +573,7 @@ Broker.prototype._ondata = function ( socket, chunk )
         socket.end() ;
         return ;
       }
+      e.setUUID ( conn.sid ) ;
       if ( e.getName() !== 'system' )
       {
         TPStore.points["EVENT_IN"].log ( "--------------------------- EVENT_IN ---------------------------" ) ;
@@ -952,6 +953,14 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
     }
     conn.version         = conn.client_info.version
     conn.client_info.sid = conn.sid ;
+    if ( conn.client_info.UUID )
+    {
+      conn.UUID = conn.client_info.UUID ;
+    }
+    else
+    {
+      conn.client_info.UUID = conn.UUID ;
+    }
     var app              = conn.client_info.application ;
     if ( app )
     {
@@ -987,10 +996,11 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
       var thiz = this ;
       setTimeout ( function()
       {
-        var einfo                           = new Event ( "system", "broker_info" ) ;
-        einfo.body.brokerVersion            = thiz.brokerVersion ;
-        einfo.body._heartbeatIntervalMillis = thiz._heartbeatIntervalMillis ;
-        conn.write ( einfo ) ;
+        var broker_info                           = new Event ( "system", "broker_info" ) ;
+        broker_info.body.brokerVersion            = thiz.brokerVersion ;
+        broker_info.body._heartbeatIntervalMillis = thiz._heartbeatIntervalMillis ;
+        broker_info.body.UUID = conn.UUID ;
+        conn.write ( broker_info ) ;
       },500) ;
     }
     return ;
