@@ -1,3 +1,9 @@
+## 1.4.5 (2016-01-10)
+- Wildcards in Event-names.
+
+## 1.4.4 (2016-01-10)
+- Some bugs and typos
+
 ## 1.4.3 (2016-01-08)
 - Access, create and edit JSON-objects in all language flavors with the class __JSAcc__.
 

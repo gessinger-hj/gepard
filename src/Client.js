@@ -10,6 +10,7 @@ var Log           = require ( "./LogFile" ) ;
 var User          = require ( "./User" ) ;
 var FileContainer = require ( "./FileContainer" ) ;
 var TracePoints   = require ( "./TracePoints" ) ;
+var TracePoints   = require ( "./ActionCmd" ) ;
 
 var counter = 0 ;
 
@@ -1445,30 +1446,8 @@ Client.prototype.getTracePoint = function ( name )
 {
   return TPStore.points[name] ;
 };
-ActionCmd = function ( cmd )
-{
-  this.cmd = cmd ;
-  this.parameter = {} ;
-  this.result = "" ;
-};
-ActionCmd.prototype =
-{
-  setResult: function ( text )
-  {
-    this.result = text ;
-  },
-  getCmd: function()
-  {
-    return this.cmd ;
-  },
-  getArgs: function()
-  {
-    return this.parameter.args ;
-  }
-};
 Client.prototype._handleSystemClientMessages = function ( e )
 {
-console.log ( e ) ;
   try
   {
     var info = e.body.info = {} ;

@@ -6,6 +6,8 @@ General purpose communication and synchronization layer for distributed applicat
 
 - [Overview](#overview)
 - [What is new](#what-is-new)
+  - [Release 1-4-5 Registered Event-names may contain Wildcards (RegExp)](#release-1-4-5-registered-event-names-may-contain-wildcards-regexp)
+  - [Release 1-4-5 Simplified Handling of JSON Trees](#release-1-4-5-simplified-handling-of-json-trees)
   - [Release 1-4-3 Logging](#release-1-4-3-logging)
   - [Release 1-4-0 New Heartbeat Protocol to ensure the Availability of Connections](#release-1-4-0-new-heartbeat-protocol-to-ensure-the-availability-of-connections)
   - [Release 1-3-3 New FileContainer class for Python, JavaScript and Java to simplify file-transfer.](#release-1-3-3-new-filecontainer-class-for-python-javascript-and-java-to-simplify-file-transfer)
@@ -120,6 +122,79 @@ or
 node_modules/.bin/gp.admin [ --help ]
 ```
 # What is new
+
+## Release 1-4-5 Registered Event-names may contain Wildcards (RegExp)
+
+Up to now an event-handler is registered with one or more exect event-names, e.g.
+
+```js
+client.on ( "config-changed", &lt;function-reference> )
+```
+
+Now it is possible to use wildcard pattern for registering a listener, e.g.
+
+```js
+client.on ( "*-changed", &lt;function-reference> )
+```
+In this case all events matching the regular expression __.*-changed__ are routed to this listener.
+
+In general a regular-expression pattern is derived from the given string if it containes some indicators.
+
+1. an __*__ (asterisk) or a __?__ (question-mark)
+  Before the regular-expression is compiled the astrisk is replaced by a __.*__ and the __?__ is replced by a __.__ (dot)
+1. at least one __.*__
+  The whole string is used as is to compile the appropriate regular-expression.
+1. the string starts and ends with a slash: __"/A.*/"__
+  The string between the slashes is used as is to compile the appropriate regular-expression.
+
+## Release 1-4-5 Simplified Handling of JSON Trees
+
+Creating and editing JSON objects in Python and Java is a little bit unhandy. The class JSAcc in Python, JavaScript and Java simplifies
+the handling of these objects.
+<br/>
+The main methods of this class are:
+
+- jsacc.add ( &lt;path>, object )
+- jsacc.get ( &lt;path>, [ &lt;default-return-object> ] )
+- jsacc.remove ( &lt;path> )
+
+The &lt;path> is a slash delimited combination of string-keys in the appropriate nodes of the JSON-tree.
+
+Example:
+
+- Python:
+
+```python
+e = Event ( "XXX" )
+jsacc = JSAcc ( e.getBody() )
+
+type = jsacc.get ( "request/header/type" )
+jsacc.remove ( "request" )
+jsacc.add ( "result/header/status", True )
+```
+
+- JavaScript:
+
+```js
+var e = new Event ( "XXX" ) ;
+var jsacc = new JSAcc ( e.getBody() ) ;
+
+var type = jsacc.get ( "request/header/type" ) ;
+jsacc.remove ( "request" ) ;
+jsacc.add ( "result/header/status", true ) ;
+```
+- Java:
+
+```java
+Event e = new Event ( "XXX" ) ;
+JSAcc jsacc = new JSAcc ( e.getBody() ) ;
+
+String type = (String) jsacc.get ( "request/header/type" ) ;
+jsacc.remove ( "request" ) ;
+jsacc.add ( "result/header/status", true ) ;
+```
+
+Path-elements which do not exist are created if needed.
 
 ## Release 1-4-3 Logging
 
