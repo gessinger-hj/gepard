@@ -125,7 +125,7 @@ node_modules/.bin/gp.admin [ --help ]
 
 ## Release 1-4-5 Registered Event-names may contain Wildcards (RegExp)
 
-Up to now an event-handler is registered with one or more exect event-names, e.g.
+Up to now an event-handler is registered with one or more exact event-names, e.g.
 
 ```js
 client.on ( "config-changed", &lt;function-reference> )
@@ -141,10 +141,13 @@ In this case all events matching the regular expression __.*-changed__ are route
 In general a regular-expression pattern is derived from the given string if it containes some indicators.
 
 1. an __*__ (asterisk) or a __?__ (question-mark)
+  <br/>
   Before the regular-expression is compiled the astrisk is replaced by a __.*__ and the __?__ is replced by a __.__ (dot)
 1. at least one __.*__
+  <br/>
   The whole string is used as is to compile the appropriate regular-expression.
 1. the string starts and ends with a slash: __"/A.*/"__
+  <br/>
   The string between the slashes is used as is to compile the appropriate regular-expression.
 
 ## Release 1-4-5 Simplified Handling of JSON Trees
