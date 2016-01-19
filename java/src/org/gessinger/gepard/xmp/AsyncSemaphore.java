@@ -15,8 +15,8 @@ public class AsyncSemaphore
           System.out.println ( "Now owner of semaphore=" + sem.getName() ) ;
           try
           {
-            System.out.println ( "sleep for 2 second" ) ;
-            Thread.sleep ( 2000 ) ;
+            System.out.println ( "sleep for 10 second" ) ;
+            Thread.sleep ( 10000 ) ;
             System.out.println ( "release semaphore" ) ;
             sem.release() ;
             sem.getClient().close() ;

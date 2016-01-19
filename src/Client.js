@@ -1,7 +1,7 @@
-var net          = require('net');
-var os           = require('os');
-var EventEmitter = require ( "events" ).EventEmitter ;
-var util         = require ( "util" ) ;
+var net           = require('net');
+var os            = require('os');
+var EventEmitter  = require ( "events" ).EventEmitter ;
+var util          = require ( "util" ) ;
 
 var T             = require ( "./Tango" ) ;
 var Event         = require ( "./Event" ) ;
@@ -10,7 +10,7 @@ var Log           = require ( "./LogFile" ) ;
 var User          = require ( "./User" ) ;
 var FileContainer = require ( "./FileContainer" ) ;
 var TracePoints   = require ( "./TracePoints" ) ;
-var TracePoints   = require ( "./ActionCmd" ) ;
+var ActionCmd     = require ( "./ActionCmd" ) ;
 
 var counter = 0 ;
 
