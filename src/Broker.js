@@ -18,6 +18,7 @@ var Path          = require ( "path" ) ;
 var FileContainer = require ( "./FileContainer" ) ;
 var Gepard        = require ( "./Gepard" ) ;
 var TracePoints   = require ( "./TracePoints" ) ;
+var JSAcc         = require ( "./JSAcc" ) ;
 
 if ( typeof Promise === 'undefined' ) // since node 0.12+
 {
@@ -507,7 +508,7 @@ Broker.prototype._ondata = function ( socket, chunk )
   var list ;
   var requesterConnection ;
   var responderConnection ;
-  var uid ;
+  var uid, history, jsacc, eventName ;
   if ( ! conn.partialMessage ) conn.partialMessage = "" ;
   mm = conn.partialMessage + mm ;
   conn.partialMessage = "" ;
@@ -600,17 +601,44 @@ Broker.prototype._ondata = function ( socket, chunk )
 
           delete this._messagesToBeProcessed[uid] ;
           responderConnection._setCurrentlyProcessedMessageUid ( "" ) ;
-try
-{
-  e.control._isResult = false ;
-  e.setName ( "ack2" ) ;
-  this._sendEventToClients ( requesterConnection, e ) ;
-}
-catch ( exc )
-{
-  console.log ( exc ) ;
-}
-          if ( requesterConnection )
+          try
+          {
+            delete e.control["availableDecision"] ;
+            jsacc     = new JSAcc ( e.control ) ;
+            eventName = e.getName() ;
+            this._connectionHook.messageReturned ( e, responderConnection, requesterConnection ) ;
+            if ( jsacc.value ( "availableDecision/command" ) === "goto" )
+            {
+              var step = jsacc.value ( "availableDecision/step" ) ;
+              if ( step )
+              {
+                e.control._isResult = false ;
+                var history = jsacc.value ( "history" ) ;
+                if ( ! history )
+                {
+                  history = jsacc.add ( "history", [] ) ;
+                }
+                history.push ( { step:e.getName(), status:e.getStatus() } ) ;
+                e.setName ( step ) ;
+                this._sendEventToClients ( requesterConnection, e ) ;
+              }
+              else
+              {
+                
+              }
+              delete e.control["availableDecision"] ;
+            }
+            history = jsacc.value ( "history" ) ;
+            if ( history )
+            {
+              history.push ( { step:eventName, status:e.getStatus() } ) ;
+            }
+          }
+          catch ( exc )
+          {
+            Log.log ( exc ) ;
+          }
+          if ( e.control._isResult && requesterConnection )
           {
             if ( e.getName() === "system" && e.getType().startsWith ( "client/" ) )
             {
@@ -805,7 +833,7 @@ Broker.prototype._sendEventToClients = function ( conn, e )
         }
       }
     }
-    if ( isStatusInfoRequested )
+    if ( conn && isStatusInfoRequested )
     {
       e.control._isStatusInfoRequested = isStatusInfoRequested ;
       e.setIsStatusInfo() ;
@@ -834,7 +862,7 @@ Broker.prototype._sendEventToClients = function ( conn, e )
       break ;
     }
   }
-  if ( found && isStatusInfoRequested )
+  if ( conn && found && isStatusInfoRequested )
   {
     e.setIsStatusInfo() ;
     e.control.status = { code:0, name:"success", reason:"Listener found for event: " + e.getName() } ;
@@ -844,7 +872,7 @@ Broker.prototype._sendEventToClients = function ( conn, e )
   }
   if ( ! found )
   {
-    if ( e.isResultRequested() || e.isFailureInfoRequested() || isStatusInfoRequested )
+    if ( conn && e.isResultRequested() || e.isFailureInfoRequested() || isStatusInfoRequested )
     {
       if ( isStatusInfoRequested )
       {

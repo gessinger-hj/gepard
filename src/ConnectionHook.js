@@ -1,5 +1,6 @@
-var util         = require ( "util" ) ;
-var T            = require ( "./Tango" ) ;
+var util  = require ( "util" ) ;
+var T     = require ( "./Tango" ) ;
+var JSAcc = require ( "./JSAcc" ) ;
 
 if ( typeof Promise === 'undefined' )
 {
@@ -62,5 +63,23 @@ ConnectionHook.prototype.clientAction = function ( connection, event )
 ConnectionHook.prototype.system = function ( connection, event )
 {
   return true ;
+};
+ConnectionHook.prototype.messageReturned = function ( event, responderConnection, requesterConnection )
+{
+  console.log ( event.control ) ;
+  console.log ( "event.getName()=" + event.getName() ) ;
+T.lwhere (  ) ;
+  if ( event.getName() === "ack2" )
+  {
+T.lwhere (  ) ;
+    event.setName ( "ack" ) ;
+    return ;
+  }
+T.lwhere (  ) ;
+  var jsacc = new JSAcc ( event.control ) ;
+  jsacc.add ( "availableDecision/command", "goto" ) ;
+  jsacc.add ( "availableDecision/step", "ack2" ) ;
+  console.log ( event.control ) ;
+  return ;
 };
 module.exports = ConnectionHook ;
