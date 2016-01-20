@@ -144,7 +144,7 @@ public class Client
 	MutableTimer _Timer = new MutableTimer ( true ) ;
 	int version         = 1 ;
 	int brokerVersion   = 0 ;
-	String UUID         = null ;
+	String UUID         = Util.getProperty ( "gepard.uuid" ) ;
 	public void setUUID ( String UUID )
 	{
 		this.UUID = UUID ;
@@ -205,7 +205,6 @@ public class Client
 		}
 		LOGGER.setUseParentHandlers ( false ) ;
 		LOGGER.addHandler ( h ) ;
-
 		this.port      = port ;
 		this.host      = host ;
 		if ( this.port <= 0 ) this.port    = Util.getInt ( "gepard.port", 17501 ) ;

@@ -3,10 +3,11 @@ import org.gessinger.gepard.* ;
 
 public class Listener
 {
-  static Client client = Client.getInstance() ;
+  static Client client ;
   static public void main ( String[] args )
   {
     Util.argsToProperties ( args ) ;
+    client = Client.getInstance() ;
     try
     {
       String name = Util.getProperty ( "name" ) ;

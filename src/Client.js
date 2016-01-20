@@ -121,7 +121,7 @@ var Client = function ( port, host )
   this.brokerVersion            = 0 ;
   this.nameToActionCallback     = new MultiHash() ;
   TPStore.remoteTracer          = this.log.bind ( this ) ;
-  this.UUID                     = null ;
+  this.UUID                     = T.getProperty ( "gepard.uuid" ) ;
 } ;
 util.inherits ( Client, EventEmitter ) ;
 Client.prototype.toString = function()

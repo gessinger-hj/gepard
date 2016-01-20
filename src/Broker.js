@@ -45,6 +45,7 @@ var Connection = function ( broker, socket )
   {
     this.sid = socket.sid ;
   }
+  this.UUID                                   = this.sid ;
   this._lockedResourcesIdList                 = [] ;
   this._patternList                           = [] ;
   this._regexpList                            = [] ;
@@ -179,6 +180,7 @@ Connection.prototype._sendInfoResult = function ( e )
   e.control.status                     = { code:0, name:"ack" } ;
   e.body.gepardVersion                 = Gepard.getVersion() ;
   e.body.brokerVersion                 = this.broker.brokerVersion ;
+  e.body.startupTime                   = this.broker.startupTime   ;
   e.body.heartbeatIntervalMillis       = this.broker._heartbeatIntervalMillis ;
   e.body.maxMessageSize                = this.broker._maxMessageSize ;
   e.body.log                           = { levelName: Log.getLevelName(), level:Log.getLevel(), file: Log.getCurrentLogFileName() } ;
@@ -420,6 +422,7 @@ var Broker = function ( port, ip )
 
   this.brokerVersion = 1 ;
   this._maxMessageSize = 20 * 1024 * 1024 ;
+  this.startupTime = new Date() ;
 };
 
 util.inherits ( Broker, EventEmitter ) ;
@@ -597,6 +600,16 @@ Broker.prototype._ondata = function ( socket, chunk )
 
           delete this._messagesToBeProcessed[uid] ;
           responderConnection._setCurrentlyProcessedMessageUid ( "" ) ;
+try
+{
+  e.control._isResult = false ;
+  e.setName ( "ack2" ) ;
+  this._sendEventToClients ( requesterConnection, e ) ;
+}
+catch ( exc )
+{
+  console.log ( exc ) ;
+}
           if ( requesterConnection )
           {
             if ( e.getName() === "system" && e.getType().startsWith ( "client/" ) )
@@ -614,22 +627,22 @@ Broker.prototype._ondata = function ( socket, chunk )
               }
             }
             requesterConnection.write ( e ) ;
-            uid = responderConnection._getNextMessageUidToBeProcessed() ;
-            if ( uid )
-            {
-              for ( i = 0 ; i < this._connectionList.length  ; i++ )
-              {
-                this._connectionList[i]._messageUidsToBeProcessed.remove ( uid ) ;
-              }
-              e  = this._messagesToBeProcessed[uid] ;
-              responderConnection.write ( e ) ;
-              responderConnection._numberOfPendingRequests++ ;
-              responderConnection._setCurrentlyProcessedMessageUid ( uid ) ;
-            }
           }
           else
           {
             Log.log ( "Requester not found for result:\n" + e.toString() ) ;
+          }
+          uid = responderConnection._getNextMessageUidToBeProcessed() ;
+          if ( uid )
+          {
+            for ( i = 0 ; i < this._connectionList.length  ; i++ )
+            {
+              this._connectionList[i]._messageUidsToBeProcessed.remove ( uid ) ;
+            }
+            e  = this._messagesToBeProcessed[uid] ;
+            responderConnection.write ( e ) ;
+            responderConnection._numberOfPendingRequests++ ;
+            responderConnection._setCurrentlyProcessedMessageUid ( uid ) ;
           }
           continue ;
         }
@@ -770,11 +783,17 @@ Broker.prototype._sendEventToClients = function ( conn, e )
     else
     {
       var number = 1 ;
-      e.control.clone = {} ;
+      if ( e.isBroadcast() )
+      {
+        e.control.clone = {} ;
+      }
       for ( i = 0 ; i < socketList.length ; i++ )
       {
-        e.control.clone.number = number++ ;
-        e.control.clone.of = socketList.length ;
+        if ( e.clone )
+        {
+          e.control.clone.number = number++ ;
+          e.control.clone.of = socketList.length ;
+        }
         var target_conn = this._connections[socketList[i].sid] ;
         if ( target_conn.isLocalHost() )
         {
@@ -999,7 +1018,7 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
         var broker_info                           = new Event ( "system", "broker_info" ) ;
         broker_info.body.brokerVersion            = thiz.brokerVersion ;
         broker_info.body._heartbeatIntervalMillis = thiz._heartbeatIntervalMillis ;
-        broker_info.body.UUID = conn.UUID ;
+        broker_info.body.UUID                     = conn.UUID ;
         conn.write ( broker_info ) ;
       },500) ;
     }

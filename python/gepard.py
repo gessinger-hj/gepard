@@ -183,7 +183,7 @@ class Event ( object ):
 		if "_isStatusInfo" not in self.control: return False
 		return self.control["_isStatusInfo"]
 	def setUUID ( self, UUID ):
-		if "uniqueId" in self.control and self.control["uniqueId"] != None:
+		if "UUID" in self.control and self.control["UUID"] != None:
 			return
 		self.control["UUID"] = UUID
 	def getUUID ( self ):
@@ -489,7 +489,7 @@ class Client:
 		self._callbackWorkerRunning   = False
 		self.nameToActionCallback     = MultiMap()
 		self.TPStore.remoteTracer     = remoteTracer ( self )
-		self.UUID                     = None
+		self.UUID                     = util.getProperty ( "gepard.uuid" )
 	def getUUID ( self ):
 		return self.UUID
 	def setUUID ( self, UUID ):
@@ -660,16 +660,16 @@ class Client:
 				self.sock = None
 				self._emit ( "error", e )
 			raise
-		event                        = Event ( "system", "client_info" )
-		event.body["language"]       = "python"
-		event.body["hostname"]       = socket.gethostname()
-		event.body["connectionTime"] = datetime.datetime.now()
-		event.body["application"]    = os.path.abspath(sys.argv[0])
-		event.body["USERNAME"]    	 = self.USERNAME
-		event.body["version"]    	   = self.version
-		event.body["UUID"]    	     = self.UUID
+		client_info                        = Event ( "system", "client_info" )
+		client_info.body["language"]       = "python"
+		client_info.body["hostname"]       = socket.gethostname()
+		client_info.body["connectionTime"] = datetime.datetime.now()
+		client_info.body["application"]    = os.path.abspath(sys.argv[0])
+		client_info.body["USERNAME"]    	 = self.USERNAME
+		client_info.body["version"]    	   = self.version
+		client_info.body["UUID"]    	     = self.UUID
 		
-		self._send ( event ) 
+		self._send ( client_info ) 
 
 	def _send ( self, event ):
 		self.connect()
@@ -984,7 +984,9 @@ class Client:
 							self.brokerVersion = body.get ( "brokerVersion" )
 							self._heartbeatIntervalMillis = body.get ( "_heartbeatIntervalMillis" )
 						if self.UUID == None:
-							self.UUID = body.get ( "brokerVersion" )
+							self.UUID = body.get ( "UUID" )
+						print ( body )
+						print ( "self.UUID=" + str ( self.UUID ) )
 						continue
 					if e.getType() == "acquireSemaphoreResult":
 						body = e.getBody()
