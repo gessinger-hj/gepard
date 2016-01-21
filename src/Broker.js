@@ -19,6 +19,7 @@ var FileContainer = require ( "./FileContainer" ) ;
 var Gepard        = require ( "./Gepard" ) ;
 var TracePoints   = require ( "./TracePoints" ) ;
 var JSAcc         = require ( "./JSAcc" ) ;
+var BTaskHandler  = require ( "./BTaskHandler" ) ;
 
 if ( typeof Promise === 'undefined' ) // since node 0.12+
 {
@@ -424,6 +425,7 @@ var Broker = function ( port, ip )
   this.brokerVersion = 1 ;
   this._maxMessageSize = 20 * 1024 * 1024 ;
   this.startupTime = new Date() ;
+  this._taskHandler = new BTaskHandler ( this ) ;
 };
 
 util.inherits ( Broker, EventEmitter ) ;
@@ -506,7 +508,7 @@ Broker.prototype._ondata = function ( socket, chunk )
   var regexp ;
   var name ;
   var list ;
-  var requesterConnection ;
+  var originatorConnection ;
   var responderConnection ;
   var uid, history, jsacc, eventName ;
   if ( ! conn.partialMessage ) conn.partialMessage = "" ;
@@ -593,52 +595,56 @@ Broker.prototype._ondata = function ( socket, chunk )
         }
         if ( e.isResult() )
         {
-          responderConnection = conn ;
+          responderConnection  = conn ;
           responderConnection._numberOfPendingRequests-- ;
-          sid                 = e.getSourceIdentifier() ;
-          uid                 = e.getUniqueId() ;
-          requesterConnection = this._connections[sid] ;
+          sid                  = e.getSourceIdentifier() ;
+          uid                  = e.getUniqueId() ;
+          originatorConnection = this._connections[sid] ;
 
           delete this._messagesToBeProcessed[uid] ;
           responderConnection._setCurrentlyProcessedMessageUid ( "" ) ;
-          try
+          if ( e.getName() !== "system" )
           {
-            delete e.control["availableDecision"] ;
-            jsacc     = new JSAcc ( e.control ) ;
-            eventName = e.getName() ;
-            this._connectionHook.messageReturned ( e, responderConnection, requesterConnection ) ;
-            if ( jsacc.value ( "availableDecision/command" ) === "goto" )
+            try
             {
-              var step = jsacc.value ( "availableDecision/step" ) ;
-              if ( step )
+              if ( e.control.task )
               {
-                e.control._isResult = false ;
-                var history = jsacc.value ( "history" ) ;
-                if ( ! history )
+                delete e.control["availableDecision"] ;
+                jsacc     = new JSAcc ( e.control ) ;
+                eventName = e.getName() ;
+                this._taskHandler.stepReturned ( e, responderConnection, originatorConnection ) ;
+                if ( jsacc.value ( "availableDecision/command" ) === "goto" )
                 {
-                  history = jsacc.add ( "history", [] ) ;
+                  var step = jsacc.value ( "availableDecision/step" ) ;
+                  if ( step )
+                  {
+                    e.control._isResult = false ;
+                    var history = jsacc.value ( "history" ) ;
+                    if ( ! history )
+                    {
+                      history = jsacc.add ( "history", [] ) ;
+                    }
+                    history.push ( { step:e.getName(), status:e.getStatus() } ) ;
+                    e.setName ( step ) ;
+                    this._sendEventToClients ( originatorConnection, e ) ;
+                  }
+                  delete e.control["availableDecision"] ;
                 }
-                history.push ( { step:e.getName(), status:e.getStatus() } ) ;
-                e.setName ( step ) ;
-                this._sendEventToClients ( requesterConnection, e ) ;
+                history = jsacc.value ( "history" ) ;
+                if ( history )
+                {
+                  history.push ( { step:eventName, status:e.getStatus() } ) ;
+                }
               }
-              else
-              {
-                
-              }
-              delete e.control["availableDecision"] ;
             }
-            history = jsacc.value ( "history" ) ;
-            if ( history )
+            catch ( exc )
             {
-              history.push ( { step:eventName, status:e.getStatus() } ) ;
+              Log.log ( exc ) ;
+              e.setStatus ( 1, "error", "internal, see log-file" ) ;
+              e.setIsResult() ;
             }
           }
-          catch ( exc )
-          {
-            Log.log ( exc ) ;
-          }
-          if ( e.control._isResult && requesterConnection )
+          if ( e.control._isResult && originatorConnection )
           {
             if ( e.getName() === "system" && e.getType().startsWith ( "client/" ) )
             {
@@ -654,7 +660,11 @@ Broker.prototype._ondata = function ( socket, chunk )
                 socket.end() ;
               }
             }
-            requesterConnection.write ( e ) ;
+            if ( e.control.task )
+            {
+              this._taskHandler._taskEpilog ( e, conn ) ;
+            }
+            originatorConnection.write ( e ) ;
           }
           else
           {
@@ -684,7 +694,21 @@ Broker.prototype._ondata = function ( socket, chunk )
           this._handleSystemMessages ( conn, e ) ;
           continue ;
         }
-        this.validateAction ( this._connectionHook.sendEvent, [ conn, e ], this, this._sendEventToClients, [ conn, e ] ) ;
+        try
+        {
+          this._taskHandler._taskProlog ( e, conn ) ;
+          this.validateAction ( this._connectionHook.sendEvent, [ conn, e ], this, this._sendEventToClients, [ conn, e ] ) ;
+        }
+        catch ( exc )
+        {
+          if ( e.isResultRequested() )
+          {
+            e.setStatus ( 1, "error", "internal, see log-file" ) ;
+            e.setIsResult() ;
+            conn.write ( e ) ;
+          }
+          Log.log ( exc ) ;
+        }
       }
       catch ( exc )
       {
@@ -1274,22 +1298,33 @@ Broker.prototype._ejectSocket = function ( socket )
     delete this._messagesToBeProcessed[uid] ;
 
     var requester_sid ;
-    var requesterConnection ;
+    var originatorConnection ;
     if ( requesterMessage )
     {
-      requester_sid       = requesterMessage.getSourceIdentifier() ;
-      requesterConnection = this._connections[requester_sid] ;
+      requester_sid        = requesterMessage.getSourceIdentifier() ;
+      originatorConnection = this._connections[requester_sid] ;
     }
 
     for ( i = 0 ; i < this._connectionList.length  ; i++ )
     {
       this._connectionList[i]._messageUidsToBeProcessed.remove ( uid ) ;
     }
-    if ( requesterConnection )
+    if ( originatorConnection )
     {
       requesterMessage.setIsResult() ;
       requesterMessage.control.status = { code:1, name:"warning", reason:"responder died unexpectedly." } ;
-      requesterConnection.write ( requesterMessage ) ;
+      originatorConnection.write ( requesterMessage ) ;
+      if ( requesterMessage.control.task )
+      {
+        try
+        {
+          this._taskHandler._taskEpilog ( requesterMessage, originatorConnection ) ;
+        }
+        catch ( exc )
+        {
+          Log.log ( exc ) ;
+        }
+      }
     }
     else
     if ( requesterMessage )
@@ -1502,6 +1537,7 @@ Broker.prototype.setConfig = function ( configuration )
       dir = Path.dirname ( configuration ) ;
     }
     configuration = JSON.parse ( fs.readFileSync ( configuration, 'utf8' ) ) ;
+    configuration.dir = dir ;
     if ( typeof configuration.connectionHook === 'string' )
     {
       configuration.connectionHook = configuration.connectionHook.replace ( /\\/g, "/" ) ;
@@ -1532,6 +1568,7 @@ Broker.prototype.setConfig = function ( configuration )
     if ( ! isNaN ( hbm ) ) this._heartbeatIntervalMillis = hbm ;
   }
   this._heartbeatIntervalMillis = T.getInt ( "gepard.heartbeat.millis", this._heartbeatIntervalMillis ) ;
+
   var factor = 1 ;
   if ( configuration.maxMessageSize )
   {
@@ -1554,6 +1591,7 @@ Broker.prototype.setConfig = function ( configuration )
       this._maxMessageSize = hbm * factor ;
     }
   }
+  this._taskHandler.init ( configuration ) ;
 };
 Broker.prototype.setHeartbeatIntervalMillis = function ( millis )
 {

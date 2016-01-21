@@ -1,0 +1,16 @@
+{
+	"XconnectionHook": "XmpConnectionHook.js"
+,	"XheartbeatMillis": 10000
+,	"tasks": {
+		"rule": "XmpTaskRule"
+	, "list": [
+		{ "name":"ack"
+		,	"Xrule":"XmpTaskRule"
+		, "stepList": [
+				{ "name": "req1", "rule":null }
+			,	{ "name": "req2", "rule":null }
+			]
+		}
+	]
+	}
+}

@@ -7,5 +7,6 @@ c.on ( name, function(e)
 {
 	console.log ( "e.getUUID()=" + e.getUUID() ) ;
 	e.setStatus ( 0, "ack", c.getUUID() ) ;
-	e.sendBack() ;
+this.end() ;
+	// e.sendBack() ;
 }) ;

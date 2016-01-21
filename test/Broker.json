@@ -1,0 +1,7 @@
+{
+	"XconnectionHook": "XmpConnectionHook.js"
+,	"XheartbeatMillis": 10000
+,	"tasks": {
+		"rule": "XmpTaskRule"
+	}
+}
