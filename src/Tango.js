@@ -1041,6 +1041,33 @@ TangoClass.prototype.toRFC3339String = function ( date )
         ;
   return t ;
 };
+TangoClass.prototype.visit = function ( obj, visitor )
+{
+  if ( ! obj ) return ;
+
+  var rc, i ;
+  if ( Array.isArray ( obj ) )
+  {
+    for ( i = 0 ; i < obj.length ; i++ )
+    {
+      if ( typeof obj[i] !== 'object' ) continue ;
+      if ( visitor.call ( null, obj[i] ) === false ) continue ;
+      if ( this.visit ( obj[i], visitor ) === false ) return false ;
+    }
+  }
+  else
+  if ( this.isObject ( obj ) )
+  {
+    for ( var key in obj )
+    {
+      if ( typeof obj[key] !== 'object' ) continue ;
+      if ( ! obj.hasOwnProperty ( key ) ) continue ;
+      if ( obj[key] === null ) continue ;
+      if ( visitor.call ( null, obj[key] ) === false ) continue ;
+      if ( this.visit ( obj[key], visitor ) === false ) return false ;
+    }    
+  }
+};
 var Tango = null ;
 
 if ( typeof org === 'undefined' ) org = {} ;
@@ -1059,3 +1086,38 @@ if ( ! Date.toRFC3339String )
   };
 }
 module.exports = org.gessinger.tangojs.Tango ;
+if ( require.main === module )
+{
+  var T = org.gessinger.tangojs.Tango ;
+  var o =
+  {
+    "XconnectionHook": "XmpConnectionHook.js"
+  , "XheartbeatMillis": 10000
+  , "tasks": {
+      "rule": "XmpTaskRule"
+    , "list": [
+      { "name":"ack"
+      , "Xrule":"XmpTaskRule"
+      , "stepList": [
+          { "name": "req1", "rule":"%HOSTNAME%" }
+        , { "name": "req2", "rule":null }
+        ]
+      }
+    ]
+    }
+  };
+  T.visit ( o, function ( oo )
+  {
+    if ( Array.isArray ( oo ) )
+    {
+      return ;
+    }
+    for ( var key in oo )
+    {
+      if ( typeof oo[key] !== 'string' ) continue ;
+      if ( oo[key].indexOf ( '%' ) < 0 ) continue ;
+      oo[key] = T.resolve ( oo[key], {} ) ;
+    }
+  });
+  T.log ( o ) ;
+}

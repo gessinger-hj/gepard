@@ -182,6 +182,7 @@ Connection.prototype._sendInfoResult = function ( e )
   e.control.status                     = { code:0, name:"ack" } ;
   e.body.gepardVersion                 = Gepard.getVersion() ;
   e.body.brokerVersion                 = this.broker.brokerVersion ;
+  e.body.port                          = this.broker.port ;
   e.body.startupTime                   = this.broker.startupTime   ;
   e.body.heartbeatIntervalMillis       = this.broker._heartbeatIntervalMillis ;
   e.body.maxMessageSize                = this.broker._maxMessageSize ;
@@ -609,31 +610,16 @@ Broker.prototype._ondata = function ( socket, chunk )
             {
               if ( e.control.task )
               {
-                delete e.control["availableDecision"] ;
-                jsacc     = new JSAcc ( e.control ) ;
-                eventName = e.getName() ;
                 this._taskHandler.stepReturned ( e, responderConnection, originatorConnection ) ;
-                if ( jsacc.value ( "availableDecision/command" ) === "goto" )
+console.log ( "e.control.task.step=" + e.control.task.step ) ;
+                if ( e.control.task.step )
                 {
-                  var step = jsacc.value ( "availableDecision/step" ) ;
-                  if ( step )
-                  {
-                    e.control._isResult = false ;
-                    var history = jsacc.value ( "history" ) ;
-                    if ( ! history )
-                    {
-                      history = jsacc.add ( "history", [] ) ;
-                    }
-                    history.push ( { step:e.getName(), status:e.getStatus() } ) ;
-                    e.setName ( step ) ;
-                    this._sendEventToClients ( originatorConnection, e ) ;
-                  }
-                  delete e.control["availableDecision"] ;
+                  e.control._isResult = false ;
+                  this._sendEventToClients ( originatorConnection, e ) ;
                 }
-                history = jsacc.value ( "history" ) ;
-                if ( history )
+                else
                 {
-                  history.push ( { step:eventName, status:e.getStatus() } ) ;
+                  e.control._isResult = true ;
                 }
               }
             }
@@ -668,7 +654,8 @@ Broker.prototype._ondata = function ( socket, chunk )
           }
           else
           {
-            Log.log ( "Requester not found for result:\n" + e.toString() ) ;
+            Log.log ( "Requester not found for result:\n" ) ;
+            Log.log ( e ) ;
           }
           uid = responderConnection._getNextMessageUidToBeProcessed() ;
           if ( uid )

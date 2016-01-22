@@ -7,9 +7,16 @@ var XmpTaskRule = function()
 	XmpTaskRule.super_.call ( this, arguments ) ;
 };
 util.inherits ( XmpTaskRule, BTaskRule ) ;
+XmpTaskRule.prototype.taskProlog = function ( event, originatorConnection )
+{
+	this.gotoStep ( event, "ack1" ) ;
+};
 XmpTaskRule.prototype.stepReturned = function ( event, responderConnection, originatorConnection )
 {
-  gepard.lwhere (  ) ;
+	if ( event.getName() === "ack1" )
+	{
+		this.gotoStep ( event, "ack2" ) ;
+	}
 	// console.log ( event ) ;
 
 //   if ( ! event.getName().startsWith ( "ack" ) )

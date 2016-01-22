@@ -2,7 +2,7 @@
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-01-21 12:13:13
 * @Last Modified by:   hg02055
-* @Last Modified time: 2016-01-21 18:05:39
+* @Last Modified time: 2016-01-22 18:30:44
 */
 
 'use strict';
@@ -83,10 +83,15 @@ BTaskHandler.prototype._taskProlog = function ( event, originatorConnection )
 		event.control.task.autoStepList = [] ;
 	}
 	var ignore = this.rule._taskProlog ( event, originatorConnection ) ;
+	if ( ignore === true )
+	{
+	  delete event.control["task"] ;
+	  return ;
+	}
 	if ( event.control.task.autoStepList )
 	{
-		event.control.task.stepIndex = 0 ;
-		event.control.task.autoStepList.push ( { name:event.getName() } ) ;
+		// event.control.task.stepIndex = 0 ;
+		// event.control.task.autoStepList.push ( { name:event.getName() } ) ;
 	}
 };
 BTaskHandler.prototype._taskEpilog = function ( event, originatorConnection )
@@ -102,14 +107,21 @@ BTaskHandler.prototype._taskEpilog = function ( event, originatorConnection )
 };
 BTaskHandler.prototype.stepReturned = function ( event, responderConnection, originatorConnection )
 {
+T.lwhere (  ) ;
 	if ( ! event.control.task )
 	{
 		return ;
 	}
+T.lwhere (  ) ;
+	event.control.task.step = null ;
 	if ( this.rule )
 	{
 		try
 		{
+			if ( event.control.task.autoStepList )
+			{
+			  event.control.task.autoStepList[event.control.task.stepIndex].status = event.getStatus() ;
+			}
 			this.rule._stepReturned ( event, responderConnection, originatorConnection ) ;
 		}
 		catch ( exc )
