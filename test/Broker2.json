@@ -4,11 +4,11 @@
 ,	"tasks": {
 		"rule": "XmpTaskRule"
 	, "list": [
-		{ "name":"ack"
+		{ "name":"stepsAhead"
 		,	"Xrule":"XmpTaskRule"
 		, "stepList": [
-				{ "name": "req1", "rule":null }
-			,	{ "name": "req2", "rule":null }
+				{ "name": "step1", "rule":null }
+			,	{ "name": "step2", "rule":null }
 			]
 		}
 	]

@@ -611,7 +611,7 @@ Broker.prototype._ondata = function ( socket, chunk )
               if ( e.control.task )
               {
                 this._taskHandler.stepReturned ( e, responderConnection, originatorConnection ) ;
-                if ( e.control.task.step )
+                if ( e.control.task.nextStep )
                 {
                   alreadySent = true ;
                   this._sendEventToClients ( originatorConnection, e ) ;
@@ -643,10 +643,6 @@ Broker.prototype._ondata = function ( socket, chunk )
                   socket.end() ;
                 }
               }
-              if ( e.control.task )
-              {
-                this._taskHandler._taskEpilog ( e, conn ) ;
-              }
               try
               {
                 originatorConnection.write ( e ) ;
@@ -655,6 +651,10 @@ Broker.prototype._ondata = function ( socket, chunk )
               {
                 originatorConnection.end() ;
                 Log.log ( exc ) ;
+              }
+              if ( e.control.task )
+              {
+                this._taskHandler._taskEpilog ( e, conn ) ;
               }
             }
             else
@@ -905,6 +905,17 @@ Broker.prototype._sendEventToClients = function ( conn, e )
       e.control.status = { code:1, name:"warning", reason:"No listener found for event: " + e.getName() } ;
       e.control.requestedName = e.getName() ;
       conn.write ( e ) ;
+      if ( e.control.task )
+      {
+        try
+        {
+          this._taskHandler._taskEpilog ( e, conn ) ;
+        }
+        catch ( exc )
+        {
+          Log.log ( exc ) ;
+        }
+      }
       return ;
     }
     Log.info ( "No listener found for " + e.getName() ) ;
@@ -1309,6 +1320,14 @@ Broker.prototype._ejectSocket = function ( socket )
     {
       requesterMessage.setIsResult() ;
       requesterMessage.control.status = { code:1, name:"warning", reason:"responder died unexpectedly." } ;
+      try
+      {
+        originatorConnection.write ( requesterMessage ) ;
+      }
+      catch ( exc )
+      {
+        Log.log ( exc ) ;
+      }
       if ( requesterMessage.control.task )
       {
         try
@@ -1320,7 +1339,6 @@ Broker.prototype._ejectSocket = function ( socket )
           Log.log ( exc ) ;
         }
       }
-      originatorConnection.write ( requesterMessage ) ;
     }
     else
     if ( requesterMessage )

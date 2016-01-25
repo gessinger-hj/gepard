@@ -1,8 +1,8 @@
 /* 
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-01-21 12:21:07
-* @Last Modified by:   gess
-* @Last Modified time: 2016-01-24 18:16:03
+* @Last Modified by:   hg02055
+* @Last Modified time: 2016-01-25 17:52:03
 */
 
 'use strict';
@@ -14,58 +14,25 @@ var BTaskRule = function ( taskHandler )
 {
 	this.taskHandler = taskHandler ;
 };
-BTaskRule.prototype._taskProlog = function ( event, originatorConnection )
+BTaskRule.prototype._taskProlog = function ( task, originatorConnection )
 {
-	return this.taskProlog ( event, originatorConnection ) ;
+	return this.taskProlog ( task, originatorConnection ) ;
 };
-BTaskRule.prototype._stepReturned = function ( event, responderConnection, originatorConnection )
+BTaskRule.prototype._stepReturned = function ( task, responderConnection, originatorConnection )
 {
-	this.stepReturned ( event, responderConnection, originatorConnection ) ;
-	if ( ! event.control.task.step )
-	{
-	  event.control._isResult = true ;
-	}
+	this.stepReturned ( task, responderConnection, originatorConnection ) ;
 };
-BTaskRule.prototype._taskEpilog = function ( event, originatorConnection )
+BTaskRule.prototype._taskEpilog = function ( task, originatorConnection )
 {
-	this.taskEpilog ( event, originatorConnection ) ;
+	this.taskEpilog ( task, originatorConnection ) ;
 };
-BTaskRule.prototype.taskProlog = function ( event, originatorConnection )
+BTaskRule.prototype.taskProlog = function ( task, originatorConnection )
 {
-T.lwhere (  ) ;
 };
-BTaskRule.prototype.stepReturned = function ( event, responderConnection, originatorConnection )
+BTaskRule.prototype.stepReturned = function ( task, responderConnection, originatorConnection )
 {
-T.lwhere (  ) ;
 };
-BTaskRule.prototype.taskEpilog = function ( event, originatorConnection )
+BTaskRule.prototype.taskEpilog = function ( task, originatorConnection )
 {
-T.lwhere (  ) ;
-};
-BTaskRule.prototype.gotoStep = function ( event, stepName )
-{
-	event.setName ( stepName ) ;
-	event.control.task.step = stepName ;
-
-	if ( event.control.task.auto )
-	{
-		event.control.task.stepIndex++ ;
-		event.control.task.stepList.push ( { name:event.getName() } ) ;
-	}
-	else
-	{
-		for ( var i = 0 ; i < event.control.task.stepList.length ; i++ )
-		{
-			if ( event.control.task.stepList[i].name === stepName )
-			{
-				event.control.task.stepIndex = i ;
-				break ;
-			}
-		}
-	}
-};
-BTaskRule.prototype.sendEvent = function ( event )
-{
-	// body...
 };
 module.exports = BTaskRule ;

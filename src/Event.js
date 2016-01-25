@@ -790,7 +790,7 @@ gepard.Event.prototype =
 	setStatus: function ( code, name, reason )
 	{
 		if ( ! this.control ) this.control = {} ;
-		if ( ! this.control.status ) this.control.status = {} ;
+		this.control.status = {} ;
 		if ( code )
 		{
 			code = parseInt ( code ) ;

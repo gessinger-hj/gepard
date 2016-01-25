@@ -1,8 +1,8 @@
 /* 
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-01-21 12:13:13
-* @Last Modified by:   gess
-* @Last Modified time: 2016-01-24 16:58:12
+* @Last Modified by:   hg02055
+* @Last Modified time: 2016-01-25 19:15:48
 */
 
 'use strict';
@@ -11,6 +11,7 @@ var fs    = require ( "fs" ) ;
 var T     = require ( "./Tango" ) ;
 var Log   = require ( "./LogFile" ) ;
 var JSAcc = require ( "./JSAcc" ) ;
+var BTask = require ( "./BTask" ) ;
 
 var BTaskHandler = function ( broker )
 {
@@ -31,8 +32,7 @@ BTaskHandler.prototype.getBroker = function()
 BTaskHandler.prototype.init = function ( configuration )
 {
 	var i, t ;
-// T.log ( configuration ) ;
-	this.conf = new JSAcc ( configuration ) ;
+	this.conf  = new JSAcc ( configuration ) ;
 	this.tasks = configuration.tasks ;
 	if ( ! this.tasks )
 	{
@@ -71,18 +71,12 @@ BTaskHandler.prototype._taskProlog = function ( event, originatorConnection )
 		return ;
 	}
 
-	event.control.task = {} ;
-	event.control.task.originalName = event.getName() ;
-	event.control.task.stepIndex = -1 ;
-	event.control.task.stepList = [] ;
-	if ( ! this.nameToTask[event.getName()] )
-	{
-		event.control.task.auto = true ;
-	}
-	var ignore = this.rule._taskProlog ( event, originatorConnection ) ;
+	var task = new BTask ( event, this ) ;
+	task.prolog() ;
+	var ignore = this.rule._taskProlog ( task, originatorConnection ) ;
 	if ( ignore === true )
 	{
-	  delete event.control["task"] ;
+		task.remove() ;
 	  return ;
 	}
 };
@@ -92,9 +86,9 @@ BTaskHandler.prototype._taskEpilog = function ( event, originatorConnection )
 	{
 		return ;
 	}
-	var task = event.control.task ;
-	event.setName ( task.originalName ) ;
-	this.rule._taskEpilog ( event, originatorConnection ) ;
+	var task = new BTask ( event, this ) ;
+	task.epilog() ;
+	this.rule._taskEpilog ( task, originatorConnection ) ;
 	// delete event.control["task"] ;
 };
 BTaskHandler.prototype.stepReturned = function ( event, responderConnection, originatorConnection )
@@ -103,17 +97,19 @@ BTaskHandler.prototype.stepReturned = function ( event, responderConnection, ori
 	{
 		return ;
 	}
-	delete event.control.task["step"] ;
+	delete event.control.task["nextStep"] ;
 	if ( this.rule )
 	{
 		try
 		{
-			if ( event.control.task.auto )
+			var task = new BTask ( event, this ) ;
+			task.saveCurrentStatusInSteplist() ;
+			if ( ! task.isAuto() )
 			{
-			  event.control.task.stepList[event.control.task.stepIndex].status = event.getStatus() ;
+				task.gotoNextStep() ;
 			}
-			this.rule._stepReturned ( event, responderConnection, originatorConnection ) ;
-			if ( event.control.task.step )
+			this.rule._stepReturned ( task, responderConnection, originatorConnection ) ;
+			if ( task.hasNextStepName() )
 			{
   			event.control._isResult = false ;
 			}

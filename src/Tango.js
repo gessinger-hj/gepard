@@ -1100,7 +1100,7 @@ if ( require.main === module )
       , "Xrule":"XmpTaskRule"
       , "stepList": [
           { "name": "req1", "rule":"%HOSTNAME%" }
-        , { "name": "req2", "rule":null }
+        , { "name": "req2", "rule":"null" }
         ]
       }
     ]

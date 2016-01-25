@@ -7,33 +7,24 @@ var XmpTaskRule = function()
 	XmpTaskRule.super_.apply ( this, arguments ) ;
 };
 util.inherits ( XmpTaskRule, BTaskRule ) ;
-XmpTaskRule.prototype.taskProlog = function ( event, originatorConnection )
+XmpTaskRule.prototype.taskProlog = function ( task, originatorConnection )
 {
-	this.gotoStep ( event, "ack1" ) ;
-};
-XmpTaskRule.prototype.stepReturned = function ( event, responderConnection, originatorConnection )
-{
-	if ( event.getName() === "ack1" )
+	if ( task.getEventName() === "ack" )
 	{
-		// this.gotoStep ( event, "ack2" ) ;
+		task.goto ( "ack1" ) ;
+	}
+};
+XmpTaskRule.prototype.stepReturned = function ( task, responderConnection, originatorConnection )
+{
+	if ( task.getEventName() === "ack1" )
+	{
+		task.goto ( "ack2" ) ;
 	}
 };
 var clone = require ( "clone" ) ;
-XmpTaskRule.prototype.taskEpilog = function ( event, originatorConnection )
+XmpTaskRule.prototype.taskEpilog = function ( task, originatorConnection )
 {
-gepard.lwhere (  ) ;
-console.log ( event ) ;
-	var e = new gepard.Event ( "sink" ) ;
-	e.control = clone ( event.control ) ;
-	e.body = clone ( event.body ) ;
- 	e.control._isResultRequested = false ;
- 	e.control._isResult = false ;
-console.log ( e.getStatus() ) ;
- 	e.setStatus ( 0, "success", "to-be-saved" ) ;
-console.log ( e ) ;
-console.log ( "this.taskHandler=" + this.taskHandler ) ;
-console.log ( "this.taskHandler.broker=" + this.taskHandler.broker ) ;
-  this.taskHandler.broker._sendEventToClients ( null, e ) ;
-
+	task.saveCurrentStatusInSteplist() ;
+	task.sendAsNew ( "sink", { code:0, name:"success", "reason":"to-be-saved" } ) ;
 };
 module.exports = XmpTaskRule ;
