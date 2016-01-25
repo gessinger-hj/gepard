@@ -601,9 +601,9 @@ Broker.prototype._ondata = function ( socket, chunk )
           sid                  = e.getSourceIdentifier() ;
           uid                  = e.getUniqueId() ;
           originatorConnection = this._connections[sid] ;
-
           delete this._messagesToBeProcessed[uid] ;
           responderConnection._setCurrentlyProcessedMessageUid ( "" ) ;
+          var alreadySent = false ;
           if ( e.getName() !== "system" )
           {
             try
@@ -611,15 +611,10 @@ Broker.prototype._ondata = function ( socket, chunk )
               if ( e.control.task )
               {
                 this._taskHandler.stepReturned ( e, responderConnection, originatorConnection ) ;
-console.log ( "e.control.task.step=" + e.control.task.step ) ;
                 if ( e.control.task.step )
                 {
-                  e.control._isResult = false ;
+                  alreadySent = true ;
                   this._sendEventToClients ( originatorConnection, e ) ;
-                }
-                else
-                {
-                  e.control._isResult = true ;
                 }
               }
             }
@@ -630,32 +625,43 @@ console.log ( "e.control.task.step=" + e.control.task.step ) ;
               e.setIsResult() ;
             }
           }
-          if ( e.control._isResult && originatorConnection )
+          if ( ! alreadySent )
           {
-            if ( e.getName() === "system" && e.getType().startsWith ( "client/" ) )
+            if ( e.isResult() && originatorConnection )
             {
-              if ( ! e.body.info ) e.body.info = {} ;
+              if ( e.getName() === "system" && e.getType().startsWith ( "client/" ) )
+              {
+                if ( ! e.body.info ) e.body.info = {} ;
+                try
+                {
+                  e.body.info.sid = responderConnection.sid ;
+                  e.body.info.applicationName = responderConnection.client_info.applicationName ;
+                }
+                catch ( exc )
+                {
+                  Log.log ( exc ) ;
+                  socket.end() ;
+                }
+              }
+              if ( e.control.task )
+              {
+                this._taskHandler._taskEpilog ( e, conn ) ;
+              }
               try
               {
-                e.body.info.sid = responderConnection.sid ;
-                e.body.info.applicationName = responderConnection.client_info.applicationName ;
+                originatorConnection.write ( e ) ;
               }
               catch ( exc )
               {
+                originatorConnection.end() ;
                 Log.log ( exc ) ;
-                socket.end() ;
               }
             }
-            if ( e.control.task )
+            else
             {
-              this._taskHandler._taskEpilog ( e, conn ) ;
+              Log.log ( "Requester not found for result:\n" ) ;
+              Log.log ( e ) ;
             }
-            originatorConnection.write ( e ) ;
-          }
-          else
-          {
-            Log.log ( "Requester not found for result:\n" ) ;
-            Log.log ( e ) ;
           }
           uid = responderConnection._getNextMessageUidToBeProcessed() ;
           if ( uid )
@@ -807,7 +813,10 @@ Broker.prototype._sendEventToClients = function ( conn, e )
 {
   var i, found = false, done = false, str, list ;
   var name = e.getName() ;
-  e.setSourceIdentifier ( conn.sid ) ;
+  if ( conn )
+  {
+    e.setSourceIdentifier ( conn.sid ) ;
+  }
   var isStatusInfoRequested = e.isStatusInfoRequested() ;
   e.control._isStatusInfoRequested = undefined ;
   var socketList = this._eventNameToSockets.get ( name ) ;
@@ -1300,7 +1309,6 @@ Broker.prototype._ejectSocket = function ( socket )
     {
       requesterMessage.setIsResult() ;
       requesterMessage.control.status = { code:1, name:"warning", reason:"responder died unexpectedly." } ;
-      originatorConnection.write ( requesterMessage ) ;
       if ( requesterMessage.control.task )
       {
         try
@@ -1312,6 +1320,7 @@ Broker.prototype._ejectSocket = function ( socket )
           Log.log ( exc ) ;
         }
       }
+      originatorConnection.write ( requesterMessage ) ;
     }
     else
     if ( requesterMessage )

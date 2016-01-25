@@ -1,8 +1,8 @@
 /* 
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-01-21 12:21:07
-* @Last Modified by:   hg02055
-* @Last Modified time: 2016-01-22 18:24:33
+* @Last Modified by:   gess
+* @Last Modified time: 2016-01-24 18:16:03
 */
 
 'use strict';
@@ -45,11 +45,27 @@ T.lwhere (  ) ;
 BTaskRule.prototype.gotoStep = function ( event, stepName )
 {
 	event.setName ( stepName ) ;
-	event.control.task.stepIndex++ ;
 	event.control.task.step = stepName ;
-	if ( event.control.task.autoStepList )
+
+	if ( event.control.task.auto )
 	{
-		event.control.task.autoStepList.push ( { name:event.getName() } ) ;
+		event.control.task.stepIndex++ ;
+		event.control.task.stepList.push ( { name:event.getName() } ) ;
 	}
+	else
+	{
+		for ( var i = 0 ; i < event.control.task.stepList.length ; i++ )
+		{
+			if ( event.control.task.stepList[i].name === stepName )
+			{
+				event.control.task.stepIndex = i ;
+				break ;
+			}
+		}
+	}
+};
+BTaskRule.prototype.sendEvent = function ( event )
+{
+	// body...
 };
 module.exports = BTaskRule ;

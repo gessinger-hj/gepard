@@ -4,7 +4,7 @@ var BTaskRule = gepard.BTaskRule ;
 
 var XmpTaskRule = function()
 {
-	XmpTaskRule.super_.call ( this, arguments ) ;
+	XmpTaskRule.super_.apply ( this, arguments ) ;
 };
 util.inherits ( XmpTaskRule, BTaskRule ) ;
 XmpTaskRule.prototype.taskProlog = function ( event, originatorConnection )
@@ -15,30 +15,25 @@ XmpTaskRule.prototype.stepReturned = function ( event, responderConnection, orig
 {
 	if ( event.getName() === "ack1" )
 	{
-		this.gotoStep ( event, "ack2" ) ;
+		// this.gotoStep ( event, "ack2" ) ;
 	}
-	// console.log ( event ) ;
+};
+var clone = require ( "clone" ) ;
+XmpTaskRule.prototype.taskEpilog = function ( event, originatorConnection )
+{
+gepard.lwhere (  ) ;
+console.log ( event ) ;
+	var e = new gepard.Event ( "sink" ) ;
+	e.control = clone ( event.control ) ;
+	e.body = clone ( event.body ) ;
+ 	e.control._isResultRequested = false ;
+ 	e.control._isResult = false ;
+console.log ( e.getStatus() ) ;
+ 	e.setStatus ( 0, "success", "to-be-saved" ) ;
+console.log ( e ) ;
+console.log ( "this.taskHandler=" + this.taskHandler ) ;
+console.log ( "this.taskHandler.broker=" + this.taskHandler.broker ) ;
+  this.taskHandler.broker._sendEventToClients ( null, e ) ;
 
-//   if ( ! event.getName().startsWith ( "ack" ) )
-//   {
-//     return ;
-//   }
-//   console.log ( event.control ) ;
-//   console.log ( "event.getName()=" + event.getName() ) ;
-// T.lwhere (  ) ;
-//   if ( event.getName() === "ack2" )
-//   {
-// T.lwhere (  ) ;
-//     event.setName ( "ack" ) ;
-//     return ;
-//   }
-// T.lwhere (  ) ;
-//   var jsacc = new JSAcc ( event.control ) ;
-//   jsacc.add ( "availableDecision/command", "goto" ) ;
-//   jsacc.add ( "availableDecision/step", "ack2" ) ;
-//   console.log ( event.control ) ;
-//   return ;
-
-	return true ;
 };
 module.exports = XmpTaskRule ;

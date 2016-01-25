@@ -1,8 +1,8 @@
 /* 
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-01-21 12:13:13
-* @Last Modified by:   hg02055
-* @Last Modified time: 2016-01-22 18:30:44
+* @Last Modified by:   gess
+* @Last Modified time: 2016-01-24 16:58:12
 */
 
 'use strict';
@@ -74,24 +74,16 @@ BTaskHandler.prototype._taskProlog = function ( event, originatorConnection )
 	event.control.task = {} ;
 	event.control.task.originalName = event.getName() ;
 	event.control.task.stepIndex = -1 ;
-	if ( this.nameToTask[event.getName()] )
+	event.control.task.stepList = [] ;
+	if ( ! this.nameToTask[event.getName()] )
 	{
-		event.control.task.stepList = [] ;
-	}
-	else
-	{
-		event.control.task.autoStepList = [] ;
+		event.control.task.auto = true ;
 	}
 	var ignore = this.rule._taskProlog ( event, originatorConnection ) ;
 	if ( ignore === true )
 	{
 	  delete event.control["task"] ;
 	  return ;
-	}
-	if ( event.control.task.autoStepList )
-	{
-		// event.control.task.stepIndex = 0 ;
-		// event.control.task.autoStepList.push ( { name:event.getName() } ) ;
 	}
 };
 BTaskHandler.prototype._taskEpilog = function ( event, originatorConnection )
@@ -107,22 +99,28 @@ BTaskHandler.prototype._taskEpilog = function ( event, originatorConnection )
 };
 BTaskHandler.prototype.stepReturned = function ( event, responderConnection, originatorConnection )
 {
-T.lwhere (  ) ;
 	if ( ! event.control.task )
 	{
 		return ;
 	}
-T.lwhere (  ) ;
-	event.control.task.step = null ;
+	delete event.control.task["step"] ;
 	if ( this.rule )
 	{
 		try
 		{
-			if ( event.control.task.autoStepList )
+			if ( event.control.task.auto )
 			{
-			  event.control.task.autoStepList[event.control.task.stepIndex].status = event.getStatus() ;
+			  event.control.task.stepList[event.control.task.stepIndex].status = event.getStatus() ;
 			}
 			this.rule._stepReturned ( event, responderConnection, originatorConnection ) ;
+			if ( event.control.task.step )
+			{
+  			event.control._isResult = false ;
+			}
+			else
+			{
+  			event.control._isResult = true ;
+			}
 		}
 		catch ( exc )
 		{
