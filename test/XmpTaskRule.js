@@ -1,5 +1,5 @@
-var util = require ( "util" ) ;
-var gepard = require ( "gepard" ) ;
+var util      = require ( "util" ) ;
+var gepard    = require ( "gepard" ) ;
 var BTaskRule = gepard.BTaskRule ;
 
 var XmpTaskRule = function()
@@ -7,7 +7,7 @@ var XmpTaskRule = function()
 	XmpTaskRule.super_.apply ( this, arguments ) ;
 };
 util.inherits ( XmpTaskRule, BTaskRule ) ;
-XmpTaskRule.prototype.taskProlog = function ( task, originatorConnection )
+XmpTaskRule.prototype.prolog = function ( task, originatorConnection )
 {
 	if ( task.getEventName() === "ack" )
 	{
@@ -22,7 +22,7 @@ XmpTaskRule.prototype.stepReturned = function ( task, responderConnection, origi
 	}
 };
 var clone = require ( "clone" ) ;
-XmpTaskRule.prototype.taskEpilog = function ( task, originatorConnection )
+XmpTaskRule.prototype.epilog = function ( task, originatorConnection )
 {
 	task.saveCurrentStatusInSteplist() ;
 	task.sendAsNew ( "sink", { code:0, name:"success", "reason":"to-be-saved" } ) ;

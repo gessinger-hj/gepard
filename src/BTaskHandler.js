@@ -2,7 +2,7 @@
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-01-21 12:13:13
 * @Last Modified by:   hg02055
-* @Last Modified time: 2016-01-25 19:15:48
+* @Last Modified time: 2016-01-26 12:59:43
 */
 
 'use strict';
@@ -64,7 +64,7 @@ BTaskHandler.prototype.init = function ( configuration )
   	this.nameToTask[t.name] = t ;
   }
 };
-BTaskHandler.prototype._taskProlog = function ( event, originatorConnection )
+BTaskHandler.prototype.prolog = function ( event, originatorConnection )
 {
 	if ( ! this.tasks )
 	{
@@ -73,14 +73,14 @@ BTaskHandler.prototype._taskProlog = function ( event, originatorConnection )
 
 	var task = new BTask ( event, this ) ;
 	task.prolog() ;
-	var ignore = this.rule._taskProlog ( task, originatorConnection ) ;
+	var ignore = this.rule._prolog ( task, originatorConnection ) ;
 	if ( ignore === true )
 	{
 		task.remove() ;
 	  return ;
 	}
 };
-BTaskHandler.prototype._taskEpilog = function ( event, originatorConnection )
+BTaskHandler.prototype.epilog = function ( event, originatorConnection )
 {
 	if ( ! event.control.task )
 	{
@@ -88,7 +88,7 @@ BTaskHandler.prototype._taskEpilog = function ( event, originatorConnection )
 	}
 	var task = new BTask ( event, this ) ;
 	task.epilog() ;
-	this.rule._taskEpilog ( task, originatorConnection ) ;
+	this.rule._epilog ( task, originatorConnection ) ;
 	// delete event.control["task"] ;
 };
 BTaskHandler.prototype.stepReturned = function ( event, responderConnection, originatorConnection )

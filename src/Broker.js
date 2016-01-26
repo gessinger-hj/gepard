@@ -654,7 +654,7 @@ Broker.prototype._ondata = function ( socket, chunk )
               }
               if ( e.control.task )
               {
-                this._taskHandler._taskEpilog ( e, conn ) ;
+                this._taskHandler.epilog ( e, conn ) ;
               }
             }
             else
@@ -689,7 +689,7 @@ Broker.prototype._ondata = function ( socket, chunk )
         }
         try
         {
-          this._taskHandler._taskProlog ( e, conn ) ;
+          this._taskHandler.prolog ( e, conn ) ;
           this.validateAction ( this._connectionHook.sendEvent, [ conn, e ], this, this._sendEventToClients, [ conn, e ] ) ;
         }
         catch ( exc )
@@ -909,7 +909,7 @@ Broker.prototype._sendEventToClients = function ( conn, e )
       {
         try
         {
-          this._taskHandler._taskEpilog ( e, conn ) ;
+          this._taskHandler.epilog ( e, conn ) ;
         }
         catch ( exc )
         {
@@ -1332,7 +1332,7 @@ Broker.prototype._ejectSocket = function ( socket )
       {
         try
         {
-          this._taskHandler._taskEpilog ( requesterMessage, originatorConnection ) ;
+          this._taskHandler.epilog ( requesterMessage, originatorConnection ) ;
         }
         catch ( exc )
         {
