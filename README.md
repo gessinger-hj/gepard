@@ -300,7 +300,7 @@ If the broker detects a target on a different machine the file is read in and pu
 <br/>
 This is done on a per connection basis.
 <br/>
-[Details](#file-transfer-with-the-filecontainer-class)
+[See details](#file-transfer-with-the-filecontainer-class)
 
 ## Release 1-3-0 Let's talk about Python
 
