@@ -3,17 +3,44 @@ var fs     = require('fs') ;
 var spawn  = require('child_process').spawn ;
 var Gepard = require ( "../src/Gepard" ) ;
 var Path 	 = require ( "path" ) ;
+var Admin  = require ( "../src/Admin" ) ;
 
-var logDir = Gepard.getLogDirectory() ;
+new Admin().isRunning ( function admin_is_running ( state )
+{
+  if ( state )
+  {
+    console.log ( "Already running" ) ;
+    return ;
+  }
+  execute() ;
+});
 
-var dir = Path.join ( logDir, "gp.broker.log" ) ;
+function execute()
+{
+	var logDir = Gepard.getLogDirectory() ;
+	var dir = Path.join ( logDir, "gp.broker.log" ) ;
 
-var out    = fs.openSync ( dir, 'w' ) ;
-var err    = fs.openSync ( dir, 'w' ) ;
+	var args = [ Path.join ( __dirname, "../src/Broker" ) ] ;
+	for ( var i = 2 ; i < process.argv.length ; i++ )
+	{
+		args.push ( process.argv[i] ) ;
+	}
+	if ( T.getProperty ( "help" ) )
+	{
+		var child = spawn ( 'node', args ) ;
+		child.stdout.on('data', function (data) {
+	  	console.log(""+data);
+		});
+		return ;
+	}
 
- var child = spawn('node', [ Path.join ( __dirname, "../src/Broker" ) ], {
-   detached: true,
-   stdio: [ 'ignore', out, err ]
- });
+	var out    = fs.openSync ( dir, 'w' ) ;
+	var err    = fs.openSync ( dir, 'w' ) ;
 
-child.unref();
+	 var child = spawn ( 'node', args, {
+	   detached: true,
+	   stdio: [ 'ignore', out, err ]
+	 });
+
+	child.unref();
+}
