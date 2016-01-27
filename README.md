@@ -6,54 +6,54 @@ General purpose communication and synchronization layer for distributed applicat
 
 - [Overview](#overview)
 - [What is new](#what-is-new)
-  - [Release 1-4-5 Registered Event-names may contain Wildcards (RegExp)](#release-1-4-5-registered-event-names-may-contain-wildcards-regexp)
-  - [Release 1-4-5 Simplified Handling of JSON Trees](#release-1-4-5-simplified-handling-of-json-trees)
-  - [Release 1-4-3 Logging](#release-1-4-3-logging)
-  - [Release 1-4-0 New Heartbeat Protocol to ensure the Availability of Connections](#release-1-4-0-new-heartbeat-protocol-to-ensure-the-availability-of-connections)
-  - [Release 1-3-3 New FileContainer class for Python, JavaScript and Java to simplify file-transfer.](#release-1-3-3-new-filecontainer-class-for-python-javascript-and-java-to-simplify-file-transfer)
-  - [Release 1-3-0 Let's talk about Python](#release-1-3-0-lets-talk-about-python)
-  - [Controlling Connections and Actions with a Hook](#controlling-connections-and-actions-with-a-hook)
-  - [Perfect load balanced message handling.](#perfect-load-balanced-message-handling)
-  - [Java bindings for all features:](#java-bindings-for-all-features)
+	- [Release 1-4-5 Registered Event-names may contain Wildcards (RegExp)](#release-1-4-5-registered-event-names-may-contain-wildcards-regexp)
+	- [Release 1-4-5 Simplified Handling of JSON Trees](#release-1-4-5-simplified-handling-of-json-trees)
+	- [Release 1-4-3 Logging](#release-1-4-3-logging)
+	- [Release 1-4-0 New Heartbeat Protocol to ensure the Availability of Connections](#release-1-4-0-new-heartbeat-protocol-to-ensure-the-availability-of-connections)
+	- [Release 1-3-3 New FileContainer class for Python, JavaScript and Java to simplify file-transfer.](#release-1-3-3-new-filecontainer-class-for-python-javascript-and-java-to-simplify-file-transfer)
+	- [Release 1-3-0 Let's talk about Python](#release-1-3-0-lets-talk-about-python)
+	- [Controlling Connections and Actions with a Hook](#controlling-connections-and-actions-with-a-hook)
+	- [Perfect load balanced message handling.](#perfect-load-balanced-message-handling)
+	- [Java bindings for all features:](#java-bindings-for-all-features)
 - [Install](#install)
 - [Getting Started](#getting-started)
-  - [Base](#base)
-  - [JavaScript](#javascript)
-  - [Java](#java)
-  - [Python](#python)
+	- [Base](#base)
+	- [JavaScript](#javascript)
+	- [Java](#java)
+	- [Python](#python)
 - [Configuration](#configuration)
 - [Use Cases](#use-cases)
-  - [Configuration Changes (Events)](#configuration-changes-events)
-  - [Concurrent editing of a Dataset (Semaphores)](#concurrent-editing-of-a-dataset-semaphores)
-  - [Synchronization of file processing (Locks)](#synchronization-of-file-processing-locks)
-  - [A Nice Exotic Mixture of Programming Languages](#a-nice-exotic-mixture-of-programming-languages)
+	- [Configuration Changes (Events)](#configuration-changes-events)
+	- [Concurrent editing of a Dataset (Semaphores)](#concurrent-editing-of-a-dataset-semaphores)
+	- [Synchronization of file processing (Locks)](#synchronization-of-file-processing-locks)
+	- [A Nice Exotic Mixture of Programming Languages](#a-nice-exotic-mixture-of-programming-languages)
 - [The Event Body](#the-event-body)
 - [Examples](#examples)
-  - [Examples Short](#examples-short)
-    - [Event listener](#event-listener)
-    - [Event Emitter](#event-emitter)
-    - [Locks](#locks)
-    - [Semaphores](#semaphores)
-    - [Request / Result](#request--result)
-      - [Send request](#send-request)
-      - [Send result](#send-result)
-  - [Examples Long](#examples-long)
-    - [Event listener](#event-listener-1)
-      - [In Application](#in-application)
-      - [In Browser](#in-browser)
-    - [Event Emitter](#event-emitter-1)
-      - [In Application](#in-application-1)
-      - [In Browser](#in-browser-1)
+	- [Examples Short](#examples-short)
+		- [Event listener](#event-listener)
+		- [Event Emitter](#event-emitter)
+		- [Locks](#locks)
+		- [Semaphores](#semaphores)
+		- [Request / Result](#request--result)
+			- [Send request](#send-request)
+			- [Send result](#send-result)
+	- [Examples Long](#examples-long)
+		- [Event listener](#event-listener-1)
+			- [In Application](#in-application)
+			- [In Browser](#in-browser)
+		- [Event Emitter](#event-emitter-1)
+			- [In Application](#in-application-1)
+			- [In Browser](#in-browser-1)
 - [File Transfer with the FileContainer Class](#file-transfer-with-the-filecontainer-class)
-  - [FileSender](#filesender)
-  - [ileReceiver](#ilereceiver)
+	- [FileSender](#filesender)
+	- [ileReceiver](#ilereceiver)
 - [Heartbeat and Reconnection Capability Parameterization](#heartbeat-and-reconnection-capability-parameterization)
-  - [Broker Side](#broker-side)
-  - [Client Side](#client-side)
-    - [Example to test](#example-to-test)
+	- [Broker Side](#broker-side)
+	- [Client Side](#client-side)
+		- [Example to test](#example-to-test)
 - [The TracePoint Concept](#the-tracepoint-concept)
-  - [TracePoints in the Broker](#tracepoints-in-the-broker)
-  - [TracePoints in the Client](#tracepoints-in-the-client)
+	- [TracePoints in the Broker](#tracepoints-in-the-broker)
+	- [TracePoints in the Client](#tracepoints-in-the-client)
 - [Technical Aspects of the Client](#technical-aspects-of-the-client)
 - [Found a bug? Help us fix it...](#found-a-bug-help-us-fix-it)
 - [https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md](#httpsgithubcomgessinger-hjgepardblobmasterchangelogmd)
@@ -141,14 +141,14 @@ In this case all events matching the regular expression __.*-changed__ are route
 In general a regular-expression pattern is derived from the given string if it containes some indicators.
 
 1. an __*__ (asterisk) or a __?__ (question-mark)
-  <br/>
-  Before the regular-expression is compiled the astrisk is replaced by a __.*__ and the __?__ is replced by a __.__ (dot)
+	<br/>
+	Before the regular-expression is compiled the astrisk is replaced by a __.*__ and the __?__ is replced by a __.__ (dot)
 1. at least one __.*__
-  <br/>
-  The whole string is used as is to compile the appropriate regular-expression.
+	<br/>
+	The whole string is used as is to compile the appropriate regular-expression.
 1. the string starts and ends with a slash: __"/A.*/"__
-  <br/>
-  The string between the slashes is used as is to compile the appropriate regular-expression.
+	<br/>
+	The string between the slashes is used as is to compile the appropriate regular-expression.
 
 ## Release 1-4-5 Simplified Handling of JSON Trees
 
@@ -202,62 +202,62 @@ Path-elements which do not exist are created if needed.
 ## Release 1-4-3 Logging
 
 - Client Logging into central Log-File on Broker side by calling the method
-  <br/>
-  __client.log ( {object} o )__
-  <br/>
-  The above {object} is converted to a user-friendly readable string, sent to the Broker which logs it to the default log-file.
-  <br/>
-  For all exception type objects an appropriate stack-trace is generated. 
-  <br/>
+	<br/>
+	__client.log ( {object} o )__
+	<br/>
+	The above {object} is converted to a user-friendly readable string, sent to the Broker which logs it to the default log-file.
+	<br/>
+	For all exception type objects an appropriate stack-trace is generated. 
+	<br/>
 
-  Examples:
-  * JavaScript: [gepard/xmp/XmpLog.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/XmpLog.js)
-  * Java: [gepard/java/org.gessinger/gepard/xmp/XmpLog.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/XmpLog.java)
-  * Python: [gepard/python/xmp/XmpLog.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/XmpLog.py)
+	Examples:
+	* JavaScript: [gepard/xmp/XmpLog.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/XmpLog.js)
+	* Java: [gepard/java/org.gessinger/gepard/xmp/XmpLog.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/XmpLog.java)
+	* Python: [gepard/python/xmp/XmpLog.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/XmpLog.py)
 
-  This function can be rejected by overwriting the system method in the ConnectionHook class.
-  <br/>
-  Event.getName() is 'system'
-  <br/>
-  Event.getType() is 'log'
+	This function can be rejected by overwriting the system method in the ConnectionHook class.
+	<br/>
+	Event.getName() is 'system'
+	<br/>
+	Event.getType() is 'log'
 
 - Logging with the concept of trace-points for Broker in/out and client in/out.
-  <br/>
-  The TracePoint logging features is configurable at run-time.
-  <br/>
-  In addition to the built-in TracePoints __EVENT_IN__ and __EVENT_OUT__ on the client-side application-specific trace-points can be easily defined and used:
-  <br/>
+	<br/>
+	The TracePoint logging features is configurable at run-time.
+	<br/>
+	In addition to the built-in TracePoints __EVENT_IN__ and __EVENT_OUT__ on the client-side application-specific trace-points can be easily defined and used:
+	<br/>
 
 JavaScript:
 
 ```js
-  var tracePoint = client.registerTracePoint ( "MY_TRACE_POINT" ) ;
-  tracePoint.log ( "Action ended" ) ;
+	var tracePoint = client.registerTracePoint ( "MY_TRACE_POINT" ) ;
+	tracePoint.log ( "Action ended" ) ;
 ```
-  Python:
+	Python:
 
 ```python
-  tracePoint = client.registerTracePoint ( "MY_TRACE_POINT" )
-  tracePoint.log ( "Action ended" )
+	tracePoint = client.registerTracePoint ( "MY_TRACE_POINT" )
+	tracePoint.log ( "Action ended" )
 ```
-  Java:
+	Java:
 
 ```java
-  TracePoint tp = client.registerTracePoint ( "MY_TRACE_POINT" ) ;
-  tracePoint.log ( "Action ended" ) ;
+	TracePoint tp = client.registerTracePoint ( "MY_TRACE_POINT" ) ;
+	tracePoint.log ( "Action ended" ) ;
 ```
-  <br/>
-  Each TracePoint can be activated and deactivated at runtime.
-  <br/>
+	<br/>
+	Each TracePoint can be activated and deactivated at runtime.
+	<br/>
 
-  [See details](#the-tracepoint-concept)
+	[See details](#the-tracepoint-concept)
 
-  <br/>
-  This function can be rejected by overwriting the __system() method__ in the ConnectionHook class.
-  <br/>
-  Event.getName() is 'system'
-  <br/>
-  Event.getType() is 'log'
+	<br/>
+	This function can be rejected by overwriting the __system() method__ in the ConnectionHook class.
+	<br/>
+	Event.getName() is 'system'
+	<br/>
+	Event.getType() is 'log'
 
 
 ## Release 1-4-0 New Heartbeat Protocol to ensure the Availability of Connections
@@ -345,7 +345,7 @@ To configure this hook a __subclass__ of __ConnectionHook__ must be implemented 
 
 ```json
 {
-  "connectionHook": "<path-to-javascript-code>/XmpConnectionHook"
+	"connectionHook": "<path-to-javascript-code>/XmpConnectionHook"
 }
 ```
 This hook file is __require'd__ with the start of the broker.
@@ -361,21 +361,21 @@ var util = require ( "util" ) ;
 var ConnectionHook = require ( "gepard" ).ConnectionHook ;
 var XmpConnectionHook = function()
 {
-  XmpConnectionHook.super_.call ( this ) ;
+	XmpConnectionHook.super_.call ( this ) ;
 };
 util.inherits ( XmpConnectionHook, ConnectionHook ) ;
 XmpConnectionHook.prototype.connect = function ( connection )
 {
-  console.log ( "connection.getRemoteAddress()=" + connection.getRemoteAddress() ) ;
-  return true ;
+	console.log ( "connection.getRemoteAddress()=" + connection.getRemoteAddress() ) ;
+	return true ;
 };
 module.exports = XmpConnectionHook ;
 ```
 If you prefer to start the broker from within your own JavaScript-program the configuration object can be set like:
 ```js
-  var b = new Broker() ;
-  b.setConfig ( <config-object or path to config-json-file> ) ;
-  b.listen() ;
+	var b = new Broker() ;
+	b.setConfig ( <config-object or path to config-json-file> ) ;
+	b.listen() ;
 ```
 The parameter __connection__ in the above method-signatures is an internal used object with mainly the public useful methods:
 
@@ -444,34 +444,34 @@ The examples show the nice and easy interaction between programs written in thes
 
 ## Base
 1.  __gp.broker<br/>__
-    Start the gepard broker with websocket proxy
+		Start the gepard broker with websocket proxy
 
 1.  __gp.shutdown<br/>__
-    Send a __shutdown__ event to all clients an stop the broker
+		Send a __shutdown__ event to all clients an stop the broker
 
 1.  __gp.info<br/>__
-    Show basic information from the broker
+		Show basic information from the broker
 
 ## JavaScript
 
 1.  __gp.listen --name=hello<br/>__
-    Start a listener for events named __hello__
-    <br/>
-    If you want to listen to all events with name starting with hello use a wildcard:
-    <br/>
-    __gp.listen "--name=hello*"__
+		Start a listener for events named __hello__
+		<br/>
+		If you want to listen to all events with name starting with hello use a wildcard:
+		<br/>
+		__gp.listen "--name=hello*"__
 
 1.  __gp.emit --name=hello__ [--body='{"City":"Frankfurt"}']
-    emit an event with name __hello__
+		emit an event with name __hello__
 
 1.  __gp.sem__<br/>
-    Acquire a semaphore
+		Acquire a semaphore
 
 1.  __gp.lock__<br/>
-    Acquire a lock
+		Acquire a lock
 
 1.  If you want to play with the web-client implementation use the appropriate files in:
-    __node_modules/gepard/xmp/webclient__
+		__node_modules/gepard/xmp/webclient__
 <br/>
 To simplyfy this the command
 
@@ -490,10 +490,10 @@ Options are:
 Start your browser and go to: __localhost:8888__
 
 1.  __gp.http.simple.shutdown__<br/>
-    Stop the simple webserver.
+		Stop the simple webserver.
 
 1.  __gp.http.simple.is.running__<br/>
-    Check if the simple webserver is running.
+		Check if the simple webserver is running.
 
 <br/>
 In order to try out the examples goto node_modules/gepard/xmp.
@@ -607,12 +607,12 @@ gepard.port = 17502 ;
 var sem = new gepard.Semaphore ( "user:4711" ) ;
 this.sem.acquire ( function sem_callback ( err )
 {
-  // we are owner
-  fetch data, edit and save
+	// we are owner
+	fetch data, edit and save
 
-  then:
+	then:
 
-  this.release() ; // with this statement the second user's browser app is callbacked
+	this.release() ; // with this statement the second user's browser app is callbacked
 }) ;
 ```
 
@@ -685,23 +685,23 @@ __Note: Gepard's data exchange mechanism is NOT intended to transport serialized
 The valid types are:
 * scalar type objects: string, int, double, number
 * array type objects:
-  - Array ( [] )
-  - List ( [] )
+	- Array ( [] )
+	- List ( [] )
 * hashtable type objects:
-  - Java: Map&lt;String,Object&gt;
-  - Python: dict ( {} )
-  - JavaScript: Object ( {} )
+	- Java: Map&lt;String,Object&gt;
+	- Python: dict ( {} )
+	- JavaScript: Object ( {} )
 
 There are 2 type of objects which are treated by gepard in a special way:
 * dates
-  - JavaScript: Date
-  - Java: Date
-  - Python: datetime.datetime
+	- JavaScript: Date
+	- Java: Date
+	- Python: datetime.datetime
 * bytes
-  - JavaScript: Buffer
-  - Java: byte[]
-  - Python: bytearray, bytes ( bytes should not be used to send because in python < 3 bytes is a subclass of str, typeof byte == 'str'
-    and thus cannot be detected by this mechanism)
+	- JavaScript: Buffer
+	- Java: byte[]
+	- Python: bytearray, bytes ( bytes should not be used to send because in python < 3 bytes is a subclass of str, typeof byte == 'str'
+		and thus cannot be detected by this mechanism)
 
 In these cases an object is transferred from a generic class of a sender to the generic class of the receiver which means it is reconstructed in the target programming language.
 <br/>
@@ -733,7 +733,7 @@ Ready to use examples for Python are located in __.../gepard/python/xmp__
 Adding a event-listener with the __on()__ method may be done with a single event-name or a list of event-names.
 
 __JavaScript__: client.on ( "ALARM", callback )
-   <br/> or client.on ( [ "ALARM", "BLARM" ], callback )
+	 <br/> or client.on ( [ "ALARM", "BLARM" ], callback )
 
 __Java__: client.on ( "ALARM", callback )
  <br/>or client.on ( new String[] { "ALARM", "BLARM" }, callback )
@@ -747,13 +747,13 @@ The callback will be called with an Event object of the appropriate name ( e.get
 Application
 
 ```js
-  var gepard = require ( "gepard" ) ;
-  var client = gepard.getClient() ;
+	var gepard = require ( "gepard" ) ;
+	var client = gepard.getClient() ;
 ```
 Browser
 
 ```js
-  var client = gepard.getWebClient ( 17502 ) ;
+	var client = gepard.getWebClient ( 17502 ) ;
 ```
 
 Code
@@ -761,7 +761,7 @@ Code
 ```js
 client.on ( "ALARM", function event_listener_callback(e)
 {
-  console.log ( e.toString() ) ;
+	console.log ( e.toString() ) ;
 });
 ```
 
@@ -775,10 +775,10 @@ Client client = Client.getInstance() ;
 
 client.on ( "ALARM", new EventListener()
 {
-  public void event ( Event e )
-  {
-    System.out.println ( e ) ;
-  }
+	public void event ( Event e )
+	{
+		System.out.println ( e ) ;
+	}
 } ) ;
 ```
 
@@ -789,8 +789,8 @@ import gepard
 client = gepard.Client.getInstance()
 
 def on_ABLARM ( event ):
-  print ( "on_ALARM" )
-  print ( event )
+	print ( "on_ALARM" )
+	print ( event )
 
 client.on ( "ALARM", on_ABLARM )
 ```
@@ -810,11 +810,11 @@ var gepard = require ( "gepard" ) ;
 var client = gepard.getClient() ;
 client.emit ( "ALARM",
 {
-  var thiz = this ;
-  write: function()
-  {
-    thiz.end() ; // close connection after written
-  }
+	var thiz = this ;
+	write: function()
+	{
+		thiz.end() ; // close connection after written
+	}
 });
 ```
 
@@ -858,8 +858,8 @@ Details in:
 Application
 
 ```js
-  var gepard = require ( "gepard" ) ;
-  var lock = new gepard.Lock ( "resid:main" ) ;
+	var gepard = require ( "gepard" ) ;
+	var lock = new gepard.Lock ( "resid:main" ) ;
 ```
 Browser
 
@@ -872,12 +872,12 @@ Code
 ```js
 lock.acquire ( function ( err )
 {
-  console.log ( this.toString() ) ;
-  if ( this.isOwner() )
-  {
-    .........
-    this.release() ;
-  }
+	console.log ( this.toString() ) ;
+	if ( this.isOwner() )
+	{
+		.........
+		this.release() ;
+	}
 } ) ;
 ```
 
@@ -889,8 +889,8 @@ Lock lock = new Lock ( "resid:main" ) ;
 lock.acquire() ;
 if ( lock.isOwner() )
 {
-  .........
-  lock.release() ;
+	.........
+	lock.release() ;
 }
 ```
 
@@ -903,8 +903,8 @@ lock = gepard.Lock ( "resid:main" )
 lock.acquire()
 
 if lock.isOwner():
-  ......................
-  lock.release()
+	......................
+	lock.release()
 
 ```
 
@@ -920,8 +920,8 @@ Details in:
 Application
 
 ```js
-  var gepard = require ( "gepard" ) ;
-  var sem = new gepard.Semaphore ( "user:4711" ) ;
+	var gepard = require ( "gepard" ) ;
+	var sem = new gepard.Semaphore ( "user:4711" ) ;
 ```
 Browser
 
@@ -935,11 +935,11 @@ Code
 ```js
 sem.acquire ( function ( err )
 {
-  console.log ( this.toString() ) ;
+	console.log ( this.toString() ) ;
 
-    .....................
+		.....................
 
-  this.release() ;
+	this.release() ;
 } ) ;
 ```
 
@@ -953,12 +953,12 @@ import org.gessinger.gepard.SemaphoreCallback ;
 final Semaphore sem = new Semaphore ( "user:4711" ) ;
 sem.acquire ( new SemaphoreCallback()
 {
-  public void acquired ( Event e )
-  {
-    System.out.println ( sem ) ;
-    .....................
-    sem.release() ;
-  }
+	public void acquired ( Event e )
+	{
+		System.out.println ( sem ) ;
+		.....................
+		sem.release() ;
+	}
 }) ;
 ```
 
@@ -972,8 +972,8 @@ sem.acquire(5000) ;
 
 if ( sem.isOwner() ) // if not timeout occured
 {
-    .....................
-  sem.release() ;
+		.....................
+	sem.release() ;
 }
 ```
 
@@ -985,8 +985,8 @@ Asynchronously
 import gepard
 
 def on_owner(sem):
-  ................
-  sem.release()
+	................
+	sem.release()
 
 sem = gepard.Semaphore ( "user:4711" )
 sem.acquire ( on_owner )
@@ -1003,8 +1003,8 @@ sem = gepard.Semaphore ( name )
 sem.acquire ( 5 ) # with or without a timeout
 
 if sem.isOwner():
-  ...........
-  sem.release()
+	...........
+	sem.release()
 ```
 
 Details in:
@@ -1022,23 +1022,23 @@ Details in:
 Application:
 
 ```js
-  var gepard = require ( "gepard" ) ;
-  var client = gepard.getClient() ;
+	var gepard = require ( "gepard" ) ;
+	var client = gepard.getClient() ;
 ```
 Browser:
 
 ```js
-  var client = gepard.getWebClient ( 17502 ) ;
+	var client = gepard.getWebClient ( 17502 ) ;
 ```
 Code:
 
 ```js
 client().request ( "getFileList"
 , function result(e)
-  {
-    console.log ( e.getBody().list ) ;
-    this.end() ;
-  });
+	{
+		console.log ( e.getBody().list ) ;
+		this.end() ;
+	});
 ```
 
 Java
@@ -1051,19 +1051,19 @@ import java.util.List ;
 final Client client = Client.getInstance() ;
 client.request ( "getFileList", new ResultCallback()
 {
-  public void result ( Event e )
-  {
-    if ( e.isBad() )
-    {
-      System.out.println ( "e.getStatusReason()=" + e.getStatusReason() ) ;
-    }
-    else
-    {
-      List<String> list = (List<String>) e.getBodyValue ( "file_list" ) ;
-      System.out.println ( Util.toString ( list ) ) ;
-    }
-    client.close() ;
-  }
+	public void result ( Event e )
+	{
+		if ( e.isBad() )
+		{
+			System.out.println ( "e.getStatusReason()=" + e.getStatusReason() ) ;
+		}
+		else
+		{
+			List<String> list = (List<String>) e.getBodyValue ( "file_list" ) ;
+			System.out.println ( Util.toString ( list ) ) ;
+		}
+		client.close() ;
+	}
 }) ;
 
 ```
@@ -1076,11 +1076,11 @@ import gepard
 client = gepard.Client.getInstance()
 
 def getFileList ( e ):
-  if e.isBad():
-    print ( e.getStatusReason() )
-  else:
-    print ( e.getValue ( "file_list" ) )
-  e.getClient().close()
+	if e.isBad():
+		print ( e.getStatusReason() )
+	else:
+		print ( e.getValue ( "file_list" ) )
+	e.getClient().close()
 
 client.request ( "getFileList", getFileList )
 
@@ -1097,13 +1097,13 @@ Details in:
 Application:
 
 ```js
-  var gepard = require ( "gepard" ) ;
-  var client = gepard.getClient() ;
+	var gepard = require ( "gepard" ) ;
+	var client = gepard.getClient() ;
 ```
 Browser:
 
 ```js
-  var client = gepard.getWebClient ( 17502 ) ;
+	var client = gepard.getWebClient ( 17502 ) ;
 ```
 Code:
 
@@ -1111,8 +1111,8 @@ Code:
 var list = [ "one.js", "two.js", "three.js" ] ;
 client.on ( "getFileList", function ( e )
 {
-  e.getBody().list = list ;
-  e.sendBack() ;
+	e.getBody().list = list ;
+	e.sendBack() ;
 });
 ```
 
@@ -1125,12 +1125,12 @@ import org.gessinger.gepard.Event ;
 final Client client = Client.getInstance() ;
 client.on ( name, new EventListener()
 {
-  public void event ( Event e )
-  {
-    String[] fileList = new String[] { "a.java", "b.java", "c.java" } ;
-    e.putBodyValue ( "file_list", fileList ) ;
-    e.sendBack() ;
-  }
+	public void event ( Event e )
+	{
+		String[] fileList = new String[] { "a.java", "b.java", "c.java" } ;
+		e.putBodyValue ( "file_list", fileList ) ;
+		e.sendBack() ;
+	}
 } ) ;
 ```
 
@@ -1142,11 +1142,11 @@ client = gepard.Client.getInstance()
 
 fileList = [ "a.py", "b.py", "c.py" ] ;
 def on_getFileList ( event ):
-  print ( "Request in" ) ;
-  print ( "File list out:" ) ;
-  print ( fileList ) ;
-  event.body["file_list"] = fileList ;
-  event.sendBack() ;
+	print ( "Request in" ) ;
+	print ( "File list out:" ) ;
+	print ( fileList ) ;
+	event.body["file_list"] = fileList ;
+	event.sendBack() ;
 
 client.on ( "getFileList", on_getFileList )
 ```
@@ -1171,19 +1171,19 @@ var eventName = "ALARM" ;
 console.log ( "Listen for events with name=" + eventName ) ;
 c.on ( eventName, function(e)
 {
-  console.log ( e ) ;
+	console.log ( e ) ;
 });
 c.on('end', function()
 {
-  console.log('socket disconnected');
+	console.log('socket disconnected');
 });
 c.on('error', function ( event)
 {
-  console.log( event );
+	console.log( event );
 });
 c.on('shutdown', function()
 {
-  console.log('broker shut down');
+	console.log('broker shut down');
 });
 ```
 
@@ -1196,19 +1196,19 @@ c.on('shutdown', function()
 ```
 
 ```js
-    var wc = gepard.getWebClient ( 17502 ) ;
-    this.wc.on ( "open", function onopen()
-    {
-    }) ;
-    this.wc.on ( "error", function onerror()
-    {
-    }) ;
-    this.wc.on ( "close", function onclose()
-    {
-    }) ;
+		var wc = gepard.getWebClient ( 17502 ) ;
+		this.wc.on ( "open", function onopen()
+		{
+		}) ;
+		this.wc.on ( "error", function onerror()
+		{
+		}) ;
+		this.wc.on ( "close", function onclose()
+		{
+		}) ;
 		wc.on ( "ALARM", function event_listener_callback ( e )
 		{
-		  console.log ( e.toString() ) ;
+			console.log ( e.toString() ) ;
 		}) ;
 ```
 
@@ -1224,10 +1224,10 @@ var event = new gepard.Event ( "CONFIG-CHANGED" ) ;
 event.setBody ( { "config-name" : "app.conf" } ) ;
 c.emit ( event,
 {
-  write: function() // close connection after write
-  {
-    c.end() ;
-  }
+	write: function() // close connection after write
+	{
+		c.end() ;
+	}
 });
 ```
 #### In Browser
@@ -1263,15 +1263,15 @@ var file = "<full-file-name>" ;
 event.putValue ( "DATA", new gepard.FileContainer ( file ) ) ;
 client.request ( event, function ( e )
 {
-  if ( e.isBad() )
-  {
-    console.log ( e.getStatus() ) ;
-  }
-  else
-  {
-    console.log ( "File " + file + " sent successfully." )
-  }
-  this.end() ;
+	if ( e.isBad() )
+	{
+		console.log ( e.getStatus() ) ;
+	}
+	else
+	{
+		console.log ( "File " + file + " sent successfully." )
+	}
+	this.end() ;
 }) ;
 ```
 
@@ -1287,11 +1287,11 @@ file = "<full-file-name>" ;
 event.putValue ( "DATA", gepard.FileContainer ( file ) )
 
 def result ( e ):
-  if e.isBad():
-    print ( e.getStatusReason() )
-  else:
-    print ( "File " + file + " sent successfully." )
-  e.getClient().close()
+	if e.isBad():
+		print ( e.getStatusReason() )
+	else:
+		print ( "File " + file + " sent successfully." )
+	e.getClient().close()
 
 print ( "Sending " + file )
 client.request ( event, result )
@@ -1300,29 +1300,29 @@ Java:
 <br/>See also: [gepard/java/org.gessinger/gepard/xmp/FileSender.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/FileSender.java)
 
 ```java
-    final Client client = Client.getInstance() ;
+		final Client client = Client.getInstance() ;
 
-    Event event = new Event ( "__FILE__" ) ;
-    final String file = "<full-file-name>"
-    event.putValue ( "DATA", new FileContainer ( file ) ) ;
-    client.request ( event, new ResultCallback()
-    {
-      public void result ( Event e )
-      {
-        if ( e.isBad() )
-        {
-          System.out.println ( e ) ;
-        }
-        else
-        {
-          System.out.println ( "File " + file + " sent successfully." ) ;
-          System.out.println ( "code: " + e.getStatusCode() );
-          System.out.println ( "name: " + e.getStatusName() );
-          System.out.println ( "reason: " + e.getStatusReason() );
-        }
-        client.close() ;
-      }
-    }) ;
+		Event event = new Event ( "__FILE__" ) ;
+		final String file = "<full-file-name>"
+		event.putValue ( "DATA", new FileContainer ( file ) ) ;
+		client.request ( event, new ResultCallback()
+		{
+			public void result ( Event e )
+			{
+				if ( e.isBad() )
+				{
+					System.out.println ( e ) ;
+				}
+				else
+				{
+					System.out.println ( "File " + file + " sent successfully." ) ;
+					System.out.println ( "code: " + e.getStatusCode() );
+					System.out.println ( "name: " + e.getStatusName() );
+					System.out.println ( "reason: " + e.getStatusReason() );
+				}
+				client.close() ;
+			}
+		}) ;
 ```
 
 ##FileReceiver
@@ -1331,24 +1331,24 @@ JavaScript:
 <br/>See also: [gepard/xmp/FileReceiver.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/FileReceiver.js)
 
 ```js
-  var client = gepard.getClient() ;
-  client.on ( "__FILE__", function(e)
-  {
-    var data = e.removeValue ( "DATA" ) ;
-    console.log ( data.getName() + " received." ) ;
-    var fname = data.getName() + ".in" ;
-    try
-    {
-      data.write ( fname ) ;
-      console.log ( fname + " written." ) ;
-    }
-    catch ( exc )
-    {
-      e.control.status = { code:1, name:"error", reason:"could not write: " + fname } ;
-      console.log ( exc ) ;
-    }
-    e.sendBack() ;
-  });
+	var client = gepard.getClient() ;
+	client.on ( "__FILE__", function(e)
+	{
+		var data = e.removeValue ( "DATA" ) ;
+		console.log ( data.getName() + " received." ) ;
+		var fname = data.getName() + ".in" ;
+		try
+		{
+			data.write ( fname ) ;
+			console.log ( fname + " written." ) ;
+		}
+		catch ( exc )
+		{
+			e.control.status = { code:1, name:"error", reason:"could not write: " + fname } ;
+			console.log ( exc ) ;
+		}
+		e.sendBack() ;
+	});
 ```
 
 Python:
@@ -1358,15 +1358,15 @@ Python:
 client = gepard.Client.getInstance()
 
 def on___FILE__ ( e ):
-  data = e.removeValue ( "DATA" )
-  print ( data.getName() + " received." ) ;
-  fname = data.getName() + ".in"
-  try:
-    data.write ( fname ) ;
-    print ( fname + " written.")
-  except Exception as exc:
-    print ( exc )
-  e.sendBack() ;
+	data = e.removeValue ( "DATA" )
+	print ( data.getName() + " received." ) ;
+	fname = data.getName() + ".in"
+	try:
+		data.write ( fname ) ;
+		print ( fname + " written.")
+	except Exception as exc:
+		print ( exc )
+	e.sendBack() ;
 
 client.on ( "__FILE__", on___FILE__ )
 ```
@@ -1377,30 +1377,30 @@ Java:
 final Client client = Client.getInstance() ;
 client.on ( "__FILE__", new EventListener()
 {
-  public void event ( Event e )
-  {
-    try
-    {
-      FileContainer fileContainer = (FileContainer) e.removeValue ( "DATA" ) ;
-      String fname = fileContainer.getName() + ".in" ;
-      fileContainer.write ( fname ) ;
-      System.out.println ( fname + " written." );
-      e.setStatus ( 0, "success", "File accepted." ) ;
-    }
-    catch ( Exception exc )
-    {
-      e.setStatus ( 1, "error", "File not saved." ) ;
-      System.out.println ( Util.toString ( exc ) ) ;
-    }
-    try
-    {
-      e.sendBack() ;
-    }
-    catch ( Exception exc )
-    {
-      System.out.println ( Util.toString ( exc ) ) ;
-    }
-  }
+	public void event ( Event e )
+	{
+		try
+		{
+			FileContainer fileContainer = (FileContainer) e.removeValue ( "DATA" ) ;
+			String fname = fileContainer.getName() + ".in" ;
+			fileContainer.write ( fname ) ;
+			System.out.println ( fname + " written." );
+			e.setStatus ( 0, "success", "File accepted." ) ;
+		}
+		catch ( Exception exc )
+		{
+			e.setStatus ( 1, "error", "File not saved." ) ;
+			System.out.println ( Util.toString ( exc ) ) ;
+		}
+		try
+		{
+			e.sendBack() ;
+		}
+		catch ( Exception exc )
+		{
+			System.out.println ( Util.toString ( exc ) ) ;
+		}
+	}
 } ) ;
 
 ```
@@ -1435,16 +1435,16 @@ At this place a call to __client.setReconnect(false|False)__ initiates a Client-
 There are two new callbacks available signaling the state-change to the owner-application:
 
 * Java
-  1.  client.onReconnect ( InfoCallback icb )
-  1.  client.onDisconnect ( InfoCallback icb )
+	1.  client.onReconnect ( InfoCallback icb )
+	1.  client.onDisconnect ( InfoCallback icb )
 
 * Python
-  1.  client.onReconnect ( &lt;callback> )
-  1.  client.onDisconnect ( &lt;callback> )
+	1.  client.onReconnect ( &lt;callback> )
+	1.  client.onDisconnect ( &lt;callback> )
 
 * JavaScript
-  1.  client.on ( "reconnect", &lt;callback> )
-  1.  client.on ( "disconnect", &lt;callback> )
+	1.  client.on ( "reconnect", &lt;callback> )
+	1.  client.on ( "disconnect", &lt;callback> )
 
 ### Example to test
 
@@ -1452,7 +1452,7 @@ There are two new callbacks available signaling the state-change to the owner-ap
 1.  open a terminal, execute: node node_modules/gepard/xmp/Listener.js
 1.  open a terminal, execute: python node_modules/gepard/python/xmp/Listener.py
 1.  open a terminal, goto node_modules/gepard/java
-    <br/> execute: java -cp lib/Gepard.jar:lib/gson-2.3.1.jar org.gessinger.gepard.xmp.Listener
+		<br/> execute: java -cp lib/Gepard.jar:lib/gson-2.3.1.jar org.gessinger.gepard.xmp.Listener
 
 Then goto terminal one and kill the Broker either with ^C ( ctrl+C ) or with kill -9 &lt;pid> or with the taskmanger on windows. 
 <br/>
@@ -1477,29 +1477,29 @@ There are 2 predefined __TPs__ in the Broker. Each TP in the context of a progra
 <br/>
 
 1.  __EVENT_IN__
-  If this TP is switched on all incoming events are logged to the Broker's log-file.
+	If this TP is switched on all incoming events are logged to the Broker's log-file.
 1.  __EVENT_OUT__
-  If this TP is switched on all outgoing events are logged to the Broker's log-file.
+	If this TP is switched on all outgoing events are logged to the Broker's log-file.
 
 The status of these __TPs__ can be viewed with the command: __gp.tplist__
 <br/>
 The output reads as:
 ```js
 { tracePointStatus:
-   { name: 'broker',
-     list:
-      [ { name: 'EVENT_IN', active: false },
-        { name: 'EVENT_OUT', active: false } ],
-     output: 'local' } }
+	 { name: 'broker',
+		 list:
+			[ { name: 'EVENT_IN', active: false },
+				{ name: 'EVENT_OUT', active: false } ],
+		 output: 'local' } }
 ```
 Switching the __TPs__ is done with the commands:
 
 - __gp.tpon__ [ &lt;tp-name> { , &lt;tp-name> }] 
-  switch on all or given __TPs__
+	switch on all or given __TPs__
 - __gp.tpoff__ [ &lt;tp-name> { , &lt;tp-name> }] 
-  switch off all or given __TPs__
+	switch off all or given __TPs__
 - __gp.tp__
-  toggle all __TPs__
+	toggle all __TPs__
 
 In all cases the current status of the __TPs__ is shown.
 
@@ -1509,9 +1509,9 @@ There are 2 predefined __TPs__ in each client. Each TP in the context of a progr
 <br/>
 
 1.  __EVENT_IN__
-  If this TP is switched on all incoming events are logged.
+	If this TP is switched on all incoming events are logged.
 1.  __EVENT_OUT__
-  If this TP is switched on all outgoing events are logged.
+	If this TP is switched on all outgoing events are logged.
 
 The status of these __TPs__ can be viewed with the command: __gp.client.tplist__
 <br/>
@@ -1519,30 +1519,30 @@ The output reads as:
 
 ```js
 { tracePointStatus:
-   { name: 'broker',
-     list:
-      [ { name: 'EVENT_IN', active: false },
-        { name: 'EVENT_OUT', active: false } ],
-     output: 'local' } }
+	 { name: 'broker',
+		 list:
+			[ { name: 'EVENT_IN', active: false },
+				{ name: 'EVENT_OUT', active: false } ],
+		 output: 'local' } }
 ```
 
 Switching the __TPs__ is done with the commands:
 
 - __gp.client.tpon__ [ &lt;tp-name> { , &lt;tp-name> }] [ --output=remote|local ] [ --sid=&lt;sid-of-specific-client> ]
-  <br/>
-  switch on all or given TPs
-  <br/>
-  optional: direct output to local or remote to the Broker.
+	<br/>
+	switch on all or given TPs
+	<br/>
+	optional: direct output to local or remote to the Broker.
 - __gp.client.tpoff__ [ &lt;tp-name> { , &lt;tp-name> }]  [ --output=remote|local ] [ --sid=&lt;sid-of-specific-client> ]
-  <br/>
-  switch off all or given TPs
-  <br/>
-  optional: direct output to local or remote to the Broker.
+	<br/>
+	switch off all or given TPs
+	<br/>
+	optional: direct output to local or remote to the Broker.
 - __gp.client.tp__  [ --output=remote|local ] [ --sid=&lt;sid-of-specific-client> ]
-  <br/>
-  toggle all TPs
-  <br/>
-  optional: direct output to local or remote to the Broker.
+	<br/>
+	toggle all TPs
+	<br/>
+	optional: direct output to local or remote to the Broker.
 
 In all cases the current status of the __TPs__ is shown.
 
@@ -1551,46 +1551,46 @@ Examples with 2 clients:
 
 ```js
 { tracePointStatus:
-   { name: 'client',
-     list:
-      [ { name: 'EVENT_IN', active: false },
-        { name: 'EVENT_OUT', active: false },
-     output: 'local' },
-  sid: '::ffff:127.0.0.1_44109_1452621748330',
-  applicationName: 'Listener' }
+	 { name: 'client',
+		 list:
+			[ { name: 'EVENT_IN', active: false },
+				{ name: 'EVENT_OUT', active: false },
+		 output: 'local' },
+	sid: '::ffff:127.0.0.1_44109_1452621748330',
+	applicationName: 'Listener' }
 { tracePointStatus:
-   { name: 'client',
-     list:
-      [ { name: 'EVENT_IN', state: false },
-        { name: 'EVENT_OUT', state: false } ],
-     output: 'local' },
-  sid: '::ffff:127.0.0.1_44246_1452621873697',
-  applicationName: 'org.gessinger.gepard.xmp.Listener' }
+	 { name: 'client',
+		 list:
+			[ { name: 'EVENT_IN', state: false },
+				{ name: 'EVENT_OUT', state: false } ],
+		 output: 'local' },
+	sid: '::ffff:127.0.0.1_44246_1452621873697',
+	applicationName: 'org.gessinger.gepard.xmp.Listener' }
 ```
 - __gp.client.tplist --sid=::ffff:127.0.0.1_44246_1452621873697__
 
 ```js
 { tracePointStatus:
-   { name: 'client',
-     list:
-      [ { name: 'EVENT_IN', state: false },
-        { name: 'EVENT_OUT', state: false } ],
-     output: 'local' },
-  sid: '::ffff:127.0.0.1_44246_1452621873697',
-  applicationName: 'org.gessinger.gepard.xmp.Listener' }
+	 { name: 'client',
+		 list:
+			[ { name: 'EVENT_IN', state: false },
+				{ name: 'EVENT_OUT', state: false } ],
+		 output: 'local' },
+	sid: '::ffff:127.0.0.1_44246_1452621873697',
+	applicationName: 'org.gessinger.gepard.xmp.Listener' }
 ```
 
 - __gp.client.tp --sid=::ffff:127.0.0.1_44246_1452621873697 --output=remote__
 
 ```js
 { tracePointStatus:
-   { name: 'client',
-     list:
-      [ { name: 'EVENT_IN', state: true },
-        { name: 'EVENT_OUT', state: true } ],
-     output: 'remote' },
-  sid: '::ffff:127.0.0.1_44246_1452621873697',
-  applicationName: 'org.gessinger.gepard.xmp.Listener' }
+	 { name: 'client',
+		 list:
+			[ { name: 'EVENT_IN', state: true },
+				{ name: 'EVENT_OUT', state: true } ],
+		 output: 'remote' },
+	sid: '::ffff:127.0.0.1_44246_1452621873697',
+	applicationName: 'org.gessinger.gepard.xmp.Listener' }
 ```
 
 # Technical Aspects of the Client
@@ -1624,15 +1624,15 @@ We are trying our best to keep Gepard as free of bugs as possible, but if you fi
 * Update Gepard and make sure that your problem also appears with the latest version of Gepard.
 
 * Goto the [issue tracker](https://github.com/gessinger-hj/gepard/issues) to see if your problem has been reported already.
-  If there is no existing bug report, feel free to create a new one. If there is an existing report, but you can give additional information,
-  please add your data to this existing issue. If the existing issue report has already been closed,
-  please only re-open it or comment on it if the same (or a closely related issue) re-appears,
-  i.e., there is a high chance that the very same bug has re-appeared. Otherwise, create a new issue report.
+	If there is no existing bug report, feel free to create a new one. If there is an existing report, but you can give additional information,
+	please add your data to this existing issue. If the existing issue report has already been closed,
+	please only re-open it or comment on it if the same (or a closely related issue) re-appears,
+	i.e., there is a high chance that the very same bug has re-appeared. Otherwise, create a new issue report.
 
 * Whenever you create a new issue report in our issue tracker, please make sure to include as much information as possible like
-  exceptions with text and stack trace or other log information.
-  <br/>
-  Having all the required information saves a lot of work.
+	exceptions with text and stack trace or other log information.
+	<br/>
+	Having all the required information saves a lot of work.
 
 #
 https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md
@@ -1644,8 +1644,8 @@ https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md
 # Features
 * High performance
 * Minimal configuration with
-  - __GEPARD_PORT__
-  - __GEPARD_HOST__
+	- __GEPARD_PORT__
+	- __GEPARD_HOST__
 * All JavaScript client features like event listener, event emitter, semaphores, locks and messages
 	are available in any web-browser apps.
 * All client features are also available for Java and Python
