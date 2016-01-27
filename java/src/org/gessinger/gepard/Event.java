@@ -175,17 +175,17 @@ public class Event
   {
     this.control.put ( "sourceIdentifier", sourceIdentifier ) ;
   }
-  public String getUUID()
+  public String getCHID()
   {
-    return "" + this.control.get ( "UUID" ) ;
+    return "" + this.control.get ( "CHID" ) ;
   }
-  public void setUUID ( String UUID )
+  public void setCHID ( String CHID )
   {
-    if ( this.control.containsKey ( "UUID" ) )
+    if ( this.control.containsKey ( "CHID" ) )
     {
       return ;
     }
-    this.control.put ( "UUID", UUID ) ;
+    this.control.put ( "CHID", CHID ) ;
   }
   public String getProxyIdentifier()
   {

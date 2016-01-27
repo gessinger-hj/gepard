@@ -144,14 +144,14 @@ public class Client
 	MutableTimer _Timer = new MutableTimer ( true ) ;
 	int version         = 1 ;
 	int brokerVersion   = 0 ;
-	String UUID         = Util.getProperty ( "gepard.uuid" ) ;
-	public void setUUID ( String UUID )
+	String CHID         = Util.getProperty ( "gepard.chid" ) ;
+	public void setCHID ( String CHID )
 	{
-		this.UUID = UUID ;
+		this.CHID = CHID ;
 	}
-	public String getUUID()
+	public String getCHID()
 	{
-		return UUID ;		
+		return CHID ;		
 	}
   class LFormatter extends SimpleFormatter
   {
@@ -316,10 +316,10 @@ public class Client
 	    body.put ( "application", Util.getMainClassName() ) ;
 	    body.put ( "USERNAME", USERNAME ) ;
 	    body.put ( "version", new Integer ( version ) ) ;
-	    body.put ( "UUID", UUID ) ;
+	    body.put ( "CHID", CHID ) ;
 
 	    e.setTargetIsLocalHost ( targetIsLocalHost ) ;
-	    e.setUUID ( UUID ) ;
+	    e.setCHID ( CHID ) ;
 			String t = e.toJSON() ;
 	    _out.write ( t, 0, t.length() ) ;
 	    _out.flush() ;
@@ -545,7 +545,7 @@ public class Client
 				getWriter() ;
 	  	  e.setUniqueId ( createUniqueId() ) ;
 		    e.setTargetIsLocalHost ( targetIsLocalHost ) ;
-		    e.setUUID ( UUID ) ;
+		    e.setCHID ( CHID ) ;
 				String t = e.toJSON() ;
 		    _out.write ( t, 0, t.length() ) ;
 		    _out.flush() ;
@@ -953,9 +953,9 @@ public class Client
 						      {
 							      brokerVersion = vers.intValue() ;
 						      }
-						      if ( UUID == null )
+						      if ( CHID == null )
 						      {
-	            			UUID = (String)body.get ( "UUID" ) ;
+	            			CHID = (String)body.get ( "CHID" ) ;
 						      }
 						      Double heartbeatIntervalMillis = (Double) body.get ( "_heartbeatIntervalMillis" ) ;
 						      if ( heartbeatIntervalMillis != null )

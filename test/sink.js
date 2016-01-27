@@ -6,5 +6,5 @@ var c = gepard.getClient() ;
 c.on ( name, function(e)
 {
 	gepard.log ( e ) ;
-	console.log ( "e.getUUID()=" + e.getUUID() ) ;
+	console.log ( "e.getCHID()=" + e.getCHID() ) ;
 }) ;

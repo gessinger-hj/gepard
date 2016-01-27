@@ -121,20 +121,20 @@ var Client = function ( port, host )
   this.brokerVersion            = 0 ;
   this.nameToActionCallback     = new MultiHash() ;
   TPStore.remoteTracer          = this.log.bind ( this ) ;
-  this.UUID                     = T.getProperty ( "gepard.uuid" ) ;
+  this.CHID                     = T.getProperty ( "gepard.chid" ) ;
 } ;
 util.inherits ( Client, EventEmitter ) ;
 Client.prototype.toString = function()
 {
   return "(Client)[connected=" + ( this.socket ? true : false ) + "]" ;
 };
-Client.prototype.setUUID = function ( UUID )
+Client.prototype.setCHID = function ( CHID )
 {
-  this.UUID = UUID ;
+  this.CHID = CHID ;
 };
-Client.prototype.getUUID = function()
+Client.prototype.getCHID = function()
 {
-  return this.UUID ;   
+  return this.CHID ;   
 };
 Client.prototype.registerTracePoint = function ( name )
 {
@@ -256,8 +256,8 @@ Client.prototype.connect = function()
     client_info.body.application    = thiz._application ;
     client_info.body.USERNAME       = thiz.USERNAME ;
     client_info.body.version        = thiz.version ;
-    client_info.body.UUID           = thiz.UUID ;
-    client_info.setUUID ( thiz.UUID ) ;
+    client_info.body.CHID           = thiz.CHID ;
+    client_info.setCHID ( thiz.CHID ) ;
     json                            = client_info.serialize() ;
     thiz._stats.incrementOut ( json.length )
     this.write ( json ) ;
@@ -279,7 +279,7 @@ Client.prototype.connect = function()
         }
         ctx.e = undefined ;
         e.setTargetIsLocalHost ( thiz.brokerIsLocalHost() ) ;
-        e.setUUID ( thiz.UUID ) ;
+        e.setCHID ( thiz.CHID ) ;
         json = e.serialize() ;
         thiz._stats.incrementOut ( json.length )
         this.write ( json, function()
@@ -441,9 +441,9 @@ Client.prototype.connect = function()
           if ( e.getType() === "broker_info" )
           {
             thiz.brokerVersion = e.body.brokerVersion ;
-            if ( ! thiz.UUID )
+            if ( ! thiz.CHID )
             {
-              thiz.UUID = e.body.UUID ;
+              thiz.CHID = e.body.CHID ;
             }
             if ( thiz.brokerVersion > 0 )
             {
@@ -961,7 +961,7 @@ Client.prototype.emit = function ( params, callback, opts )
     {
       e.setUser ( this.user ) ;
     }
-    e.setUUID ( this.UUID ) ;
+    e.setCHID ( this.CHID ) ;
     var json = e.serialize() ;
     this._stats.incrementOut ( json.length ) ;
     s.write ( json, function()
@@ -1418,7 +1418,7 @@ Client.prototype.sendResult = function ( message )
 Client.prototype.send = function ( e )
 {
   e.setTargetIsLocalHost ( this.brokerIsLocalHost() ) ;
-  e.setUUID ( this.UUID ) ;
+  e.setCHID ( this.CHID ) ;
   var json = e.serialize() ;
   this._stats.incrementOut ( json.length )
   this.getSocket().write ( json ) ;

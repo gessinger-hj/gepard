@@ -182,12 +182,12 @@ class Event ( object ):
 	def isStatusInfo(self):
 		if "_isStatusInfo" not in self.control: return False
 		return self.control["_isStatusInfo"]
-	def setUUID ( self, UUID ):
-		if "UUID" in self.control and self.control["UUID"] != None:
+	def setCHID ( self, CHID ):
+		if "CHID" in self.control and self.control["CHID"] != None:
 			return
-		self.control["UUID"] = UUID
-	def getUUID ( self ):
-		return self.control.get ("UUID")
+		self.control["CHID"] = CHID
+	def getCHID ( self ):
+		return self.control.get ("CHID")
 
 	@staticmethod
 	def deserialize ( s ):
@@ -489,11 +489,11 @@ class Client:
 		self._callbackWorkerRunning   = False
 		self.nameToActionCallback     = MultiMap()
 		self.TPStore.remoteTracer     = remoteTracer ( self )
-		self.UUID                     = util.getProperty ( "gepard.uuid" )
-	def getUUID ( self ):
-		return self.UUID
-	def setUUID ( self, UUID ):
-		self.UUID = UUID
+		self.CHID                     = util.getProperty ( "gepard.chid" )
+	def getCHID ( self ):
+		return self.CHID
+	def setCHID ( self, CHID ):
+		self.CHID = CHID
 	def onAction ( self, cmd, desc, cb=None ):
 		if isinstance ( desc, types.FunctionType ):
 			cb = desc
@@ -667,7 +667,7 @@ class Client:
 		client_info.body["application"]    = os.path.abspath(sys.argv[0])
 		client_info.body["USERNAME"]    	 = self.USERNAME
 		client_info.body["version"]    	   = self.version
-		client_info.body["UUID"]    	     = self.UUID
+		client_info.body["CHID"]    	     = self.CHID
 		
 		self._send ( client_info ) 
 
@@ -676,7 +676,7 @@ class Client:
 		if event.getUser() == None:
 			event.setUser ( self.user )
 		event.setUniqueId ( self.createUniqueId() )
-		event.setUUID ( self.UUID )
+		event.setCHID ( self.CHID )
 		self.sock.sendall ( event.serialize().encode ( "utf-8" ) )
 		if event.getName() != "system":
 			self.TPStore.points["EVENT_OUT"].log ( event )
@@ -983,10 +983,10 @@ class Client:
 						if body.get ( "brokerVersion" ) != None:
 							self.brokerVersion = body.get ( "brokerVersion" )
 							self._heartbeatIntervalMillis = body.get ( "_heartbeatIntervalMillis" )
-						if self.UUID == None:
-							self.UUID = body.get ( "UUID" )
+						if self.CHID == None:
+							self.CHID = body.get ( "CHID" )
 						print ( body )
-						print ( "self.UUID=" + str ( self.UUID ) )
+						print ( "self.CHID=" + str ( self.CHID ) )
 						continue
 					if e.getType() == "acquireSemaphoreResult":
 						body = e.getBody()

@@ -522,17 +522,17 @@ gepard.Event.prototype =
 	{
   	this.control.sourceIdentifier = sourceIdentifier ;
 	},
-	setUUID: function ( UUID )
+	setCHID: function ( CHID )
 	{
-		if ( this.control.UUID )
+		if ( this.control.CHID )
 		{
 			return ;
 		}
-  	this.control.UUID = UUID ;
+  	this.control.CHID = CHID ;
 	},
-	getUUID: function()
+	getCHID: function()
 	{
-  	return this.control.UUID ;
+  	return this.control.CHID ;
 	},
 	/**
 	 * Description
