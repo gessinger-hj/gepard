@@ -47,7 +47,7 @@ var Connection = function ( broker, socket )
   {
     this.sid = socket.sid ;
   }
-  this.CHID                                   = this.sid ;
+  this.CHANNEL ;
   this._lockedResourcesIdList                 = [] ;
   this._patternList                           = [] ;
   this._regexpList                            = [] ;
@@ -580,7 +580,6 @@ Broker.prototype._ondata = function ( socket, chunk )
         socket.end() ;
         return ;
       }
-      e.setCHID ( conn.sid ) ;
       if ( e.getName() !== 'system' )
       {
         TPStore.points["EVENT_IN"].log ( "--------------------------- EVENT_IN ---------------------------" ) ;
@@ -1031,13 +1030,13 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
     }
     conn.version         = conn.client_info.version
     conn.client_info.sid = conn.sid ;
-    if ( conn.client_info.CHID )
+    if ( conn.client_info.CHANNEL )
     {
-      conn.CHID = conn.client_info.CHID ;
+      conn.CHANNEL = conn.client_info.CHANNEL ;
     }
     else
     {
-      conn.client_info.CHID = conn.CHID ;
+      conn.client_info.CHANNEL = conn.CHANNEL ;
     }
     var app              = conn.client_info.application ;
     if ( app )
@@ -1077,7 +1076,6 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
         var broker_info                           = new Event ( "system", "broker_info" ) ;
         broker_info.body.brokerVersion            = thiz.brokerVersion ;
         broker_info.body._heartbeatIntervalMillis = thiz._heartbeatIntervalMillis ;
-        broker_info.body.CHID                     = conn.CHID ;
         conn.write ( broker_info ) ;
       },500) ;
     }

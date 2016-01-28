@@ -5,8 +5,8 @@ var name = gepard.getProperty ( "name", "ack" ) ;
 var c = gepard.getClient() ;
 c.on ( name, function(e)
 {
-	console.log ( "e.getCHID()=" + e.getCHID() ) ;
-	e.setStatus ( 0, "ack", c.getCHID() ) ;
+	console.log ( "e.getCHANNEL()=" + e.getChannel() ) ;
+	e.setStatus ( 0, "ack", c.getChannel() ) ;
 // this.end() ;
 	e.sendBack() ;
 }) ;

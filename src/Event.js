@@ -522,17 +522,21 @@ gepard.Event.prototype =
 	{
   	this.control.sourceIdentifier = sourceIdentifier ;
 	},
-	setCHID: function ( CHID )
+	setTargetChannel: function ( TARGET_CHANNEL )
 	{
-		if ( this.control.CHID )
-		{
-			return ;
-		}
-  	this.control.CHID = CHID ;
+  	this.control.TARGET_CHANNEL = TARGET_CHANNEL ;
 	},
-	getCHID: function()
+	getTargetChannel: function()
 	{
-  	return this.control.CHID ;
+  	return this.control.TARGET_CHANNEL ;
+	},
+	setChannel: function ( CHANNEL )
+	{
+  	this.control.CHANNEL = CHANNEL ;
+	},
+	getChannel: function()
+	{
+  	return this.control.CHANNEL ;
 	},
 	/**
 	 * Description

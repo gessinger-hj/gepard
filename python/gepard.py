@@ -65,9 +65,11 @@ class Event ( object ):
 			self.body = body
 		else:
 			raise ValueError ( "body must be None or a dict, not: " + str(body) + "(" + body.__class__.__name__ + ")" )
-		self.user = None
-		self.control = { "createdAt": datetime.datetime.now(), "hostname": socket.gethostname(), "plang": "python" }
-
+		self.user           = None
+		self.control        = { "createdAt": datetime.datetime.now(), "hostname": socket.gethostname(), "plang": "python" }
+		self.CHANNEL        = None
+		self.TARGET_CHANNEL = None
+		self.sid            = None
 	def jsa(self):
 		if "_JSAcc" in self.__dict__:
 			return self._JSAcc
@@ -182,12 +184,14 @@ class Event ( object ):
 	def isStatusInfo(self):
 		if "_isStatusInfo" not in self.control: return False
 		return self.control["_isStatusInfo"]
-	def setCHID ( self, CHID ):
-		if "CHID" in self.control and self.control["CHID"] != None:
-			return
-		self.control["CHID"] = CHID
-	def getCHID ( self ):
-		return self.control.get ("CHID")
+	def setChannel ( self, CHANNEL ):
+		self.control["CHANNEL"] = CHANNEL
+	def getChannel ( self ):
+		return self.control.get ("CHANNEL")
+	def setTargetChannel ( self, TARGET_CHANNEL ):
+		self.TARGET_CHANNEL = TARGET_CHANNEL
+	def getTargetChannel ( self ):
+		return self.TARGET_CHANNEL
 
 	@staticmethod
 	def deserialize ( s ):
@@ -489,11 +493,11 @@ class Client:
 		self._callbackWorkerRunning   = False
 		self.nameToActionCallback     = MultiMap()
 		self.TPStore.remoteTracer     = remoteTracer ( self )
-		self.CHID                     = util.getProperty ( "gepard.chid" )
-	def getCHID ( self ):
-		return self.CHID
-	def setCHID ( self, CHID ):
-		self.CHID = CHID
+		self.CHANNEL                  = util.getProperty ( "gepard.channel" )
+	def setChannel ( self, CHANNEL ):
+		self.CHANNEL = CHANNEL
+	def getChannel ( self ):
+		return self.CHANNEL
 	def onAction ( self, cmd, desc, cb=None ):
 		if isinstance ( desc, types.FunctionType ):
 			cb = desc
@@ -667,7 +671,7 @@ class Client:
 		client_info.body["application"]    = os.path.abspath(sys.argv[0])
 		client_info.body["USERNAME"]    	 = self.USERNAME
 		client_info.body["version"]    	   = self.version
-		client_info.body["CHID"]    	     = self.CHID
+		client_info.body["CHANNEL"]    	     = self.CHANNEL
 		
 		self._send ( client_info ) 
 
@@ -676,7 +680,7 @@ class Client:
 		if event.getUser() == None:
 			event.setUser ( self.user )
 		event.setUniqueId ( self.createUniqueId() )
-		event.setCHID ( self.CHID )
+		event.setChannel ( self.CHANNEL )
 		self.sock.sendall ( event.serialize().encode ( "utf-8" ) )
 		if event.getName() != "system":
 			self.TPStore.points["EVENT_OUT"].log ( event )
@@ -983,11 +987,8 @@ class Client:
 						if body.get ( "brokerVersion" ) != None:
 							self.brokerVersion = body.get ( "brokerVersion" )
 							self._heartbeatIntervalMillis = body.get ( "_heartbeatIntervalMillis" )
-						if self.CHID == None:
-							self.CHID = body.get ( "CHID" )
-						print ( body )
-						print ( "self.CHID=" + str ( self.CHID ) )
 						continue
+						self.sid = body.get ( "sid" )
 					if e.getType() == "acquireSemaphoreResult":
 						body = e.getBody()
 						resourceId = body.get ( "resourceId" )

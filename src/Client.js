@@ -121,20 +121,21 @@ var Client = function ( port, host )
   this.brokerVersion            = 0 ;
   this.nameToActionCallback     = new MultiHash() ;
   TPStore.remoteTracer          = this.log.bind ( this ) ;
-  this.CHID                     = T.getProperty ( "gepard.chid" ) ;
+  this.CHANNEL                  = T.getProperty ( "gepard.channel" ) ;
+  this.sid                      = "" ;
 } ;
 util.inherits ( Client, EventEmitter ) ;
 Client.prototype.toString = function()
 {
   return "(Client)[connected=" + ( this.socket ? true : false ) + "]" ;
 };
-Client.prototype.setCHID = function ( CHID )
+Client.prototype.setChannel = function ( CHANNEL )
 {
-  this.CHID = CHID ;
+  this.CHANNEL = CHANNEL ;
 };
-Client.prototype.getCHID = function()
+Client.prototype.getChannel = function()
 {
-  return this.CHID ;   
+  return this.CHANNEL ;   
 };
 Client.prototype.registerTracePoint = function ( name )
 {
@@ -256,8 +257,8 @@ Client.prototype.connect = function()
     client_info.body.application    = thiz._application ;
     client_info.body.USERNAME       = thiz.USERNAME ;
     client_info.body.version        = thiz.version ;
-    client_info.body.CHID           = thiz.CHID ;
-    client_info.setCHID ( thiz.CHID ) ;
+    client_info.body.CHANNEL           = thiz.CHANNEL ;
+    client_info.setChannel ( thiz.CHANNEL ) ;
     json                            = client_info.serialize() ;
     thiz._stats.incrementOut ( json.length )
     this.write ( json ) ;
@@ -279,7 +280,7 @@ Client.prototype.connect = function()
         }
         ctx.e = undefined ;
         e.setTargetIsLocalHost ( thiz.brokerIsLocalHost() ) ;
-        e.setCHID ( thiz.CHID ) ;
+        e.setChannel ( thiz.CHANNEL ) ;
         json = e.serialize() ;
         thiz._stats.incrementOut ( json.length )
         this.write ( json, function()
@@ -441,10 +442,6 @@ Client.prototype.connect = function()
           if ( e.getType() === "broker_info" )
           {
             thiz.brokerVersion = e.body.brokerVersion ;
-            if ( ! thiz.CHID )
-            {
-              thiz.CHID = e.body.CHID ;
-            }
             if ( thiz.brokerVersion > 0 )
             {
               thiz._heartbeatIntervalMillis = e.body._heartbeatIntervalMillis ;
@@ -457,6 +454,7 @@ Client.prototype.connect = function()
                 thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._heartbeatIntervalMillis ) ;
               }
             }
+            thiz.sid = e.body.sid ;
             return ;
           }
           if ( e.getType() === "PING" )
@@ -961,7 +959,7 @@ Client.prototype.emit = function ( params, callback, opts )
     {
       e.setUser ( this.user ) ;
     }
-    e.setCHID ( this.CHID ) ;
+    e.setChannel ( this.CHANNEL ) ;
     var json = e.serialize() ;
     this._stats.incrementOut ( json.length ) ;
     s.write ( json, function()
@@ -1418,7 +1416,7 @@ Client.prototype.sendResult = function ( message )
 Client.prototype.send = function ( e )
 {
   e.setTargetIsLocalHost ( this.brokerIsLocalHost() ) ;
-  e.setCHID ( this.CHID ) ;
+  e.setChannel ( this.CHANNEL ) ;
   var json = e.serialize() ;
   this._stats.incrementOut ( json.length )
   this.getSocket().write ( json ) ;

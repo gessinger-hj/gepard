@@ -144,14 +144,14 @@ public class Client
 	MutableTimer _Timer = new MutableTimer ( true ) ;
 	int version         = 1 ;
 	int brokerVersion   = 0 ;
-	String CHID         = Util.getProperty ( "gepard.chid" ) ;
-	public void setCHID ( String CHID )
+	String CHANNEL         = Util.getProperty ( "gepard.channel" ) ;
+	public void setChannel ( String CHANNEL )
 	{
-		this.CHID = CHID ;
+		this.CHANNEL = CHANNEL ;
 	}
-	public String getCHID()
+	public String getChannel()
 	{
-		return CHID ;		
+		return CHANNEL ;		
 	}
   class LFormatter extends SimpleFormatter
   {
@@ -316,10 +316,10 @@ public class Client
 	    body.put ( "application", Util.getMainClassName() ) ;
 	    body.put ( "USERNAME", USERNAME ) ;
 	    body.put ( "version", new Integer ( version ) ) ;
-	    body.put ( "CHID", CHID ) ;
+	    body.put ( "CHANNEL", CHANNEL ) ;
 
 	    e.setTargetIsLocalHost ( targetIsLocalHost ) ;
-	    e.setCHID ( CHID ) ;
+	    e.setChannel ( CHANNEL ) ;
 			String t = e.toJSON() ;
 	    _out.write ( t, 0, t.length() ) ;
 	    _out.flush() ;
@@ -545,7 +545,7 @@ public class Client
 				getWriter() ;
 	  	  e.setUniqueId ( createUniqueId() ) ;
 		    e.setTargetIsLocalHost ( targetIsLocalHost ) ;
-		    e.setCHID ( CHID ) ;
+		    e.setChannel ( CHANNEL ) ;
 				String t = e.toJSON() ;
 		    _out.write ( t, 0, t.length() ) ;
 		    _out.flush() ;
@@ -953,16 +953,13 @@ public class Client
 						      {
 							      brokerVersion = vers.intValue() ;
 						      }
-						      if ( CHID == null )
-						      {
-	            			CHID = (String)body.get ( "CHID" ) ;
-						      }
 						      Double heartbeatIntervalMillis = (Double) body.get ( "_heartbeatIntervalMillis" ) ;
 						      if ( heartbeatIntervalMillis != null )
 						      {
 							      _heartbeatIntervalMillis = heartbeatIntervalMillis.longValue() ;
 							      socket.setSoTimeout ( 3 * (int)_heartbeatIntervalMillis ) ;
 						      }
+						      this.sid = (String) body.get ( "sid" ) ;
 						    }
 						    catch ( Exception exc )
 						    {
