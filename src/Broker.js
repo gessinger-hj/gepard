@@ -779,27 +779,38 @@ Broker.prototype._logMessage = function ( conn, e )
  */
 Broker.prototype._sendMessageToClient = function ( e, socketList )
 {
-  var socket, i = false ;
-  var uid                          = e.getUniqueId() ;
+  var socket, found = false, i ;
+  var uid = e.getUniqueId() ;
+  var TARGET_CHANNEL = e.getTargetChannel() ;
   this._messagesToBeProcessed[uid] = e ;
   for ( i = 0 ; i < socketList.length ; i++ )
   {
     socket = socketList[i] ;
     conn   = this._connections[socket.sid] ;
+    if ( TARGET_CHANNEL && conn.CHANNEL !== TARGET_CHANNEL )
+    {
+      continue ;
+    }
     if ( conn._numberOfPendingRequests === 0 )
     {
       conn.write ( e ) ;
       conn._numberOfPendingRequests++ ;
       conn._setCurrentlyProcessedMessageUid ( uid ) ;
-      return ;
+      return true ;
     }
   }
   for ( i = 0 ; i < socketList.length ; i++ )
   {
     socket = socketList[i] ;
     conn   = this._connections[socket.sid] ;
+    if ( TARGET_CHANNEL && conn.CHANNEL !== TARGET_CHANNEL )
+    {
+      continue ;
+    }
+    found = true ;
     conn._messageUidsToBeProcessed.push ( uid ) ;
   }
+  return found ;
 };
 /**
  * Description
@@ -816,16 +827,17 @@ Broker.prototype._sendEventToClients = function ( conn, e )
   {
     e.setSourceIdentifier ( conn.sid ) ;
   }
-  var isStatusInfoRequested = e.isStatusInfoRequested() ;
+  var isStatusInfoRequested        = e.isStatusInfoRequested() ;
   e.control._isStatusInfoRequested = undefined ;
-  var socketList = this._eventNameToSockets.get ( name ) ;
+  var socketList                   = this._eventNameToSockets.get ( name ) ;
+  var TARGET_CHANNEL               = e.getTargetChannel() ;
   var s ;
   if ( socketList )
   {
     found = true ;
     if ( e.isResultRequested() && ! e.isBroadcast() )
     {
-      this._sendMessageToClient ( e, socketList ) ;
+      found = this._sendMessageToClient ( e, socketList ) ;
     }
     else
     {
@@ -860,7 +872,10 @@ Broker.prototype._sendEventToClients = function ( conn, e )
       e.control.requestedName = e.getName() ;
       conn.write ( e ) ;
     }
-    return ;
+    if ( found )
+    {
+      return ;
+    }
   }
   for ( i = 0 ; i < this._connectionList.length ; i++ )
   {
@@ -889,6 +904,7 @@ Broker.prototype._sendEventToClients = function ( conn, e )
     conn.write ( e ) ;
     return ;
   }
+console.log ( "found=" + found ) ;
   if ( ! found )
   {
     if ( conn && e.isResultRequested() || e.isFailureInfoRequested() || isStatusInfoRequested )

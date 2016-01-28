@@ -494,10 +494,13 @@ class Client:
 		self.nameToActionCallback     = MultiMap()
 		self.TPStore.remoteTracer     = remoteTracer ( self )
 		self.CHANNEL                  = util.getProperty ( "gepard.channel" )
+		self.SID 											= None ;
 	def setChannel ( self, CHANNEL ):
 		self.CHANNEL = CHANNEL
 	def getChannel ( self ):
 		return self.CHANNEL
+	def getSid ( self ):
+		return self.SID
 	def onAction ( self, cmd, desc, cb=None ):
 		if isinstance ( desc, types.FunctionType ):
 			cb = desc

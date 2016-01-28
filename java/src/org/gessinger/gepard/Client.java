@@ -144,7 +144,8 @@ public class Client
 	MutableTimer _Timer = new MutableTimer ( true ) ;
 	int version         = 1 ;
 	int brokerVersion   = 0 ;
-	String CHANNEL         = Util.getProperty ( "gepard.channel" ) ;
+	String CHANNEL      = Util.getProperty ( "gepard.channel" ) ;
+	String SID          = null ;
 	public void setChannel ( String CHANNEL )
 	{
 		this.CHANNEL = CHANNEL ;
@@ -152,6 +153,10 @@ public class Client
 	public String getChannel()
 	{
 		return CHANNEL ;		
+	}
+	public String getSid()
+	{
+		return sid ;		
 	}
   class LFormatter extends SimpleFormatter
   {

@@ -137,6 +137,10 @@ Client.prototype.getChannel = function()
 {
   return this.CHANNEL ;   
 };
+Client.prototype.getSid = function()
+{
+  return this.sid ;   
+};
 Client.prototype.registerTracePoint = function ( name )
 {
   return TPStore.add ( name ) ;
