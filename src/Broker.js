@@ -782,17 +782,19 @@ Broker.prototype._sendMessageToClient = function ( e, socketList )
   var socket, found = false, i ;
   var uid = e.getUniqueId() ;
   var TARGET_CHANNEL = e.getTargetChannel() ;
-  this._messagesToBeProcessed[uid] = e ;
   for ( i = 0 ; i < socketList.length ; i++ )
   {
     socket = socketList[i] ;
     conn   = this._connections[socket.sid] ;
-    if ( TARGET_CHANNEL && conn.CHANNEL !== TARGET_CHANNEL )
+    if (  ( ! TARGET_CHANNEL && conn.CHANNEL )
+       || ( TARGET_CHANNEL && ! conn.CHANNEL[TARGET_CHANNEL] )
+       )
     {
       continue ;
     }
     if ( conn._numberOfPendingRequests === 0 )
     {
+      this._messagesToBeProcessed[uid] = e ;
       conn.write ( e ) ;
       conn._numberOfPendingRequests++ ;
       conn._setCurrentlyProcessedMessageUid ( uid ) ;
@@ -803,7 +805,9 @@ Broker.prototype._sendMessageToClient = function ( e, socketList )
   {
     socket = socketList[i] ;
     conn   = this._connections[socket.sid] ;
-    if ( TARGET_CHANNEL && conn.CHANNEL !== TARGET_CHANNEL )
+    if (  ( ! TARGET_CHANNEL && conn.CHANNEL )
+       || ( TARGET_CHANNEL && ! conn.CHANNEL[TARGET_CHANNEL] )
+       )
     {
       continue ;
     }
@@ -848,23 +852,24 @@ Broker.prototype._sendEventToClients = function ( conn, e )
       }
       for ( i = 0 ; i < socketList.length ; i++ )
       {
+        var target_conn = this._connections[socketList[i].sid] ;
+        if (  ( ! TARGET_CHANNEL && target_conn.CHANNEL )
+           || ( TARGET_CHANNEL && ! target_conn.CHANNEL[TARGET_CHANNEL] )
+           )
+        {
+          continue ;
+        }
+
         if ( e.clone )
         {
           e.control.clone.number = number++ ;
           e.control.clone.of = socketList.length ;
         }
-        var target_conn = this._connections[socketList[i].sid] ;
-        if ( target_conn.isLocalHost() )
-        {
-          target_conn.write ( e ) ;
-        }
-        else
-        {
-          target_conn.write ( e ) ;
-        }
+        found = true ;
+        target_conn.write ( e ) ;
       }
     }
-    if ( conn && isStatusInfoRequested )
+    if ( found && conn && isStatusInfoRequested )
     {
       e.control._isStatusInfoRequested = isStatusInfoRequested ;
       e.setIsStatusInfo() ;
@@ -872,7 +877,7 @@ Broker.prototype._sendEventToClients = function ( conn, e )
       e.control.requestedName = e.getName() ;
       conn.write ( e ) ;
     }
-    if ( found )
+    if ( found && e.isResultRequested() && ! e.isBroadcast() )
     {
       return ;
     }
@@ -884,6 +889,12 @@ Broker.prototype._sendEventToClients = function ( conn, e )
     for ( j = 0 ; j < list.length ; j++ )
     {
       if ( ! list[j].test ( name ) ) continue ;
+      if (  ( ! TARGET_CHANNEL && this._connectionList[i].CHANNEL )
+         || ( TARGET_CHANNEL && ! this._connectionList[i].CHANNEL[TARGET_CHANNEL] )
+         )
+      {
+        continue ;
+      }
       found = true ;
       this._connectionList[i].write ( e ) ;
       if ( e.isResultRequested() && ! e.isBroadcast() )
@@ -904,7 +915,6 @@ Broker.prototype._sendEventToClients = function ( conn, e )
     conn.write ( e ) ;
     return ;
   }
-console.log ( "found=" + found ) ;
   if ( ! found )
   {
     if ( conn && e.isResultRequested() || e.isFailureInfoRequested() || isStatusInfoRequested )
@@ -1006,7 +1016,7 @@ Broker.prototype._handleSystemClientMessages = function ( conn, e )
  */
 Broker.prototype._handleSystemMessages = function ( conn, e )
 {
-  var i, found ;
+  var i, found, list, CHANNEL, t ;
   if ( e.getType() === "addMultiplexer" )
   {
     return ;
@@ -1046,13 +1056,30 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
     }
     conn.version         = conn.client_info.version
     conn.client_info.sid = conn.sid ;
-    if ( conn.client_info.CHANNEL )
+    CHANNEL = conn.client_info.CHANNEL ;
+    if ( typeof CHANNEL === 'string' )
     {
-      conn.CHANNEL = conn.client_info.CHANNEL ;
+      conn.CHANNEL = {} ;
+      if ( CHANNEL.indexOf ( ',' ) >= 0 )
+      {
+        list = CHANNEL.split ( ',' ) ;
+      }
+      else
+      {
+        list = [ CHANNEL ] ;
+      }
+      for ( i = 0 ; i < list.length ; i++ )
+      {
+        t = list[i].trim() ;
+        if ( ! t ) continue ;
+        if ( ! conn.CHANNEL ) conn.CHANNEL = {} ;
+        conn.CHANNEL[t] = true ;
+      } 
     }
     else
+    if ( typeof CHANNEL === 'object' )
     {
-      conn.client_info.CHANNEL = conn.CHANNEL ;
+      conn.CHANNEL = CHANNEL ;
     }
     var app              = conn.client_info.application ;
     if ( app )

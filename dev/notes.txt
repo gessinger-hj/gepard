@@ -1,0 +1,176 @@
+=================================================
+Feature
+=================================================
+
+--------------------------------
+Start
+--------------------------------
+
+$ git checkout -b myfeature develop
+																								Switched to a new branch "myfeature"
+
+Incorporating a finished feature on develop
+
+Finished features may be merged into the develop branch to definitely add them to the upcoming release:
+
+--------------------------------
+Finish Feature
+--------------------------------
+$ git checkout develop
+																								Switched to branch 'develop'
+
+$ git merge --no-ff myfeature
+																								Updating ea1b82a..05e9557
+																								(Summary of changes)
+
+$ git branch -d myfeature
+																								Deleted branch myfeature (was 05e9557).
+
+$ git push origin develop
+
+=================================================
+Release
+=================================================
+
+--------------------------------
+Start
+--------------------------------
+$ git checkout -b release-1.2 develop
+																								Switched to a new branch "release-1.2"
+
+--------------------------------
+./bump-version.sh 1.2
+Files modified successfully, version bumped to 1.2.
+
+--------------------------------
+$ git commit -a -m "Bumped version number to 1.2"
+																								[release-1.2 74d9424] Bumped version number to 1.2
+																								1 files changed, 1 insertions(+), 1 deletions(-)
+
+--------------------------------
+Finish Release
+--------------------------------
+$ git checkout develop 														Switched to branch 'develop'
+
+$ git merge --no-ff release-1.2
+															 									Merge made by recursive.
+																								(Summary of changes)
+
+$ git branch -d release-1.2
+																								Deleted branch release-1.2 (was ff452fe).
+
+=================================================
+Hotfix
+=================================================
+
+$ git checkout -b hotfix-1.2.1 master
+																								Switched to a new branch "hotfix-1.2.1"
+
+$ ./bump-version.sh 1.2.1
+Files modified successfully, version bumped to 1.2.1.
+
+$ git commit -a -m "Bumped version number to 1.2.1"
+																								[hotfix-1.2.1 41e61bb] Bumped version number to 1.2.1
+																								1 files changed, 1 insertions(+), 1 deletions(-)
+
+$ git commit -m "Fixed severe production problem"
+																								[hotfix-1.2.1 abbe5d6] Fixed severe production problem
+																								5 files changed, 32 insertions(+), 17 deletions(-)
+
+--------------------------------
+Finish Hotfix
+--------------------------------
+
+  First, update master and tag the release.
+
+$ git checkout master
+																								Switched to branch 'master'
+$ git merge --no-ff hotfix-1.2.1
+																								Merge made by recursive.
+																								(Summary of changes)
+$ git tag -a 1.2.1
+
+	Next, include the bugfix in develop, too:
+
+$ git checkout develop
+																								Switched to branch 'develop'
+$ git merge --no-ff hotfix-1.2.1
+																								Merge made by recursive.
+																								(Summary of changes)
+
+	Finally, remove the temporary branch:
+
+$ git branch -d hotfix-1.2.1
+																								Deleted branch hotfix-1.2.1 (was abbe5d6).
+
+=================================================
+Show not pushed commits
+=================================================
+$ git log --branches --not --remotes
+																								commit af2ecab41faa7817722e6b54c93d142fefb26b40
+																								Author: gessinger-hj <gessinger.hj@gmail.com>
+																								Date:   Thu Jan 28 12:30:33 2016 +0100
+
+$ git log --tags --not --remotes
+
+=================================================
+Rename a branch
+=================================================
+Local:
+
+$ git -m <old-name> <new-name>
+															 									may contain directory: a -> feature/a
+
+Remote:
+
+$ git push origin :feature-channels
+																								 - [deleted]         feature-channels
+
+$ git push --set-upstream origin feature/channels
+																								Counting objects: 25, done.
+																								Delta compression using up to 4 threads.
+																								Compressing objects: 100% (22/22), done.
+																								Writing objects: 100% (25/25), 8.02 KiB | 0 bytes/s, done.
+																								Total 25 (delta 18), reused 0 (delta 0)
+																								To https://github.com/gessinger-hj/gepard.git
+																								 * [new branch]      feature/channels -> feature/channels
+																								Branch feature/channels set up to track remote branch feature/channels from origin by rebasing.
+
+=================================================
+list commits
+=================================================
+$ git log --pretty=oneline
+
+=================================================
+list all branches remote and locally
+=================================================
+$ git branch -a
+
+=================================================
+Tags
+=================================================
+
+Create:
+$ git checkout master
+$ git tag -a tags/v1.4.5 -m "tag v1.4.5"
+
+List:
+$git tag -l
+
+Push:
+$ git push origin tags/v1.4.5
+$ git push origin --tags 												all not pushec tags
+
+Checkout:
+$ git checkout -b version2 tags/v1.4.5					new branch
+
+Delete:
+$ git tag -d tags/v1.4.5
+$ git branch -d version2
+$ git push origin :tags/v1.4.5
+
+=================================================
+Show
+=================================================
+Tree:
+$ git log --graph
