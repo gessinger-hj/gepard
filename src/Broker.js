@@ -47,7 +47,7 @@ var Connection = function ( broker, socket )
   {
     this.sid = socket.sid ;
   }
-  this.CHANNEL ;
+  this.channels ;
   this._lockedResourcesIdList                 = [] ;
   this._patternList                           = [] ;
   this._regexpList                            = [] ;
@@ -780,14 +780,14 @@ Broker.prototype._logMessage = function ( conn, e )
 Broker.prototype._sendMessageToClient = function ( e, socketList )
 {
   var socket, found = false, i ;
-  var uid = e.getUniqueId() ;
-  var TARGET_CHANNEL = e.getTargetChannel() ;
+  var uid           = e.getUniqueId() ;
+  var channel       = e.getChannel() ;
   for ( i = 0 ; i < socketList.length ; i++ )
   {
     socket = socketList[i] ;
     conn   = this._connections[socket.sid] ;
-    if (  ( ! TARGET_CHANNEL && conn.CHANNEL )
-       || ( TARGET_CHANNEL && ! conn.CHANNEL[TARGET_CHANNEL] )
+    if (  ( ! channel && conn.channels )
+       || ( channel && ( ! conn.channels || ! conn.channels[channel] ) )
        )
     {
       continue ;
@@ -805,8 +805,8 @@ Broker.prototype._sendMessageToClient = function ( e, socketList )
   {
     socket = socketList[i] ;
     conn   = this._connections[socket.sid] ;
-    if (  ( ! TARGET_CHANNEL && conn.CHANNEL )
-       || ( TARGET_CHANNEL && ! conn.CHANNEL[TARGET_CHANNEL] )
+    if (  ( ! channel && conn.channels )
+       || ( channel && ( ! conn.channels || ! conn.channels[channel] ) )
        )
     {
       continue ;
@@ -825,7 +825,7 @@ Broker.prototype._sendMessageToClient = function ( e, socketList )
  */
 Broker.prototype._sendEventToClients = function ( conn, e )
 {
-  var i, found = false, done = false, str, list ;
+  var i, found = false, done = false, str, list, target_conn ;
   var name = e.getName() ;
   if ( conn )
   {
@@ -834,7 +834,7 @@ Broker.prototype._sendEventToClients = function ( conn, e )
   var isStatusInfoRequested        = e.isStatusInfoRequested() ;
   e.control._isStatusInfoRequested = undefined ;
   var socketList                   = this._eventNameToSockets.get ( name ) ;
-  var TARGET_CHANNEL               = e.getTargetChannel() ;
+  var channel                      = e.getChannel() ;
   var s ;
   if ( socketList )
   {
@@ -852,9 +852,9 @@ Broker.prototype._sendEventToClients = function ( conn, e )
       }
       for ( i = 0 ; i < socketList.length ; i++ )
       {
-        var target_conn = this._connections[socketList[i].sid] ;
-        if (  ( ! TARGET_CHANNEL && target_conn.CHANNEL )
-           || ( TARGET_CHANNEL && ! target_conn.CHANNEL[TARGET_CHANNEL] )
+        target_conn = this._connections[socketList[i].sid] ;
+        if (  ( ! channel && target_conn.channels )
+           || ( channel && ( ! target_conn.channels || ! target_conn.channels[channel] ) )
            )
         {
           continue ;
@@ -889,8 +889,9 @@ Broker.prototype._sendEventToClients = function ( conn, e )
     for ( j = 0 ; j < list.length ; j++ )
     {
       if ( ! list[j].test ( name ) ) continue ;
-      if (  ( ! TARGET_CHANNEL && this._connectionList[i].CHANNEL )
-         || ( TARGET_CHANNEL && ! this._connectionList[i].CHANNEL[TARGET_CHANNEL] )
+      target_conn = this._connectionList[i] ;
+      if (  ( ! channel && target_conn.channels )
+         || ( channel && ( ! target_conn.channels || ! target_conn.channels[channel] ) )
          )
       {
         continue ;
@@ -1050,16 +1051,17 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
   if ( e.getType() === "client_info" )
   {
     conn.client_info = e.body ; e.body = {} ;
+console.log ( conn.client_info ) ;
     if ( ! conn.client_info.version )
     {
       conn.client_info.version = 0 ;
     }
     conn.version         = conn.client_info.version
     conn.client_info.sid = conn.sid ;
-    CHANNEL = conn.client_info.CHANNEL ;
+    CHANNEL = conn.client_info.channels ;
     if ( typeof CHANNEL === 'string' )
     {
-      conn.CHANNEL = {} ;
+      conn.channels = {} ;
       if ( CHANNEL.indexOf ( ',' ) >= 0 )
       {
         list = CHANNEL.split ( ',' ) ;
@@ -1072,14 +1074,14 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
       {
         t = list[i].trim() ;
         if ( ! t ) continue ;
-        if ( ! conn.CHANNEL ) conn.CHANNEL = {} ;
-        conn.CHANNEL[t] = true ;
+        if ( ! conn.channels ) conn.channels = {} ;
+        conn.channels[t] = true ;
       } 
     }
     else
     if ( typeof CHANNEL === 'object' )
     {
-      conn.CHANNEL = CHANNEL ;
+      conn.channels = CHANNEL ;
     }
     var app              = conn.client_info.application ;
     if ( app )

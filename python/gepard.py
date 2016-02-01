@@ -67,8 +67,7 @@ class Event ( object ):
 			raise ValueError ( "body must be None or a dict, not: " + str(body) + "(" + body.__class__.__name__ + ")" )
 		self.user           = None
 		self.control        = { "createdAt": datetime.datetime.now(), "hostname": socket.gethostname(), "plang": "python" }
-		self.CHANNEL        = None
-		self.TARGET_CHANNEL = None
+		self.channel        = None
 		self.sid            = None
 	def jsa(self):
 		if "_JSAcc" in self.__dict__:
@@ -95,6 +94,8 @@ class Event ( object ):
 		return self.control["createdAt"]
 	def getName ( self ):
 		return self.name
+	def setName ( self, name ):
+		self.name = name
 	def getType ( self ):
 		return self.type
 	def setType ( self, type ):
@@ -184,14 +185,12 @@ class Event ( object ):
 	def isStatusInfo(self):
 		if "_isStatusInfo" not in self.control: return False
 		return self.control["_isStatusInfo"]
-	def setChannel ( self, CHANNEL ):
-		self.control["CHANNEL"] = CHANNEL
+	def setChannel ( self, channel ):
+		if self.control.get ( "channel" ) != None:
+			return
+		self.control["channel"] = channel
 	def getChannel ( self ):
-		return self.control.get ("CHANNEL")
-	def setTargetChannel ( self, TARGET_CHANNEL ):
-		self.TARGET_CHANNEL = TARGET_CHANNEL
-	def getTargetChannel ( self ):
-		return self.TARGET_CHANNEL
+		return self.control.get ("channel")
 
 	@staticmethod
 	def deserialize ( s ):
@@ -493,12 +492,21 @@ class Client:
 		self._callbackWorkerRunning   = False
 		self.nameToActionCallback     = MultiMap()
 		self.TPStore.remoteTracer     = remoteTracer ( self )
-		self.CHANNEL                  = util.getProperty ( "gepard.channel" )
-		self.SID 											= None ;
-	def setChannel ( self, CHANNEL ):
-		self.CHANNEL = CHANNEL
+		self.channels                 = util.getProperty ( "gepard.channel" )
+		self.mainChannel              = None #self.channels
+		self.setChannel ( self.channels )
+		self.SID 											= None
+	def setChannel ( self, channels=None ):
+		if channels == None:
+			return
+		if channels.find ( ',' ) > 0:
+			self.channels = channels
+			pos  = channels.find ( "," )
+			self.mainChannel = channels[:pos]
+		else:
+			self.mainChannel = channels
 	def getChannel ( self ):
-		return self.CHANNEL
+		return self.channels
 	def getSid ( self ):
 		return self.SID
 	def onAction ( self, cmd, desc, cb=None ):
@@ -674,7 +682,7 @@ class Client:
 		client_info.body["application"]    = os.path.abspath(sys.argv[0])
 		client_info.body["USERNAME"]    	 = self.USERNAME
 		client_info.body["version"]    	   = self.version
-		client_info.body["CHANNEL"]    	     = self.CHANNEL
+		client_info.body["channels"]    	 = self.channels
 		
 		self._send ( client_info ) 
 
@@ -683,7 +691,7 @@ class Client:
 		if event.getUser() == None:
 			event.setUser ( self.user )
 		event.setUniqueId ( self.createUniqueId() )
-		event.setChannel ( self.CHANNEL )
+		event.setChannel ( self.mainChannel )
 		self.sock.sendall ( event.serialize().encode ( "utf-8" ) )
 		if event.getName() != "system":
 			self.TPStore.points["EVENT_OUT"].log ( event )
@@ -725,6 +733,14 @@ class Client:
 		elif isinstance ( event, Event ):
 			if isinstance ( type, dict ):
 				map = type
+		name = e.getName()
+		pos  = name.find ( "::" )
+		if pos > 0:
+			channel = name[:pos]
+			name    = name[pos+2:]
+			e.setName ( name )
+			e.setChannel ( channel )
+
 		if map != None:
 			callback = {}
 			for key in map:

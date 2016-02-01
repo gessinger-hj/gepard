@@ -4,11 +4,8 @@ var gepard = require ( "gepard" ) ;
 var name   = gepard.getProperty ( "name", "ack" ) ;
 var c      = gepard.getClient() ;
 
-var e = new gepard.Event ( name ) ;
-e.setTargetChannel ( "gessinger.hj@gmail.com" ) ;
-console.log ( e ) ;
-c.request ( e,
-  function(e) // The event is sent -> end connection and exit
+c.request ( name,
+  function(e)
   {
   	console.log ( util.inspect ( e, { showHidden: false, depth: null } ) ) ;
     this.end() ;

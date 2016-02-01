@@ -51,8 +51,7 @@ public class Event
   transient JSAcc c_JSAcc   = null ;
   HashMap<String,Object> control = new HashMap<String,Object>() ;
   Map<String,Object> body = new HashMap<String,Object>() ;
-  String CHANNEL = null ;
-  String TARGET_CHANNEL = null ;
+  String channel = null ;
   private Event()
   {
   }
@@ -177,21 +176,14 @@ public class Event
   {
     this.control.put ( "sourceIdentifier", sourceIdentifier ) ;
   }
-  public void setChannel ( String CHANNEL )
+  public void setChannel ( String channel )
   {
-    this.control.put ( "CHANNEL", CHANNEL ) ;
+    if ( control.containsKey ( "channel" ) ) return ;
+    this.control.put ( "channel", channel ) ;
   }
   public String getChannel()
   {
-    return (String)this.control.get ( "CHANNEL" ) ;
-  }
-  public void setTargetChannel ( String TARGET_CHANNEL )
-  {
-    this.control.put ( "TARGET_CHANNEL", TARGET_CHANNEL ) ;
-  }
-  public String getTargetChannel()
-  {
-    return (String)this.control.get ( "TARGET_CHANNEL" ) ;
+    return (String)this.control.get ( "channel" ) ;
   }
   public String getProxyIdentifier()
   {

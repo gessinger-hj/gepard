@@ -121,7 +121,8 @@ var Client = function ( port, host )
   this.brokerVersion            = 0 ;
   this.nameToActionCallback     = new MultiHash() ;
   TPStore.remoteTracer          = this.log.bind ( this ) ;
-  this.CHANNEL                  = T.getProperty ( "gepard.channel" ) ;
+  this.channels                 = T.getProperty ( "gepard.channel" ) ;
+  this.mainChannel              = this.channels ;
   this.sid                      = "" ;
 } ;
 util.inherits ( Client, EventEmitter ) ;
@@ -129,13 +130,13 @@ Client.prototype.toString = function()
 {
   return "(Client)[connected=" + ( this.socket ? true : false ) + "]" ;
 };
-Client.prototype.setChannel = function ( CHANNEL )
+Client.prototype.setChannel = function ( channels )
 {
-  this.CHANNEL = CHANNEL ;
+  this.channels = channels ;
 };
 Client.prototype.getChannel = function()
 {
-  return this.CHANNEL ;   
+  return this.channels ;   
 };
 Client.prototype.getSid = function()
 {
@@ -261,8 +262,8 @@ Client.prototype.connect = function()
     client_info.body.application    = thiz._application ;
     client_info.body.USERNAME       = thiz.USERNAME ;
     client_info.body.version        = thiz.version ;
-    client_info.body.CHANNEL           = thiz.CHANNEL ;
-    client_info.setChannel ( thiz.CHANNEL ) ;
+    client_info.body.channels           = thiz.channels ;
+    client_info.setChannel ( thiz.mainChannel ) ;
     json                            = client_info.serialize() ;
     thiz._stats.incrementOut ( json.length )
     this.write ( json ) ;
@@ -284,7 +285,7 @@ Client.prototype.connect = function()
         }
         ctx.e = undefined ;
         e.setTargetIsLocalHost ( thiz.brokerIsLocalHost() ) ;
-        e.setChannel ( thiz.CHANNEL ) ;
+        e.setChannel ( thiz.mainChannel ) ;
         json = e.serialize() ;
         thiz._stats.incrementOut ( json.length )
         this.write ( json, function()
@@ -842,7 +843,7 @@ Client.prototype.fireEvent = function ( params, callback )
 Client.prototype.emit = function ( params, callback, opts )
 {
   if ( ! opts ) opts = {} ;
-  var e = null, user ;
+  var e = null, user, pos, name, channel ;
   if ( params instanceof Event )
   {
     e = params ;
@@ -869,6 +870,15 @@ Client.prototype.emit = function ( params, callback, opts )
     throw new Error ( "Client.emit: eventName must not be 'system'" ) ;
   }
 
+  name = e.getName() ;
+  pos = name.indexOf ( "::" ) ;
+  if ( pos > 0 )
+  {
+    channel = name.substring ( 0, pos ) ;
+    name    = name.substring ( pos + 2 ) ;
+    e.setName ( name ) ;
+    e.setChannel ( channel ) ;
+  }
   var ctx = {} ;
   if ( callback )
   {
@@ -963,7 +973,7 @@ Client.prototype.emit = function ( params, callback, opts )
     {
       e.setUser ( this.user ) ;
     }
-    e.setChannel ( this.CHANNEL ) ;
+    e.setChannel ( this.mainChannel ) ;
     var json = e.serialize() ;
     this._stats.incrementOut ( json.length ) ;
     s.write ( json, function()
@@ -1420,7 +1430,7 @@ Client.prototype.sendResult = function ( message )
 Client.prototype.send = function ( e )
 {
   e.setTargetIsLocalHost ( this.brokerIsLocalHost() ) ;
-  e.setChannel ( this.CHANNEL ) ;
+  e.setChannel ( this.mainChannel ) ;
   var json = e.serialize() ;
   this._stats.incrementOut ( json.length )
   this.getSocket().write ( json ) ;

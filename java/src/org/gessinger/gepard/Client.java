@@ -144,15 +144,16 @@ public class Client
 	MutableTimer _Timer = new MutableTimer ( true ) ;
 	int version         = 1 ;
 	int brokerVersion   = 0 ;
-	String CHANNEL      = Util.getProperty ( "gepard.channel" ) ;
-	String SID          = null ;
-	public void setChannel ( String CHANNEL )
+	String channels     = Util.getProperty ( "gepard.channel" ) ;
+	String mainChannel  = channels ;
+	String sid          = null ;
+	public void setChannel ( String channels )
 	{
-		this.CHANNEL = CHANNEL ;
+		this.channels = channels ;
 	}
 	public String getChannel()
 	{
-		return CHANNEL ;		
+		return channels ;		
 	}
 	public String getSid()
 	{
@@ -321,10 +322,9 @@ public class Client
 	    body.put ( "application", Util.getMainClassName() ) ;
 	    body.put ( "USERNAME", USERNAME ) ;
 	    body.put ( "version", new Integer ( version ) ) ;
-	    body.put ( "CHANNEL", CHANNEL ) ;
-
+	    body.put ( "channels", channels ) ;
 	    e.setTargetIsLocalHost ( targetIsLocalHost ) ;
-	    e.setChannel ( CHANNEL ) ;
+	    e.setChannel ( mainChannel ) ;
 			String t = e.toJSON() ;
 	    _out.write ( t, 0, t.length() ) ;
 	    _out.flush() ;
@@ -496,6 +496,15 @@ public class Client
 	public void emit ( Event e, EventCallback ecb )
 	throws IOException
 	{
+		String name = e.getName() ;
+		int pos     = name.indexOf ( "::" ) ;
+	  if ( pos > 0 )
+	  {
+	    String channel = name.substring ( 0, pos ) ;
+	    name    = name.substring ( pos + 2 ) ;
+	    e.setName ( name ) ;
+	    e.setChannel ( channel ) ;
+	  }
 		e.setInUse() ;
 		boolean hasCallbacks = false ;
 		if ( ecb instanceof StatusCallback )
@@ -550,7 +559,7 @@ public class Client
 				getWriter() ;
 	  	  e.setUniqueId ( createUniqueId() ) ;
 		    e.setTargetIsLocalHost ( targetIsLocalHost ) ;
-		    e.setChannel ( CHANNEL ) ;
+		    e.setChannel ( mainChannel ) ;
 				String t = e.toJSON() ;
 		    _out.write ( t, 0, t.length() ) ;
 		    _out.flush() ;
@@ -964,7 +973,7 @@ public class Client
 							      _heartbeatIntervalMillis = heartbeatIntervalMillis.longValue() ;
 							      socket.setSoTimeout ( 3 * (int)_heartbeatIntervalMillis ) ;
 						      }
-						      this.sid = (String) body.get ( "sid" ) ;
+						      Client.this.sid = (String) body.get ( "sid" ) ;
 						    }
 						    catch ( Exception exc )
 						    {
