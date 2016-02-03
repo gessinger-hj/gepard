@@ -13,4 +13,6 @@ def fack ( e ):
 	e.setStatus ( 0, "ack" ) ;
 	e.sendBack() ;
 
+gepard.util.exitWithSIGINT()
+
 client.on ( name, fack )

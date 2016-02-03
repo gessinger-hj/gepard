@@ -232,6 +232,7 @@ Connection.prototype._sendInfoResult = function ( e )
     {
       client_info2.pendingSemaphores = conn._pendingAcquireSemaphoreRecourceIdList ;
     }
+    client_info2.channels = conn.channels ;
   }
   for ( key in this.broker._lockOwner )
   {
@@ -291,6 +292,12 @@ Connection.prototype._addEventListener = function ( e )
 
     if ( ! regexp )
     {
+      var pos = eventName.indexOf ( "::" ) ;
+      if ( pos > 0 )
+      {
+        if ( ! this.channels ) this.channels = {} ;
+        this.channels[eventName.substring ( 0, pos )] = true ;
+      }
       this.eventNameList.push ( eventName ) ;
       this.broker._eventNameToSockets.put ( eventName, this.socket ) ;
     }
@@ -834,7 +841,22 @@ Broker.prototype._sendEventToClients = function ( conn, e )
   var isStatusInfoRequested        = e.isStatusInfoRequested() ;
   e.control._isStatusInfoRequested = undefined ;
   var socketList                   = this._eventNameToSockets.get ( name ) ;
-  var channel                      = e.getChannel() ;
+  if ( e.getChannel() )
+  {
+    var socketList2 = this._eventNameToSockets.get ( e.getChannel() + "::" + name ) ;
+    if ( socketList2 )
+    {
+      if ( socketList )
+      {
+        socketList = socketList2.concat ( socketList ) ;
+      }
+      else
+      {
+        socketList = socketList2.concat ( [] ) ;
+      }
+    }
+  }
+  var channel = e.getChannel() ;
   var s ;
   if ( socketList )
   {
@@ -918,6 +940,11 @@ Broker.prototype._sendEventToClients = function ( conn, e )
   }
   if ( ! found )
   {
+    var reasonText = "No listener found for event: " + e.getName() ;
+    if ( e.getChannel() )
+    {
+      reasonText += " (" + e.getChannel() + ")" ;
+    }
     if ( conn && e.isResultRequested() || e.isFailureInfoRequested() || isStatusInfoRequested )
     {
       if ( isStatusInfoRequested )
@@ -928,7 +955,7 @@ Broker.prototype._sendEventToClients = function ( conn, e )
       {
         e.setIsResult() ;
       }
-      e.control.status = { code:1, name:"warning", reason:"No listener found for event: " + e.getName() } ;
+      e.control.status = { code:1, name:"warning", reason:reasonText } ;
       e.control.requestedName = e.getName() ;
       conn.write ( e ) ;
       if ( e.control.task )
@@ -944,7 +971,7 @@ Broker.prototype._sendEventToClients = function ( conn, e )
       }
       return ;
     }
-    Log.info ( "No listener found for " + e.getName() ) ;
+    Log.info ( reasonText ) ;
   }
 };
 Broker.prototype._handleSystemClientMessages = function ( conn, e )
@@ -1051,7 +1078,6 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
   if ( e.getType() === "client_info" )
   {
     conn.client_info = e.body ; e.body = {} ;
-console.log ( conn.client_info ) ;
     if ( ! conn.client_info.version )
     {
       conn.client_info.version = 0 ;

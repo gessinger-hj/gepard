@@ -121,18 +121,42 @@ var Client = function ( port, host )
   this.brokerVersion            = 0 ;
   this.nameToActionCallback     = new MultiHash() ;
   TPStore.remoteTracer          = this.log.bind ( this ) ;
-  this.channels                 = T.getProperty ( "gepard.channel" ) ;
-  this.mainChannel              = this.channels ;
+  this.channels ;
+  this.mainChannel ;
+  this.setChannel ( T.getProperty ( "gepard.channel" ) ) ;
   this.sid                      = "" ;
 } ;
 util.inherits ( Client, EventEmitter ) ;
+Client.prototype.setChannel = function ( channel )
+{
+  if ( ! channel ) return ;
+  if ( channel.indexOf ( ',' ) < 0 )
+  {
+    if ( channel.charAt ( 0 ) === '*' ) channel = channel.substring ( 1 ) ;
+    this.mainChannel       = channel ;
+    this.channels          = {} ;
+    this.channels[channel] = true ;
+    return ;
+  }
+  var l = channel.split ( ',' ) ;
+  for ( var i = 0 ; i < l.length ; i++ )
+  {
+    l[i] = l[i].trim() ;
+    if ( ! l[i] ) continue ;
+    if ( i === 0 ) this.mainChannel = l[i] ;
+    if ( l[i].charAt ( 0 ) === '*' )
+    {
+      l[i] = l[i].substring ( 1 ) ;
+      if ( ! l[i] ) continue ;
+      this.mainChannel = l[i] ;
+    }
+    if ( ! this.channels ) this.channels = {} ;
+    this.channels[l[i]] = true ;
+  }
+};
 Client.prototype.toString = function()
 {
   return "(Client)[connected=" + ( this.socket ? true : false ) + "]" ;
-};
-Client.prototype.setChannel = function ( channels )
-{
-  this.channels = channels ;
 };
 Client.prototype.getChannel = function()
 {
@@ -573,6 +597,22 @@ Client.prototype.connect = function()
           }
           found = false ;
           callbackList = thiz.eventNameToListener.get ( e.getName() ) ;
+          if ( e.getChannel() )
+          {
+            var callbackList2 = thiz.eventNameToListener.get ( e.getChannel() + "::" + e.getName() ) ;
+            if ( callbackList2 )
+            {
+              if ( callbackList )
+              {
+                callbackList = callbackList2.concat ( callbackList ) ;
+              }
+              else
+              {
+                callbackList = callbackList2.concat ( [] ) ;
+              }
+            }
+          }
+
           if ( callbackList )
           {
             found = true ;
@@ -1091,33 +1131,14 @@ Client.prototype.addEventListener = function ( eventNameList, callback )
   {
     this.pendingEventListenerList.push ( { e:e } ) ;
   }
-  // if ( ! this.socket && this._reconnect )
-  // {
-  //   var thiz = this ;
-  //   var id = setInterval ( function cb1()
-  //   {
-  //     thiz.isRunning ( function cb2 ( state )
-  //     {
-  //       if ( !state )
-  //       {
-  //         return ;
-  //       }
-  //       clearInterval ( id ) ;
-  //       s = thiz.getSocket() ;
-  //     }) ;
-  //   }, this._reconnectIntervalMillis ) ;
-  // }
-  // else
+  var s = this.getSocket() ;
+  if ( ! this.pendingEventListenerList.length )
   {
-    var s = this.getSocket() ;
-    if ( ! this.pendingEventListenerList.length )
-    {
-      counter++ ;
-      var uid = os.hostname() + "_" + this.localPort + "_" + new Date().getTime() + "_" + counter ;
-      e.setUniqueId ( uid ) ;
-      var thiz = this ;
-      this.send ( e ) ;
-    }
+    counter++ ;
+    var uid = os.hostname() + "_" + this.localPort + "_" + new Date().getTime() + "_" + counter ;
+    e.setUniqueId ( uid ) ;
+    var thiz = this ;
+    this.send ( e ) ;
   }
 };
 /**

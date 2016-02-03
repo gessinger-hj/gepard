@@ -351,9 +351,16 @@ class CallbackWorker:
 					else:
 						print ( "No result callback found for:\n" + e )
 					continue
-				functionList = self.client.eventListenerFunctions.get ( e.getName() )
+				callbackList = self.client.eventListenerFunctions.get ( e.getName() )
+				if e.getChannel() != None:
+					callbackList2 = self.client.eventListenerFunctions.get ( e.getChannel() + "::" + e.getName() )
+					if callbackList2 != None:
+						if callbackList != None:
+							callbackList = callbackList2 + callbackList
+						else:
+							callbackList = callbackList2 + []
 				found = False
-				for function in functionList:
+				for function in callbackList:
 					found = True
 					function ( e )
 					if e.isResultRequested():
@@ -489,26 +496,38 @@ class Client:
 		self._reconnectIntervalMillis = 5000
 		cb = decoratedTimerCallback ( self )
 		self._Timer.add ( self._reconnectIntervalMillis/1000, cb )
-		self._callbackWorkerRunning   = False
-		self.nameToActionCallback     = MultiMap()
-		self.TPStore.remoteTracer     = remoteTracer ( self )
-		self.channels                 = util.getProperty ( "gepard.channel" )
-		self.mainChannel              = None #self.channels
-		self.setChannel ( self.channels )
-		self.SID 											= None
-	def setChannel ( self, channels=None ):
-		if channels == None:
+		self._callbackWorkerRunning = False
+		self.nameToActionCallback   = MultiMap()
+		self.TPStore.remoteTracer   = remoteTracer ( self )
+		self.channels               = None
+		self.mainChannel            = None
+		self.setChannel ( util.getProperty ( "gepard.channel" ) )
+		self.sid 											= None
+	def setChannel ( self, channel ):
+		if channel == None:
 			return
-		if channels.find ( ',' ) > 0:
-			self.channels = channels
-			pos  = channels.find ( "," )
-			self.mainChannel = channels[:pos]
-		else:
-			self.mainChannel = channels
+		if channel.find ( ',' ) < 0:
+			if channel[0] == '*': channel = channel[1:]
+			self.mainChannel       = channel
+			self.channels = {}
+			self.channels[channel] = True
+			return
+		l = channel.split ( "," )
+		for i in range ( 0, len(l) ):
+			l[i] = l[i].strip()
+			if len ( l[i] ) == 0: continue
+			if i == 0: self.mainChannel = l[i]
+			if l[i][0] == '*':
+				l[i] = l[i][1:]
+				if len ( l[i] ) == 0: continue
+				self.mainChannel = l[i]
+			if self.channels == None: self.channels = {}
+			self.channels[l[i]] = True
+
 	def getChannel ( self ):
 		return self.channels
 	def getSid ( self ):
-		return self.SID
+		return self.sid
 	def onAction ( self, cmd, desc, cb=None ):
 		if isinstance ( desc, types.FunctionType ):
 			cb = desc

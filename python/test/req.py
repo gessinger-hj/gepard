@@ -9,7 +9,7 @@ name   = gepard.util.getProperty ( "name", "ack" ) ;
 client = gepard.Client.getInstance()
 
 def freq ( e ):
-	print ( e )
+	print ( e.getStatus() )
 	e.getClient().close()
 
 client.request ( name, freq )
