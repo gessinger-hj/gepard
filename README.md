@@ -1,11 +1,16 @@
 # gepard
-General purpose communication and synchronization layer for distributed applications / events, semaphores, locks and messages for JavaScript, Java and Python
+General purpose communication and synchronization layer for distributed applications / Microservices / events, semaphores, locks and messages for JavaScript, Java and Python
 
 
 <!-- MarkdownTOC -->
 
 - [Overview](#overview)
 - [What is new](#what-is-new)
+	- [Release 1-5-0 Channels](#release-1-5-0-channels)
+		- [Using Channels](#using-channels)
+			- [Event-listener](#event-listener)
+			- [Event-emitter](#event-emitter)
+		- [Channel Examples](#channel-examples)
 	- [Release 1-4-5 Registered Event-names may contain Wildcards (RegExp)](#release-1-4-5-registered-event-names-may-contain-wildcards-regexp)
 	- [Release 1-4-5 Simplified Handling of JSON Trees](#release-1-4-5-simplified-handling-of-json-trees)
 	- [Release 1-4-3 Logging](#release-1-4-3-logging)
@@ -30,18 +35,18 @@ General purpose communication and synchronization layer for distributed applicat
 - [The Event Body](#the-event-body)
 - [Examples](#examples)
 	- [Examples Short](#examples-short)
-		- [Event listener](#event-listener)
-		- [Event Emitter](#event-emitter)
+		- [Event listener](#event-listener-1)
+		- [Event Emitter](#event-emitter-1)
 		- [Locks](#locks)
 		- [Semaphores](#semaphores)
 		- [Request / Result](#request--result)
 			- [Send request](#send-request)
 			- [Send result](#send-result)
 	- [Examples Long](#examples-long)
-		- [Event listener](#event-listener-1)
+		- [Event listener](#event-listener-2)
 			- [In Application](#in-application)
 			- [In Browser](#in-browser)
-		- [Event Emitter](#event-emitter-1)
+		- [Event Emitter](#event-emitter-2)
 			- [In Application](#in-application-1)
 			- [In Browser](#in-browser-1)
 - [File Transfer with the FileContainer Class](#file-transfer-with-the-filecontainer-class)
@@ -122,6 +127,88 @@ or
 node_modules/.bin/gp.admin [ --help ]
 ```
 # What is new
+
+## Release 1-5-0 Channels
+
+This release introduces __Channels__ as a meta-layer to organize different realms in a very simple and effective manner.
+<br/>
+Each listener-client can subscribe for event-names in one or more channel(s).
+<br/>
+An emitter- / requester-client can emit events containing a channel identifier.
+The Broker filters the listening-clients with this channel and sends the event only to clients on this channel.
+
+### Using Channels
+
+#### Event-listener
+
+There are 2 different possibilities to subscribe to one or more channels:
+
+1.	The method __client.setChannel ( <channel-identifier> )__
+	<br/>The &lt;channel-identifier> is of the form: id{,id-2, ... id-n}
+	<br/>
+	Example: client.setChannel ( "A,B,C" )
+	<br/>
+	All events which are not emitted with one of these channel-ids are filtered-out by the broker.
+	<br/>
+	If a client subscribes for any event-name all name-matching and channel-matching events are propagated to the
+	registered listening-function.
+
+2.	Regardless of the client's channel-membership a shortcut for registering a listener for a specific channel is:
+	<br/>
+	client.on ( &lt;channel-identifier>__::__&lt;event-name>, &lt;callback> )
+	<br/>
+	As seen the channel-identifier and the event-name are concatenated with to colons (__::__).
+	<br/>
+	In this case the broker matches the given channel only in combination with the given event-name.
+	<br/>
+	Example: client.on ( "A::alarm" )
+	<br/>
+
+#### Event-emitter
+
+There are 2 different possibilities to emit an event on a channel:
+
+1.	The method __client.setChannel ( <channel-identifier> )__
+	The &lt;channel-identifier> is of the form: id{,id-2, ... id-n}
+	<br/>
+	The event can only be sent on one channel the so-called main-channel.
+	<br/>
+	By default the main-channel is the first in the comma-list of channel-identifiers.
+	This may be changed by prefixing the appropriate channel-identifier with a asterisk (__*__)
+	<br/>
+	Example: client.setChannel ( "A,B,<b>*</b>C" )
+	<br/>
+	With this definition the channel __C__ is the main-channel.
+
+2.	Regardless of the client's channel-membership a shortcut for emitting an event on another channel is:
+	<br/>
+	client.emit ( &lt;channel-identifier>__::__&lt;event-name> )
+	<br/>
+	Example: client.emit ( "A__::__alarm" )
+
+### Channel Examples
+
+Suppose you need access to 2 databases named DB-A and DB-B with different content.
+<br/>
+It is easy to use the identical client-programs to connect with appropriate credentials and parameters.
+<br/>
+The 2 micro-services register themselfes with
+-	client.setChannel ( "DB-A" )
+	<br/>
+	client.on ( "db-request" )
+
+	and
+
+-	client.setChannel ( "DB-B" )
+	<br/>
+	client.on ( "db-request" )
+
+A interested client only needs to know the appropriate channel and requests
+-	client.request ( "DB-A::db-request", callback )
+
+	or
+
+-	client.request ( "DB-B::db-request", callback )
 
 ## Release 1-4-5 Registered Event-names may contain Wildcards (RegExp)
 

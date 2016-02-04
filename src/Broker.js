@@ -296,7 +296,8 @@ Connection.prototype._addEventListener = function ( e )
       if ( pos > 0 )
       {
         if ( ! this.channels ) this.channels = {} ;
-        this.channels[eventName.substring ( 0, pos )] = true ;
+        if ( ! this.fullQualifiedEventNames ) this.fullQualifiedEventNames = {} ;
+        this.fullQualifiedEventNames[eventName] = true ;
       }
       this.eventNameList.push ( eventName ) ;
       this.broker._eventNameToSockets.put ( eventName, this.socket ) ;
@@ -789,6 +790,7 @@ Broker.prototype._sendMessageToClient = function ( e, socketList )
   var socket, found = false, i ;
   var uid           = e.getUniqueId() ;
   var channel       = e.getChannel() ;
+  var fullName      = channel + "::" + e.getName() ;
   for ( i = 0 ; i < socketList.length ; i++ )
   {
     socket = socketList[i] ;
@@ -797,7 +799,8 @@ Broker.prototype._sendMessageToClient = function ( e, socketList )
        || ( channel && ( ! conn.channels || ! conn.channels[channel] ) )
        )
     {
-      continue ;
+      if ( ! channel ) continue ;
+      if ( ! conn.fullQualifiedEventNames[fullName] ) continue ;
     }
     if ( conn._numberOfPendingRequests === 0 )
     {
@@ -856,7 +859,8 @@ Broker.prototype._sendEventToClients = function ( conn, e )
       }
     }
   }
-  var channel = e.getChannel() ;
+  var channel  = e.getChannel() ;
+  var fullName = channel + "::" + e.getName() ;
   var s ;
   if ( socketList )
   {
@@ -879,7 +883,8 @@ Broker.prototype._sendEventToClients = function ( conn, e )
            || ( channel && ( ! target_conn.channels || ! target_conn.channels[channel] ) )
            )
         {
-          continue ;
+          if ( ! channel ) continue ;
+          if ( ! conn.fullQualifiedEventNames[fullName] ) continue ;
         }
 
         if ( e.clone )
@@ -916,7 +921,8 @@ Broker.prototype._sendEventToClients = function ( conn, e )
          || ( channel && ( ! target_conn.channels || ! target_conn.channels[channel] ) )
          )
       {
-        continue ;
+        if ( ! channel ) continue ;
+        if ( ! conn.fullQualifiedEventNames[fullName] ) continue ;
       }
       found = true ;
       this._connectionList[i].write ( e ) ;
