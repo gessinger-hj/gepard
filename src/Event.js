@@ -522,17 +522,14 @@ gepard.Event.prototype =
 	{
   	this.control.sourceIdentifier = sourceIdentifier ;
 	},
-	setUUID: function ( UUID )
+	setChannel: function ( channel )
 	{
-		if ( this.control.UUID )
-		{
-			return ;
-		}
-  	this.control.UUID = UUID ;
+		if ( this.control.channel ) return ;
+  	this.control.channel = channel ;
 	},
-	getUUID: function()
+	getChannel: function()
 	{
-  	return this.control.UUID ;
+  	return this.control.channel ;
 	},
 	/**
 	 * Description

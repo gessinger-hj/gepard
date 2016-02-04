@@ -65,9 +65,10 @@ class Event ( object ):
 			self.body = body
 		else:
 			raise ValueError ( "body must be None or a dict, not: " + str(body) + "(" + body.__class__.__name__ + ")" )
-		self.user = None
-		self.control = { "createdAt": datetime.datetime.now(), "hostname": socket.gethostname(), "plang": "python" }
-
+		self.user           = None
+		self.control        = { "createdAt": datetime.datetime.now(), "hostname": socket.gethostname(), "plang": "python" }
+		self.channel        = None
+		self.sid            = None
 	def jsa(self):
 		if "_JSAcc" in self.__dict__:
 			return self._JSAcc
@@ -93,6 +94,8 @@ class Event ( object ):
 		return self.control["createdAt"]
 	def getName ( self ):
 		return self.name
+	def setName ( self, name ):
+		self.name = name
 	def getType ( self ):
 		return self.type
 	def setType ( self, type ):
@@ -182,12 +185,12 @@ class Event ( object ):
 	def isStatusInfo(self):
 		if "_isStatusInfo" not in self.control: return False
 		return self.control["_isStatusInfo"]
-	def setUUID ( self, UUID ):
-		if "UUID" in self.control and self.control["UUID"] != None:
+	def setChannel ( self, channel ):
+		if self.control.get ( "channel" ) != None:
 			return
-		self.control["UUID"] = UUID
-	def getUUID ( self ):
-		return self.control.get ("UUID")
+		self.control["channel"] = channel
+	def getChannel ( self ):
+		return self.control.get ("channel")
 
 	@staticmethod
 	def deserialize ( s ):
@@ -348,9 +351,16 @@ class CallbackWorker:
 					else:
 						print ( "No result callback found for:\n" + e )
 					continue
-				functionList = self.client.eventListenerFunctions.get ( e.getName() )
+				callbackList = self.client.eventListenerFunctions.get ( e.getName() )
+				if e.getChannel() != None:
+					callbackList2 = self.client.eventListenerFunctions.get ( e.getChannel() + "::" + e.getName() )
+					if callbackList2 != None:
+						if callbackList != None:
+							callbackList = callbackList2 + callbackList
+						else:
+							callbackList = callbackList2 + []
 				found = False
-				for function in functionList:
+				for function in callbackList:
 					found = True
 					function ( e )
 					if e.isResultRequested():
@@ -486,14 +496,38 @@ class Client:
 		self._reconnectIntervalMillis = 5000
 		cb = decoratedTimerCallback ( self )
 		self._Timer.add ( self._reconnectIntervalMillis/1000, cb )
-		self._callbackWorkerRunning   = False
-		self.nameToActionCallback     = MultiMap()
-		self.TPStore.remoteTracer     = remoteTracer ( self )
-		self.UUID                     = util.getProperty ( "gepard.uuid" )
-	def getUUID ( self ):
-		return self.UUID
-	def setUUID ( self, UUID ):
-		self.UUID = UUID
+		self._callbackWorkerRunning = False
+		self.nameToActionCallback   = MultiMap()
+		self.TPStore.remoteTracer   = remoteTracer ( self )
+		self.channels               = None
+		self.mainChannel            = None
+		self.setChannel ( util.getProperty ( "gepard.channel" ) )
+		self.sid 											= None
+	def setChannel ( self, channel ):
+		if channel == None:
+			return
+		if channel.find ( ',' ) < 0:
+			if channel[0] == '*': channel = channel[1:]
+			self.mainChannel       = channel
+			self.channels = {}
+			self.channels[channel] = True
+			return
+		l = channel.split ( "," )
+		for i in range ( 0, len(l) ):
+			l[i] = l[i].strip()
+			if len ( l[i] ) == 0: continue
+			if i == 0: self.mainChannel = l[i]
+			if l[i][0] == '*':
+				l[i] = l[i][1:]
+				if len ( l[i] ) == 0: continue
+				self.mainChannel = l[i]
+			if self.channels == None: self.channels = {}
+			self.channels[l[i]] = True
+
+	def getChannel ( self ):
+		return self.channels
+	def getSid ( self ):
+		return self.sid
 	def onAction ( self, cmd, desc, cb=None ):
 		if isinstance ( desc, types.FunctionType ):
 			cb = desc
@@ -667,7 +701,7 @@ class Client:
 		client_info.body["application"]    = os.path.abspath(sys.argv[0])
 		client_info.body["USERNAME"]    	 = self.USERNAME
 		client_info.body["version"]    	   = self.version
-		client_info.body["UUID"]    	     = self.UUID
+		client_info.body["channels"]    	 = self.channels
 		
 		self._send ( client_info ) 
 
@@ -676,7 +710,7 @@ class Client:
 		if event.getUser() == None:
 			event.setUser ( self.user )
 		event.setUniqueId ( self.createUniqueId() )
-		event.setUUID ( self.UUID )
+		event.setChannel ( self.mainChannel )
 		self.sock.sendall ( event.serialize().encode ( "utf-8" ) )
 		if event.getName() != "system":
 			self.TPStore.points["EVENT_OUT"].log ( event )
@@ -718,6 +752,14 @@ class Client:
 		elif isinstance ( event, Event ):
 			if isinstance ( type, dict ):
 				map = type
+		name = e.getName()
+		pos  = name.find ( "::" )
+		if pos > 0:
+			channel = name[:pos]
+			name    = name[pos+2:]
+			e.setName ( name )
+			e.setChannel ( channel )
+
 		if map != None:
 			callback = {}
 			for key in map:
@@ -983,11 +1025,8 @@ class Client:
 						if body.get ( "brokerVersion" ) != None:
 							self.brokerVersion = body.get ( "brokerVersion" )
 							self._heartbeatIntervalMillis = body.get ( "_heartbeatIntervalMillis" )
-						if self.UUID == None:
-							self.UUID = body.get ( "UUID" )
-						print ( body )
-						print ( "self.UUID=" + str ( self.UUID ) )
 						continue
+						self.sid = body.get ( "sid" )
 					if e.getType() == "acquireSemaphoreResult":
 						body = e.getBody()
 						resourceId = body.get ( "resourceId" )

@@ -47,7 +47,7 @@ var Connection = function ( broker, socket )
   {
     this.sid = socket.sid ;
   }
-  this.UUID                                   = this.sid ;
+  this.channels ;
   this._lockedResourcesIdList                 = [] ;
   this._patternList                           = [] ;
   this._regexpList                            = [] ;
@@ -232,6 +232,7 @@ Connection.prototype._sendInfoResult = function ( e )
     {
       client_info2.pendingSemaphores = conn._pendingAcquireSemaphoreRecourceIdList ;
     }
+    client_info2.channels = conn.channels ;
   }
   for ( key in this.broker._lockOwner )
   {
@@ -291,6 +292,13 @@ Connection.prototype._addEventListener = function ( e )
 
     if ( ! regexp )
     {
+      var pos = eventName.indexOf ( "::" ) ;
+      if ( pos > 0 )
+      {
+        if ( ! this.channels ) this.channels = {} ;
+        if ( ! this.fullQualifiedEventNames ) this.fullQualifiedEventNames = {} ;
+        this.fullQualifiedEventNames[eventName] = true ;
+      }
       this.eventNameList.push ( eventName ) ;
       this.broker._eventNameToSockets.put ( eventName, this.socket ) ;
     }
@@ -580,7 +588,6 @@ Broker.prototype._ondata = function ( socket, chunk )
         socket.end() ;
         return ;
       }
-      e.setUUID ( conn.sid ) ;
       if ( e.getName() !== 'system' )
       {
         TPStore.points["EVENT_IN"].log ( "--------------------------- EVENT_IN ---------------------------" ) ;
@@ -780,27 +787,44 @@ Broker.prototype._logMessage = function ( conn, e )
  */
 Broker.prototype._sendMessageToClient = function ( e, socketList )
 {
-  var socket, i = false ;
-  var uid                          = e.getUniqueId() ;
-  this._messagesToBeProcessed[uid] = e ;
+  var socket, found = false, i ;
+  var uid           = e.getUniqueId() ;
+  var channel       = e.getChannel() ;
+  var fullName      = channel + "::" + e.getName() ;
   for ( i = 0 ; i < socketList.length ; i++ )
   {
     socket = socketList[i] ;
     conn   = this._connections[socket.sid] ;
+    if (  ( ! channel && conn.channels )
+       || ( channel && ( ! conn.channels || ! conn.channels[channel] ) )
+       )
+    {
+      if ( ! channel ) continue ;
+      if ( ! conn.fullQualifiedEventNames[fullName] ) continue ;
+    }
     if ( conn._numberOfPendingRequests === 0 )
     {
+      this._messagesToBeProcessed[uid] = e ;
       conn.write ( e ) ;
       conn._numberOfPendingRequests++ ;
       conn._setCurrentlyProcessedMessageUid ( uid ) ;
-      return ;
+      return true ;
     }
   }
   for ( i = 0 ; i < socketList.length ; i++ )
   {
     socket = socketList[i] ;
     conn   = this._connections[socket.sid] ;
+    if (  ( ! channel && conn.channels )
+       || ( channel && ( ! conn.channels || ! conn.channels[channel] ) )
+       )
+    {
+      continue ;
+    }
+    found = true ;
     conn._messageUidsToBeProcessed.push ( uid ) ;
   }
+  return found ;
 };
 /**
  * Description
@@ -811,22 +835,39 @@ Broker.prototype._sendMessageToClient = function ( e, socketList )
  */
 Broker.prototype._sendEventToClients = function ( conn, e )
 {
-  var i, found = false, done = false, str, list ;
+  var i, found = false, done = false, str, list, target_conn ;
   var name = e.getName() ;
   if ( conn )
   {
     e.setSourceIdentifier ( conn.sid ) ;
   }
-  var isStatusInfoRequested = e.isStatusInfoRequested() ;
+  var isStatusInfoRequested        = e.isStatusInfoRequested() ;
   e.control._isStatusInfoRequested = undefined ;
-  var socketList = this._eventNameToSockets.get ( name ) ;
+  var socketList                   = this._eventNameToSockets.get ( name ) ;
+  if ( e.getChannel() )
+  {
+    var socketList2 = this._eventNameToSockets.get ( e.getChannel() + "::" + name ) ;
+    if ( socketList2 )
+    {
+      if ( socketList )
+      {
+        socketList = socketList2.concat ( socketList ) ;
+      }
+      else
+      {
+        socketList = socketList2.concat ( [] ) ;
+      }
+    }
+  }
+  var channel  = e.getChannel() ;
+  var fullName = channel + "::" + e.getName() ;
   var s ;
   if ( socketList )
   {
     found = true ;
     if ( e.isResultRequested() && ! e.isBroadcast() )
     {
-      this._sendMessageToClient ( e, socketList ) ;
+      found = this._sendMessageToClient ( e, socketList ) ;
     }
     else
     {
@@ -837,23 +878,25 @@ Broker.prototype._sendEventToClients = function ( conn, e )
       }
       for ( i = 0 ; i < socketList.length ; i++ )
       {
+        target_conn = this._connections[socketList[i].sid] ;
+        if (  ( ! channel && target_conn.channels )
+           || ( channel && ( ! target_conn.channels || ! target_conn.channels[channel] ) )
+           )
+        {
+          if ( ! channel ) continue ;
+          if ( ! conn.fullQualifiedEventNames[fullName] ) continue ;
+        }
+
         if ( e.clone )
         {
           e.control.clone.number = number++ ;
           e.control.clone.of = socketList.length ;
         }
-        var target_conn = this._connections[socketList[i].sid] ;
-        if ( target_conn.isLocalHost() )
-        {
-          target_conn.write ( e ) ;
-        }
-        else
-        {
-          target_conn.write ( e ) ;
-        }
+        found = true ;
+        target_conn.write ( e ) ;
       }
     }
-    if ( conn && isStatusInfoRequested )
+    if ( found && conn && isStatusInfoRequested )
     {
       e.control._isStatusInfoRequested = isStatusInfoRequested ;
       e.setIsStatusInfo() ;
@@ -861,7 +904,10 @@ Broker.prototype._sendEventToClients = function ( conn, e )
       e.control.requestedName = e.getName() ;
       conn.write ( e ) ;
     }
-    return ;
+    if ( found && e.isResultRequested() && ! e.isBroadcast() )
+    {
+      return ;
+    }
   }
   for ( i = 0 ; i < this._connectionList.length ; i++ )
   {
@@ -870,6 +916,14 @@ Broker.prototype._sendEventToClients = function ( conn, e )
     for ( j = 0 ; j < list.length ; j++ )
     {
       if ( ! list[j].test ( name ) ) continue ;
+      target_conn = this._connectionList[i] ;
+      if (  ( ! channel && target_conn.channels )
+         || ( channel && ( ! target_conn.channels || ! target_conn.channels[channel] ) )
+         )
+      {
+        if ( ! channel ) continue ;
+        if ( ! conn.fullQualifiedEventNames[fullName] ) continue ;
+      }
       found = true ;
       this._connectionList[i].write ( e ) ;
       if ( e.isResultRequested() && ! e.isBroadcast() )
@@ -892,6 +946,11 @@ Broker.prototype._sendEventToClients = function ( conn, e )
   }
   if ( ! found )
   {
+    var reasonText = "No listener found for event: " + e.getName() ;
+    if ( e.getChannel() )
+    {
+      reasonText += " (" + e.getChannel() + ")" ;
+    }
     if ( conn && e.isResultRequested() || e.isFailureInfoRequested() || isStatusInfoRequested )
     {
       if ( isStatusInfoRequested )
@@ -902,7 +961,7 @@ Broker.prototype._sendEventToClients = function ( conn, e )
       {
         e.setIsResult() ;
       }
-      e.control.status = { code:1, name:"warning", reason:"No listener found for event: " + e.getName() } ;
+      e.control.status = { code:1, name:"warning", reason:reasonText } ;
       e.control.requestedName = e.getName() ;
       conn.write ( e ) ;
       if ( e.control.task )
@@ -918,7 +977,7 @@ Broker.prototype._sendEventToClients = function ( conn, e )
       }
       return ;
     }
-    Log.info ( "No listener found for " + e.getName() ) ;
+    Log.info ( reasonText ) ;
   }
 };
 Broker.prototype._handleSystemClientMessages = function ( conn, e )
@@ -991,7 +1050,7 @@ Broker.prototype._handleSystemClientMessages = function ( conn, e )
  */
 Broker.prototype._handleSystemMessages = function ( conn, e )
 {
-  var i, found ;
+  var i, found, list, CHANNEL, t ;
   if ( e.getType() === "addMultiplexer" )
   {
     return ;
@@ -1031,13 +1090,30 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
     }
     conn.version         = conn.client_info.version
     conn.client_info.sid = conn.sid ;
-    if ( conn.client_info.UUID )
+    CHANNEL = conn.client_info.channels ;
+    if ( typeof CHANNEL === 'string' )
     {
-      conn.UUID = conn.client_info.UUID ;
+      conn.channels = {} ;
+      if ( CHANNEL.indexOf ( ',' ) >= 0 )
+      {
+        list = CHANNEL.split ( ',' ) ;
+      }
+      else
+      {
+        list = [ CHANNEL ] ;
+      }
+      for ( i = 0 ; i < list.length ; i++ )
+      {
+        t = list[i].trim() ;
+        if ( ! t ) continue ;
+        if ( ! conn.channels ) conn.channels = {} ;
+        conn.channels[t] = true ;
+      } 
     }
     else
+    if ( typeof CHANNEL === 'object' )
     {
-      conn.client_info.UUID = conn.UUID ;
+      conn.channels = CHANNEL ;
     }
     var app              = conn.client_info.application ;
     if ( app )
@@ -1077,7 +1153,6 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
         var broker_info                           = new Event ( "system", "broker_info" ) ;
         broker_info.body.brokerVersion            = thiz.brokerVersion ;
         broker_info.body._heartbeatIntervalMillis = thiz._heartbeatIntervalMillis ;
-        broker_info.body.UUID                     = conn.UUID ;
         conn.write ( broker_info ) ;
       },500) ;
     }

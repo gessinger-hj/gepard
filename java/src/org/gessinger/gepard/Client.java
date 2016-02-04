@@ -102,7 +102,7 @@ public class Client
 		}
 	}
 
-	MultiMap<String,EventListener> eventListenerFunctions = new MultiMap<String,EventListener>() ;
+	MultiMap<String,EventListener> eventNameToListener = new MultiMap<String,EventListener>() ;
 	Hashtable<String,EventCallback> callbacks             = new Hashtable<String,EventCallback>() ;
 	MultiMap<String,ActionCmdCtx> nameToActionCallback    = new MultiMap<String,ActionCmdCtx>() ;
 
@@ -142,16 +142,45 @@ public class Client
   static Hashtable<String,Client> _Instances = new Hashtable<String,Client>() ;
 
 	MutableTimer _Timer = new MutableTimer ( true ) ;
-	int version         = 1 ;
-	int brokerVersion   = 0 ;
-	String UUID         = Util.getProperty ( "gepard.uuid" ) ;
-	public void setUUID ( String UUID )
+	int version                  = 1 ;
+	int brokerVersion            = 0 ;
+	Map<String,Boolean> channels = null ;
+	String mainChannel           = null ;
+	String sid                   = null ;
+	public void setChannel ( String channel )
 	{
-		this.UUID = UUID ;
+	  if ( channel == null ) return ;
+	  if ( channel.indexOf ( ',' ) < 0 )
+	  {
+	    if ( channel.charAt ( 0 ) == '*' ) channel = channel.substring ( 1 ) ;
+	    mainChannel       = channel ;
+	    channels          = new HashMap<String,Boolean>() ;
+	    channels.put ( channel, true ) ;
+	    return ;
+	  }
+	  String[] l = channel.split ( "," ) ;
+	  for ( int i = 0 ; i < l.length ; i++ )
+	  {
+	    l[i] = l[i].trim() ;
+	    if ( l[i].length() == 0 ) continue ;
+	    if ( i == 0 ) this.mainChannel = l[i] ;
+	    if ( l[i].charAt ( 0 ) == '*' )
+	    {
+	      l[i] = l[i].substring ( 1 ) ;
+	      if ( l[i].length() == 0 ) continue ;
+	      this.mainChannel = l[i] ;
+	    }
+	    if ( this.channels == null ) this.channels = new HashMap<String,Boolean>() ;
+	    this.channels.put ( l[i], true ) ;
+	  }
 	}
-	public String getUUID()
+	public Map<String,Boolean> getChannel()
 	{
-		return UUID ;		
+		return channels ;
+	}
+	public String getSid()
+	{
+		return sid ;		
 	}
   class LFormatter extends SimpleFormatter
   {
@@ -234,6 +263,7 @@ public class Client
 				}
 			}
 		} ) ;
+		setChannel ( Util.getProperty ( "gepard.channel" ) ) ;
 		TPStore.remoteTracer = new RemoteTracer ( this ) ;
 	}
 	public String getUSERNAME()
@@ -316,10 +346,9 @@ public class Client
 	    body.put ( "application", Util.getMainClassName() ) ;
 	    body.put ( "USERNAME", USERNAME ) ;
 	    body.put ( "version", new Integer ( version ) ) ;
-	    body.put ( "UUID", UUID ) ;
-
+	    body.put ( "channels", channels ) ;
 	    e.setTargetIsLocalHost ( targetIsLocalHost ) ;
-	    e.setUUID ( UUID ) ;
+	    e.setChannel ( mainChannel ) ;
 			String t = e.toJSON() ;
 	    _out.write ( t, 0, t.length() ) ;
 	    _out.flush() ;
@@ -443,7 +472,7 @@ public class Client
 		_semaphores.clear() ;
 		_NQ_semaphoreEvents.awakeAll() ;
 		_NQ_lockEvents.awakeAll() ;
-		eventListenerFunctions.clear() ;
+		eventNameToListener.clear() ;
   	_Instances.remove ( "" + this.host + ":" + this.port ) ;
 		_CallbackIsolator.awakeAll() ;
   	_emit ( "close", null ) ;
@@ -491,6 +520,15 @@ public class Client
 	public void emit ( Event e, EventCallback ecb )
 	throws IOException
 	{
+		String name = e.getName() ;
+		int pos     = name.indexOf ( "::" ) ;
+	  if ( pos > 0 )
+	  {
+	    String channel = name.substring ( 0, pos ) ;
+	    name    = name.substring ( pos + 2 ) ;
+	    e.setName ( name ) ;
+	    e.setChannel ( channel ) ;
+	  }
 		e.setInUse() ;
 		boolean hasCallbacks = false ;
 		if ( ecb instanceof StatusCallback )
@@ -545,7 +583,7 @@ public class Client
 				getWriter() ;
 	  	  e.setUniqueId ( createUniqueId() ) ;
 		    e.setTargetIsLocalHost ( targetIsLocalHost ) ;
-		    e.setUUID ( UUID ) ;
+		    e.setChannel ( mainChannel ) ;
 				String t = e.toJSON() ;
 		    _out.write ( t, 0, t.length() ) ;
 		    _out.flush() ;
@@ -627,7 +665,7 @@ public class Client
     		{
 	    		patternContextList.add ( new PatternContext ( eventName, el ) ) ;
     		}
-		    eventListenerFunctions.put ( eventName, el ) ;
+		    eventNameToListener.put ( eventName, el ) ;
     	}
     }
     _send ( e ) ;
@@ -654,7 +692,7 @@ public class Client
 		HashMap<String,String> m = new HashMap<String,String>() ;
 		for ( String name : nameList )
 		{
-			eventListenerFunctions.remove ( name ) ;
+			eventNameToListener.remove ( name ) ;
 			m.put ( name, null ) ;
 		}
 		ArrayList<PatternContext> toBeRemoved = new ArrayList<PatternContext>() ;
@@ -698,12 +736,12 @@ public class Client
 		ArrayList<String> nameList = new ArrayList<String>() ; 
 		for ( EventListener el : elList )
 		{
-      List<String> keys = eventListenerFunctions.getKeysOf ( el ) ;
+      List<String> keys = eventNameToListener.getKeysOf ( el ) ;
       for ( String name : keys )
       {
       	nameList.add ( name ) ;
       }
-      eventListenerFunctions.removeValue ( el ) ;
+      eventNameToListener.removeValue ( el ) ;
 			m.put ( el, null ) ;
 		}
 		ArrayList<PatternContext> toBeRemoved = new ArrayList<PatternContext>() ;
@@ -823,11 +861,28 @@ public class Client
 						}
 						continue ;
 					}
-					List<EventListener> list = eventListenerFunctions.get ( e.getName() ) ;
 					boolean found = false ;
-					if ( list != null )
+					List<EventListener> callbackList = eventNameToListener.get ( e.getName() ) ;
+          if ( e.getChannel() != null )
+          {
+            List<EventListener> callbackList2 = eventNameToListener.get ( e.getChannel() + "::" + e.getName() ) ;
+            if ( callbackList2 != null )
+            {
+              if ( callbackList != null )
+              {
+              	List<EventListener> newList = new ArrayList<EventListener> ( callbackList2 ) ;
+								newList.addAll ( callbackList ) ;
+                callbackList = newList ;
+              }
+              else
+              {
+                callbackList = new ArrayList<EventListener> ( callbackList2 ) ;
+              }
+            }
+          }
+					if ( callbackList != null )
 					{
-						List<EventListener> clonedList = new ArrayList(list) ;
+						List<EventListener> clonedList = new ArrayList(callbackList) ;
 						try
 						{
 							for ( EventListener l : clonedList )
@@ -953,16 +1008,13 @@ public class Client
 						      {
 							      brokerVersion = vers.intValue() ;
 						      }
-						      if ( UUID == null )
-						      {
-	            			UUID = (String)body.get ( "UUID" ) ;
-						      }
 						      Double heartbeatIntervalMillis = (Double) body.get ( "_heartbeatIntervalMillis" ) ;
 						      if ( heartbeatIntervalMillis != null )
 						      {
 							      _heartbeatIntervalMillis = heartbeatIntervalMillis.longValue() ;
 							      socket.setSoTimeout ( 3 * (int)_heartbeatIntervalMillis ) ;
 						      }
+						      Client.this.sid = (String) body.get ( "sid" ) ;
 						    }
 						    catch ( Exception exc )
 						    {
@@ -1225,7 +1277,7 @@ public class Client
 		{
 			closing = false ;
 			getWriter ( true ) ;
-			Set<String> keySet = eventListenerFunctions.keySet() ;
+			Set<String> keySet = eventNameToListener.keySet() ;
 			ArrayList<String> list = new ArrayList<String>() ;
 			for ( String key : keySet )
 			{

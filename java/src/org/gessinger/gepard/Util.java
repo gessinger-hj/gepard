@@ -312,7 +312,7 @@ final public class Util
     if ( args == null ) return ;
     for  ( int i = 0 ; i < args.length ; i++ )
     {
-      if ( args[i].startsWith ( "-D" ) )
+      if ( args[i].startsWith ( "-D" ) || args[i].startsWith ( "--" ) )
       {
         if (  args[i].length() < 3
            || args[i].charAt ( 2 ) == '='

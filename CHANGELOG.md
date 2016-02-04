@@ -1,3 +1,6 @@
+## 1.5.0 (2016-02-04)
+- Channels.
+
 ## 1.4.5 (2016-01-10)
 - Wildcards in Event-names.
 

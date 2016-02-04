@@ -1,5 +1,6 @@
 python/test/
 test/
+java/src/org/gessinger/gepard/test/
 dev/
 __pycache__/
 *.pyc
