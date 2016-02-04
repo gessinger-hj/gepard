@@ -141,10 +141,10 @@ The Broker filters the listening-clients with this channel and sends the event o
 
 #### Event-listener
 
-There are 2 different possibilities to subscribe to one or more channels:
+There are 3 different possibilities to subscribe to one or more channels:
 
-1.	The method __client.setChannel ( <channel-identifier> )__
-	<br/>The &lt;channel-identifier> is of the form: id{,id-2, ... id-n}
+1.	The method __client.setChannel ( <channel-name> )__
+	<br/>The &lt;channel-name> is of the form: id{,id-2, ... id-n}
 	<br/>
 	Example: client.setChannel ( "A,B,C" )
 	<br/>
@@ -155,26 +155,35 @@ There are 2 different possibilities to subscribe to one or more channels:
 
 2.	Regardless of the client's channel-membership a shortcut for registering a listener for a specific channel is:
 	<br/>
-	client.on ( &lt;channel-identifier>__::__&lt;event-name>, &lt;callback> )
+	client.on ( &lt;channel-name>__::__&lt;event-name>, &lt;callback> )
 	<br/>
-	As seen the channel-identifier and the event-name are concatenated with to colons (__::__).
+	As seen the channel-name and the event-name are concatenated with to colons (__::__).
 	<br/>
 	In this case the broker matches the given channel only in combination with the given event-name.
 	<br/>
 	Example: client.on ( "A::alarm" )
+
+3.	Simple external channel assignment:
+	-	Start the appropriate application with the option
 	<br/>
+		__--gepard.channel=&lt;channel-name>__
+	<br/>
+	or
+	-	Set the environment-variable in the scope of the process:
+	<br/>
+	__export GEPARD_CHANNEL=&lt;channel-name>__
 
 #### Event-emitter
 
 There are 2 different possibilities to emit an event on a channel:
 
-1.	The method __client.setChannel ( <channel-identifier> )__
-	The &lt;channel-identifier> is of the form: id{,id-2, ... id-n}
+1.	The method __client.setChannel ( <channel-name> )__
+	The &lt;channel-name> is of the form: id{,id-2, ... id-n}
 	<br/>
 	The event can only be sent on one channel the so-called main-channel.
 	<br/>
-	By default the main-channel is the first in the comma-list of channel-identifiers.
-	This may be changed by prefixing the appropriate channel-identifier with a asterisk (__*__)
+	By default the main-channel is the first in the comma-list of channel-names.
+	This may be changed by prefixing the appropriate channel-name with a asterisk (__*__)
 	<br/>
 	Example: client.setChannel ( "A,B,<b>*</b>C" )
 	<br/>
@@ -182,9 +191,19 @@ There are 2 different possibilities to emit an event on a channel:
 
 2.	Regardless of the client's channel-membership a shortcut for emitting an event on another channel is:
 	<br/>
-	client.emit ( &lt;channel-identifier>__::__&lt;event-name> )
+	client.emit ( &lt;channel-name>__::__&lt;event-name> )
 	<br/>
 	Example: client.emit ( "A__::__alarm" )
+
+3.	Simple external channel assignment:
+	-	Start the appropriate application with the option
+	<br/>
+		__--gepard.channel=&lt;channel-name>__
+	<br/>
+	or
+	-	Set the environment-variable in the scope of the process:
+	<br/>
+	__export GEPARD_CHANNEL=&lt;channel-name>__
 
 ### Channel Examples
 
