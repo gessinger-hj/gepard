@@ -4,25 +4,30 @@
 * @Author: gess
 * @Date:   2016-01-31 17:36:23
 * @Last Modified by:   HG02055
-* @Last Modified time: 2016-02-02 18:21:23
+* @Last Modified time: 2016-02-05 18:26:41
 */
 
 'use strict';
-var bonjour = require('bonjour')()
+var Bonjour = require('bonjour') ;
 
-var browser = bonjour.find({ type: '' }, function (service) {
-  console.log('Found an HTTP server:', service)
-}) ;
+var bonjour ;
+	bonjour = new Bonjour()
 
-// browser.on ( "up", function(service)
-// {
-// 	console.log ( "----------------------up---------------------------------" ) ;
-// 	console.log ( service ) ;
-// console.log ( browser.services ) ;
-// });
-// browser.on ( "down", function(service)
-// {
-// 	console.log ( "----------------------down---------------------------------" ) ;
-// 	console.log ( service ) ;
-// console.log ( browser.services ) ;
-// });
+	var browser = bonjour.find({ type: 'gepard' } ) ;
+
+	browser.on ( "up", function(service)
+	{
+	  // if ( service.fqdn.indexOf ( "gepard" ) >= 0 )
+	  	console.log('up:', service ) ;
+	});
+	browser.on ( "down", function(service)
+	{
+	  // if ( service.fqdn.indexOf ( "gepard" ) >= 0 )
+	  	console.log('down:', service.fqdn ) ;
+	});
+
+// scan() ;
+setInterval ( function()
+{
+	browser.reset() ;
+},21000);
