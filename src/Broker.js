@@ -802,9 +802,9 @@ Broker.prototype._sendMessageToClient = function ( e, socketList )
       if ( ! channel ) continue ;
       if ( ! conn.fullQualifiedEventNames[fullName] ) continue ;
     }
+    this._messagesToBeProcessed[uid] = e ; // hotfix-1.5.0_1
     if ( conn._numberOfPendingRequests === 0 )
     {
-      this._messagesToBeProcessed[uid] = e ;
       conn.write ( e ) ;
       conn._numberOfPendingRequests++ ;
       conn._setCurrentlyProcessedMessageUid ( uid ) ;
