@@ -57,6 +57,7 @@ var Connection = function ( broker, socket )
   this._messageUidsToBeProcessed              = [] ;
   this._isLocalHost ;
   this._timeStamp                             = 0 ;
+  this.fullQualifiedEventNames = {} ;
 };
 /**
  * Description
@@ -121,6 +122,11 @@ Connection.prototype.removeEventListener = function ( e )
       this._patternList.remove ( index ) ;
       this._regexpList.remove ( index ) ;
     }
+    // var pos = eventNameList[i].indexOf ( "::" ) ;
+    // if ( pos > 0 )
+    // {
+    //   delete this.fullQualifiedEventNames[eventNameList[i]] ;
+    // }
   }
   for  ( i = 0 ; i < toBeRemoved.length ; i++ )
   {
@@ -296,7 +302,6 @@ Connection.prototype._addEventListener = function ( e )
       if ( pos > 0 )
       {
         if ( ! this.channels ) this.channels = {} ;
-        if ( ! this.fullQualifiedEventNames ) this.fullQualifiedEventNames = {} ;
         this.fullQualifiedEventNames[eventName] = true ;
       }
       this.eventNameList.push ( eventName ) ;
