@@ -4,7 +4,7 @@
 * @Author: gess
 * @Date:   2016-01-31 17:36:23
 * @Last Modified by:   hg02055
-* @Last Modified time: 2016-02-16 13:36:37
+* @Last Modified time: 2016-02-16 19:39:53
 */
 
 'use strict';
@@ -31,5 +31,6 @@ var bonjour ;
 // scan() ;
 setInterval ( function()
 {
-	browser.reset() ;
+  browser.stop() ;
+  browser.start() ;
 },21000);

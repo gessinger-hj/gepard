@@ -188,6 +188,10 @@ Connection.prototype._sendInfoResult = function ( e )
   e.control.status                     = { code:0, name:"ack" } ;
   e.body.gepardVersion                 = Gepard.getVersion() ;
   e.body.brokerVersion                 = this.broker.brokerVersion ;
+  if ( this.broker.uniformGepardLocator )
+  {
+    e.body.zeroconf = this.broker.uniformGepardLocator ;
+  }
   e.body.port                          = this.broker.port ;
   e.body.startupTime                   = this.broker.startupTime   ;
   e.body.heartbeatIntervalMillis       = this.broker._heartbeatIntervalMillis ;
@@ -1760,15 +1764,22 @@ if ( require.main === module )
     return ;
   }
 
-  new Admin().isRunning ( function admin_is_running ( state )
+  if ( T.getProperty ( "gepard.zeroconf" ) )
   {
-    if ( state )
-    {
-      console.log ( "Already running" ) ;
-      return ;
-    }
     execute() ;
-  });
+  }
+  else
+  {
+    new Admin().isRunning ( function admin_is_running ( state )
+    {
+      if ( state )
+      {
+        console.log ( "Already running" ) ;
+        return ;
+      }
+      execute() ;
+    });
+  }
   function execute()
   {
     var logDir = Gepard.getLogDirectory() ;
