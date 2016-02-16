@@ -3,17 +3,19 @@
 /* 
 * @Author: gess
 * @Date:   2016-01-31 17:36:23
-* @Last Modified by:   HG02055
-* @Last Modified time: 2016-02-05 18:26:41
+* @Last Modified by:   hg02055
+* @Last Modified time: 2016-02-16 13:36:37
 */
 
 'use strict';
+var gepard = require ( 'gepard' ) ;
+var type = gepard.getProperty ( 'type', 'gepard' ) ;
 var Bonjour = require('bonjour') ;
 
 var bonjour ;
 	bonjour = new Bonjour()
 
-	var browser = bonjour.find({ type: 'gepard' } ) ;
+	var browser = bonjour.find({ type: type } ) ;
 
 	browser.on ( "up", function(service)
 	{
