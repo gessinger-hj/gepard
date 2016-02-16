@@ -1500,20 +1500,39 @@ Broker.prototype.listen = function ( port, callback )
     this.port = T.getProperty ( "gepard.port", 17501 ) ;
   }
   this._checkHeartbeat_bind = this._checkHeartbeat.bind ( this ) ;
-  if ( typeof callback !== 'function' )
+
+  var thiz = this ;
+  var callback2 = function()
   {
-    var thiz = this ;
-    /**
-     * Description
-     * @return 
-     */
-    callback = function()
-               {
-                 Log.info ( 'server bound to port=' + thiz.port ) ;
-                 thiz.intervallId = setInterval ( thiz._checkHeartbeat_bind, thiz._heartbeatIntervalMillis ) ;
-               } ;
+    Log.info ( 'server bound to port=' + thiz.server.address().port ) ;
+    thiz.intervallId = setInterval ( thiz._checkHeartbeat_bind, thiz._heartbeatIntervalMillis ) ;
+    if ( thiz.uniformGepardLocator )
+    {
+      thiz.uniformGepardLocator.port = thiz.server.address().port ;
+      thiz.publishService()
+    }
+    if ( typeof callback === 'function' )
+    {
+      try
+      {
+        callback() ;
+      }
+      catch ( exc )
+      {
+        Log.log ( exc ) ;
+      }
+    }
+  };
+  if ( this.uniformGepardLocator )
+  {
+    if ( this.uniformGepardLocator.port )
+    {
+      this.port = parseInt ( this.uniformGepardLocator.port ) ;
+    }
   }
-  this.server.listen ( this.port, callback ) ;
+  if ( this.port <= 0 ) this.port = 0 ;
+  this.server.listen ( this.port, callback2 ) ;
+  this.port = this.server.address().port ;
 };
 Broker.prototype._send_PING_to_all = function()
 {
@@ -1609,6 +1628,16 @@ Broker.prototype._checkHeartbeat = function()
   }
   socketsToBePINGed.length = 0 ;
 };
+Broker.prototype.publishService = function()
+{
+  var bonjour = require('bonjour')() ;
+  bonjour.publish ( { name: this.uniformGepardLocator.name
+                    , type: this.uniformGepardLocator.type
+                    , port: this.uniformGepardLocator.port
+                    , txt:{ list:"a,b" }
+                  }) ;
+};
+
 /**
  * @method setConfig
  * @param {object} configJson
@@ -1684,6 +1713,22 @@ Broker.prototype.setConfig = function ( configuration )
     {
       this._maxMessageSize = hbm * factor ;
     }
+  }
+  var zeroconf = T.getProperty ( "gepard.zeroconf" ) ;
+  if ( ! zeroconf ) zeroconf = configuration.zeroconf ;
+  if ( zeroconf === 'true' )
+  {
+    zeroconf = "Broker-${HOSTNAME}-${PID},gepard" ;
+  }
+  if ( zeroconf )
+  {
+    var a = zeroconf.split ( ',' ) ;
+    if ( ! a[0] ) a[0] = "Broker-${HOSTNAME}-${PID}" ;
+    if ( ! a[1] ) a[1] = "gepard" ;
+    var pid = process.pid ;
+    var map = { HOSTNAME:os.hostname(), PID: "" + process.pid } ;
+    a[0] = T.resolve ( a[0], map ) ;
+    this.uniformGepardLocator = { name: a[0], type: a[1], port: a[2] } ;
   }
   this._taskHandler.init ( configuration ) ;
 };
