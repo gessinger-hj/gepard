@@ -1,12 +1,9 @@
 #!/usr/bin/env node
 if ( require.main === module )
 {
-  var T      = require ( "../src/Tango" ) ;
-  var Event  = require ( "../src/Event" ) ;
-  var Client = require ( "../src/Client" ) ;
-  var Admin  = require ( "../src/Admin" ) ;
+  var gepard = require ( "gepard" ) ;
 
-  if ( T.getProperty ( "help" ) )
+  if ( gepard.getProperty ( "help" ) )
   {
     console.log (
       "Gepard Examples: RequesterMassTest, do a statistic for performance analysation.\n"
@@ -15,22 +12,22 @@ if ( require.main === module )
     process.exit() ;
   }
 
-  new Admin().isRunning ( function admin_is_running ( state )
+  new gepard.Admin().isRunning ( function admin_is_running ( state )
   {
     if ( ! state )
     {
       console.log ( "Not running on " + this.getHostPort() ) ;
 			process.exit() ;
     }
-    var nb = T.getInt ( "b", 0 ) ;
- 		var n = T.getInt ( "n", 10 ) ;
+    var nb = gepard.getInt ( "b", 0 ) ;
+ 		var n = gepard.getInt ( "n", 10 ) ;
 		if ( n < 1 )
 		{
 			console.log ( "invalid n=" + n ) ;
 			return ;
 		}
    	var name = "mass-test" ;
-   	var c = new Client() ;
+   	var c = new gepard.Client() ;
 		var m = n ;
     c.emit ( "mass-test-start" )
     var txt = "" ;
@@ -43,17 +40,22 @@ if ( require.main === module )
       }
     }
 		var T0 = new Date().getTime() ;
+    var count = 0 ;
     for ( i = n ; i > 0 ; i-- )
     {
-      var event = new Event ( name ) ;
+      var event = new gepard.Event ( name ) ;
+      event.control.sequenceNumber = i ;
       if ( txt )
       {
         event.putValue ( "TEXT", txt ) ;
       }
       c.request ( event, function ( e )
       {
+        count++ ;
+// console.log ( "count=" + count ) ;
+// console.log ( "m=" + m ) ;
         m-- ;
-        if ( m < 1 )
+        if ( e.control.sequenceNumber <= 1 )
         {
           var T1 = new Date().getTime() ;
           var millis = T1 - T0 ;

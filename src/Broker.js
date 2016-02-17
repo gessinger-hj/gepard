@@ -197,6 +197,12 @@ Connection.prototype._sendInfoResult = function ( e )
   e.body.heartbeatIntervalMillis       = this.broker._heartbeatIntervalMillis ;
   e.body.maxMessageSize                = this.broker._maxMessageSize ;
   e.body.log                           = { levelName: Log.getLevelName(), level:Log.getLevel(), file: Log.getCurrentLogFileName() } ;
+  i = 0 ;
+  for ( key in this.broker._messagesToBeProcessed )
+  {
+    i++ ;
+  }
+  e.body.numberOfPendingRequests       = i ;
   e.body.currentEventNames             = this.broker._eventNameToSockets.getKeys() ;
   for ( i = 0 ; i < this.broker._connectionList.length ; i++ )
   {
@@ -439,11 +445,11 @@ var Broker = function ( port, ip )
   ee.addClassNameToConstructor ( "FileContainer", FileContainer ) ;
   this._heartbeatIntervalMillis = 30000 ;
   this._heartbeatIntervalMillis = T.getInt ( "gepard.heartbeat.millis", this._heartbeatIntervalMillis ) ;
-
-  this.brokerVersion = 1 ;
-  this._maxMessageSize = 20 * 1024 * 1024 ;
-  this.startupTime = new Date() ;
-  this._taskHandler = new BTaskHandler ( this ) ;
+  
+  this.brokerVersion            = 1 ;
+  this._maxMessageSize          = 20 * 1024 * 1024 ;
+  this.startupTime              = new Date() ;
+  this._taskHandler             = new BTaskHandler ( this ) ;
 };
 
 util.inherits ( Broker, EventEmitter ) ;

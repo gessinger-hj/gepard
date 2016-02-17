@@ -358,6 +358,7 @@ Client.prototype.connect = function()
       thiz._pendingAcquireSemaphoreList.length = 0 ;
     }
   } ) ;
+  var count = 0 ;
   this.socket.on ( 'data', function socket_on_data ( data )
   {
     if ( !thiz.alive )
@@ -417,6 +418,9 @@ Client.prototype.connect = function()
         if ( e.isResult() )
         {
           uid = e.getUniqueId() ;
+// console.log ( "uid=" + uid ) ;
+count++ ;
+console.log ( "count=" + count ) ;
           ctx = thiz.callbacks[uid] ;
           if ( ! e.isBroadcast() )
           {
