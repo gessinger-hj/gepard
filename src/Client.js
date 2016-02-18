@@ -358,7 +358,6 @@ Client.prototype.connect = function()
       thiz._pendingAcquireSemaphoreList.length = 0 ;
     }
   } ) ;
-  var count = 0 ;
   this.socket.on ( 'data', function socket_on_data ( data )
   {
     if ( !thiz.alive )
@@ -391,7 +390,7 @@ Client.prototype.connect = function()
         return ;
       }
       var m = messageList[j] ;
-      if ( m.length === 0 )
+      if ( !m || m.length === 0 )
       {
         continue ;
       }
@@ -406,6 +405,14 @@ Client.prototype.connect = function()
       thiz._stats.incrementIn ( m.length )
       if ( m.charAt ( 0 ) === '{' )
       {
+try
+{
+  if ( m === '{}' )
+  {
+    // console.log ( result ) ;
+    // process.exit(0) ;
+    continue ;
+  }
         e = Event.prototype.deserialize ( m ) ;
         if ( e.getName() !== "system" )
         {
@@ -414,13 +421,18 @@ Client.prototype.connect = function()
             TPStore.points["EVENT_IN"].log ( e ) ;
           }
         }
+}
+catch ( exc )
+{
+  console.log ( result ) ;
+  console.log ( exc ) ;
+process.exit ( 0 ) ;
+  throw exc ;
+}
         // e._Client = thiz ;
         if ( e.isResult() )
         {
           uid = e.getUniqueId() ;
-// console.log ( "uid=" + uid ) ;
-count++ ;
-console.log ( "count=" + count ) ;
           ctx = thiz.callbacks[uid] ;
           if ( ! e.isBroadcast() )
           {
