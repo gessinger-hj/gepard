@@ -183,7 +183,7 @@ Connection.prototype.write = function ( data )
  */
 Connection.prototype._sendInfoResult = function ( e )
 {
-  var i, first, str, key, conn, key2 ;
+  var i, j, first, str, key, conn, key2 ;
   e.setType ( "getInfoResult" ) ;
   e.control.status                     = { code:0, name:"ack" } ;
   e.body.gepardVersion                 = Gepard.getVersion() ;
@@ -552,13 +552,31 @@ Broker.prototype._ondata = function ( socket, chunk )
       return ;
     }
   }
+  if ( result )
+  {
+  }
   var messageList = result.list ;
-  var j = 0 ;
   var e = null ;
+  if ( result.lastLineIsPartial )
+  {
+    conn.partialMessage = messageList[messageList.length-1] ;
+    messageList[messageList.length-1] = "" ;
+    if ( conn.partialMessage > this._maxMessageSize )
+    {
+      str = "Message size exceeds maximum.\nsid=" + conn.sid + "\nmax=" + this._maxMessageSize + "\nactual size=" + conn.partialMessage.length ;
+      Log.log ( str ) ;
+      e = new Event ( "ERROR" ) ;
+      e.setStatus ( 1, "error", str ) ;
+      conn.write ( e ) ;
+      socket.end() ;
+      return ;
+    }
+  }
+
   for ( j = 0 ; j < messageList.length ; j++ )
   {
     var m = messageList[j] ;
-    if ( m.length === 0 )
+    if ( !m || m.length === 0 )
     {
       continue ;
     }
@@ -571,24 +589,6 @@ Broker.prototype._ondata = function ( socket, chunk )
       conn.write ( e ) ;
       socket.end() ;
       return ;
-    }
-    if ( j === messageList.length - 1 )
-    {
-      if ( result.lastLineIsPartial )
-      {
-        conn.partialMessage = m ;
-        if ( conn.partialMessage > this._maxMessageSize )
-        {
-          str = "Message size exceeds maximum.\nsid=" + conn.sid + "\nmax=" + this._maxMessageSize + "\nactual size=" + conn.partialMessage.length ;
-          Log.log ( str ) ;
-          e = new Event ( "ERROR" ) ;
-          e.setStatus ( 1, "error", str ) ;
-          conn.write ( e ) ;
-          socket.end() ;
-          return ;
-        }
-        break ;
-      }
     }
     if ( m.charAt ( 0 ) === '{' )
     {
@@ -850,7 +850,7 @@ Broker.prototype._sendMessageToClient = function ( e, socketList )
  */
 Broker.prototype._sendEventToClients = function ( conn, e )
 {
-  var i, found = false, done = false, str, list, target_conn ;
+  var i, j, found = false, done = false, str, list, target_conn ;
   var name = e.getName() ;
   if ( conn )
   {

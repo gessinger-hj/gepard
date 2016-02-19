@@ -12,13 +12,13 @@ if ( require.main === module )
     process.exit() ;
   }
 
-  new gepard.Admin().isRunning ( function admin_is_running ( state )
-  {
-    if ( ! state )
-    {
-      console.log ( "Not running on " + this.getHostPort() ) ;
-			process.exit() ;
-    }
+  // new gepard.Admin().isRunning ( function admin_is_running ( state )
+  // {
+  //   if ( ! state )
+  //   {
+  //     console.log ( "Not running on " + this.getHostPort() ) ;
+		// 	process.exit() ;
+  //   }
     var nb = gepard.getInt ( "b", 0 ) ;
  		var n = gepard.getInt ( "n", 10 ) ;
 		if ( n < 1 )
@@ -27,7 +27,8 @@ if ( require.main === module )
 			return ;
 		}
    	var name = "mass-test" ;
-   	var c = new gepard.Client() ;
+    var c = new gepard.Client_debug() ;
+   	// var c = new gepard.Client() ;
 		var m = n ;
     c.emit ( "mass-test-start" )
     var txt = "" ;
@@ -41,10 +42,15 @@ if ( require.main === module )
     }
 		var T0 = new Date().getTime() ;
     var count = 0 ;
+var el = [] ;
+var j = 0 ;
     for ( i = n ; i > 0 ; i-- )
     {
       var event = new gepard.Event ( name ) ;
       event.control.sequenceNumber = i ;
+      event.control.sequenceNumber_j = j ;
+      // el.push ( j ) ;
+      j++ ;
       if ( txt )
       {
         event.putValue ( "TEXT", txt ) ;
@@ -53,10 +59,13 @@ if ( require.main === module )
       {
         count++ ;
 // console.log ( "count=" + count ) ;
-// console.log ( "m=" + m ) ;
+el.push ( e.control.sequenceNumber_j ) ;
+console.log ( "el.length=" + el.length ) ;
         m-- ;
-        if ( e.control.sequenceNumber <= 1 )
+        // if ( e.control.sequenceNumber <= 1 )
+        if ( m <= 1 )
         {
+console.log ( "m=" + m ) ;
           var T1 = new Date().getTime() ;
           var millis = T1 - T0 ;
           var millisPerCall = millis / n ;
@@ -64,9 +73,17 @@ if ( require.main === module )
           console.log ( "millisPerCall=" + millisPerCall ) ;
           c.emit ( "mass-test-end", { write: function(p){ c.end(); }} )
           console.log ( c._stats ) ;
-					// this.end() ;
+          // this.end() ;
+for ( var k = 0 ; k < el.length ; k++ )
+{
+  if ( k !== el[k] )
+  {
+    console.log ( "k=" + k ) ;
+    console.log ( "el[k]=" + el[k] ) ;
+  }
+}
 				}
       }) ;
     }
-  });
+  // });
 }

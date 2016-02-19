@@ -292,7 +292,7 @@ Client.prototype.connect = function()
     thiz._stats.incrementOut ( json.length )
     this.write ( json ) ;
 
-    var i ;
+    var i, j ;
     if ( thiz.pendingEventList.length )
     {
       for ( i = 0 ; i < thiz.pendingEventList.length ; i++ )
@@ -370,19 +370,24 @@ Client.prototype.connect = function()
     if ( ! this.partialMessage ) this.partialMessage = "" ;
     mm = this.partialMessage + mm ;
     this.partialMessage = "" ;
-
     var result ;
     try
     {
-      result = T.splitJSONObjects ( mm ) ;
+      result = T.splitJSONObjects ( mm, 0, false ) ;
     }
     catch ( exc )
     {
       Log.log ( exc ) ;
     }
+    this.partialMessage = "" ;
     var messageList = result.list ;
-    var i, j, k ;
+    var i, j, k, kk ;
     var ctx, uid, rcb, e, callbackList ;
+    if ( result.lastLineIsPartial )
+    {
+      this.partialMessage = messageList[messageList.length-1] ;
+      messageList[messageList.length-1] = "" ;
+    }
     for ( j = 0 ; j < messageList.length ; j++ )
     {
       if ( this.stopImediately )
@@ -394,25 +399,9 @@ Client.prototype.connect = function()
       {
         continue ;
       }
-      if ( j === messageList.length - 1 )
-      {
-        if ( result.lastLineIsPartial )
-        {
-          this.partialMessage = m ;
-          break ;
-        }
-      }
       thiz._stats.incrementIn ( m.length )
       if ( m.charAt ( 0 ) === '{' )
       {
-try
-{
-  if ( m === '{}' )
-  {
-    // console.log ( result ) ;
-    // process.exit(0) ;
-    continue ;
-  }
         e = Event.prototype.deserialize ( m ) ;
         if ( e.getName() !== "system" )
         {
@@ -421,14 +410,6 @@ try
             TPStore.points["EVENT_IN"].log ( e ) ;
           }
         }
-}
-catch ( exc )
-{
-  console.log ( result ) ;
-  console.log ( exc ) ;
-process.exit ( 0 ) ;
-  throw exc ;
-}
         // e._Client = thiz ;
         if ( e.isResult() )
         {
@@ -650,9 +631,9 @@ process.exit ( 0 ) ;
           {
             list = thiz.listenerFunctionsList[k]._regexpList ;
             if ( ! list ) continue ;
-            for ( j = 0 ; j < list.length ; j++ )
+            for ( kk = 0 ; kk < list.length ; kk++ )
             {
-              if ( ! list[j].test ( e.getName() ) ) continue ;
+              if ( ! list[kk].test ( e.getName() ) ) continue ;
               found = true ;
               if ( e.isResultRequested() )
               {

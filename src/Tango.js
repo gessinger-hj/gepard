@@ -521,13 +521,14 @@ TangoClass.prototype.getConfigPath = function()
  * @param {} str
  * @return list
  */
-TangoClass.prototype.splitJSONObjects = function ( str, max )
+TangoClass.prototype.splitJSONObjects = function ( str, max, flag )
 {
   var list = [] ;
   var pcounter = 1 ;
   var q = "" ;
   var i0 = 0 ;
   var i = 1 ;
+  var firstIsBraces = str.charAt ( 0 ) === '{' ;
   for ( i = 1 ; i < str.length ; i++ )
   {
     if ( max && i - i0 > max )
@@ -584,7 +585,12 @@ TangoClass.prototype.splitJSONObjects = function ( str, max )
   {
     list.push ( str.substring ( i0 ) ) ;
   }
-  return { list: list, lastLineIsPartial: pcounter ? true : false } ;
+  if ( flag && pcounter )
+  {
+    console.log ( "pcounter!==0|" + list[list.length-1] ) ;
+    console.log ( "list.length=" + list.length ) ;
+  }
+  return { list: list, lastLineIsPartial: pcounter ? true : false, firstIsBraces: firstIsBraces, pcounter: pcounter } ;
 };
 /**
  * Description
