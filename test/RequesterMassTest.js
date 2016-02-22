@@ -27,7 +27,7 @@ if ( require.main === module )
 			return ;
 		}
    	var name = "mass-test" ;
-    var c = new gepard.Client_debug() ;
+    var c = new gepard.Client() ;
    	// var c = new gepard.Client() ;
 		var m = n ;
     c.emit ( "mass-test-start" )
@@ -60,7 +60,6 @@ var j = 0 ;
         count++ ;
 // console.log ( "count=" + count ) ;
 el.push ( e.control.sequenceNumber_j ) ;
-console.log ( "el.length=" + el.length ) ;
         m-- ;
         // if ( e.control.sequenceNumber <= 1 )
         if ( m <= 1 )
@@ -74,14 +73,15 @@ console.log ( "m=" + m ) ;
           c.emit ( "mass-test-end", { write: function(p){ c.end(); }} )
           console.log ( c._stats ) ;
           // this.end() ;
-for ( var k = 0 ; k < el.length ; k++ )
-{
-  if ( k !== el[k] )
-  {
-    console.log ( "k=" + k ) ;
-    console.log ( "el[k]=" + el[k] ) ;
-  }
-}
+console.log ( "el.length=" + el.length ) ;
+// for ( var k = 0 ; k < el.length ; k++ )
+// {
+//   if ( k !== el[k] )
+//   {
+//     console.log ( "k=" + k ) ;
+//     console.log ( "el[k]=" + el[k] ) ;
+//   }
+// }
 				}
       }) ;
     }
