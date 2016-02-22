@@ -89,6 +89,7 @@ JSAcc.prototype.add = function ( path, obj )
     }
     if ( i === plist.length - 1 )
     {
+      if ( ! obj ) obj = {} ;
       m[p] = obj ;
     }
   }
@@ -158,5 +159,7 @@ if ( require.main === module )
   console.log ( JSON.stringify ( a.map ) ) ;
   a.remove ( "M1/M2/N" ) ;
 // console.log ( '7 -- a.remove ( "M1/M2/N" )' ) ;
+  console.log ( JSON.stringify ( a.map ) ) ;
+  a.add ( "only/a/map" ) ;
   console.log ( JSON.stringify ( a.map ) ) ;
 }

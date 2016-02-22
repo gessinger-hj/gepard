@@ -1034,6 +1034,13 @@ TangoClass.prototype._MLZ = function (x)
   }
   return rc ;
 };
+/**
+ * { function_description }
+ *
+ * @method     toRFC3339String
+ * @param      {Date}  date    date to be stringified
+ * @return     {string}  date as string in the given format
+ */
 TangoClass.prototype.toRFC3339String = function ( date )
 {
   var to = date.getTimezoneOffset() ;
@@ -1073,6 +1080,39 @@ TangoClass.prototype.visit = function ( obj, visitor )
       if ( this.visit ( obj[key], visitor ) === false ) return false ;
     }    
   }
+};
+TangoClass.prototype.getLocalNetworAddresses = function()
+{
+  if ( this.networkAddresses )
+  {
+    return this.networkAddresses ;
+  }
+  var os = require ( "os" ) ;
+  var networkInterfaces = os.networkInterfaces() ;
+  this.networkAddresses = {} ;
+  for ( var kk in networkInterfaces )
+  {
+    var niList = networkInterfaces[kk]
+    for ( var i = 0 ; i < niList.length ; i++ )
+    {
+      this.networkAddresses[niList[i]["address"]] = true ;
+    }
+  }
+  return this.networkAddresses ;
+};
+TangoClass.prototype.isLocalHost = function ( name, callback )
+{
+  var na = this.getLocalNetworAddresses() ;
+  var dns = require ( "dns" ) ;
+  dns.lookup ( name, function ( err, p )
+  {
+    if ( err )
+    {
+      callback ( err, false ) ;
+      return ;
+    }
+    callback ( err, !!na[p] ) ;
+  });
 };
 var Tango = null ;
 
@@ -1126,4 +1166,8 @@ if ( require.main === module )
     }
   });
   T.log ( o ) ;
+  T.isLocalHost ( "wevli077", function ( err, p )
+  {
+console.log ( "p=" + p ) ;
+  }) ;
 }

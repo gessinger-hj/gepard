@@ -62,7 +62,7 @@ var j = 0 ;
 el.push ( e.control.sequenceNumber_j ) ;
         m-- ;
         // if ( e.control.sequenceNumber <= 1 )
-        if ( m <= 1 )
+        if ( m < 1 )
         {
 console.log ( "m=" + m ) ;
           var T1 = new Date().getTime() ;

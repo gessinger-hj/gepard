@@ -1930,7 +1930,7 @@ class JSAcc:
 			continue
 		return dflt
 
-	def add ( self, path, obj ):
+	def add ( self, path, obj={} ):
 		if ( path.find ( "/" ) == -1 ):
 			self.map[path] = obj
 			return obj

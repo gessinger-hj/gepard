@@ -13,7 +13,7 @@ if ( require.main === module )
 		) ;
 		process.exit() ;
 	}
-	var s = findService ( {}, function cb ( service )
+	var s = findService ( { type: 'test-gepard' }, function cb ( service )
 	{
 // console.log ( service ) ;
 		var port = service.port ;

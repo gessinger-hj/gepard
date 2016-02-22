@@ -188,21 +188,16 @@ Connection.prototype._sendInfoResult = function ( e )
   e.control.status                     = { code:0, name:"ack" } ;
   e.body.gepardVersion                 = Gepard.getVersion() ;
   e.body.brokerVersion                 = this.broker.brokerVersion ;
-  if ( this.broker.uniformGepardLocator )
+  if ( this.broker.uniformServiceLocator )
   {
-    e.body.zeroconf = this.broker.uniformGepardLocator ;
+    e.body.zeroconf = this.broker.uniformServiceLocator ;
   }
   e.body.port                          = this.broker.port ;
   e.body.startupTime                   = this.broker.startupTime   ;
   e.body.heartbeatIntervalMillis       = this.broker._heartbeatIntervalMillis ;
   e.body.maxMessageSize                = this.broker._maxMessageSize ;
   e.body.log                           = { levelName: Log.getLevelName(), level:Log.getLevel(), file: Log.getCurrentLogFileName() } ;
-  i = 0 ;
-  for ( key in this.broker._messagesToBeProcessed )
-  {
-    i++ ;
-  }
-  e.body.numberOfPendingRequests       = i ;
+  e.body.numberOfPendingMessages       = this.broker._numberOfPendingMessages ;
   e.body.currentEventNames             = this.broker._eventNameToSockets.getKeys() ;
   for ( i = 0 ; i < this.broker._connectionList.length ; i++ )
   {
@@ -450,6 +445,7 @@ var Broker = function ( port, ip )
   this._maxMessageSize          = 20 * 1024 * 1024 ;
   this.startupTime              = new Date() ;
   this._taskHandler             = new BTaskHandler ( this ) ;
+  this._numberOfPendingMessages = 0 ;
 };
 
 util.inherits ( Broker, EventEmitter ) ;
@@ -624,6 +620,8 @@ Broker.prototype._ondata = function ( socket, chunk )
           uid                  = e.getUniqueId() ;
           originatorConnection = this._connections[sid] ;
           delete this._messagesToBeProcessed[uid] ;
+          this._numberOfPendingMessages-- ;
+          if ( this._numberOfPendingMessages < 0 ) this._numberOfPendingMessages = 0 ;
           responderConnection._setCurrentlyProcessedMessageUid ( "" ) ;
           var alreadySent = false ;
           if ( e.getName() !== "system" )
@@ -818,6 +816,7 @@ Broker.prototype._sendMessageToClient = function ( e, socketList )
       if ( ! conn.fullQualifiedEventNames[fullName] ) continue ;
     }
     this._messagesToBeProcessed[uid] = e ; // hotfix-1.5.0_1
+    this._numberOfPendingMessages++ ;
     if ( conn._numberOfPendingRequests === 0 )
     {
       conn.write ( e ) ;
@@ -1393,7 +1392,8 @@ Broker.prototype._ejectSocket = function ( socket )
     conn._setCurrentlyProcessedMessageUid ( "" ) ;
     var requesterMessage    = this._messagesToBeProcessed[uid] ;
     delete this._messagesToBeProcessed[uid] ;
-
+    this._numberOfPendingMessages-- ;
+    if ( this._numberOfPendingMessages < 0 ) this._numberOfPendingMessages = 0 ;
     var requester_sid ;
     var originatorConnection ;
     if ( requesterMessage )
@@ -1516,9 +1516,9 @@ Broker.prototype.listen = function ( port, callback )
   {
     Log.info ( 'server bound to port=' + thiz.server.address().port ) ;
     thiz.intervallId = setInterval ( thiz._checkHeartbeat_bind, thiz._heartbeatIntervalMillis ) ;
-    if ( thiz.uniformGepardLocator )
+    if ( thiz.uniformServiceLocator )
     {
-      thiz.uniformGepardLocator.port = thiz.server.address().port ;
+      thiz.uniformServiceLocator.port = thiz.server.address().port ;
       thiz.publishService()
     }
     if ( typeof callback === 'function' )
@@ -1533,11 +1533,11 @@ Broker.prototype.listen = function ( port, callback )
       }
     }
   };
-  if ( this.uniformGepardLocator )
+  if ( this.uniformServiceLocator )
   {
-    if ( this.uniformGepardLocator.port )
+    if ( this.uniformServiceLocator.port )
     {
-      this.port = parseInt ( this.uniformGepardLocator.port ) ;
+      this.port = parseInt ( this.uniformServiceLocator.port ) ;
     }
   }
   if ( this.port <= 0 ) this.port = 0 ;
@@ -1641,9 +1641,9 @@ Broker.prototype._checkHeartbeat = function()
 Broker.prototype.publishService = function()
 {
   var bonjour = require('bonjour')() ;
-  bonjour.publish ( { name: this.uniformGepardLocator.name
-                    , type: this.uniformGepardLocator.type
-                    , port: this.uniformGepardLocator.port
+  bonjour.publish ( { name: this.uniformServiceLocator.name
+                    , type: this.uniformServiceLocator.type
+                    , port: this.uniformServiceLocator.port
                     , txt:{ list:"a,b" }
                   }) ;
 };
@@ -1730,15 +1730,22 @@ Broker.prototype.setConfig = function ( configuration )
   {
     zeroconf = "Broker-${HOSTNAME}-${PID},gepard" ;
   }
-  if ( zeroconf )
+  if ( typeof zeroconf === 'string' && zeroconf.indexOf ( ',' ) >= 0 )
   {
     var a = zeroconf.split ( ',' ) ;
-    if ( ! a[0] ) a[0] = "Broker-${HOSTNAME}-${PID}" ;
-    if ( ! a[1] ) a[1] = "gepard" ;
+    zeroconf      = {} ;
+    zeroconf.name = a[0] ;
+    zeroconf.type = a[1] ;
+    zeroconf.port = a[2] ;
+  }
+  if ( zeroconf )
+  {
+    if ( ! zeroconf.name ) zeroconf.name = "Broker-${HOSTNAME}-${PID}" ;
+    if ( ! zeroconf.type ) zeroconf.type = "gepard" ;
     var pid = process.pid ;
     var map = { HOSTNAME:os.hostname(), PID: "" + process.pid } ;
-    a[0] = T.resolve ( a[0], map ) ;
-    this.uniformGepardLocator = { name: a[0], type: a[1], port: a[2] } ;
+    zeroconf.name = T.resolve ( zeroconf.name, map ) ;
+    this.uniformServiceLocator = zeroconf ;
   }
   this._taskHandler.init ( configuration ) ;
 };

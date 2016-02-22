@@ -123,6 +123,11 @@ Admin.prototype._execute = function ( action, what, callback )
 		this.socket.on ( "connect", function()
 		{
 		  var e = new gepard.Event ( "system", "shutdown" ) ;
+  		var channel = gepard.getProperty ( "channel" ) ;
+  		if ( channel )
+  		{
+		  	e.body.shutdown_channel = channel ;
+  		}
 		  if ( what )
 		  {
 		  	e.body.shutdown_sid = what ;
@@ -439,14 +444,17 @@ Admin.prototype.client = function ( p )
 	{
 		name = "client/info/" ;
 	}
+// console.log ( "name=" + name ) ;
 	var util = require ( "util" ) ;
 	var c = gepard.getClient() ;
 	c.setReconnect ( false ) ;
   var n = 0 ;
 
   var sid = gepard.getProperty ( "sid" ) ;
+  var channel = gepard.getProperty ( "channel" ) ;
   parameter.name = name ;
   parameter.sid = sid ;
+  parameter.channel = channel ;
   c.systemInfo ( function ( e )
   {
     if ( e.isBad() )
@@ -561,6 +569,7 @@ console.log ( "n=" + n ) ;
 		var info   = gepard.getProperty ( "info" ) ;
 		var action = gepard.getProperty ( "action" ) ;
 		var value  = gepard.getProperty ( "value" ) ;
+		var channel  = gepard.getProperty ( "channel" ) ;
 		if ( value && value.startsWith ( "--" ) )
 		{
 			value = "" ;

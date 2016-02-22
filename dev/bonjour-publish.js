@@ -4,7 +4,7 @@
 * @Author: gess
 * @Date:   2016-01-31 17:36:23
 * @Last Modified by:   hg02055
-* @Last Modified time: 2016-02-17 16:40:32
+* @Last Modified time: 2016-02-22 17:24:00
 */
 
 'use strict';
@@ -22,6 +22,6 @@ setTimeout ( function()
   // {
   //   console.log ( p ) ;
   // });
-  process.exit(0) ;
+  // process.exit(0) ;
 },10000 ) ;
 // bonjour.publish({ name: 'My Web Server2', type: 'gepard', port: 3100, addresses:["AAA"] }) ;

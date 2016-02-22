@@ -289,7 +289,7 @@ Client.prototype.connect = function()
     client_info.body.channels           = thiz.channels ;
     client_info.setChannel ( thiz.mainChannel ) ;
     json                            = client_info.serialize() ;
-    thiz._stats.incrementOut ( json.length )
+    thiz._stats.incrementOut ( json.length ) ;
     this.write ( json ) ;
 
     var i, j ;
@@ -399,7 +399,7 @@ Client.prototype.connect = function()
       {
         continue ;
       }
-      thiz._stats.incrementIn ( m.length )
+      thiz._stats.incrementIn ( m.length ) ;
       if ( m.charAt ( 0 ) === '{' )
       {
         e = Event.prototype.deserialize ( m ) ;
@@ -828,6 +828,10 @@ Client.prototype.systemInfo = function ( callback, parameter )
     e.putValue ( "sid", parameter.sid ) ;
   }
   e.putValue ( "parameter", parameter ) ;
+  if ( parameter.channel )
+  {
+    e.setChannel ( parameter.channel ) ;
+  }
   this.emit ( e, callback, { isBroadcast:true, internal: true } ) ;
 };
 Client.prototype.log = function ( messageText, callback )
