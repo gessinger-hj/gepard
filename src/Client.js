@@ -64,6 +64,37 @@ Stats.prototype =
 var Client = function ( port, host )
 {
   EventEmitter.call ( this ) ;
+  if ( typeof port === 'object' && typeof host === 'function' )
+  {
+T.lwhere (  ) ;
+    var callback         = host ;
+    var serviceParameter = port ;
+    var thiz             = this ;
+    T.findService ( serviceParameter, function client_findService ( service)
+    {
+      try
+      {
+        thiz._initialize ( service.port, service.host ) ;
+        var rc = callback ( service ) ;
+        if ( rc )
+        {
+          return true ;
+        }
+      }
+      catch ( exc )
+      {
+        console.log ( exc ) ;
+      }
+    } ) ;
+  }
+  else
+  {
+    this._initialize ( port, host ) ;
+  }
+} ;
+util.inherits ( Client, EventEmitter ) ;
+Client.prototype._initialize = function ( port, host )
+{
   this.port                         = port ;
   if ( ! this.port ) this.port      = T.getProperty ( "gepard.port", "17501" ) ;
   this.host                         = host ;
@@ -125,8 +156,7 @@ var Client = function ( port, host )
   this.mainChannel ;
   this.setChannel ( T.getProperty ( "gepard.channel" ) ) ;
   this.sid                      = "" ;
-} ;
-util.inherits ( Client, EventEmitter ) ;
+};
 Client.prototype.setChannel = function ( channel )
 {
   if ( ! channel ) return ;

@@ -7,40 +7,49 @@ gepard._Instances = {} ;
 
 gepard.getClient = function ( port, host )
 {
-	port = port ? port : undefined ;
-	host = host ? host : undefined ;
-	if ( ! port )
+	if ( ( typeof port === 'string' || typeof port === 'number' )
+		 && typeof host === 'function'
+		 )
 	{
-		port = gepard.getProperty ( "gepard.port", "17501" ) ;
+	  
 	}
-	if ( ! host )
+	else
 	{
-		host = gepard.getProperty ( "gepard.host" ) ;
+		port = port ? port : undefined ;
+		host = host ? host : undefined ;
+		if ( ! port )
+		{
+			port = gepard.getProperty ( "gepard.port", "17501" ) ;
+		}
+		if ( ! host )
+		{
+			host = gepard.getProperty ( "gepard.host" ) ;
+		}
+		var c = gepard._Instances["" + host + ":" + port] ;
+		if ( c )
+		{
+			return c ;
+		}
+		c = new gepard.Client ( port, host ) ;
+		var thiz = gepard ;
+		c.on ( "end", function onend()
+		{
+			delete thiz._Instances["" + host + ":" + port] ;
+		} ) ;
+		c.on ( "disconnect", function ondisconnect()
+		{
+			delete thiz._Instances["" + host + ":" + port] ;
+		} ) ;
+		c.on ( "shutdown", function onend()
+		{
+			delete thiz._Instances["" + host + ":" + port] ;
+		} ) ;
+		c.on ( "error", function onend()
+		{
+			delete thiz._Instances["" + host + ":" + port] ;
+		} ) ;
+		gepard._Instances["" + host + ":" + port] = c 
 	}
-	var c = gepard._Instances["" + host + ":" + port] ;
-	if ( c )
-	{
-		return c ;
-	}
-	c = new gepard.Client ( port, host ) ;
-	var thiz = gepard ;
-	c.on ( "end", function onend()
-	{
-		delete thiz._Instances["" + host + ":" + port] ;
-	} ) ;
-	c.on ( "disconnect", function ondisconnect()
-	{
-		delete thiz._Instances["" + host + ":" + port] ;
-	} ) ;
-	c.on ( "shutdown", function onend()
-	{
-		delete thiz._Instances["" + host + ":" + port] ;
-	} ) ;
-	c.on ( "error", function onend()
-	{
-		delete thiz._Instances["" + host + ":" + port] ;
-	} ) ;
-	gepard._Instances["" + host + ":" + port] = c 
 	return c ;
  }
 

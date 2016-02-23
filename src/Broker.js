@@ -132,6 +132,7 @@ Connection.prototype.removeEventListener = function ( e )
   {
     this.eventNameList.remove ( toBeRemoved[i] ) ;
   }
+  this.broker.republishService() ;
   toBeRemoved.length = 0 ;
 };
 /**
@@ -320,6 +321,7 @@ Connection.prototype._addEventListener = function ( e )
   }
   e.control.status = { code:0, name:"ack" } ;
   this.write ( e ) ;
+  this.broker.republishService() ;
 };
 Connection.prototype._setCurrentlyProcessedMessageUid = function ( uid )
 {
@@ -446,6 +448,7 @@ var Broker = function ( port, ip )
   this.startupTime              = new Date() ;
   this._taskHandler             = new BTaskHandler ( this ) ;
   this._numberOfPendingMessages = 0 ;
+  this._republishServiceTimeoutMillis = 3000 ;
 };
 
 util.inherits ( Broker, EventEmitter ) ;
@@ -1296,6 +1299,7 @@ Broker.prototype._shutdown = function ( conn, e )
       Log.info ( 'server shutting down' ) ;
       e.control.status = { code:0, name:"ack" } ;
       conn.write ( e ) ;
+      this.unpublishService() ;
       this._closeAllSockets() ;
       this.server.unref() ;
       Log.info ( 'server shut down' ) ;
@@ -1466,6 +1470,7 @@ Broker.prototype._ejectSocket = function ( socket )
   conn._ownedSemaphoresRecourceIdList.length = 0 ;
   delete this._connections[sid] ;
   Log.info ( 'Socket disconnected, sid=' + sid ) ;
+  this.republishService() ;
 };
 /**
  * Description
@@ -1638,14 +1643,44 @@ Broker.prototype._checkHeartbeat = function()
   }
   socketsToBePINGed.length = 0 ;
 };
+Broker.prototype.republishService = function()
+{
+  if ( this.republishServiceTimeoutId )
+  {
+    clearTimeout ( this.republishServiceTimeoutId ) ;
+  }
+  var thiz = this ;
+  this.republishServiceTimeoutId = setTimeout ( function republishServiceTimeout()
+  {
+    thiz._republishService() ;
+  }, this._republishServiceTimeoutMillis );
+};
+Broker.prototype._republishService = function()
+{
+  if ( ! this.bonjour ) return ;
+  this.bonjour.unpublishAll() ;
+  this.publishService() ;
+};
 Broker.prototype.publishService = function()
 {
-  var bonjour = require('bonjour')() ;
-  bonjour.publish ( { name: this.uniformServiceLocator.name
-                    , type: this.uniformServiceLocator.type
-                    , port: this.uniformServiceLocator.port
-                    , txt:{ list:"a,b" }
-                  }) ;
+  if ( ! this.bonjour )
+  {
+    this.bonjour = require('bonjour')() ;
+  }
+  var eventNames = this._eventNameToSockets.getKeys() ;
+  eventNames = eventNames.join ( ',' ) ;
+  this.bonjour.publish ( { name: this.uniformServiceLocator.name
+                         , type: this.uniformServiceLocator.type
+                         , port: this.uniformServiceLocator.port
+                         , txt: { topics:eventNames }
+                         }) ;
+};
+Broker.prototype.unpublishService = function()
+{
+  if ( ! this.bonjour ) return ;
+  this.bonjour.unpublishAll() ;
+  this.bonjour.destroy() ;
+  this.bonjour = null ;
 };
 
 /**
@@ -1728,7 +1763,7 @@ Broker.prototype.setConfig = function ( configuration )
   if ( ! zeroconf ) zeroconf = configuration.zeroconf ;
   if ( zeroconf === 'true' )
   {
-    zeroconf = "Broker-${HOSTNAME}-${PID},gepard" ;
+    zeroconf = "Broker-[${HOSTNAME}]-${PID},gepard" ;
   }
   if ( typeof zeroconf === 'string' && zeroconf.indexOf ( ',' ) >= 0 )
   {
@@ -1740,7 +1775,7 @@ Broker.prototype.setConfig = function ( configuration )
   }
   if ( zeroconf )
   {
-    if ( ! zeroconf.name ) zeroconf.name = "Broker-${HOSTNAME}-${PID}" ;
+    if ( ! zeroconf.name ) zeroconf.name = "Broker-[${HOSTNAME}]-${PID}" ;
     if ( ! zeroconf.type ) zeroconf.type = "gepard" ;
     var pid = process.pid ;
     var map = { HOSTNAME:os.hostname(), PID: "" + process.pid } ;
@@ -1801,16 +1836,17 @@ if ( require.main === module )
     var b = new Broker() ;
     b.setConfig() ;
     b.listen() ;
+    var wse ;
+    b.on ( "shutdown", function onshutdown(e)
+    {
+      if ( wse ) wse.shutdown() ;
+      process.exit ( 0 ) ;
+    });
     if ( T.getBool ( "web", false ) )
     {
       var WebSocketEventProxy = require ( "./WebSocketEventProxy" ) ;
-      var wse = new WebSocketEventProxy() ;
+      wse = new WebSocketEventProxy() ;
       wse.listen() ;
-      b.on ( "shutdown", function onshutdown(e)
-      {
-        wse.shutdown() ;
-        process.exit ( 0 ) ;
-      });
     }
   }
 }

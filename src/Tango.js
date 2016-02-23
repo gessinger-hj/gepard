@@ -1114,6 +1114,24 @@ TangoClass.prototype.isLocalHost = function ( name, callback )
     callback ( err, !!na[p] ) ;
   });
 };
+TangoClass.prototype.findService = function ( serviceParameter, callback )
+{
+  var Bonjour = require ( 'bonjour' ) ;
+
+  if ( ! serviceParameter ) serviceParameter = {} ;
+  if ( ! serviceParameter.type ) serviceParameter.type = 'gepard' ;
+
+  var bonjour = new Bonjour()
+  var browser = bonjour.find ( { type: serviceParameter.type }, function cb_find ( service )
+  {
+    var rc = callback ( service ) ;
+    if ( rc )
+    {
+      browser.stop() ;
+      bonjour.destroy() ;
+    }
+  } ) ;
+};
 var Tango = null ;
 
 if ( typeof org === 'undefined' ) org = {} ;
