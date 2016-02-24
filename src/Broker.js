@@ -57,7 +57,9 @@ var Connection = function ( broker, socket )
   this._messageUidsToBeProcessed              = [] ;
   this._isLocalHost ;
   this._timeStamp                             = 0 ;
-  this.fullQualifiedEventNames = {} ;
+  this.fullQualifiedEventNames                = {} ;
+  this.eventNameList                          = [] ;
+  this.channelNameList                        = [] ;
 };
 /**
  * Description
@@ -281,8 +283,6 @@ Connection.prototype._addEventListener = function ( e )
     this.write ( e ) ;
     return ;
   }
-  if ( ! this.eventNameList ) this.eventNameList = [] ;
-
   for  ( i = 0 ; i < eventNameList.length ; i++ )
   {
     eventName = eventNameList[i] ;
@@ -392,6 +392,7 @@ var Broker = function ( port, ip )
   EventEmitter.call ( this ) ;
   this._connections                        = {} ;
   this._eventNameToSockets                 = new MultiHash() ;
+  this._channelNameToSockets               = new MultiHash() ;
   this._connectionList                     = [] ;
   this.port                                = port ;
   this.ip                                  = ip ;
@@ -1067,7 +1068,7 @@ Broker.prototype._handleSystemClientMessages = function ( conn, e )
  */
 Broker.prototype._handleSystemMessages = function ( conn, e )
 {
-  var i, found, list, CHANNEL, t ;
+  var i, found, list, CHANNEL, t, key ;
   if ( e.getType() === "addMultiplexer" )
   {
     return ;
@@ -1125,12 +1126,19 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
         if ( ! t ) continue ;
         if ( ! conn.channels ) conn.channels = {} ;
         conn.channels[t] = true ;
+        conn.channelNameList.push ( t ) ;
+        this._channelNameToSockets ( t, this ) ;
       } 
     }
     else
     if ( typeof CHANNEL === 'object' )
     {
       conn.channels = CHANNEL ;
+      for ( key in conn.channels )
+      {
+        conn.channelNameList.push ( key ) ;
+        this._channelNameToSockets.put ( key, conn.socket ) ;
+      }
     }
     var app              = conn.client_info.application ;
     if ( app )
@@ -1448,6 +1456,11 @@ Broker.prototype._ejectSocket = function ( socket )
       this._eventNameToSockets.remove ( conn.eventNameList[i], socket ) ;
     }
     conn.eventNameList.length = 0 ;
+    for  ( i = 0 ; i < conn.channelNameList.length ; i++ )
+    {
+      this._channelNameToSockets.remove ( conn.channelNameList[i], socket ) ;
+    }
+    conn.channelNameList.length = 0 ;
   }
   this._connectionList.remove ( conn ) ;
   for ( i = 0 ; i < conn._lockedResourcesIdList.length ; i++ )
@@ -1667,12 +1680,16 @@ Broker.prototype.publishService = function()
   {
     this.bonjour = require('bonjour')() ;
   }
-  var eventNames = this._eventNameToSockets.getKeys() ;
+  var eventNames   = this._eventNameToSockets.getKeys() ;
   eventNames = eventNames.join ( ',' ) ;
+  var channelNames = this._channelNameToSockets.getKeys() ;
+  channelNames = channelNames.join ( ',' ) ;
   this.bonjour.publish ( { name: this.uniformServiceLocator.name
                          , type: this.uniformServiceLocator.type
                          , port: this.uniformServiceLocator.port
-                         , txt: { topics:eventNames }
+                         , txt:{ topics:eventNames, channels:channelNames
+                               , host:os.hostname()
+                         }
                          }) ;
 };
 Broker.prototype.unpublishService = function()
@@ -1763,7 +1780,7 @@ Broker.prototype.setConfig = function ( configuration )
   if ( ! zeroconf ) zeroconf = configuration.zeroconf ;
   if ( zeroconf === 'true' )
   {
-    zeroconf = "Broker-[${HOSTNAME}]-${PID},gepard" ;
+    zeroconf = "Gepard-[${HOSTNAME}]-${PID},gepard" ;
   }
   if ( typeof zeroconf === 'string' && zeroconf.indexOf ( ',' ) >= 0 )
   {
@@ -1775,7 +1792,7 @@ Broker.prototype.setConfig = function ( configuration )
   }
   if ( zeroconf )
   {
-    if ( ! zeroconf.name ) zeroconf.name = "Broker-[${HOSTNAME}]-${PID}" ;
+    if ( ! zeroconf.name ) zeroconf.name = "Gepard-[${HOSTNAME}]-${PID}" ;
     if ( ! zeroconf.type ) zeroconf.type = "gepard" ;
     var pid = process.pid ;
     var map = { HOSTNAME:os.hostname(), PID: "" + process.pid } ;

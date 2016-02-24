@@ -128,7 +128,7 @@ TangoClass.prototype.toString = function ( value )
   else
   if ( typeof value === 'object' )
   {
-    return util.inspect ( value, { showHidden: false, depth: null } )
+    return util.inspect ( value, { showHidden: false, depth: null } ) ;
   }
   return value ;
 };
@@ -1124,13 +1124,46 @@ TangoClass.prototype.findService = function ( serviceParameter, callback )
   var bonjour = new Bonjour()
   var browser = bonjour.find ( { type: serviceParameter.type }, function cb_find ( service )
   {
+    if ( service.txt.topics )
+    {
+      service.topics = service.txt.topics.split ( ',' ) ;
+    }
+    else
+    {
+      service.topics = [] ;
+    }
+    if ( service.txt.channels )
+    {
+      service.channels = service.txt.channels.split ( ',' ) ;
+    }
+    else
+    {
+      service.channels = [] ;
+    }
+    
     var rc = callback ( service ) ;
-    if ( rc )
+    if ( rc === true )
     {
       browser.stop() ;
       bonjour.destroy() ;
+      browser = null ;
+      bonjour = null ;
     }
   } ) ;
+  if ( serviceParameter.timeout > 100 )
+  {
+    setTimeout ( function ()
+    {
+      if ( ! browser )
+      {
+        return ;
+      }
+      browser.stop() ;
+      bonjour.destroy() ;
+      browser = null ;
+      bonjour = null ;
+    }, serviceParameter.timeout ) ;
+  }
 };
 var Tango = null ;
 
