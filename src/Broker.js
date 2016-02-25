@@ -1782,13 +1782,28 @@ Broker.prototype.setConfig = function ( configuration )
   {
     zeroconf = "Gepard-[${HOSTNAME}]-${PID},gepard" ;
   }
-  if ( typeof zeroconf === 'string' && zeroconf.indexOf ( ',' ) >= 0 )
+  if ( typeof zeroconf === 'string' )
   {
-    var a = zeroconf.split ( ',' ) ;
-    zeroconf      = {} ;
-    zeroconf.name = a[0] ;
-    zeroconf.type = a[1] ;
-    zeroconf.port = a[2] ;
+    if ( zeroconf.indexOf ( ',' ) >= 0 )
+    {
+      var a = zeroconf.split ( ',' ) ;
+      zeroconf      = {} ;
+      zeroconf.name = a[0] ;
+      zeroconf.type = a[1] ;
+      zeroconf.port = a[2] ;
+      if ( isFinite ( parseInt ( zeroconf.type ) ) ) // zeroconf.type is a port
+      {
+        zeroconf.port = zeroconf.type ;
+        zeroconf.type = zeroconf.name ;
+        zeroconf.name = "" ;
+      }
+    }
+    else
+    {
+      var s = zeroconf ;
+      zeroconf      = {} ;
+      zeroconf.type = s ;
+    }
   }
   if ( zeroconf )
   {

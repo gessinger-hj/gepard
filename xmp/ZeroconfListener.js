@@ -22,39 +22,14 @@ if ( require.main === module )
 	{
 		name = [ name ] ;
 	}
-	// var client = new gepard.Client ( { type: 'test-gepard' }, function acceptService ( service )
-	// var client = gepard.getClient ( { type: 'test-gepard' }, function acceptService ( service )
-	// {
-	// 	console.log ( service.txt ) ;
- //  	return new Promise  ( function ( resolve, reject )
-	//   {
-	//     if ( false )
-	//     {
-	//       reject() ;
-	//       return ;
-	//     }
-	//     resolve() ;
-	// 		console.log ( "Listen for events with name=" + name ) ;
-	// 		client.on ( name, function(e)
-	// 		{
-	// 			console.log ( e ) ;
-	// 		});
-	//   });
-	// }) ;
-	// var client = gepard.getClient ( { type: 'test-gepard', timeout: 20000 }, function acceptService ( service )
-	var client = gepard.getClient ( { type: 'test-gepard' }, function acceptService ( service )
+	var client = gepard.getClient ( { type: 'test-gepard' }, function acceptService ( service, isReconnect )
 	{
 		console.log ( service.txt ) ;
 		console.log ( "Listen for events with name=" + name ) ;
-		client.on ( name, (e) => { console.log ( e ) ; } ) ;
+		if ( ! isReconnect )
+		{
+			client.on ( name, (e) => { console.log ( e ) ; } ) ;
+		}
 		return true ;
 	} ) ;
-	// client.onConnect ( () =>
-	// {
-	// 	console.log ( "Listen for events with name=" + name ) ;
-	// 	client.on ( name, function(e)
-	// 	{
-	// 		console.log ( e ) ;
-	// 	});
-	// });
 }

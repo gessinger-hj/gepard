@@ -4,7 +4,7 @@
 * @Author: hg02055
 * @Date:   2016-02-24 19:09:52
 * @Last Modified by:   hg02055
-* @Last Modified time: 2016-02-24 19:37:32
+* @Last Modified time: 2016-02-25 13:46:54
 */
 
 'use strict';
@@ -47,4 +47,4 @@ function formatOutput ( service )
 	}
 	console.log ( service )
 }
-// gepard.findService ( { type:type }, (service) => console.log ( service ) ) ;
+gepard.findService ( { type:type }, (service) => console.log ( service ) ) ;

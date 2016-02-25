@@ -299,7 +299,14 @@ Client.prototype.connect = function()
     }
     if ( this.keepDataForReconnect )
     {
-      thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._reconnectIntervalMillis ) ;
+      if ( thiz.userServiceLookupParameter && thiz.userServiceLookupCallback )
+      {
+        thiz._checkHeartbeat()
+      }
+      else
+      {
+        thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._reconnectIntervalMillis ) ;
+      }
     }
     thiz.socket = null ;
   });
@@ -709,7 +716,7 @@ Client.prototype.isRunning = function ( callback )
       {
         thiz.port = service.port ;
         thiz.host = service.host ;
-        var rc = thiz.userServiceLookupCallback ( service ) ;
+        var rc = thiz.userServiceLookupCallback ( service, true ) ;
         if ( ! rc )
         {
           return ;
