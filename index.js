@@ -1,5 +1,6 @@
 var Path = require ( "path" ) ;
 var fs = require ( "fs" ) ;
+var util = require ( "util" ) ;
 
 var d = Path.join ( __dirname, "/src/" ) ;
 var gepard = require ( Path.join ( d, "./Tango" ) ) ;
@@ -7,11 +8,17 @@ gepard._Instances = {} ;
 
 gepard.getClient = function ( port, host )
 {
-	if ( ( typeof port === 'string' || typeof port === 'number' )
-		 && typeof host === 'function'
-		 )
+	var c ;
+	if ( typeof port === 'object' && typeof host === 'function' )
 	{
-	  
+		var key = util.inspect ( port, { showHidden: false, depth: null } ) ;
+		c = gepard._Instances[key] ;
+		if ( c )
+		{
+			return c ;
+		}
+		c = new gepard.Client ( port, host ) ;
+		gepard._Instances[key] = c ;
 	}
 	else
 	{
@@ -25,31 +32,32 @@ gepard.getClient = function ( port, host )
 		{
 			host = gepard.getProperty ( "gepard.host" ) ;
 		}
-		var c = gepard._Instances["" + host + ":" + port] ;
+		c = gepard._Instances["" + host + ":" + port] ;
 		if ( c )
 		{
 			return c ;
 		}
 		c = new gepard.Client ( port, host ) ;
-		var thiz = gepard ;
-		c.on ( "end", function onend()
-		{
-			delete thiz._Instances["" + host + ":" + port] ;
-		} ) ;
-		c.on ( "disconnect", function ondisconnect()
-		{
-			delete thiz._Instances["" + host + ":" + port] ;
-		} ) ;
-		c.on ( "shutdown", function onend()
-		{
-			delete thiz._Instances["" + host + ":" + port] ;
-		} ) ;
-		c.on ( "error", function onend()
-		{
-			delete thiz._Instances["" + host + ":" + port] ;
-		} ) ;
 		gepard._Instances["" + host + ":" + port] = c 
 	}
+	var thiz = gepard ;
+	c.on ( "end", function onend()
+	{
+		delete thiz._Instances["" + host + ":" + port] ;
+	} ) ;
+	c.on ( "disconnect", function ondisconnect()
+	{
+		delete thiz._Instances["" + host + ":" + port] ;
+	} ) ;
+	c.on ( "shutdown", function onend()
+	{
+		delete thiz._Instances["" + host + ":" + port] ;
+	} ) ;
+	c.on ( "error", function onend()
+	{
+		delete thiz._Instances["" + host + ":" + port] ;
+	} ) ;
+
 	return c ;
  }
 

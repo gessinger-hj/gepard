@@ -55,7 +55,7 @@ Stats.prototype =
 };
 /**
  * @constructor
- * @extends    EventEmitter
+ * @extends    EventEmittergit
  *
  * @class      Client
  * @param      {}    port    { description }
@@ -66,18 +66,23 @@ var Client = function ( port, host )
   EventEmitter.call ( this ) ;
   if ( typeof port === 'object' && typeof host === 'function' )
   {
-T.lwhere (  ) ;
-    var callback         = host ;
-    var serviceParameter = port ;
-    var thiz             = this ;
-    T.findService ( serviceParameter, function client_findService ( service)
+    this.userServiceLookupCallback  = host ;
+    this.userServiceLookupParameter = port ;
+    var thiz                        = this ;
+    Log.logln ( "Service lookup with: " + util.inspect ( this.userServiceLookupParameter, { showHidden: false, depth: null } ) ) ;
+    T.findService ( this.userServiceLookupParameter, function client_findService ( service )
     {
       try
       {
         thiz._initialize ( service.port, service.host ) ;
-        var rc = callback ( service ) ;
-        if ( rc )
+        var rc = thiz.userServiceLookupCallback ( service ) ;
+        if ( ! rc )
         {
+          return ; 
+        }
+        if ( rc === true )
+        {
+          Log.logln ( "Service connect with: " + service.host + "/" + service.port ) ;
           return true ;
         }
       }
@@ -294,7 +299,14 @@ Client.prototype.connect = function()
     }
     if ( this.keepDataForReconnect )
     {
-      thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._reconnectIntervalMillis ) ;
+      if ( thiz.userServiceLookupParameter && thiz.userServiceLookupCallback )
+      {
+        thiz._checkHeartbeat()
+      }
+      else
+      {
+        thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._reconnectIntervalMillis ) ;
+      }
     }
     thiz.socket = null ;
   });
@@ -387,6 +399,7 @@ Client.prototype.connect = function()
       }
       thiz._pendingAcquireSemaphoreList.length = 0 ;
     }
+    thiz._private_emit ( "connect" ) ;
   } ) ;
   this.socket.on ( 'data', function socket_on_data ( data )
   {
@@ -688,9 +701,40 @@ Client.prototype.connect = function()
     }
   } ) ;
 };
+
 Client.prototype.isRunning = function ( callback )
 {
   var thiz = this ;
+  if ( this.userServiceLookupParameter && this.userServiceLookupCallback )
+  {
+    if ( this.intervalId ) clearInterval ( this.intervalId ) ;
+    Log.logln ( "Service lookup for re-connect with: " + util.inspect ( this.userServiceLookupParameter, { showHidden: false, depth: null } ) ) ;
+
+    T.findService ( this.userServiceLookupParameter, function client_findService ( service )
+    {
+      try
+      {
+        thiz.port = service.port ;
+        thiz.host = service.host ;
+        var rc = thiz.userServiceLookupCallback ( service, true ) ;
+        if ( ! rc )
+        {
+          return ;
+        }
+        if ( rc === true )
+        {
+          Log.logln ( "Service re-connect with: " + service.host + "/" + service.port ) ;
+          callback.call ( thiz, true ) ;
+          return true ;
+        }
+      }
+      catch ( exc )
+      {
+        console.log ( exc ) ;
+      }
+    } ) ;
+    return ;
+  }
   var socket ;
   var p = {} ;
   if ( this.port  ) p.port = this.port ;
@@ -771,7 +815,7 @@ Client.prototype._checkHeartbeat = function()
     if ( ! this._reconnect )
     {
       this._end() ;
-      if  ( this.intervalId ) clearInterval ( this.intervalId ) ;
+      if ( this.intervalId ) clearInterval ( this.intervalId ) ;
     }
     else
     {
@@ -1195,6 +1239,11 @@ Client.prototype.on = function ( eventName, callback )
     }
   }
   this.addEventListener ( eventName, callback ) ;
+};
+Client.prototype.onConnect = function ( callback )
+{
+  EventEmitter.prototype.on.call ( this, "connect", callback ) ;
+  this.connect() ;
 };
 Client.prototype.onAction = function ( cmd, desc, callback )
 {

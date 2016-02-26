@@ -21,22 +21,15 @@ if ( require.main === module )
 	else
 	{
 		name = [ name ] ;
-		// var client = gepard.getClient ( port, host ) ;
 	}
-	var client = new gepard.Client ( { type: 'test-gepard' }, function acceptService ( service )
+	var client = gepard.getClient ( { type: 'test-gepard' }, function acceptService ( service, isReconnect )
 	{
-		console.log ( "port=" + service.port ) ;
-		console.log ( "host=" + service.host ) ;
 		console.log ( service.txt ) ;
-		execute ( service.port, service.host ) ;
+		console.log ( "Listen for events with name=" + name ) ;
+		if ( ! isReconnect )
+		{
+			client.on ( name, (e) => { console.log ( e ) ; } ) ;
+		}
 		return true ;
 	} ) ;
-	function execute ( port, host )
-	{
-		console.log ( "Listen for events with name=" + name ) ;
-		client.on ( name, function(e)
-		{
-			console.log ( e ) ;
-		});
-	}
 }
