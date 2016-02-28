@@ -1684,7 +1684,8 @@ Broker.prototype.publishService = function()
   eventNames = eventNames.join ( ',' ) ;
   var channelNames = this._channelNameToSockets.getKeys() ;
   channelNames = channelNames.join ( ',' ) ;
-  this.bonjour.publish ( { name: this.uniformServiceLocator.name
+  var name = this.uniformServiceLocator.name + "-[" + os.hostname() + "]-[PORT:" + this.port + "]-[PID:" + process.pid + "]-[" + eventNames + "]" ;
+  this.bonjour.publish ( { name: name
                          , type: this.uniformServiceLocator.type
                          , port: this.uniformServiceLocator.port
                          , txt:{ topics:eventNames, channels:channelNames
@@ -1780,7 +1781,7 @@ Broker.prototype.setConfig = function ( configuration )
   if ( ! zeroconf ) zeroconf = configuration.zeroconf ;
   if ( zeroconf === 'true' )
   {
-    zeroconf = "Gepard-[${HOSTNAME}]-${PID},gepard" ;
+    zeroconf = "Gepard,gepard" ;
   }
   if ( typeof zeroconf === 'string' )
   {
@@ -1807,11 +1808,8 @@ Broker.prototype.setConfig = function ( configuration )
   }
   if ( zeroconf )
   {
-    if ( ! zeroconf.name ) zeroconf.name = "Gepard-[${HOSTNAME}]-${PID}" ;
+    if ( ! zeroconf.name ) zeroconf.name = "Gepard" ;
     if ( ! zeroconf.type ) zeroconf.type = "gepard" ;
-    var pid = process.pid ;
-    var map = { HOSTNAME:os.hostname(), PID: "" + process.pid } ;
-    zeroconf.name = T.resolve ( zeroconf.name, map ) ;
     this.uniformServiceLocator = zeroconf ;
   }
   this._taskHandler.init ( configuration ) ;

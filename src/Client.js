@@ -83,6 +83,7 @@ var Client = function ( port, host )
         if ( rc === true )
         {
           Log.logln ( "Service connect with: " + service.host + "/" + service.port ) ;
+          thiz.connect() ;
           return true ;
         }
       }
@@ -1243,7 +1244,6 @@ Client.prototype.on = function ( eventName, callback )
 Client.prototype.onConnect = function ( callback )
 {
   EventEmitter.prototype.on.call ( this, "connect", callback ) ;
-  this.connect() ;
 };
 Client.prototype.onAction = function ( cmd, desc, callback )
 {
