@@ -18,7 +18,7 @@ if ( require.main === module )
 		console.log ( service.txt ) ;
 		return true ;
 	} ) ;
-	client._on_ ( "connect" ) ;
+	// client._on_ ( "connect" ) ;
 	client.onConnect ( () => {
 		console.log ( "Listen for events with name=" + name ) ;
 		client.on ( name, (e) => { console.log ( e ) ; } ) ;
