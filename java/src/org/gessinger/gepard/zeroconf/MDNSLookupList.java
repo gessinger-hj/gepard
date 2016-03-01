@@ -58,9 +58,9 @@ public class MDNSLookupList
     JmDNS jmdns = null;
     try
     {
-      jmdns = JmDNS.create();
       while ( true )
       {
+      jmdns = JmDNS.create();
         // String type = "_airport._tcp.local." ;
         String fullType = "_" + type + "._tcp.local." ;
         ServiceInfo[] infos = jmdns.list ( fullType ) ;
@@ -121,6 +121,7 @@ public class MDNSLookupList
         System.out.println ( "--------------" ) ;
 
         Thread.sleep(10000);
+      if ( jmdns != null ) try { jmdns.close(); } catch (Exception exception) {}
       }
     }
     catch ( Exception e )
@@ -129,7 +130,6 @@ public class MDNSLookupList
     }
     finally
     {
-      if ( jmdns != null ) try { jmdns.close(); } catch (Exception exception) {}
     }
   }
 }

@@ -1684,7 +1684,7 @@ Broker.prototype.publishService = function()
   eventNames = eventNames.join ( ',' ) ;
   var channelNames = this._channelNameToSockets.getKeys() ;
   channelNames = channelNames.join ( ',' ) ;
-  var name = this.uniformServiceLocator.name + "-[" + os.hostname() + "]-[PORT:" + this.port + "]-[PID:" + process.pid + "]-[" + eventNames + "]" ;
+  var name = this.uniformServiceLocator.name + "-[H:" + os.hostname() + "]-[P:" + this.port + "]-[PID:" + process.pid + "]-[T:" + eventNames + "]" ;
   this.bonjour.publish ( { name: name
                          , type: this.uniformServiceLocator.type
                          , port: this.uniformServiceLocator.port
