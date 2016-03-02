@@ -45,6 +45,30 @@ function formatOutput ( service )
 	  process.stdout.write ( "--gepard.host=" + service.host + " --gepard.port=" + service.port ) ;
 	  return ;
 	}
-	console.log ( service )
+	console.log ( service.fqdn )
 }
-gepard.findService ( { type:type }, (service) => console.log ( service ) ) ;
+var cache = {} ;
+setInterval ( () => {
+	let now = new Date().getTime() ;
+	let toBeRemoved = [] ;
+	for ( let fqdn in cache )
+	{
+		if ( cache[fqdn].time + 10000 < now )
+		{
+			console.log ( "Removed: " + fqdn ) ;
+		  toBeRemoved.push ( fqdn ) ;
+		}
+	}
+	for ( let i = 0 ; i < toBeRemoved.length ; i++ )
+	{
+		delete cache[toBeRemoved[i]] ;
+	}
+	toBeRemoved.length = 0 ;
+}, 10000);
+gepard.findService ( { type:type }, (service) => {
+	if ( ! cache[service.fqdn] )
+	{
+		console.log ( "Added: " + service.fqdn ) ;
+	}
+	cache[service.fqdn] = { time:new Date().getTime() } ;
+ } ) ;

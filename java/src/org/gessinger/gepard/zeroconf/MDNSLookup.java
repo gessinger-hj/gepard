@@ -64,6 +64,7 @@ public class MDNSLookup
       if ( acceptableServive == null )
       {
         String fqdn = event.getName() + "." + event.getType() ;
+        // System.out.println ( "Added: " + fqdn ) ;
         Info inf = store.get ( fqdn ) ;
         if ( inf == null )
         {
@@ -134,7 +135,8 @@ public class MDNSLookup
 
     while ( true )
     {
-      jmdns = JmDNS.create ( addr ) ;
+      // jmdns = JmDNS.create ( addr ) ;
+      jmdns = JmDNS.create() ;
       jmdns.addServiceListener("_" + type + "._tcp.local.", new SampleListener(null));
       ArrayList<String> toBeRemoved = new ArrayList<String>() ;
       for ( String fqdn : store.keySet() )
@@ -162,7 +164,8 @@ public class MDNSLookup
   {
     InetAddress addr = InetAddress.getLocalHost();
     if ( type == null ) type = "gepard" ;
-    jmdns = JmDNS.create ( addr ) ;
+    // jmdns = JmDNS.create ( addr ) ;
+    jmdns = JmDNS.create() ;
     jmdns.addServiceListener("_" + type + "._tcp.local.", new SampleListener ( acceptableServive ) ) ;
     // Thread.sleep(Long.MAX_VALUE);
     // jmdns.close();

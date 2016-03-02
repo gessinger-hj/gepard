@@ -6,6 +6,7 @@ import java.io.* ;
 import java.net.* ;
 import java.util.logging.* ;
 import com.google.gson.* ;
+import org.gessinger.gepard.zeroconf.* ;
 
 import java.lang.management.* ;
 import javax.management.* ;
@@ -216,6 +217,24 @@ public class Client
   	c._first = true ;
   	return c ;
   }
+	public Client ( String type, final AcceptableService acceptableService )
+	throws Exception
+	{
+	  MDNSLookup mdns = new MDNSLookup() ;
+    mdns.findService ( type, new AcceptableService()
+    {
+      public boolean accept ( Service service )
+      {
+        Client.this._initialize ( service.getPort(), service.getHost() ) ;
+  			boolean accepted = acceptableService.accept ( service ) ;
+        if ( accepted )
+        {
+        	return true ;
+        }
+        return false ;
+      }
+    }) ;
+	}
 	public Client()
 	{
 		this ( -1, null ) ;
@@ -225,6 +244,10 @@ public class Client
 		this ( port, null ) ;
 	}
 	public Client ( int port, String host )
+	{
+		_initialize ( port, host ) ;
+	}
+	private void _initialize ( int port, String host )
 	{
 		Handler h = new ConsoleHandler() ;
 		h.setFormatter ( new LFormatter() ) ;

@@ -449,7 +449,7 @@ var Broker = function ( port, ip )
   this.startupTime              = new Date() ;
   this._taskHandler             = new BTaskHandler ( this ) ;
   this._numberOfPendingMessages = 0 ;
-  this._republishServiceTimeoutMillis = 3000 ;
+  this._republishServiceTimeoutMillis = 10000 ;
 };
 
 util.inherits ( Broker, EventEmitter ) ;
@@ -1660,10 +1660,10 @@ Broker.prototype.republishService = function()
 {
   if ( this.republishServiceTimeoutId )
   {
-    clearTimeout ( this.republishServiceTimeoutId ) ;
+    clearInterval ( this.republishServiceTimeoutId ) ;
   }
   var thiz = this ;
-  this.republishServiceTimeoutId = setTimeout ( function republishServiceTimeout()
+  this.republishServiceTimeoutId = setInterval ( function republishServiceTimeout()
   {
     thiz._republishService() ;
   }, this._republishServiceTimeoutMillis );

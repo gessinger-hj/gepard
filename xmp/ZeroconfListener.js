@@ -16,11 +16,10 @@ if ( require.main === module )
 	var client = gepard.getClient ( { type: 'test-gepard' }, function acceptService ( service, isReconnect )
 	{
 		console.log ( service.txt ) ;
+		if ( ! isReconnect )
+		{
+			client.on ( name, (e) => { console.log ( e ) ; } ) ;
+		}
 		return true ;
 	} ) ;
-	// client._on_ ( "connect" ) ;
-	client.onConnect ( () => {
-		console.log ( "Listen for events with name=" + name ) ;
-		client.on ( name, (e) => { console.log ( e ) ; } ) ;
-	});
 }
