@@ -19,24 +19,22 @@ public class ZeroconfEmitter
   throws Exception
   {
     String type = Util.getProperty ( "gepard.zeroconf.type", "test-gepard" ) ;
-    // MDNSLookup mdns = new MDNSLookup() ;
-    // mdns.findService ( type, new AcceptableService()
-    // {
-    //   public boolean accept ( Service service )
-    //   {
-    //     System.out.println ( service ) ;
-    //     return true ;
-    //   }
-    // }) ;
     // Client client = Client.getInstance() ;
     Client client = new Client ( type, new AcceptableService()
     {
-      public boolean accept ( Service service )
+      public boolean accept ( Client self, Service service )
       {
-        System.out.println ( service ) ;
-        String name = Util.getProperty ( "name", "ALARM" ) ;
-        client.emit ( name ) ;
-        client.close() ;
+        try
+        {
+          System.out.println ( service ) ;
+          String name = Util.getProperty ( "name", "ALARM" ) ;
+          self.emit ( name ) ;
+          self.close() ;
+        }
+        catch ( Exception exc )
+        {
+          exc.printStackTrace() ;
+        }
         return true ;
       }
     }) ;

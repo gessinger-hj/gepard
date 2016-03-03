@@ -142,7 +142,7 @@ public class Client
   boolean _reconnect            = Util.getBool ( "gepard.reconnect", false ) ;
   static Hashtable<String,Client> _Instances = new Hashtable<String,Client>() ;
 
-	MutableTimer _Timer = new MutableTimer ( true ) ;
+	MutableTimer _Timer = new MutableTimer ( false ) ;
 	int version                  = 1 ;
 	int brokerVersion            = 0 ;
 	Map<String,Boolean> channels = null ;
@@ -217,16 +217,23 @@ public class Client
   	c._first = true ;
   	return c ;
   }
+  String userServiceLookupParameter = null ;
+  AcceptableService userServiceLookupCallback = null ;
+
 	public Client ( String type, final AcceptableService acceptableService )
 	throws Exception
 	{
+    _initialize ( -1, null ) ;
+    userServiceLookupParameter = type ;
+    userServiceLookupCallback = acceptableService ;
 	  MDNSLookup mdns = new MDNSLookup() ;
-    mdns.findService ( type, new AcceptableService()
+    mdns.findService ( userServiceLookupParameter, new AcceptableService()
     {
-      public boolean accept ( Service service )
+      public boolean accept ( Client c, Service service )
       {
-        Client.this._initialize ( service.getPort(), service.getHost() ) ;
-  			boolean accepted = acceptableService.accept ( service ) ;
+      	Client.this.port = service.getPort() ;
+      	Client.this.host = service.getHost() ;
+  			boolean accepted = userServiceLookupCallback.accept ( Client.this, service ) ;
         if ( accepted )
         {
         	return true ;
@@ -1305,23 +1312,68 @@ public class Client
 	{
 		try
 		{
-			closing = false ;
-			getWriter ( true ) ;
-			Set<String> keySet = eventNameToListener.keySet() ;
-			ArrayList<String> list = new ArrayList<String>() ;
-			for ( String key : keySet )
+			if ( userServiceLookupParameter != null && userServiceLookupCallback != null )
 			{
-				list.add ( key ) ;
-			}
-			String[] eventNameList = list.toArray ( new String[0] ) ;
+			  MDNSLookup mdns = new MDNSLookup() ;
+			  mdns.findService ( userServiceLookupParameter, new AcceptableService()
+			  {
+			    public boolean accept ( Client c, Service service )
+			    {
+			    	Client.this.port = service.getPort() ;
+			    	Client.this.host = service.getHost() ;
+						boolean accepted = userServiceLookupCallback.accept ( Client.this, service ) ;
+			      if ( accepted )
+			      {
+			      	try
+			      	{
+								closing = false ;
+								getWriter ( true ) ;
+								Set<String> keySet = eventNameToListener.keySet() ;
+								ArrayList<String> list = new ArrayList<String>() ;
+								for ( String key : keySet )
+								{
+									list.add ( key ) ;
+								}
+								String[] eventNameList = list.toArray ( new String[0] ) ;
 
-			_Timer.stop() ;
-			Event e = new Event ( "system", "addEventListener" ) ;
-		  e.body.put ( "eventNameList", eventNameList ) ;
-	    e.setUniqueId ( createUniqueId() ) ;
-      LOGGER.info ( "re-connect in progress with events: " + list.toString() + "\n" ) ;
-      _emit ( "reconnect", list.toString() ) ;
-	    _send ( e ) ;
+								_Timer.stop() ;
+								Event e = new Event ( "system", "addEventListener" ) ;
+							  e.body.put ( "eventNameList", eventNameList ) ;
+						    e.setUniqueId ( createUniqueId() ) ;
+					      LOGGER.info ( "re-connect in progress with events: " + list.toString() + "\n" ) ;
+					      _emit ( "reconnect", list.toString() ) ;
+						    _send ( e ) ;
+			      	}
+			      	catch ( Exception exc )
+			      	{
+			      		LOGGER.info ( Util.toString ( exc ) ) ;
+			      	}
+			      	return true ;
+			      }
+			      return false ;
+			    }
+			  }) ;
+			}
+			else
+			{
+				closing = false ;
+				getWriter ( true ) ;
+				Set<String> keySet = eventNameToListener.keySet() ;
+				ArrayList<String> list = new ArrayList<String>() ;
+				for ( String key : keySet )
+				{
+					list.add ( key ) ;
+				}
+				String[] eventNameList = list.toArray ( new String[0] ) ;
+
+				_Timer.stop() ;
+				Event e = new Event ( "system", "addEventListener" ) ;
+			  e.body.put ( "eventNameList", eventNameList ) ;
+		    e.setUniqueId ( createUniqueId() ) ;
+	      LOGGER.info ( "re-connect in progress with events: " + list.toString() + "\n" ) ;
+	      _emit ( "reconnect", list.toString() ) ;
+		    _send ( e ) ;
+			}
 		}
 		catch ( ConnectException cexc )
 		{

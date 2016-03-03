@@ -1120,7 +1120,7 @@ TangoClass.prototype.findService = function ( serviceParameter, callback )
 
   if ( ! serviceParameter ) serviceParameter = {} ;
   if ( ! serviceParameter.type ) serviceParameter.type = 'gepard' ;
-
+  var thiz = this ;
   var bonjour = new Bonjour()
   var browser = bonjour.find ( { type: serviceParameter.type }, function cb_find ( service )
   {

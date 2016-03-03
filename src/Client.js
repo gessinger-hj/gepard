@@ -1113,7 +1113,11 @@ Client.prototype.end = function()
 Client.prototype._end = function ( keepDataForReconnect )
 {
   this.alive = false ;
-  if ( this.socket ) { this.socket.end() ; this.socket.keepDataForReconnect = keepDataForReconnect ; }
+  if ( this.socket )
+  {
+    this.socket.keepDataForReconnect = keepDataForReconnect ;
+    this.socket.end() ;
+  }
   this.socket = null ;
   this.pendingEventList = [] ;
   this.pendingResultList = {} ;

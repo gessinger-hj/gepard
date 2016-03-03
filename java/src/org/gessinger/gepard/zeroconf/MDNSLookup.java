@@ -32,7 +32,7 @@ public class MDNSLookup
         String type = Util.getProperty ( "type", "gepard" ) ;
         mdns.findService ( type, new AcceptableService()
         {
-          public boolean accept ( Service service )
+          public boolean accept ( Client self, Service service )
           {
             System.out.println ( service ) ;
             return true ;
@@ -102,7 +102,7 @@ public class MDNSLookup
         }
 
         Service service = new Service ( name.substring ( 0, name.indexOf ( '-' ) ), event.getType(), port, host ) ;
-        boolean answer = acceptableServive.accept ( service ) ;
+        boolean answer = acceptableServive.accept ( null, service ) ;
         if ( answer )
         {
           try

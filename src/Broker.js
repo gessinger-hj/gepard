@@ -449,7 +449,7 @@ var Broker = function ( port, ip )
   this.startupTime              = new Date() ;
   this._taskHandler             = new BTaskHandler ( this ) ;
   this._numberOfPendingMessages = 0 ;
-  this._republishServiceTimeoutMillis = 10000 ;
+  this._republishServiceTimeoutMillis = 5000 ;
 };
 
 util.inherits ( Broker, EventEmitter ) ;
@@ -1684,7 +1684,13 @@ Broker.prototype.publishService = function()
   eventNames = eventNames.join ( ',' ) ;
   var channelNames = this._channelNameToSockets.getKeys() ;
   channelNames = channelNames.join ( ',' ) ;
-  var name = this.uniformServiceLocator.name + "-[H:" + os.hostname() + "]-[P:" + this.port + "]-[PID:" + process.pid + "]-[T:" + eventNames + "]" ;
+  var name = this.uniformServiceLocator.name
+           + "-[H:" + os.hostname()
+           + "]-[P:" + this.port
+           + "]-[PID:" + process.pid
+           + "]-[T:" + eventNames
+           + "]-[C:" + channelNames
+           + "]" ;
   this.bonjour.publish ( { name: name
                          , type: this.uniformServiceLocator.type
                          , port: this.uniformServiceLocator.port
