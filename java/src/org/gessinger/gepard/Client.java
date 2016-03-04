@@ -508,6 +508,7 @@ public class Client
   	_Instances.remove ( "" + this.host + ":" + this.port ) ;
 		_CallbackIsolator.awakeAll() ;
   	_emit ( "close", null ) ;
+  	_Timer.cancel() ;
 	}
 	public void emit ( String name )
 	throws IOException

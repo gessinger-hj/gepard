@@ -164,11 +164,8 @@ public class MDNSLookup
   {
     InetAddress addr = InetAddress.getLocalHost();
     if ( type == null ) type = "gepard" ;
-    // jmdns = JmDNS.create ( addr ) ;
     jmdns = JmDNS.create() ;
     jmdns.addServiceListener("_" + type + "._tcp.local.", new SampleListener ( acceptableServive ) ) ;
-    // Thread.sleep(Long.MAX_VALUE);
-    // jmdns.close();
   }
   public MDNSLookup()
   {

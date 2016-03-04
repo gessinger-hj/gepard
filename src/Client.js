@@ -260,6 +260,7 @@ Client.prototype.brokerIsLocalHost = function()
   {
     return this._brokerIsLocalHost ;
   }
+  if ( ! this.socket ) return false ;
   for ( i = 0 ; i < this._networkAddresses.length ; i++ )
   {
     var index = this.socket.remoteAddress.indexOf ( this._networkAddresses[i] ) ;

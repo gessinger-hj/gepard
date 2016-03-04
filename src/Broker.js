@@ -1660,10 +1660,10 @@ Broker.prototype.republishService = function()
 {
   if ( this.republishServiceTimeoutId )
   {
-    clearInterval ( this.republishServiceTimeoutId ) ;
+    clearTimeout ( this.republishServiceTimeoutId ) ;
   }
   var thiz = this ;
-  this.republishServiceTimeoutId = setInterval ( function republishServiceTimeout()
+  this.republishServiceTimeoutId = setTimeout ( function republishServiceTimeout()
   {
     thiz._republishService() ;
   }, this._republishServiceTimeoutMillis );
@@ -1672,7 +1672,15 @@ Broker.prototype._republishService = function()
 {
   if ( ! this.bonjour ) return ;
   this.bonjour.unpublishAll() ;
-  this.publishService() ;
+  if ( this.publishServiceTimeoutId )
+  {
+    clearTimeout ( this.publishServiceTimeoutId ) ;
+  }
+  var thiz = this ;
+  this.publishServiceTimeoutId = setTimeout ( function publishServiceTimeout()
+  {
+    thiz.publishService() ;
+  }, 1000 ) ;
 };
 Broker.prototype.publishService = function()
 {
@@ -1680,6 +1688,8 @@ Broker.prototype.publishService = function()
   {
     this.bonjour = require('bonjour')() ;
   }
+  if ( !this.counter ) this.counter = 0 ;
+  this.counter++ ;
   var eventNames   = this._eventNameToSockets.getKeys() ;
   eventNames = eventNames.join ( ',' ) ;
   var channelNames = this._channelNameToSockets.getKeys() ;
@@ -1696,6 +1706,7 @@ Broker.prototype.publishService = function()
                          , port: this.uniformServiceLocator.port
                          , txt:{ topics:eventNames, channels:channelNames
                                , host:os.hostname()
+                               , counter:this.counter
                          }
                          }) ;
 };
