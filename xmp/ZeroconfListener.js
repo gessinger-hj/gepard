@@ -13,10 +13,12 @@ if ( require.main === module )
 	{
 		name = [ name ] ;
 	}
-	var client = gepard.getClient ( { type: 'test-gepard' }, function acceptService ( service, isReconnect )
+	var client = gepard.getClient ( { type: 'test-gepard' }, function acceptService ( service )
 	{
-		console.log ( service.txt ) ;
-		if ( ! isReconnect )
+		console.log ( service.getTopics() ) ;
+		console.log ( "service.getChannels()=" + service.getChannels() ) ;
+		console.log ( "service.isLocalHost()=" + service.isLocalHost() ) ;
+		if ( ! service.isReconnect() )
 		{
 			client.on ( name, (e) => { console.log ( e ) ; } ) ;
 		}

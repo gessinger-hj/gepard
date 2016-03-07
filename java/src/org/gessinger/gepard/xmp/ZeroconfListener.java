@@ -13,6 +13,7 @@ public class ZeroconfListener
 
     try
     {
+
       client = new Client( type, new AcceptableService()
       {
         public boolean accept ( Client self, Service service )
@@ -20,16 +21,20 @@ public class ZeroconfListener
           try
           {
             System.out.println ( service ) ;
+            System.out.println ( "service.isLocalHost()=" + service.isLocalHost() ) ;
             String name = Util.getProperty ( "name", "ALARM,BLARM" ) ;
             String[] nameArray = name.split ( "," ) ;
             System.out.println ( "Listen for events with name=" + name ) ;
-            self.on ( nameArray, new EventListener()
+            if ( ! service.isReconnect() )
             {
-              public void event ( Event e )
+              self.on ( nameArray, new EventListener()
               {
-                System.out.println ( e ) ;
-              }
-            } ) ;
+                public void event ( Event e )
+                {
+                  System.out.println ( e ) ;
+                }
+              } ) ;
+            }
           }
           catch ( Exception exc )
           {

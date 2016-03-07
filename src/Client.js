@@ -11,6 +11,7 @@ var User          = require ( "./User" ) ;
 var FileContainer = require ( "./FileContainer" ) ;
 var TracePoints   = require ( "./TracePoints" ) ;
 var ActionCmd     = require ( "./ActionCmd" ) ;
+var Service       = require ( "./Service" ) ;
 
 var counter = 0 ;
 
@@ -70,11 +71,13 @@ var Client = function ( port, host )
     this.userServiceLookupParameter = port ;
     var thiz                        = this ;
     Log.logln ( "Service lookup with: " + util.inspect ( this.userServiceLookupParameter, { showHidden: false, depth: null } ) ) ;
-    T.findService ( this.userServiceLookupParameter, function client_findService ( service )
+    T.findService ( this.userServiceLookupParameter, function client_findService ( srv )
     {
       try
       {
-        thiz._initialize ( service.port, service.host ) ;
+        var service = new Service ( srv ) ;
+        service.setIsReconnect ( false ) ;
+        thiz._initialize ( srv.port, srv.host ) ;
         var rc = thiz.userServiceLookupCallback ( service ) ;
         if ( ! rc )
         {
@@ -712,13 +715,15 @@ Client.prototype.isRunning = function ( callback )
     if ( this.intervalId ) clearInterval ( this.intervalId ) ;
     Log.logln ( "Service lookup for re-connect with: " + util.inspect ( this.userServiceLookupParameter, { showHidden: false, depth: null } ) ) ;
 
-    T.findService ( this.userServiceLookupParameter, function client_findService ( service )
+    T.findService ( this.userServiceLookupParameter, function client_findService ( srv )
     {
       try
       {
-        thiz.port = service.port ;
-        thiz.host = service.host ;
-        var rc = thiz.userServiceLookupCallback ( service, true ) ;
+        thiz.port = srv.port ;
+        thiz.host = srv.host ;
+        var service = new Service ( srv ) ;
+        service.setIsReconnect ( true ) ;
+        var rc = thiz.userServiceLookupCallback ( service ) ;
         if ( ! rc )
         {
           return ;

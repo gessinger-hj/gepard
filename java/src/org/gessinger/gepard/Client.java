@@ -1320,6 +1320,7 @@ public class Client
 			  {
 			    public boolean accept ( Client c, Service service )
 			    {
+			    	service.setIsReconnect ( true ) ;
 			    	Client.this.port = service.getPort() ;
 			    	Client.this.host = service.getHost() ;
 						boolean accepted = userServiceLookupCallback.accept ( Client.this, service ) ;
