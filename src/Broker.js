@@ -603,7 +603,7 @@ Broker.prototype._ondata = function ( socket, chunk )
         socket.end() ;
         return ;
       }
-      if ( e.getName() !== 'system' )
+      // if ( e.getName() !== 'system' )
       {
         TPStore.points["EVENT_IN"].log ( "--------------------------- EVENT_IN ---------------------------" ) ;
         TPStore.points["EVENT_IN"].log ( e ) ;

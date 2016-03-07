@@ -83,7 +83,6 @@ var Client = function ( port, host )
         if ( rc === true )
         {
           Log.logln ( "Service connect with: " + service.host + "/" + service.port ) ;
-          thiz.connect() ;
           return true ;
         }
       }
@@ -261,6 +260,7 @@ Client.prototype.brokerIsLocalHost = function()
     return this._brokerIsLocalHost ;
   }
   if ( ! this.socket ) return false ;
+  if ( ! this.socket.remoteAddress ) return false ;
   for ( i = 0 ; i < this._networkAddresses.length ; i++ )
   {
     var index = this.socket.remoteAddress.indexOf ( this._networkAddresses[i] ) ;
@@ -448,7 +448,7 @@ Client.prototype.connect = function()
       if ( m.charAt ( 0 ) === '{' )
       {
         e = Event.prototype.deserialize ( m ) ;
-        if ( e.getName() !== "system" )
+        // if ( e.getName() !== "system" )
         {
           if ( TPStore.points["EVENT_IN"].isActive() )
           {
@@ -1536,7 +1536,7 @@ Client.prototype.send = function ( e )
   var json = e.serialize() ;
   this._stats.incrementOut ( json.length )
   this.getSocket().write ( json ) ;
-  if ( e.getName() !== "system" )
+  // if ( e.getName() !== "system" )
   {
     TPStore.points["EVENT_OUT"].log ( e ) ;
   }
