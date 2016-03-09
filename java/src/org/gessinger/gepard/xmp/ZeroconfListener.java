@@ -22,6 +22,8 @@ public class ZeroconfListener
           {
             System.out.println ( service ) ;
             System.out.println ( "service.isLocalHost()=" + service.isLocalHost() ) ;
+            System.out.println ( "service.getTopics()=" + service.getTopics() ) ;
+            System.out.println ( "service.getChannels()=" + service.getChannels() ) ;
             String name = Util.getProperty ( "name", "ALARM,BLARM" ) ;
             String[] nameArray = name.split ( "," ) ;
             System.out.println ( "Listen for events with name=" + name ) ;

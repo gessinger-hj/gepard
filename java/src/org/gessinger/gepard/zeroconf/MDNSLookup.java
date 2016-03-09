@@ -34,6 +34,7 @@ public class MDNSLookup
         {
           public boolean accept ( Client self, Service service )
           {
+System.out.println ( "1 ----------------------" ) ;
             System.out.println ( service ) ;
             return true ;
           }
@@ -87,21 +88,7 @@ public class MDNSLookup
           return ;
         }
 
-        String host = name.substring ( pos + 3, name.indexOf ( "]", pos ) ) ;
-        pos = name.indexOf ( "[P:" ) ;
-        String s = name.substring ( pos + 3, name.indexOf ( "]", pos ) ) ;
-        int port = -1 ;
-        try
-        {
-          port = Integer.parseInt ( s ) ; 
-        }
-        catch ( Exception exc )
-        {
-          System.out.println ( Util.toString ( exc ) ) ;
-          return ;
-        }
-
-        Service service = new Service ( name.substring ( 0, name.indexOf ( '-' ) ), event.getType(), port, host ) ;
+        Service service = new Service ( name, event.getType() ) ;
         boolean answer = acceptableServive.accept ( null, service ) ;
         if ( answer )
         {
@@ -166,6 +153,7 @@ public class MDNSLookup
     if ( type == null ) type = "gepard" ;
     jmdns = JmDNS.create() ;
     jmdns.addServiceListener("_" + type + "._tcp.local.", new SampleListener ( acceptableServive ) ) ;
+    Thread.sleep ( Long.MAX_VALUE ) ;
   }
   public MDNSLookup()
   {

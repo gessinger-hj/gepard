@@ -1,8 +1,8 @@
 /*
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-03-01 12:48:16
-* @Last Modified by:   HG02055
-* @Last Modified time: 2016-03-07 19:51:54
+* @Last Modified by:   hg02055
+* @Last Modified time: 2016-03-09 19:07:26
 */
 
 var Service = function ( srv )
@@ -11,8 +11,8 @@ var Service = function ( srv )
 	this.type     = srv.type ;
 	this.port     = srv.port ;
 	this.host     = srv.host ;
-	this.topics   = srv.txt["topics"].split ( ',' ) ;
-	this.channels = srv.txt.channels.split ( ',' ) ;
+	this.topics   = srv.txt["topics"] ? srv.txt["topics"].split ( ',' ) : [] ;
+	this.channels = srv.txt.channels ? srv.txt.channels.split ( ',' ) : [] ;
 	// console.log ( srv ) ;
 };
 Service.prototype.getName = function() { return this.name ; } ;

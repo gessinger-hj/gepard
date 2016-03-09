@@ -1697,14 +1697,15 @@ Broker.prototype.publishService = function()
   var name = this.uniformServiceLocator.name
            + "-[H:" + os.hostname()
            + "]-[P:" + this.port
-           + "]-[PID:" + process.pid
+           // + "]-[PID:" + process.pid
            + "]-[T:" + eventNames
            + "]-[C:" + channelNames
            + "]" ;
   this.bonjour.publish ( { name: name
                          , type: this.uniformServiceLocator.type
                          , port: this.uniformServiceLocator.port
-                         , txt:{ topics:eventNames, channels:channelNames
+                         , txt:{ topics:eventNames
+                               , channels:channelNames
                                , host:os.hostname()
                                , counter:this.counter
                          }
