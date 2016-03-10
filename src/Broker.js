@@ -191,13 +191,13 @@ Connection.prototype._sendInfoResult = function ( e )
   e.control.status                     = { code:0, name:"ack" } ;
   e.body.gepardVersion                 = Gepard.getVersion() ;
   e.body.brokerVersion                 = this.broker.brokerVersion ;
-  if ( this.broker.uniformServiceLocator )
+  if ( this.broker.zeroconf )
   {
-    e.body.zeroconf = this.broker.uniformServiceLocator ;
+    e.body.zeroconf = this.broker.zeroconf ;
   }
   e.body.port                          = this.broker.port ;
   e.body.startupTime                   = this.broker.startupTime   ;
-  e.body.heartbeatIntervalMillis       = this.broker._heartbeatIntervalMillis ;
+  e.body.heartbeatIntervalMillis       = this.broker.heartbeatMillis ;
   e.body.maxMessageSize                = this.broker._maxMessageSize ;
   e.body.log                           = { levelName: Log.getLevelName(), level:Log.getLevel(), file: Log.getCurrentLogFileName() } ;
   e.body.numberOfPendingMessages       = this.broker._numberOfPendingMessages ;
@@ -441,8 +441,8 @@ var Broker = function ( port, ip )
   });
   var ee = new Event() ;
   ee.addClassNameToConstructor ( "FileContainer", FileContainer ) ;
-  this._heartbeatIntervalMillis = 30000 ;
-  this._heartbeatIntervalMillis = T.getInt ( "gepard.heartbeat.millis", this._heartbeatIntervalMillis ) ;
+  this.heartbeatMillis = 30000 ;
+  this.heartbeatMillis = T.getInt ( "gepard.heartbeat.millis", this.heartbeatMillis ) ;
   
   this.brokerVersion            = 1 ;
   this._maxMessageSize          = 20 * 1024 * 1024 ;
@@ -750,14 +750,14 @@ Broker.prototype._setSystemParameter = function ( conn, e )
   var sp = e.body.systemParameter ;
   if ( sp._heartbeatIntervalMillis >= 3000 )
   {
-  if ( this._heartbeatIntervalMillis !== sp._heartbeatIntervalMillis )
+  if ( this.heartbeatMillis !== sp._heartbeatIntervalMillis )
     {
-      this._heartbeatIntervalMillis = sp._heartbeatIntervalMillis ;
+      this.heartbeatMillis = sp._heartbeatIntervalMillis ;
       if ( this.intervallId )
       {
         clearInterval ( this.intervallId ) ;
       }
-      this.intervallId = setInterval ( this._checkHeartbeat_bind, this._heartbeatIntervalMillis ) ;
+      this.intervallId = setInterval ( this._checkHeartbeat_bind, this.heartbeatMillis ) ;
       this._send_PING_to_all() ;
     }
   }
@@ -1177,7 +1177,7 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
       {
         var broker_info                           = new Event ( "system", "broker_info" ) ;
         broker_info.body.brokerVersion            = thiz.brokerVersion ;
-        broker_info.body._heartbeatIntervalMillis = thiz._heartbeatIntervalMillis ;
+        broker_info.body._heartbeatIntervalMillis = thiz.heartbeatMillis ;
         conn.write ( broker_info ) ;
       },500) ;
     }
@@ -1533,10 +1533,10 @@ Broker.prototype.listen = function ( port, callback )
   var callback2 = function()
   {
     Log.info ( 'server bound to port=' + thiz.server.address().port ) ;
-    thiz.intervallId = setInterval ( thiz._checkHeartbeat_bind, thiz._heartbeatIntervalMillis ) ;
-    if ( thiz.uniformServiceLocator )
+    thiz.intervallId = setInterval ( thiz._checkHeartbeat_bind, thiz.heartbeatMillis ) ;
+    if ( thiz.zeroconf )
     {
-      thiz.uniformServiceLocator.port = thiz.server.address().port ;
+      thiz.zeroconf.port = thiz.server.address().port ;
       thiz.publishService()
     }
     if ( typeof callback === 'function' )
@@ -1551,11 +1551,11 @@ Broker.prototype.listen = function ( port, callback )
       }
     }
   };
-  if ( this.uniformServiceLocator )
+  if ( this.zeroconf )
   {
-    if ( this.uniformServiceLocator.port )
+    if ( this.zeroconf.port )
     {
-      this.port = parseInt ( this.uniformServiceLocator.port ) ;
+      this.port = parseInt ( this.zeroconf.port ) ;
     }
   }
   if ( this.port <= 0 ) this.port = 0 ;
@@ -1565,7 +1565,7 @@ Broker.prototype.listen = function ( port, callback )
 Broker.prototype._send_PING_to_all = function()
 {
   var e = new Event ( "system", "PING" ) ;
-  e.control._heartbeatIntervalMillis = this._heartbeatIntervalMillis ;
+  e.control._heartbeatIntervalMillis = this.heartbeatMillis ;
   var se = e.serialize() ;
   for ( i = 0 ; i < this._connectionList.length ; i++ )
   {
@@ -1595,10 +1595,10 @@ Broker.prototype._checkHeartbeat = function()
   var socketsToBePINGed = [] ;
   var i, conn ;
   var now = new Date().getTime() ;
-  var heartbeatInterval = ( this._heartbeatIntervalMillis / 1000 ) ;
-  var heartbeatInterval_x_3 = ( this._heartbeatIntervalMillis / 1000 ) * 3 ;
+  var heartbeatInterval = ( this.heartbeatMillis / 1000 ) ;
+  var heartbeatInterval_x_3 = ( this.heartbeatMillis / 1000 ) * 3 ;
   var e = new Event ( "system", "PING" ) ;
-  e.control._heartbeatIntervalMillis = this._heartbeatIntervalMillis ;
+  e.control._heartbeatIntervalMillis = this.heartbeatMillis ;
   var se = e.serialize() ;
   for ( i = 0 ; i < this._connectionList.length ; i++ )
   {
@@ -1694,7 +1694,7 @@ Broker.prototype.publishService = function()
   eventNames = eventNames.join ( ',' ) ;
   var channelNames = this._channelNameToSockets.getKeys() ;
   channelNames = channelNames.join ( ',' ) ;
-  var name = this.uniformServiceLocator.name
+  var name = this.zeroconf.name
            + "-[H:" + os.hostname()
            + "]-[P:" + this.port
            // + "]-[PID:" + process.pid
@@ -1702,8 +1702,8 @@ Broker.prototype.publishService = function()
            + "]-[C:" + channelNames
            + "]" ;
   this.bonjour.publish ( { name: name
-                         , type: this.uniformServiceLocator.type
-                         , port: this.uniformServiceLocator.port
+                         , type: this.zeroconf.type
+                         , port: this.zeroconf.port
                          , txt:{ topics:eventNames
                                , channels:channelNames
                                , host:os.hostname()
@@ -1769,9 +1769,9 @@ Broker.prototype.setConfig = function ( configuration )
   if ( configuration.heartbeatMillis )
   {
     var hbm = parseInt ( configuration.heartbeatMillis ) ;
-    if ( ! isNaN ( hbm ) ) this._heartbeatIntervalMillis = hbm ;
+    if ( ! isNaN ( hbm ) ) this.heartbeatMillis = hbm ;
   }
-  this._heartbeatIntervalMillis = T.getInt ( "gepard.heartbeat.millis", this._heartbeatIntervalMillis ) ;
+  this.heartbeatMillis = T.getInt ( "gepard.heartbeat.millis", this.heartbeatMillis ) ;
 
   var factor = 1 ;
   if ( configuration.maxMessageSize )
@@ -1828,7 +1828,7 @@ Broker.prototype.setConfig = function ( configuration )
   {
     if ( ! zeroconf.name ) zeroconf.name = "Gepard" ;
     if ( ! zeroconf.type ) zeroconf.type = "gepard" ;
-    this.uniformServiceLocator = zeroconf ;
+    this.zeroconf = zeroconf ;
   }
   this._taskHandler.init ( configuration ) ;
 };
@@ -1838,7 +1838,7 @@ Broker.prototype.setHeartbeatIntervalMillis = function ( millis )
   {
     throw new Error ( "Invalid value for parameter millis:" + millis ) ;
   }
-  this._heartbeatIntervalMillis = millis ;
+  this.heartbeatMillis = millis ;
 };
 module.exports = Broker ;
 
