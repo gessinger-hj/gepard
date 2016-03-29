@@ -6,12 +6,15 @@ General purpose communication and synchronization layer for distributed applicat
 
 - [Overview](#overview)
 - [What is new](#what-is-new)
+	- [Release 1-6-0 mDNS / Zeroconf](#release-1-6-0-mdns--zeroconf)
+		- [Zeronconf with the Broker](#zeronconf-with-the-broker)
+		- [Zeroconf with the client](#zeroconf-with-the-client)
 	- [Release 1-5-0 Channels](#release-1-5-0-channels)
 		- [Using Channels](#using-channels)
 			- [Event-listener](#event-listener)
 			- [Event-emitter](#event-emitter)
 		- [Channel Examples](#channel-examples)
-	- [Release 1-4-5 Registered Event-names may contain Wildcards (RegExp)](#release-1-4-5-registered-event-names-may-contain-wildcards-regexp)
+	- [Release 1-4-5 Registered Event-names may contain Wildcards \(RegExp\)](#release-1-4-5-registered-event-names-may-contain-wildcards-regexp)
 	- [Release 1-4-5 Simplified Handling of JSON Trees](#release-1-4-5-simplified-handling-of-json-trees)
 	- [Release 1-4-3 Logging](#release-1-4-3-logging)
 	- [Release 1-4-0 New Heartbeat Protocol to ensure the Availability of Connections](#release-1-4-0-new-heartbeat-protocol-to-ensure-the-availability-of-connections)
@@ -28,9 +31,9 @@ General purpose communication and synchronization layer for distributed applicat
 	- [Python](#python)
 - [Configuration](#configuration)
 - [Use Cases](#use-cases)
-	- [Configuration Changes (Events)](#configuration-changes-events)
-	- [Concurrent editing of a Dataset (Semaphores)](#concurrent-editing-of-a-dataset-semaphores)
-	- [Synchronization of file processing (Locks)](#synchronization-of-file-processing-locks)
+	- [Configuration Changes \(Events\)](#configuration-changes-events)
+	- [Concurrent editing of a Dataset \(Semaphores\)](#concurrent-editing-of-a-dataset-semaphores)
+	- [Synchronization of file processing \(Locks\)](#synchronization-of-file-processing-locks)
 	- [A Nice Exotic Mixture of Programming Languages](#a-nice-exotic-mixture-of-programming-languages)
 - [The Event Body](#the-event-body)
 - [Examples](#examples)
@@ -128,6 +131,72 @@ node_modules/.bin/gp.admin [ --help ]
 ```
 # What is new
 
+## Release 1-6-0 mDNS / Zeroconf
+
+Zero-configuration networking (zeroconf) is a set of technologies that automatically creates a usable computer network based on the Internet Protocol Suite (TCP/IP) when computers or network peripherals are interconnected. It does not require manual operator intervention or special configuration servers.
+<br/>
+Zeroconf mDNS plus DNS-SD: that is, multicast DNS plus DNS service discovery
+<br/>
+This technology is perfect to enhance the gepard based app communications.
+<br/>
+
+### Zeronconf with the Broker
+
+If configured the gepard Broker publishes a service in the local subnet and can be discovered by any interested client.
+<br/>
+The fully qualified domain name (FQDN) for the service consists out of 2 parts:
+
+1.	name, e.g. __Broker__
+
+1.	type, e.g. __gepard__
+
+The FQDN is derived from this parameters as: __Broker._gepard._tcp.local__
+<br/>
+This name and type can be defined by
+
+1.	an entry in the broker's json config
+<br/>
+	The form is either a comma separated list like
+
+	```js
+	{
+		"zeroconf": [<name>,]<type> [ ,<port>]
+	}
+	```
+	<br/>
+	or
+
+	```js
+	{
+		"zeroconf": {
+				"name":<name>
+			, "type": <type>
+			[ , "port": <port>]
+		}
+	}
+	```
+1.	a startup parameter of the form: --gepard.zeroconv=[&lt;name>,]&lt;type>[,&lt;port>]
+1.	an environment variable of the form: export GEPARD_ZEROCONF=[&lt;name>,]&lt;type>[,&lt;port>]
+
+If only the &lt;type> is given the &lt;name> is choosen to be:
+```js
+Gepard-[H:<hostname>]-[P:<port>]
+```
+This postfix is always appended to make the name unique.
+<br/>
+If the &lt;port is not given the standard definitions are used.
+<br/>
+If the port is __exactly 0__ a random free port is choosen. Thus no special arrangement is needed for running a broker on the same machine.
+<br/>
+The __TXT__ segment contains a comma-list of all registered event-names as TOPIC entry and a comma-list of all channels as CHANNELS entry.
+<br/>
+With this information a client can make a profound decision whether to connect to a broker.
+
+### Zeroconf with the client
+
+Up to now
+
+
 ## Release 1-5-0 Channels
 
 This release introduces __Channels__ as a meta-layer to organize different realms in a very simple and effective manner.
@@ -136,6 +205,7 @@ Each listener-client can subscribe for event-names in one or more channel(s).
 <br/>
 An emitter- / requester-client can emit events containing a channel identifier.
 The Broker filters the listening-clients with this channel and sends the event only to clients on this channel.
+
 
 ### Using Channels
 
