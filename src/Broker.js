@@ -1304,10 +1304,19 @@ Broker.prototype._shutdown = function ( conn, e )
       {
         clearInterval ( this.intervallId ) ;
       }
+      if ( this.bonjour )
+      {
+        this.bonjour.unpublishAll() ;
+      }
       Log.info ( 'server shutting down' ) ;
       e.control.status = { code:0, name:"ack" } ;
       conn.write ( e ) ;
-      this.unpublishService() ;
+      // this.unpublishService() ;
+      if ( this.bonjour )
+      {
+        this.bonjour.destroy() ;
+        this.bonjour = null ;
+      }
       this._closeAllSockets() ;
       this.server.unref() ;
       Log.info ( 'server shut down' ) ;
@@ -1698,8 +1707,8 @@ Broker.prototype.publishService = function()
            + "-[H:" + os.hostname()
            + "]-[P:" + this.port
            // + "]-[PID:" + process.pid
-           + "]-[T:" + eventNames
-           + "]-[C:" + channelNames
+           // + "]-[T:" + eventNames
+           // + "]-[C:" + channelNames
            + "]" ;
   this.bonjour.publish ( { name: name
                          , type: this.zeroconf.type
@@ -1795,7 +1804,8 @@ Broker.prototype.setConfig = function ( configuration )
       this._maxMessageSize = hbm * factor ;
     }
   }
-  var zeroconf = T.getProperty ( "gepard.zeroconf" ) ;
+  var zeroconf = this.zeroconf ;
+  if ( ! zeroconf ) zeroconf = T.getProperty ( "gepard.zeroconf" ) ;
   if ( ! zeroconf ) zeroconf = configuration.zeroconf ;
   if ( zeroconf === 'true' )
   {
@@ -1839,6 +1849,10 @@ Broker.prototype.setHeartbeatIntervalMillis = function ( millis )
     throw new Error ( "Invalid value for parameter millis:" + millis ) ;
   }
   this.heartbeatMillis = millis ;
+};
+Broker.prototype.setZeroconfParameter = function ( zeroconfCommaList )
+{
+  this.zeroconf = zeroconfCommaList ;
 };
 module.exports = Broker ;
 

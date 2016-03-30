@@ -6,15 +6,23 @@ var T      = require ( "../src/Tango" ) ;
 var Path 	 = require ( "path" ) ;
 var Admin  = require ( "../src/Admin" ) ;
 
-new Admin().isRunning ( function admin_is_running ( state )
+var zeroconf = T.getProperty ( "gepard.zeroconf" ) ;
+if ( ! zeroconf || ! zeroconf.endsWith ( "0" ) )
 {
-  if ( state )
-  {
-    console.log ( "Already running" ) ;
-    return ;
-  }
+	new Admin().isRunning ( function admin_is_running ( state )
+	{
+	  if ( state )
+	  {
+	    console.log ( "Already running" ) ;
+	    return ;
+	  }
+	  execute() ;
+	});
+}
+else
+{
   execute() ;
-});
+}
 
 function execute()
 {

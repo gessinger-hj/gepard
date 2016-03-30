@@ -2,15 +2,20 @@
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-03-01 12:48:16
 * @Last Modified by:   hg02055
-* @Last Modified time: 2016-03-09 19:07:26
+* @Last Modified time: 2016-03-30 16:53:52
 */
 
 var Service = function ( srv )
 {
-	this.name     = srv.name.substring ( 0, srv.name.indexOf ( '-' ) ) ;
+	this.name     = srv.name ;
+	if ( this.name.indexOf ( '-' ) > 0 )
+	{
+		this.name = srv.name.substring ( 0, srv.name.indexOf ( '-' ) ) ;
+	}
 	this.type     = srv.type ;
 	this.port     = srv.port ;
 	this.host     = srv.host ;
+	this.fqdn     = srv.fqdn ;
 	this.topics   = srv.txt["topics"] ? srv.txt["topics"].split ( ',' ) : [] ;
 	this.channels = srv.txt.channels ? srv.txt.channels.split ( ',' ) : [] ;
 	// console.log ( srv ) ;

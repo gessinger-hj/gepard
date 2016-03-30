@@ -163,9 +163,7 @@ This name and type can be defined by
 		"zeroconf": [<name>,]<type> [ ,<port>]
 	}
 	```
-	<br/>
 	or
-
 	```js
 	{
 		"zeroconf": {
@@ -177,12 +175,13 @@ This name and type can be defined by
 	```
 1.	a startup parameter of the form: --gepard.zeroconv=[&lt;name>,]&lt;type>[,&lt;port>]
 1.	an environment variable of the form: export GEPARD_ZEROCONF=[&lt;name>,]&lt;type>[,&lt;port>]
+1.	calling the method broker.setZeroconfParameter ( [&lt;name>,]&lt;type> [ ,&lt;port>] )
 
 If only the &lt;type> is given the &lt;name> is choosen to be:
 ```js
 Gepard-[H:<hostname>]-[P:<port>]
 ```
-This postfix is always appended to make the name unique.
+This postfix __-[H:<hostname>]-[P:<port>]__ is always appended to make the name unique.
 <br/>
 If the &lt;port is not given the standard definitions are used.
 <br/>
@@ -194,8 +193,85 @@ With this information a client can make a profound decision whether to connect t
 
 ### Zeroconf with the client
 
-Up to now
+Up to now only the JavaScript flavor works out of the box.
+<br/>
+Suppose the broker is started with __test-gepard,0__. (service-type is test-gepard and port is arbitrary)
+```js
+gp.broker --gepard.zeroconf=test-gepard,0
+```
+<br/>
+An interested listener would do the following:
 
+```js
+var gepard = require ( "gepard" ) ;
+var client = gepard.getClient ( { type: 'test-gepard' }, function acceptService ( service )
+{
+	client.setReconnect ( true ) ; // This is for re-connect if broker dies.
+	if ( ! service.isReconnect() ) // Here a new broker is found
+	{                              //  and the "ALARM" listener is automatically re-registered.
+		client.on ( "ALARM", (e) => { console.log ( e ) ; } ) ;
+	}
+	return true ;
+} ) ;
+```
+An interested emitter would do the following:
+
+```js
+var gepard = require ( "gepard" ) ;
+var client = gepard.getClient ( { type: 'test-gepard' }, function acceptService ( service )
+{
+	client.setReconnect ( false ) ;
+	client.emit ( "ALARM",
+	{
+	  write: function() // The event is sent -> end connection and exit
+	  {
+	    client.end() ;
+	  }
+	});
+	return true ;
+} ) ;
+```
+
+The __service__ parameter can be used to get [more details:](https://github.com/gessinger-hj/gepard/blob/master/src/Service.js)
+
+
+*	service.getTopics()
+<br/>
+	list of registered event-names
+*	service.getChannels()
+<br/>
+	list of registered channels
+*	service.getHost()
+<br/>
+	host-name where the found broker is running.
+*	service.isLocalHost()
+<br/>
+	whether the found broker is on the same host as the client.
+
+If the client is configured to reconnect automatically in case the broker dies all existing event-names are re-registered upon
+connection to another discovered broker.
+<br/>
+This service- / broker-lookup is done as soon as the old broker has gone.
+<br/>
+__Conclusion: The set-up with one broker is no more a single point of failure.__
+<br/>
+In case of broker-failure all clients search another broker and register their listeners automatically.
+<br/>
+The method gepard.findService ( { type:&lt;type> }, callback ) can be used to discover all services in the subnet of given type.
+If the callback returns true the search ends.
+<br/>
+To monitor services the file MDNSLookup.js can be used.
+<br/>
+Example to find any service for a given type:
+
+```js
+gepard.findService ( { type:type }, (service) => {
+	if ( service.host === os.hostname() )
+	{
+		formatOutput ( service ) ;
+	  return true ;
+	});
+```
 
 ## Release 1-5-0 Channels
 
