@@ -11,6 +11,7 @@ var User          = require ( "./User" ) ;
 var FileContainer = require ( "./FileContainer" ) ;
 var TracePoints   = require ( "./TracePoints" ) ;
 var ActionCmd     = require ( "./ActionCmd" ) ;
+var Service       = require ( "./Service" ) ;
 
 var counter = 0 ;
 
@@ -55,7 +56,7 @@ Stats.prototype =
 };
 /**
  * @constructor
- * @extends    EventEmitter
+ * @extends    EventEmittergit
  *
  * @class      Client
  * @param      {}    port    { description }
@@ -64,6 +65,80 @@ Stats.prototype =
 var Client = function ( port, host )
 {
   EventEmitter.call ( this ) ;
+  var i = 0 ;
+  if ( ! port && ! host )
+  {
+    port = gepard.getProperty ( "gepard.zeroconf.type" ) ;
+  }
+  if ( typeof port === 'string' && isNaN ( parseInt ( port ) ) )
+  {
+    port = { type: port } ;
+  }
+  if ( typeof port === 'object' && typeof host !== 'function' )
+  {
+    if ( typeof host !== 'function' )
+    {
+      if ( port.type.startsWith ( "localhost:" ) )
+      {
+        localhost = true ;
+        port.type = port.type.substring ( "localhost:".length ) ;
+      }
+      host = function auto_client_findService ( srv )
+      {
+        if ( localhost && ! srv.isLocalHost() )
+        {
+          return ;
+        }
+        return true ;
+      } ;
+    }
+  }
+  if ( typeof port === 'object' && typeof host === 'function' )
+  {
+    this.zeroconf_based_pending_list = [] ;
+    this.userServiceLookupCallback  = host ;
+    this.userServiceLookupParameter = port ;
+    var thiz                        = this ;
+    Log.logln ( "Service lookup with: " + util.inspect ( this.userServiceLookupParameter, { showHidden: false, depth: null } ) ) ;
+    T.findService ( this.userServiceLookupParameter, function client_findService ( srv )
+    {
+      try
+      {
+        var service = new Service ( srv ) ;
+        thiz._initialize ( srv.port, srv.host ) ;
+        var rc = thiz.userServiceLookupCallback ( service ) ;
+        if ( ! rc )
+        {
+          return ; 
+        }
+        if ( rc === true )
+        {
+          Log.logln ( "Service connect with: " + service.host + "/" + service.port ) ;
+          var list = thiz.zeroconf_based_pending_list ;
+          delete thiz["zeroconf_based_pending_list"] ;
+          for ( i = 0 ; i < list.length ; i++ )
+          {
+            var o = list[i] ;
+            thiz.addEventListener ( o.eventNameList, o.callback ) ;
+          }
+          list.length = 0 ;
+          return true ;
+        }
+      }
+      catch ( exc )
+      {
+        console.log ( exc ) ;
+      }
+    } ) ;
+  }
+  else
+  {
+    this._initialize ( port, host ) ;
+  }
+} ;
+util.inherits ( Client, EventEmitter ) ;
+Client.prototype._initialize = function ( port, host )
+{
   this.port                         = port ;
   if ( ! this.port ) this.port      = T.getProperty ( "gepard.port", "17501" ) ;
   this.host                         = host ;
@@ -125,8 +200,7 @@ var Client = function ( port, host )
   this.mainChannel ;
   this.setChannel ( T.getProperty ( "gepard.channel" ) ) ;
   this.sid                      = "" ;
-} ;
-util.inherits ( Client, EventEmitter ) ;
+};
 Client.prototype.setChannel = function ( channel )
 {
   if ( ! channel ) return ;
@@ -224,6 +298,8 @@ Client.prototype.brokerIsLocalHost = function()
   {
     return this._brokerIsLocalHost ;
   }
+  if ( ! this.socket ) return false ;
+  if ( ! this.socket.remoteAddress ) return false ;
   for ( i = 0 ; i < this._networkAddresses.length ; i++ )
   {
     var index = this.socket.remoteAddress.indexOf ( this._networkAddresses[i] ) ;
@@ -264,7 +340,14 @@ Client.prototype.connect = function()
     }
     if ( this.keepDataForReconnect )
     {
-      thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._reconnectIntervalMillis ) ;
+      if ( thiz.userServiceLookupParameter && thiz.userServiceLookupCallback )
+      {
+        thiz._checkHeartbeat()
+      }
+      else
+      {
+        thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._reconnectIntervalMillis ) ;
+      }
     }
     thiz.socket = null ;
   });
@@ -289,10 +372,10 @@ Client.prototype.connect = function()
     client_info.body.channels           = thiz.channels ;
     client_info.setChannel ( thiz.mainChannel ) ;
     json                            = client_info.serialize() ;
-    thiz._stats.incrementOut ( json.length )
+    thiz._stats.incrementOut ( json.length ) ;
     this.write ( json ) ;
 
-    var i ;
+    var i, j ;
     if ( thiz.pendingEventList.length )
     {
       for ( i = 0 ; i < thiz.pendingEventList.length ; i++ )
@@ -357,6 +440,7 @@ Client.prototype.connect = function()
       }
       thiz._pendingAcquireSemaphoreList.length = 0 ;
     }
+    thiz._private_emit ( "connect" ) ;
   } ) ;
   this.socket.on ( 'data', function socket_on_data ( data )
   {
@@ -370,19 +454,24 @@ Client.prototype.connect = function()
     if ( ! this.partialMessage ) this.partialMessage = "" ;
     mm = this.partialMessage + mm ;
     this.partialMessage = "" ;
-
     var result ;
     try
     {
-      result = T.splitJSONObjects ( mm ) ;
+      result = T.splitJSONObjects ( mm, 0, false ) ;
     }
     catch ( exc )
     {
       Log.log ( exc ) ;
     }
+    this.partialMessage = "" ;
     var messageList = result.list ;
-    var i, j, k ;
+    var i, j, k, kk ;
     var ctx, uid, rcb, e, callbackList ;
+    if ( result.lastLineIsPartial )
+    {
+      this.partialMessage = messageList[messageList.length-1] ;
+      messageList[messageList.length-1] = "" ;
+    }
     for ( j = 0 ; j < messageList.length ; j++ )
     {
       if ( this.stopImediately )
@@ -390,23 +479,15 @@ Client.prototype.connect = function()
         return ;
       }
       var m = messageList[j] ;
-      if ( m.length === 0 )
+      if ( !m || m.length === 0 )
       {
         continue ;
       }
-      if ( j === messageList.length - 1 )
-      {
-        if ( result.lastLineIsPartial )
-        {
-          this.partialMessage = m ;
-          break ;
-        }
-      }
-      thiz._stats.incrementIn ( m.length )
+      thiz._stats.incrementIn ( m.length ) ;
       if ( m.charAt ( 0 ) === '{' )
       {
         e = Event.prototype.deserialize ( m ) ;
-        if ( e.getName() !== "system" )
+        // if ( e.getName() !== "system" )
         {
           if ( TPStore.points["EVENT_IN"].isActive() )
           {
@@ -634,9 +715,9 @@ Client.prototype.connect = function()
           {
             list = thiz.listenerFunctionsList[k]._regexpList ;
             if ( ! list ) continue ;
-            for ( j = 0 ; j < list.length ; j++ )
+            for ( kk = 0 ; kk < list.length ; kk++ )
             {
-              if ( ! list[j].test ( e.getName() ) ) continue ;
+              if ( ! list[kk].test ( e.getName() ) ) continue ;
               found = true ;
               if ( e.isResultRequested() )
               {
@@ -661,9 +742,42 @@ Client.prototype.connect = function()
     }
   } ) ;
 };
+
 Client.prototype.isRunning = function ( callback )
 {
   var thiz = this ;
+  if ( this.userServiceLookupParameter && this.userServiceLookupCallback )
+  {
+    if ( this.intervalId ) clearInterval ( this.intervalId ) ;
+    Log.logln ( "Service lookup for re-connect with: " + util.inspect ( this.userServiceLookupParameter, { showHidden: false, depth: null } ) ) ;
+
+    T.findService ( this.userServiceLookupParameter, function client_findService ( srv )
+    {
+      try
+      {
+        thiz.port = srv.port ;
+        thiz.host = srv.host ;
+        var service = new Service ( srv ) ;
+        service.setIsReconnect ( true ) ;
+        var rc = thiz.userServiceLookupCallback ( service ) ;
+        if ( ! rc )
+        {
+          return ;
+        }
+        if ( rc === true )
+        {
+          Log.logln ( "Service re-connect with: " + service.host + "/" + service.port ) ;
+          callback.call ( thiz, true ) ;
+          return true ;
+        }
+      }
+      catch ( exc )
+      {
+        console.log ( exc ) ;
+      }
+    } ) ;
+    return ;
+  }
   var socket ;
   var p = {} ;
   if ( this.port  ) p.port = this.port ;
@@ -744,7 +858,7 @@ Client.prototype._checkHeartbeat = function()
     if ( ! this._reconnect )
     {
       this._end() ;
-      if  ( this.intervalId ) clearInterval ( this.intervalId ) ;
+      if ( this.intervalId ) clearInterval ( this.intervalId ) ;
     }
     else
     {
@@ -831,6 +945,10 @@ Client.prototype.systemInfo = function ( callback, parameter )
     e.putValue ( "sid", parameter.sid ) ;
   }
   e.putValue ( "parameter", parameter ) ;
+  if ( parameter.channel )
+  {
+    e.setChannel ( parameter.channel ) ;
+  }
   this.emit ( e, callback, { isBroadcast:true, internal: true } ) ;
 };
 Client.prototype.log = function ( messageText, callback )
@@ -1037,7 +1155,11 @@ Client.prototype.end = function()
 Client.prototype._end = function ( keepDataForReconnect )
 {
   this.alive = false ;
-  if ( this.socket ) { this.socket.end() ; this.socket.keepDataForReconnect = keepDataForReconnect ; }
+  if ( this.socket )
+  {
+    this.socket.keepDataForReconnect = keepDataForReconnect ;
+    this.socket.end() ;
+  }
   this.socket = null ;
   this.pendingEventList = [] ;
   this.pendingResultList = {} ;
@@ -1081,6 +1203,11 @@ Client.prototype.addEventListener = function ( eventNameList, callback )
   if ( ! eventNameList.length )
   {
     throw new Error ( "Client.addEventListener: eventNameList must not be empty." ) ;
+  }
+  if ( this.zeroconf_based_pending_list )
+  {
+    this.zeroconf_based_pending_list.push ( { eventNameList: eventNameList, callback: callback } ) ;
+    return ;
   }
   var e = new Event ( "system", "addEventListener" ) ;
   if ( this.user )
@@ -1455,7 +1582,7 @@ Client.prototype.send = function ( e )
   var json = e.serialize() ;
   this._stats.incrementOut ( json.length )
   this.getSocket().write ( json ) ;
-  if ( e.getName() !== "system" )
+  // if ( e.getName() !== "system" )
   {
     TPStore.points["EVENT_OUT"].log ( e ) ;
   }

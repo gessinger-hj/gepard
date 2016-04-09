@@ -128,7 +128,7 @@ TangoClass.prototype.toString = function ( value )
   else
   if ( typeof value === 'object' )
   {
-    return util.inspect ( value, { showHidden: false, depth: null } )
+    return util.inspect ( value, { showHidden: false, depth: null } ) ;
   }
   return value ;
 };
@@ -521,13 +521,14 @@ TangoClass.prototype.getConfigPath = function()
  * @param {} str
  * @return list
  */
-TangoClass.prototype.splitJSONObjects = function ( str, max )
+TangoClass.prototype.splitJSONObjects = function ( str, max, flag )
 {
   var list = [] ;
   var pcounter = 1 ;
   var q = "" ;
   var i0 = 0 ;
   var i = 1 ;
+  var firstIsBraces = str.charAt ( 0 ) === '{' ;
   for ( i = 1 ; i < str.length ; i++ )
   {
     if ( max && i - i0 > max )
@@ -584,7 +585,12 @@ TangoClass.prototype.splitJSONObjects = function ( str, max )
   {
     list.push ( str.substring ( i0 ) ) ;
   }
-  return { list: list, lastLineIsPartial: pcounter ? true : false } ;
+  if ( flag && pcounter )
+  {
+    console.log ( "pcounter!==0|" + list[list.length-1] ) ;
+    console.log ( "list.length=" + list.length ) ;
+  }
+  return { list: list, lastLineIsPartial: pcounter ? true : false, firstIsBraces: firstIsBraces, pcounter: pcounter } ;
 };
 /**
  * Description
@@ -1028,6 +1034,13 @@ TangoClass.prototype._MLZ = function (x)
   }
   return rc ;
 };
+/**
+ * { function_description }
+ *
+ * @method     toRFC3339String
+ * @param      {Date}  date    date to be stringified
+ * @return     {string}  date as string in the given format
+ */
 TangoClass.prototype.toRFC3339String = function ( date )
 {
   var to = date.getTimezoneOffset() ;
@@ -1066,6 +1079,92 @@ TangoClass.prototype.visit = function ( obj, visitor )
       if ( visitor.call ( null, obj[key] ) === false ) continue ;
       if ( this.visit ( obj[key], visitor ) === false ) return false ;
     }    
+  }
+};
+TangoClass.prototype.getLocalNetworAddresses = function()
+{
+  if ( this.networkAddresses )
+  {
+    return this.networkAddresses ;
+  }
+  var os = require ( "os" ) ;
+  var networkInterfaces = os.networkInterfaces() ;
+  this.networkAddresses = {} ;
+  for ( var kk in networkInterfaces )
+  {
+    var niList = networkInterfaces[kk]
+    for ( var i = 0 ; i < niList.length ; i++ )
+    {
+      this.networkAddresses[niList[i]["address"]] = true ;
+    }
+  }
+  return this.networkAddresses ;
+};
+TangoClass.prototype.isLocalHost = function ( name, callback )
+{
+  var na = this.getLocalNetworAddresses() ;
+  var dns = require ( "dns" ) ;
+  dns.lookup ( name, function ( err, p )
+  {
+    if ( err )
+    {
+      callback ( err, false ) ;
+      return ;
+    }
+    callback ( err, !!na[p] ) ;
+  });
+};
+TangoClass.prototype.findService = function ( serviceParameter, callback )
+{
+  var Bonjour = require ( 'bonjour' ) ;
+
+  if ( ! serviceParameter ) serviceParameter = {} ;
+  if ( ! serviceParameter.type ) serviceParameter.type = 'gepard' ;
+  var thiz = this ;
+  var bonjour = new Bonjour()
+
+  var browser = bonjour.find ( { type: serviceParameter.type }, function cb_find ( service )
+  {
+    if ( service.txt.topics )
+    {
+      service.topics = service.txt.topics.split ( ',' ) ;
+    }
+    else
+    {
+      service.topics = [] ;
+    }
+    if ( service.txt.channels )
+    {
+      service.channels = service.txt.channels.split ( ',' ) ;
+    }
+    else
+    {
+      service.channels = [] ;
+    }
+    
+    var rc = callback ( service ) ;
+    if ( rc === true )
+    {
+      browser.stop() ;
+      bonjour.destroy() ;
+      browser = null ;
+      bonjour = null ;
+    }
+  } ) ;
+
+  if ( serviceParameter.timeout > 100 )
+  {
+    setTimeout ( function ()
+    {
+      if ( ! browser )
+      {
+        return ;
+      }
+      browser.stop() ;
+      bonjour.destroy() ;
+      browser = null ;
+      bonjour = null ;
+    }, serviceParameter.timeout ) ;
   }
 };
 var Tango = null ;
@@ -1120,4 +1219,8 @@ if ( require.main === module )
     }
   });
   T.log ( o ) ;
+  T.isLocalHost ( "wevli077", function ( err, p )
+  {
+console.log ( "p=" + p ) ;
+  }) ;
 }

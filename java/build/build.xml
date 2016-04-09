@@ -9,6 +9,7 @@
   <property name="bin.dir" value="java-classes"/>
   <property name="target.dir" value="${external.lib.dir}"/>
 
+  <!-- <property name="default.classpath" value="${bin.dir}:${external.lib.dir}/gson-2.3.1.jar:${external.lib.dir}/jmdns.jar"/> -->
   <property name="default.classpath" value="${bin.dir}:${external.lib.dir}/gson-2.3.1.jar"/>
 
   <target name="Gepard" depends=".prepare ">

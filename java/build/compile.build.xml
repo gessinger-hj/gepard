@@ -1,21 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="compile" default="compile">
-  <target name="compile" depends="setSourceDir1, setSourceDir2, setJarClassPath, compileOnly, buildJar" />
+  <target name="compile" depends="setSourceDir1, setSourceDir2, compileOnly, buildJar" />
   <target name="compileOnly" depends="editClassPath1, editClassPath2, excludeFiles" >
     <delete dir="${bin.dir}/org/"/>
     <delete file="${target.dir}/${jar.file}"/>
-<!--
-    <property name="target.version" value="1.6" />
-    <property name="source.version" value="${target.version}" />
-    <javac debug="on" optimize="on" source="${source.version}" target="${target.version}"
--->
     <property name="class.files" value="**/*.class" />
     <javac debug="on" optimize="on"
 			source="1.6"
 			target="1.6"
       srcdir="${sourcedir}"
       destdir="${bin.dir}"
-      classpath="${jar.classpath}:${classpath}:${external.lib.dir}/omsyntax.jar"
+      classpath="${classpath}"
       includes="${source.files}"
       excludes="${exclude.files}"
     />
@@ -27,7 +22,6 @@
       <fileset dir="${source.dir}" includes="${include.files}"/>
       <manifest>
       	<attribute name="Main-Class" value="${main.class}"/>
-      	<!-- <attribute name="Class-Path" value="${jar.classpath}"/> -->
         <attribute name="Built-By" value="${user.name}"/>
       	<attribute name="Build-Time" value="${build.time}"/>
       </manifest>
@@ -41,9 +35,6 @@
   </target>
   <target name="excludeFiles" unless="exclude.files" >
     <property name="exclude.files" value="XXXX" />
-  </target >
-  <target name="setJarClassPath" unless="jar.classpath" >
-    <property name="jar.classpath" value="${build.root}/lib/vx.jar:${build.root}/lib/TUtil.jar:${build.root}/lib/jxl.jar"/>
   </target >
   <target name="setSourceDir1" if="add.source.dir" >
     <property name="sourcedir" value="${source.dir}:${add.source.dir}" />

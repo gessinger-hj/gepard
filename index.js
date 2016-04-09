@@ -1,5 +1,6 @@
 var Path = require ( "path" ) ;
 var fs = require ( "fs" ) ;
+var util = require ( "util" ) ;
 
 var d = Path.join ( __dirname, "/src/" ) ;
 var gepard = require ( Path.join ( d, "./Tango" ) ) ;
@@ -7,22 +8,66 @@ gepard._Instances = {} ;
 
 gepard.getClient = function ( port, host )
 {
-	port = port ? port : undefined ;
-	host = host ? host : undefined ;
-	if ( ! port )
+	var c ;
+  var localhost = false ;
+  if ( ! port && ! host )
+  {
+    port = gepard.getProperty ( "gepard.zeroconf.type" ) ;
+  }
+  if ( typeof port === 'string' && isNaN ( parseInt ( port ) ) )
+  {
+    port = { type: port } ;
+  }
+  if ( typeof port === 'object' && typeof host !== 'function' )
+  {
+	  if ( typeof host !== 'function' )
+	  {
+	    if ( port.type.startsWith ( "localhost:" ) )
+	    {
+	    	localhost = true ;
+	    	port.type = port.type.substring ( "localhost:".length ) ;
+	    }
+      host = function auto_client_findService ( srv )
+      {
+      	if ( localhost && ! srv.isLocalHost() )
+      	{
+      		return ;
+      	}
+        return true ;
+      } ;
+	  }
+  }
+	if ( typeof port === 'object' && typeof host === 'function' )
 	{
-		port = gepard.getProperty ( "gepard.port", "17501" ) ;
+		var key = util.inspect ( port, { showHidden: false, depth: null } ) ;
+		c = gepard._Instances[key] ;
+		if ( c )
+		{
+			return c ;
+		}
+		c = new gepard.Client ( port, host ) ;
+		gepard._Instances[key] = c ;
 	}
-	if ( ! host )
+	else
 	{
-		host = gepard.getProperty ( "gepard.host" ) ;
+		port = port ? port : undefined ;
+		host = host ? host : undefined ;
+		if ( ! port )
+		{
+			port = gepard.getProperty ( "gepard.port", "17501" ) ;
+		}
+		if ( ! host )
+		{
+			host = gepard.getProperty ( "gepard.host" ) ;
+		}
+		c = gepard._Instances["" + host + ":" + port] ;
+		if ( c )
+		{
+			return c ;
+		}
+		c = new gepard.Client ( port, host ) ;
+		gepard._Instances["" + host + ":" + port] = c 
 	}
-	var c = gepard._Instances["" + host + ":" + port] ;
-	if ( c )
-	{
-		return c ;
-	}
-	c = new gepard.Client ( port, host ) ;
 	var thiz = gepard ;
 	c.on ( "end", function onend()
 	{
@@ -40,7 +85,7 @@ gepard.getClient = function ( port, host )
 	{
 		delete thiz._Instances["" + host + ":" + port] ;
 	} ) ;
-	gepard._Instances["" + host + ":" + port] = c 
+
 	return c ;
  }
 

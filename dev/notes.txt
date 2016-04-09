@@ -174,3 +174,12 @@ Show
 =================================================
 Tree:
 $ git log --graph
+
+=================================================
+This will fetch all of the remote branches for you. You can see the branches available for checkout with:
+=================================================
+
+git branch -v -a 																With the remote branches in hand, you now need to check
+																								out the branch you are interested in, giving you a local working copy:
+
+git checkout -b feature/zeroconf origin feature/zeroconf

@@ -55,6 +55,17 @@ public class JSAcc
     return value ( map, path, def ) ;
   }
   /**
+   * @brief      Create path if it does not exist
+   * 
+   * @param      path  '/' separated names
+   *
+   * @return     { description_of_the_return_value }
+   */
+  public Object add ( String path )
+  {
+    return add ( map, path ) ;    
+  }
+  /**
    * @brief      Create path if it does not exist and store obj
    * 
    * @param      path  '/' separated names
@@ -122,6 +133,18 @@ public class JSAcc
     return def ;
   }
   /**
+   * @brief      add only a map
+   *
+   * @param      Map root  Map
+   * @param      String path  path
+   *
+   * @return     the new created map
+   */
+  public static Object add ( Map root, String path )
+  {
+    return add ( root, path, null ) ;
+  }
+  /**
    * @brief      Create path if it does not exist and store obj
    *
    * @param      root  Map of interest
@@ -163,11 +186,19 @@ public class JSAcc
       }
       if ( i == plist.length - 1 )
       {
+        if ( obj == null ) obj = new HashMap() ;
         m.put ( p, obj ) ;
       }
     }
     return obj ;
   }
+  /**
+   * @brief      remove path
+   *
+   * @param      path  
+   *
+   * @return     removed object
+   */
   public Object remove ( String path )
   {
     return remove  ( map, path ) ;
@@ -233,6 +264,8 @@ public class JSAcc
   System.out.println ( gson.toJson ( a.map ) ) ;
     a.remove ( "M1/M2/N" ) ;
 // System.out.println ( "7 -- a.remove ( 'M1/M2/N' )" ) ;
+  System.out.println ( gson.toJson ( a.map ) ) ;
+    a.add ( "only/a/map" ) ;
   System.out.println ( gson.toJson ( a.map ) ) ;
   }
 }
