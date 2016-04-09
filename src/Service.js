@@ -1,8 +1,8 @@
 /*
 * @Author: Hans Jürgen Gessinger
 * @Date:   2016-03-01 12:48:16
-* @Last Modified by:   hg02055
-* @Last Modified time: 2016-03-30 16:53:52
+* @Last Modified by:   Hans Jürgen Gessinger
+* @Last Modified time: 2016-04-09 13:07:13
 */
 
 var Service = function ( srv )
@@ -18,7 +18,7 @@ var Service = function ( srv )
 	this.fqdn     = srv.fqdn ;
 	this.topics   = srv.txt["topics"] ? srv.txt["topics"].split ( ',' ) : [] ;
 	this.channels = srv.txt.channels ? srv.txt.channels.split ( ',' ) : [] ;
-	// console.log ( srv ) ;
+	this._isReconnect = false ;
 };
 Service.prototype.getName = function() { return this.name ; } ;
 Service.prototype.getType = function() { return this.type ; } ;
@@ -27,7 +27,7 @@ Service.prototype.getHost = function() { return this.host ; } ;
 Service.prototype.getTopics = function() { return this.topics ; } ;
 Service.prototype.getChannels = function() { return this.channels ; } ;
 Service.prototype.isReconnect = function() { return this._isReconnect ; } ;
-Service.prototype.setIsReconnect = function( state ) { this._isReconnect = state ; } ;
+Service.prototype.setIsReconnect = function ( state ) { this._isReconnect = state ; } ;
 Service.prototype.toString = function()
 {
 	return "(Service)[name=" + this.name + ",type=" + this.type + ",host=" + this.host + ",port=" + this.port + "]" ;	

@@ -65,8 +65,37 @@ Stats.prototype =
 var Client = function ( port, host )
 {
   EventEmitter.call ( this ) ;
+  var i = 0 ;
+  if ( ! port && ! host )
+  {
+    port = gepard.getProperty ( "gepard.zeroconf.type" ) ;
+  }
+  if ( typeof port === 'string' && isNaN ( parseInt ( port ) ) )
+  {
+    port = { type: port } ;
+  }
+  if ( typeof port === 'object' && typeof host !== 'function' )
+  {
+    if ( typeof host !== 'function' )
+    {
+      if ( port.type.startsWith ( "localhost:" ) )
+      {
+        localhost = true ;
+        port.type = port.type.substring ( "localhost:".length ) ;
+      }
+      host = function auto_client_findService ( srv )
+      {
+        if ( localhost && ! srv.isLocalHost() )
+        {
+          return ;
+        }
+        return true ;
+      } ;
+    }
+  }
   if ( typeof port === 'object' && typeof host === 'function' )
   {
+    this.zeroconf_based_pending_list = [] ;
     this.userServiceLookupCallback  = host ;
     this.userServiceLookupParameter = port ;
     var thiz                        = this ;
@@ -76,7 +105,6 @@ var Client = function ( port, host )
       try
       {
         var service = new Service ( srv ) ;
-        service.setIsReconnect ( false ) ;
         thiz._initialize ( srv.port, srv.host ) ;
         var rc = thiz.userServiceLookupCallback ( service ) ;
         if ( ! rc )
@@ -86,6 +114,14 @@ var Client = function ( port, host )
         if ( rc === true )
         {
           Log.logln ( "Service connect with: " + service.host + "/" + service.port ) ;
+          var list = thiz.zeroconf_based_pending_list ;
+          delete thiz["zeroconf_based_pending_list"] ;
+          for ( i = 0 ; i < list.length ; i++ )
+          {
+            var o = list[i] ;
+            thiz.addEventListener ( o.eventNameList, o.callback ) ;
+          }
+          list.length = 0 ;
           return true ;
         }
       }
@@ -1167,6 +1203,11 @@ Client.prototype.addEventListener = function ( eventNameList, callback )
   if ( ! eventNameList.length )
   {
     throw new Error ( "Client.addEventListener: eventNameList must not be empty." ) ;
+  }
+  if ( this.zeroconf_based_pending_list )
+  {
+    this.zeroconf_based_pending_list.push ( { eventNameList: eventNameList, callback: callback } ) ;
+    return ;
   }
   var e = new Event ( "system", "addEventListener" ) ;
   if ( this.user )

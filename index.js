@@ -9,6 +9,34 @@ gepard._Instances = {} ;
 gepard.getClient = function ( port, host )
 {
 	var c ;
+  var localhost = false ;
+  if ( ! port && ! host )
+  {
+    port = gepard.getProperty ( "gepard.zeroconf.type" ) ;
+  }
+  if ( typeof port === 'string' && isNaN ( parseInt ( port ) ) )
+  {
+    port = { type: port } ;
+  }
+  if ( typeof port === 'object' && typeof host !== 'function' )
+  {
+	  if ( typeof host !== 'function' )
+	  {
+	    if ( port.type.startsWith ( "localhost:" ) )
+	    {
+	    	localhost = true ;
+	    	port.type = port.type.substring ( "localhost:".length ) ;
+	    }
+      host = function auto_client_findService ( srv )
+      {
+      	if ( localhost && ! srv.isLocalHost() )
+      	{
+      		return ;
+      	}
+        return true ;
+      } ;
+	  }
+  }
 	if ( typeof port === 'object' && typeof host === 'function' )
 	{
 		var key = util.inspect ( port, { showHidden: false, depth: null } ) ;
