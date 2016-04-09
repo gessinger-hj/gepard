@@ -57,7 +57,9 @@ var Connection = function ( broker, socket )
   this._messageUidsToBeProcessed              = [] ;
   this._isLocalHost ;
   this._timeStamp                             = 0 ;
-  this.fullQualifiedEventNames = {} ;
+  this.fullQualifiedEventNames                = {} ;
+  this.eventNameList                          = [] ;
+  this.channelNameList                        = [] ;
 };
 /**
  * Description
@@ -132,6 +134,7 @@ Connection.prototype.removeEventListener = function ( e )
   {
     this.eventNameList.remove ( toBeRemoved[i] ) ;
   }
+  this.broker.republishService() ;
   toBeRemoved.length = 0 ;
 };
 /**
@@ -183,16 +186,21 @@ Connection.prototype.write = function ( data )
  */
 Connection.prototype._sendInfoResult = function ( e )
 {
-  var i, first, str, key, conn, key2 ;
+  var i, j, first, str, key, conn, key2 ;
   e.setType ( "getInfoResult" ) ;
   e.control.status                     = { code:0, name:"ack" } ;
   e.body.gepardVersion                 = Gepard.getVersion() ;
   e.body.brokerVersion                 = this.broker.brokerVersion ;
+  if ( this.broker.zeroconf )
+  {
+    e.body.zeroconf = this.broker.zeroconf ;
+  }
   e.body.port                          = this.broker.port ;
   e.body.startupTime                   = this.broker.startupTime   ;
-  e.body.heartbeatIntervalMillis       = this.broker._heartbeatIntervalMillis ;
+  e.body.heartbeatIntervalMillis       = this.broker.heartbeatMillis ;
   e.body.maxMessageSize                = this.broker._maxMessageSize ;
   e.body.log                           = { levelName: Log.getLevelName(), level:Log.getLevel(), file: Log.getCurrentLogFileName() } ;
+  e.body.numberOfPendingMessages       = this.broker._numberOfPendingMessages ;
   e.body.currentEventNames             = this.broker._eventNameToSockets.getKeys() ;
   for ( i = 0 ; i < this.broker._connectionList.length ; i++ )
   {
@@ -275,8 +283,6 @@ Connection.prototype._addEventListener = function ( e )
     this.write ( e ) ;
     return ;
   }
-  if ( ! this.eventNameList ) this.eventNameList = [] ;
-
   for  ( i = 0 ; i < eventNameList.length ; i++ )
   {
     eventName = eventNameList[i] ;
@@ -315,6 +321,7 @@ Connection.prototype._addEventListener = function ( e )
   }
   e.control.status = { code:0, name:"ack" } ;
   this.write ( e ) ;
+  this.broker.republishService() ;
 };
 Connection.prototype._setCurrentlyProcessedMessageUid = function ( uid )
 {
@@ -385,6 +392,7 @@ var Broker = function ( port, ip )
   EventEmitter.call ( this ) ;
   this._connections                        = {} ;
   this._eventNameToSockets                 = new MultiHash() ;
+  this._channelNameToSockets               = new MultiHash() ;
   this._connectionList                     = [] ;
   this.port                                = port ;
   this.ip                                  = ip ;
@@ -433,13 +441,15 @@ var Broker = function ( port, ip )
   });
   var ee = new Event() ;
   ee.addClassNameToConstructor ( "FileContainer", FileContainer ) ;
-  this._heartbeatIntervalMillis = 30000 ;
-  this._heartbeatIntervalMillis = T.getInt ( "gepard.heartbeat.millis", this._heartbeatIntervalMillis ) ;
-
-  this.brokerVersion = 1 ;
-  this._maxMessageSize = 20 * 1024 * 1024 ;
-  this.startupTime = new Date() ;
-  this._taskHandler = new BTaskHandler ( this ) ;
+  this.heartbeatMillis = 30000 ;
+  this.heartbeatMillis = T.getInt ( "gepard.heartbeat.millis", this.heartbeatMillis ) ;
+  
+  this.brokerVersion            = 1 ;
+  this._maxMessageSize          = 20 * 1024 * 1024 ;
+  this.startupTime              = new Date() ;
+  this._taskHandler             = new BTaskHandler ( this ) ;
+  this._numberOfPendingMessages = 0 ;
+  this._republishServiceTimeoutMillis = 5000 ;
 };
 
 util.inherits ( Broker, EventEmitter ) ;
@@ -542,13 +552,31 @@ Broker.prototype._ondata = function ( socket, chunk )
       return ;
     }
   }
+  if ( result )
+  {
+  }
   var messageList = result.list ;
-  var j = 0 ;
   var e = null ;
+  if ( result.lastLineIsPartial )
+  {
+    conn.partialMessage = messageList[messageList.length-1] ;
+    messageList[messageList.length-1] = "" ;
+    if ( conn.partialMessage > this._maxMessageSize )
+    {
+      str = "Message size exceeds maximum.\nsid=" + conn.sid + "\nmax=" + this._maxMessageSize + "\nactual size=" + conn.partialMessage.length ;
+      Log.log ( str ) ;
+      e = new Event ( "ERROR" ) ;
+      e.setStatus ( 1, "error", str ) ;
+      conn.write ( e ) ;
+      socket.end() ;
+      return ;
+    }
+  }
+
   for ( j = 0 ; j < messageList.length ; j++ )
   {
     var m = messageList[j] ;
-    if ( m.length === 0 )
+    if ( !m || m.length === 0 )
     {
       continue ;
     }
@@ -561,24 +589,6 @@ Broker.prototype._ondata = function ( socket, chunk )
       conn.write ( e ) ;
       socket.end() ;
       return ;
-    }
-    if ( j === messageList.length - 1 )
-    {
-      if ( result.lastLineIsPartial )
-      {
-        conn.partialMessage = m ;
-        if ( conn.partialMessage > this._maxMessageSize )
-        {
-          str = "Message size exceeds maximum.\nsid=" + conn.sid + "\nmax=" + this._maxMessageSize + "\nactual size=" + conn.partialMessage.length ;
-          Log.log ( str ) ;
-          e = new Event ( "ERROR" ) ;
-          e.setStatus ( 1, "error", str ) ;
-          conn.write ( e ) ;
-          socket.end() ;
-          return ;
-        }
-        break ;
-      }
     }
     if ( m.charAt ( 0 ) === '{' )
     {
@@ -593,7 +603,7 @@ Broker.prototype._ondata = function ( socket, chunk )
         socket.end() ;
         return ;
       }
-      if ( e.getName() !== 'system' )
+      // if ( e.getName() !== 'system' )
       {
         TPStore.points["EVENT_IN"].log ( "--------------------------- EVENT_IN ---------------------------" ) ;
         TPStore.points["EVENT_IN"].log ( e ) ;
@@ -614,6 +624,8 @@ Broker.prototype._ondata = function ( socket, chunk )
           uid                  = e.getUniqueId() ;
           originatorConnection = this._connections[sid] ;
           delete this._messagesToBeProcessed[uid] ;
+          this._numberOfPendingMessages-- ;
+          if ( this._numberOfPendingMessages < 0 ) this._numberOfPendingMessages = 0 ;
           responderConnection._setCurrentlyProcessedMessageUid ( "" ) ;
           var alreadySent = false ;
           if ( e.getName() !== "system" )
@@ -738,14 +750,14 @@ Broker.prototype._setSystemParameter = function ( conn, e )
   var sp = e.body.systemParameter ;
   if ( sp._heartbeatIntervalMillis >= 3000 )
   {
-  if ( this._heartbeatIntervalMillis !== sp._heartbeatIntervalMillis )
+  if ( this.heartbeatMillis !== sp._heartbeatIntervalMillis )
     {
-      this._heartbeatIntervalMillis = sp._heartbeatIntervalMillis ;
+      this.heartbeatMillis = sp._heartbeatIntervalMillis ;
       if ( this.intervallId )
       {
         clearInterval ( this.intervallId ) ;
       }
-      this.intervallId = setInterval ( this._checkHeartbeat_bind, this._heartbeatIntervalMillis ) ;
+      this.intervallId = setInterval ( this._checkHeartbeat_bind, this.heartbeatMillis ) ;
       this._send_PING_to_all() ;
     }
   }
@@ -808,6 +820,7 @@ Broker.prototype._sendMessageToClient = function ( e, socketList )
       if ( ! conn.fullQualifiedEventNames[fullName] ) continue ;
     }
     this._messagesToBeProcessed[uid] = e ; // hotfix-1.5.0_1
+    this._numberOfPendingMessages++ ;
     if ( conn._numberOfPendingRequests === 0 )
     {
       conn.write ( e ) ;
@@ -840,7 +853,7 @@ Broker.prototype._sendMessageToClient = function ( e, socketList )
  */
 Broker.prototype._sendEventToClients = function ( conn, e )
 {
-  var i, found = false, done = false, str, list, target_conn ;
+  var i, j, found = false, done = false, str, list, target_conn ;
   var name = e.getName() ;
   if ( conn )
   {
@@ -1055,7 +1068,7 @@ Broker.prototype._handleSystemClientMessages = function ( conn, e )
  */
 Broker.prototype._handleSystemMessages = function ( conn, e )
 {
-  var i, found, list, CHANNEL, t ;
+  var i, found, list, CHANNEL, t, key ;
   if ( e.getType() === "addMultiplexer" )
   {
     return ;
@@ -1113,12 +1126,19 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
         if ( ! t ) continue ;
         if ( ! conn.channels ) conn.channels = {} ;
         conn.channels[t] = true ;
+        conn.channelNameList.push ( t ) ;
+        this._channelNameToSockets ( t, this ) ;
       } 
     }
     else
     if ( typeof CHANNEL === 'object' )
     {
       conn.channels = CHANNEL ;
+      for ( key in conn.channels )
+      {
+        conn.channelNameList.push ( key ) ;
+        this._channelNameToSockets.put ( key, conn.socket ) ;
+      }
     }
     var app              = conn.client_info.application ;
     if ( app )
@@ -1157,7 +1177,7 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
       {
         var broker_info                           = new Event ( "system", "broker_info" ) ;
         broker_info.body.brokerVersion            = thiz.brokerVersion ;
-        broker_info.body._heartbeatIntervalMillis = thiz._heartbeatIntervalMillis ;
+        broker_info.body._heartbeatIntervalMillis = thiz.heartbeatMillis ;
         conn.write ( broker_info ) ;
       },500) ;
     }
@@ -1284,9 +1304,19 @@ Broker.prototype._shutdown = function ( conn, e )
       {
         clearInterval ( this.intervallId ) ;
       }
+      if ( this.bonjour )
+      {
+        this.bonjour.unpublishAll() ;
+      }
       Log.info ( 'server shutting down' ) ;
       e.control.status = { code:0, name:"ack" } ;
       conn.write ( e ) ;
+      // this.unpublishService() ;
+      if ( this.bonjour )
+      {
+        this.bonjour.destroy() ;
+        this.bonjour = null ;
+      }
       this._closeAllSockets() ;
       this.server.unref() ;
       Log.info ( 'server shut down' ) ;
@@ -1383,7 +1413,8 @@ Broker.prototype._ejectSocket = function ( socket )
     conn._setCurrentlyProcessedMessageUid ( "" ) ;
     var requesterMessage    = this._messagesToBeProcessed[uid] ;
     delete this._messagesToBeProcessed[uid] ;
-
+    this._numberOfPendingMessages-- ;
+    if ( this._numberOfPendingMessages < 0 ) this._numberOfPendingMessages = 0 ;
     var requester_sid ;
     var originatorConnection ;
     if ( requesterMessage )
@@ -1434,6 +1465,11 @@ Broker.prototype._ejectSocket = function ( socket )
       this._eventNameToSockets.remove ( conn.eventNameList[i], socket ) ;
     }
     conn.eventNameList.length = 0 ;
+    for  ( i = 0 ; i < conn.channelNameList.length ; i++ )
+    {
+      this._channelNameToSockets.remove ( conn.channelNameList[i], socket ) ;
+    }
+    conn.channelNameList.length = 0 ;
   }
   this._connectionList.remove ( conn ) ;
   for ( i = 0 ; i < conn._lockedResourcesIdList.length ; i++ )
@@ -1456,6 +1492,7 @@ Broker.prototype._ejectSocket = function ( socket )
   conn._ownedSemaphoresRecourceIdList.length = 0 ;
   delete this._connections[sid] ;
   Log.info ( 'Socket disconnected, sid=' + sid ) ;
+  this.republishService() ;
 };
 /**
  * Description
@@ -1500,25 +1537,44 @@ Broker.prototype.listen = function ( port, callback )
     this.port = T.getProperty ( "gepard.port", 17501 ) ;
   }
   this._checkHeartbeat_bind = this._checkHeartbeat.bind ( this ) ;
-  if ( typeof callback !== 'function' )
+
+  var thiz = this ;
+  var callback2 = function()
   {
-    var thiz = this ;
-    /**
-     * Description
-     * @return 
-     */
-    callback = function()
-               {
-                 Log.info ( 'server bound to port=' + thiz.port ) ;
-                 thiz.intervallId = setInterval ( thiz._checkHeartbeat_bind, thiz._heartbeatIntervalMillis ) ;
-               } ;
+    Log.info ( 'server bound to port=' + thiz.server.address().port ) ;
+    thiz.intervallId = setInterval ( thiz._checkHeartbeat_bind, thiz.heartbeatMillis ) ;
+    if ( thiz.zeroconf )
+    {
+      thiz.zeroconf.port = thiz.server.address().port ;
+      thiz.publishService()
+    }
+    if ( typeof callback === 'function' )
+    {
+      try
+      {
+        callback() ;
+      }
+      catch ( exc )
+      {
+        Log.log ( exc ) ;
+      }
+    }
+  };
+  if ( this.zeroconf )
+  {
+    if ( this.zeroconf.port )
+    {
+      this.port = parseInt ( this.zeroconf.port ) ;
+    }
   }
-  this.server.listen ( this.port, callback ) ;
+  if ( this.port <= 0 ) this.port = 0 ;
+  this.server.listen ( this.port, callback2 ) ;
+  this.port = this.server.address().port ;
 };
 Broker.prototype._send_PING_to_all = function()
 {
   var e = new Event ( "system", "PING" ) ;
-  e.control._heartbeatIntervalMillis = this._heartbeatIntervalMillis ;
+  e.control._heartbeatIntervalMillis = this.heartbeatMillis ;
   var se = e.serialize() ;
   for ( i = 0 ; i < this._connectionList.length ; i++ )
   {
@@ -1548,10 +1604,10 @@ Broker.prototype._checkHeartbeat = function()
   var socketsToBePINGed = [] ;
   var i, conn ;
   var now = new Date().getTime() ;
-  var heartbeatInterval = ( this._heartbeatIntervalMillis / 1000 ) ;
-  var heartbeatInterval_x_3 = ( this._heartbeatIntervalMillis / 1000 ) * 3 ;
+  var heartbeatInterval = ( this.heartbeatMillis / 1000 ) ;
+  var heartbeatInterval_x_3 = ( this.heartbeatMillis / 1000 ) * 3 ;
   var e = new Event ( "system", "PING" ) ;
-  e.control._heartbeatIntervalMillis = this._heartbeatIntervalMillis ;
+  e.control._heartbeatIntervalMillis = this.heartbeatMillis ;
   var se = e.serialize() ;
   for ( i = 0 ; i < this._connectionList.length ; i++ )
   {
@@ -1609,6 +1665,69 @@ Broker.prototype._checkHeartbeat = function()
   }
   socketsToBePINGed.length = 0 ;
 };
+Broker.prototype.republishService = function()
+{
+  if ( this.republishServiceTimeoutId )
+  {
+    clearTimeout ( this.republishServiceTimeoutId ) ;
+  }
+  var thiz = this ;
+  this.republishServiceTimeoutId = setTimeout ( function republishServiceTimeout()
+  {
+    thiz._republishService() ;
+  }, this._republishServiceTimeoutMillis );
+};
+Broker.prototype._republishService = function()
+{
+  if ( ! this.bonjour ) return ;
+  this.bonjour.unpublishAll() ;
+  if ( this.publishServiceTimeoutId )
+  {
+    clearTimeout ( this.publishServiceTimeoutId ) ;
+  }
+  var thiz = this ;
+  this.publishServiceTimeoutId = setTimeout ( function publishServiceTimeout()
+  {
+    thiz.publishService() ;
+  }, 1000 ) ;
+};
+Broker.prototype.publishService = function()
+{
+  if ( ! this.bonjour )
+  {
+    this.bonjour = require('bonjour')() ;
+  }
+  if ( !this.counter ) this.counter = 0 ;
+  this.counter++ ;
+  var eventNames   = this._eventNameToSockets.getKeys() ;
+  eventNames = eventNames.join ( ',' ) ;
+  var channelNames = this._channelNameToSockets.getKeys() ;
+  channelNames = channelNames.join ( ',' ) ;
+  var name = this.zeroconf.name
+           + "-[H:" + os.hostname()
+           + "]-[P:" + this.port
+           // + "]-[PID:" + process.pid
+           // + "]-[T:" + eventNames
+           // + "]-[C:" + channelNames
+           + "]" ;
+  this.bonjour.publish ( { name: name
+                         , type: this.zeroconf.type
+                         , port: this.zeroconf.port
+                         , txt:{ topics:eventNames
+                               , channels:channelNames
+                               , host:os.hostname()
+                               , counter:this.counter
+                         }
+                         }) ;
+};
+Broker.prototype.unpublishService = function()
+{
+  if ( ! this.bonjour ) return ;
+  this.bonjour.unpublishAll() ;
+  this.bonjour.destroy() ;
+  this.bonjour = null ;
+};
+
 /**
  * @method setConfig
  * @param {object} configJson
@@ -1659,9 +1778,9 @@ Broker.prototype.setConfig = function ( configuration )
   if ( configuration.heartbeatMillis )
   {
     var hbm = parseInt ( configuration.heartbeatMillis ) ;
-    if ( ! isNaN ( hbm ) ) this._heartbeatIntervalMillis = hbm ;
+    if ( ! isNaN ( hbm ) ) this.heartbeatMillis = hbm ;
   }
-  this._heartbeatIntervalMillis = T.getInt ( "gepard.heartbeat.millis", this._heartbeatIntervalMillis ) ;
+  this.heartbeatMillis = T.getInt ( "gepard.heartbeat.millis", this.heartbeatMillis ) ;
 
   var factor = 1 ;
   if ( configuration.maxMessageSize )
@@ -1685,6 +1804,42 @@ Broker.prototype.setConfig = function ( configuration )
       this._maxMessageSize = hbm * factor ;
     }
   }
+  var zeroconf = this.zeroconf ;
+  if ( ! zeroconf ) zeroconf = T.getProperty ( "gepard.zeroconf" ) ;
+  if ( ! zeroconf ) zeroconf = configuration.zeroconf ;
+  if ( zeroconf === 'true' )
+  {
+    zeroconf = "Gepard,gepard" ;
+  }
+  if ( typeof zeroconf === 'string' )
+  {
+    if ( zeroconf.indexOf ( ',' ) >= 0 )
+    {
+      var a = zeroconf.split ( ',' ) ;
+      zeroconf      = {} ;
+      zeroconf.name = a[0] ;
+      zeroconf.type = a[1] ;
+      zeroconf.port = a[2] ;
+      if ( isFinite ( parseInt ( zeroconf.type ) ) ) // zeroconf.type is a port
+      {
+        zeroconf.port = zeroconf.type ;
+        zeroconf.type = zeroconf.name ;
+        zeroconf.name = "" ;
+      }
+    }
+    else
+    {
+      var s = zeroconf ;
+      zeroconf      = {} ;
+      zeroconf.type = s ;
+    }
+  }
+  if ( zeroconf )
+  {
+    if ( ! zeroconf.name ) zeroconf.name = "Gepard" ;
+    if ( ! zeroconf.type ) zeroconf.type = "gepard" ;
+    this.zeroconf = zeroconf ;
+  }
   this._taskHandler.init ( configuration ) ;
 };
 Broker.prototype.setHeartbeatIntervalMillis = function ( millis )
@@ -1693,7 +1848,11 @@ Broker.prototype.setHeartbeatIntervalMillis = function ( millis )
   {
     throw new Error ( "Invalid value for parameter millis:" + millis ) ;
   }
-  this._heartbeatIntervalMillis = millis ;
+  this.heartbeatMillis = millis ;
+};
+Broker.prototype.setZeroconfParameter = function ( zeroconfCommaList )
+{
+  this.zeroconf = zeroconfCommaList ;
 };
 module.exports = Broker ;
 
@@ -1715,15 +1874,22 @@ if ( require.main === module )
     return ;
   }
 
-  new Admin().isRunning ( function admin_is_running ( state )
+  if ( T.getProperty ( "gepard.zeroconf" ) )
   {
-    if ( state )
-    {
-      console.log ( "Already running" ) ;
-      return ;
-    }
     execute() ;
-  });
+  }
+  else
+  {
+    new Admin().isRunning ( function admin_is_running ( state )
+    {
+      if ( state )
+      {
+        console.log ( "Already running" ) ;
+        return ;
+      }
+      execute() ;
+    });
+  }
   function execute()
   {
     var logDir = Gepard.getLogDirectory() ;
@@ -1732,16 +1898,17 @@ if ( require.main === module )
     var b = new Broker() ;
     b.setConfig() ;
     b.listen() ;
+    var wse ;
+    b.on ( "shutdown", function onshutdown(e)
+    {
+      if ( wse ) wse.shutdown() ;
+      process.exit ( 0 ) ;
+    });
     if ( T.getBool ( "web", false ) )
     {
       var WebSocketEventProxy = require ( "./WebSocketEventProxy" ) ;
-      var wse = new WebSocketEventProxy() ;
+      wse = new WebSocketEventProxy() ;
       wse.listen() ;
-      b.on ( "shutdown", function onshutdown(e)
-      {
-        wse.shutdown() ;
-        process.exit ( 0 ) ;
-      });
     }
   }
 }

@@ -141,12 +141,13 @@ public class Client
   boolean _reconnect            = Util.getBool ( "gepard.reconnect", false ) ;
   static Hashtable<String,Client> _Instances = new Hashtable<String,Client>() ;
 
-	MutableTimer _Timer = new MutableTimer ( true ) ;
+	MutableTimer _Timer = new MutableTimer ( false ) ;
 	int version                  = 1 ;
 	int brokerVersion            = 0 ;
 	Map<String,Boolean> channels = null ;
 	String mainChannel           = null ;
 	String sid                   = null ;
+  Stats _stats                 = new Stats() ;
 	public void setChannel ( String channel )
 	{
 	  if ( channel == null ) return ;
@@ -224,6 +225,10 @@ public class Client
 		this ( port, null ) ;
 	}
 	public Client ( int port, String host )
+	{
+		_initialize ( port, host ) ;
+	}
+	private void _initialize ( int port, String host )
 	{
 		Handler h = new ConsoleHandler() ;
 		h.setFormatter ( new LFormatter() ) ;
@@ -350,6 +355,7 @@ public class Client
 	    e.setTargetIsLocalHost ( targetIsLocalHost ) ;
 	    e.setChannel ( mainChannel ) ;
 			String t = e.toJSON() ;
+	    _stats.incrementOut ( t.length() ) ;
 	    _out.write ( t, 0, t.length() ) ;
 	    _out.flush() ;
 
@@ -476,6 +482,7 @@ public class Client
   	_Instances.remove ( "" + this.host + ":" + this.port ) ;
 		_CallbackIsolator.awakeAll() ;
   	_emit ( "close", null ) ;
+  	_Timer.cancel() ;
 	}
 	public void emit ( String name )
 	throws IOException
@@ -585,6 +592,7 @@ public class Client
 		    e.setTargetIsLocalHost ( targetIsLocalHost ) ;
 		    e.setChannel ( mainChannel ) ;
 				String t = e.toJSON() ;
+		    _stats.incrementOut ( t.length() ) ;
 		    _out.write ( t, 0, t.length() ) ;
 		    _out.flush() ;
 			}
@@ -955,6 +963,10 @@ public class Client
 	        try
 	        {
 				    t = readNextJSON ( in ) ;
+				    if ( t != null )
+				    {
+				      _stats.incrementIn ( t.length() ) ;
+				    }
 	        }
 	        catch ( IOException exc )
 	        {
@@ -1415,7 +1427,7 @@ public class Client
           info.put ( "tracePointStatus", tracePointResult ) ;
 		    }
 		    else
-		    if ( e.getType().equals ( "client/info" ) )
+		    if ( e.getType().equals ( "client/info/" ) )
 		    {
 		      MBeanServer mbs = ManagementFactory.getPlatformMBeanServer() ;
 		      ObjectName on = new ObjectName ( "java.lang:type=OperatingSystem" ) ;
@@ -1503,4 +1515,47 @@ public class Client
     }
     return list ;
   }
+  public Stats getStats()
+  {
+  	return _stats ;
+  }
+	class Stats
+	{
+		int sum_in = 0 ;
+		int sum_out = 0 ;
+		int bytes_in = 0 ;
+		int bytes_out = 0 ;
+		int calls_in = 0 ;
+		int calls_out = 0 ;
+		Stats()
+		{
+
+		}
+	  public String toString()
+	  {
+	    return "{ sum: { out: " + sum_out + ", in: " + sum_in + "}\n"
+	         + "{ bytes: { out: " + bytes_out + ", in: " + bytes_in + "}\n"
+	         + "{ calls: { out: " + calls_out + ", in: " + calls_in + "}\n"
+	         ;
+	  }
+	  void clear()
+	  {
+	    calls_out = 0 ;
+	    calls_in = 0 ;
+	    bytes_out = 0 ;
+	    bytes_in = 0 ;
+	  }
+	  void incrementOut ( int n )
+	  {
+	    calls_out += 1 ; 
+	    sum_out += n ; 
+	    bytes_out += n ; 
+	  }
+	  void incrementIn ( int n)
+	  {
+	    calls_in += 1 ;
+	    sum_in += n ;
+	    bytes_in += n ;
+	  }
+	}
 }

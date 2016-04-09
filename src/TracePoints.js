@@ -1,6 +1,7 @@
 var T     = require ( "./Tango" ) ;
 var Event = require ( "./Event" ) ;
 var Log   = require ( "./LogFile" ) ;
+var util  = require ( "util" ) ;
 
 /**
  * { function_description }
@@ -55,7 +56,7 @@ TracePoint.prototype.log = function ( value )
       s += "\n" ;
     }
     var mode = this.mode ;
-    if ( ! mode ) mode = 'hb' ; // header and body
+    if ( ! mode ) mode = 'shb' ; // status header and body
     if ( mode === 'a' )
     {
       s += T.toString ( value ) ;
@@ -74,6 +75,11 @@ TracePoint.prototype.log = function ( value )
     if ( mode.indexOf ( 'c' ) >= 0 )
     {
       s += T.toString ( value.control ) ;
+      s += "\n" ;
+    }
+    if ( mode.indexOf ( 's' ) >= 0 )
+    {
+      s += T.toString ( value.getStatus() ) ;
       s += "\n" ;
     }
     if ( mode.indexOf ( 'b' ) >= 0 )
