@@ -1,4 +1,0 @@
-#!/usr/bin/env node
-process.env.tpoff = "true"
-if ( process.argv.length > 2 ) process.env.tpoff = process.argv[2] ;
-new (require ( "../src/Admin" ))().main() ;

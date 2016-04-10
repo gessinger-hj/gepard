@@ -1,3 +1,0 @@
-#!/usr/bin/env node
-process.env.tplist = "true"
-new (require ( "../src/Admin" ))().main() ;

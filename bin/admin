@@ -1,2 +1,0 @@
-#!/usr/bin/env node
-new (require ( "../src/Admin" ))().main() ;
