@@ -1,0 +1,53 @@
+#!/usr/bin/env node
+
+var T = require ( "../src/Tango" ) ;
+var Admin  = require ( "../src/Admin" ) ;
+
+new Admin().getNumberOfApplications ( "HttpSimple", function getNumberOfApplications ( n )
+{
+  if ( n >= 1 )
+  {
+    console.log ( "HttpSimple is already running" ) ;
+    return ;
+  }
+  if ( n < 0 )
+  {
+  }
+  execute() ;
+	return ;
+} ) ;
+
+function execute()
+{
+	var fs     = require ( 'fs' ) ;
+	var spawn  = require ( 'child_process' ).spawn ;
+	var Gepard = require ( "../src/Gepard" ) ;
+	var T      = require ( "../src/Tango" ) ;
+	var Path 	 = require ( "path" ) ;
+
+	var logDir = Gepard.getLogDirectory() ;
+
+	var dir = Path.join ( logDir, "gp.http.simple.log" ) ;
+
+	var args = [ Path.join ( __dirname, "../xmp/HttpSimple.js" ) ] ;
+	for ( var i = 2 ; i < process.argv.length ; i++ )
+	{
+		args.push ( process.argv[i] ) ;
+	}
+	if ( T.getProperty ( "help" ) )
+	{
+		var child = spawn ( 'node', args ) ;
+		child.stdout.on('data', function (data) {
+	  	console.log(""+data);
+		});
+		return ;
+	}
+	var out    = fs.openSync ( dir, 'w' ) ;
+	var err    = fs.openSync ( dir, 'w' ) ;
+
+	var child = spawn ( 'node', args, {
+		detached: true,
+		stdio: [ 'ignore', out, err ]
+	});
+	child.unref();
+}
