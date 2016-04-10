@@ -14,15 +14,22 @@ if ( require.main === module )
 		process.exit() ;
 	}
 
-	new gepard.Admin().isRunning ( function admin_is_running ( state )
+	if ( ! gepard.getProperty ( "gepard.zeroconf.type" ) )
 	{
-		if ( ! state )
+		new gepard.Admin().isRunning ( function admin_is_running ( state )
 		{
-			console.log ( "Not running on " + this.getHostPort() ) ;
-			process.exit ( 1 ) ;
-		}
+			if ( ! state )
+			{
+				console.log ( "Not running on " + this.getHostPort() ) ;
+				process.exit ( 1 ) ;
+			}
+			execute() ;
+		});
+	}
+	else
+	{
 		execute() ;
-	});
+	}
 	function execute()
 	{
 		var name = gepard.getProperty ( "name" ) ;

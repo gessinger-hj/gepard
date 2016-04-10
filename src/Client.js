@@ -65,6 +65,24 @@ Stats.prototype =
 var Client = function ( port, host )
 {
   EventEmitter.call ( this ) ;
+  this.socket                       = null ;
+  this.user                         = null ;
+  this.pendingEventList             = [] ;
+  this.pendingResultList            = {} ;
+  this.callbacks                    = {} ;
+  this.pendingEventListenerList     = [] ;
+  this.eventNameToListener          = new MultiHash() ;
+  this.listenerFunctionsList        = [] ;
+  this._pendingLockList             = [] ;
+  this._acquiredResources           = {} ;
+  this._ownedResources              = {} ;
+  this.alive                        = false ;
+  this.stopImediately               = false ;
+  this._acquiredSemaphores          = {} ;
+  this._ownedSemaphores             = {} ;
+  this._pendingAcquireSemaphoreList = [] ;
+  this.nameToActionCallback         = new MultiHash() ;
+
   var i = 0 ;
   if ( ! port && ! host )
   {
@@ -143,22 +161,6 @@ Client.prototype._initialize = function ( port, host )
   if ( ! this.port ) this.port      = T.getProperty ( "gepard.port", "17501" ) ;
   this.host                         = host ;
   if ( ! this.host ) this.host      = T.getProperty ( "gepard.host" ) ;
-  this.socket                       = null ;
-  this.user                         = null ;
-  this.pendingEventList             = [] ;
-  this.pendingResultList            = {} ;
-  this.callbacks                    = {} ;
-  this.pendingEventListenerList     = [] ;
-  this.eventNameToListener          = new MultiHash() ;
-  this.listenerFunctionsList        = [] ;
-  this._pendingLockList             = [] ;
-  this._acquiredResources           = {} ;
-  this._ownedResources              = {} ;
-  this.alive                        = false ;
-  this.stopImediately               = false ;
-  this._acquiredSemaphores          = {} ;
-  this._ownedSemaphores             = {} ;
-  this._pendingAcquireSemaphoreList = [] ;
   this._application                 = process.argv[1] ;
   this._stats                       = new Stats() ;
   if ( this._application )
@@ -194,7 +196,6 @@ Client.prototype._initialize = function ( port, host )
   this._reconnect               = T.getBool ( "gepard.reconnect", false ) ;
   this.version                  = 1 ;
   this.brokerVersion            = 0 ;
-  this.nameToActionCallback     = new MultiHash() ;
   TPStore.remoteTracer          = this.log.bind ( this ) ;
   this.channels ;
   this.mainChannel ;

@@ -7,8 +7,6 @@ General purpose communication and synchronization layer for distributed applicat
 - [Overview](#overview)
 - [What is new](#what-is-new)
 	- [Release 1-6-0 mDNS / Zeroconf](#release-1-6-0-mdns--zeroconf)
-		- [Zeronconf with the Broker](#zeronconf-with-the-broker)
-		- [Zeroconf with the client](#zeroconf-with-the-client)
 	- [Release 1-5-0 Channels](#release-1-5-0-channels)
 		- [Using Channels](#using-channels)
 			- [Event-listener](#event-listener)
@@ -62,6 +60,9 @@ General purpose communication and synchronization layer for distributed applicat
 - [The TracePoint Concept](#the-tracepoint-concept)
 	- [TracePoints in the Broker](#tracepoints-in-the-broker)
 	- [TracePoints in the Client](#tracepoints-in-the-client)
+- [Zeroconf Usage in Detail](#zeroconf-usage-in-detail)
+	- [Zeronconf on the Broker's Side](#zeronconf-on-the-brokers-side)
+	- [Zeroconf on the Client's Side](#zeroconf-on-the-clients-side)
 - [Technical Aspects of the Client](#technical-aspects-of-the-client)
 - [Found a bug? Help us fix it...](#found-a-bug-help-us-fix-it)
 - [https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md](#httpsgithubcomgessinger-hjgepardblobmasterchangelogmd)
@@ -139,184 +140,18 @@ Zeroconf mDNS plus DNS-SD: that is, multicast DNS plus DNS service discovery
 <br/>
 This technology is perfect to enhance the gepard based app communications.
 <br/>
+With Gepard it is such easy:
 
-### Zeronconf with the Broker
+1.	gp.broker --gepard.zeroconf=test-gepard,0
+<br/>type: __test-gepard__
+<br/>socket: __0__ (zero) means: any free port
+<br/>on any host in the subnet.
+1.	node xmp/Listener.js --gepard.zeroconf.type=test-gepard --gepard.reconnect=true
+<br/>Finds any Broker in the subnet which advertizes the service-type __test-gepard__
+<br/>If currently no service is available waits for service coming up.
+<br/>If service goes down a new lookup is done and all listeners are re-registered to the new found Broker.
 
-If configured the gepard Broker publishes a service in the local subnet and can be discovered by any interested client.
-<br/>
-The fully qualified domain name (FQDN) for the service consists out of 3 parts:
-
-1.	name, e.g. __Broker__
-
-1.	type, e.g. __gepard__
-
-1.	protocol, **tcp.local**
-
-The FQDN is derived from this parameters as: __Broker._gepard._tcp.local__
-<br/>
-This name and type can be defined by
-
-1.	an entry in the broker's json config
-<br/>
-	The form is either a comma separated list like
-
-	```js
-	{
-		"zeroconf": [<name>,]<type> [ ,<port>|0]
-	}
-	```
-	or
-	```js
-	{
-		"zeroconf": { "name":<name> , "type": <type> [ , "port": <port>|0] }
-	}
-	```
-1.	a startup parameter of the form: --gepard.zeroconv=[&lt;name>,]&lt;type>[,&lt;port>]
-1.	an environment variable of the form: export GEPARD_ZEROCONF=[&lt;name>,]&lt;type>[,&lt;port>]
-1.	calling the method broker.setZeroconfParameter ( [&lt;name>,]&lt;type> [ ,&lt;port>] )
-
-If only the &lt;type> is given the &lt;name> is choosen to be:
-```js
-Gepard-[H:<hostname>]-[P:<port>]
-```
-
-This postfix __-[H:&lt;hostname>]-[P:&lt;port>]__ is always appended to make the name unique.
-<br/>
-If the &lt;port> is not given the standard definitions are used.
-<br/>
-If the port is __exactly 0__ a random free port is choosen. Thus no special arrangement is needed for running a broker on the same machine.
-<br/>
-The __TXT__ segment contains a comma-list of all registered event-names as TOPIC entry and a comma-list of all channels as CHANNELS entry.
-<br/>
-With this information a client can make a profound decision whether to connect to a broker.
-
-### Zeroconf with the client
-
-Up to now only the JavaScript flavor works out of the box.
-<br/>
-Suppose the broker is started with __test-gepard,0__. (service-type is test-gepard and port is arbitrary)
-
-```js
-gp.broker --gepard.zeroconf=test-gepard,0
-```
-
-<br/>
-An interested listener would do the following:
-
-```js
-var gepard = require ( "gepard" ) ;
-var client = gepard.getClient ( { type: 'test-gepard' }, function acceptService ( service )
-{
-	// optional e.g.: ignore service which is not on localhost with:
-	// if ( ! service.isLocalhost() ) return false ;
-	return true ;
-} ) ;
-client.setReconnect ( true ) ; // This is for re-connect if broker dies.
-                               // in this case the above function __acceptService__ is re-used.
-client.on ( "ALARM", (e) => console.log ( e ) ) ; // The "ALARM" listener is registered.
-```
-
-or simpler:
-
-```js
-var client = gepard.getClient ( 'test-gepard' ) ;
-client.setReconnect ( true ) ;
-client.on ( "ALARM", (e) => console.log ( e ) ) ;
-```
-
-If a client uses no connection parameter it can be parametrised by
-
-*	start-parameter: --gepard.zeroconf.type=&lt;type>
-<br/>
-or
-<br/>
-*	environment-parameter: export GEPARD_ZEROCONF_TYPE=&lt;type>
-
-In this case the code to write is minimal:
-
-```js
-var client = gepard.getClient() ;
-client.setReconnect ( true ) ;
-client.on ( "ALARM", (e) => console.log ( e ) ) ;
-```
-
-Thus the behaviour of a client can be easily changed with only external parameters without
-any code-change.
-<br/>
-Example: [ZeroconfListener.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/ZeroconfListener.js)
-
-An interested emitter would do the following:
-
-```js
-var gepard = require ( "gepard" ) ;
-var client = gepard.getClient ( 'test-gepard', function acceptService ( service )
-{
-	if ( service.getTopics().indexOf ( "ALARM" ) < 0 ) // ignore if listener does not exist
-	{
-		return ;
-	}
-	client.emit ( "ALARM",
-	{
-	  write: function() // The event is sent -> end connection and exit
-	  {
-	    client.end() ;
-	  }
-	});
-	return true ;
-} ) ;
-```
-
-Example: [ZeroconfEmitter.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/ZeroconfEmitter.js)
-<br/>
-
-If no timout is specified the service lookup never ends if no valid broker is found.
-<br/>
-If a listener connects a broker renews its service advertisement. This leads to a recall of the
-interested client-callback and the event can be sent.
-
-The optional timout in milli-seconds is given as:
-
-var client = gepard.getClient ( <b>{ timeout:10000, type:'test-gepard' }</b>, &lt;callback> )
-
-The __service__ parameter can be used to get [more details:](https://github.com/gessinger-hj/gepard/blob/master/src/Service.js)
-
-*	service.getTopics()
-<br/>
-	list of registered event-names
-*	service.getChannels()
-<br/>
-	list of registered channels
-*	service.getHost()
-<br/>
-	host-name where the found broker is running.
-*	service.isLocalHost()
-<br/>
-	whether the found broker is on the same host as the client.
-
-If the client is configured to reconnect automatically in case the broker dies all existing event-names are re-registered upon
-connection to another discovered broker.
-<br/>
-This service- / broker-lookup is done as soon as the old broker has gone.
-<br/>
-__Conclusion: The set-up with one broker is no more a single point of failure.__
-<br/>
-In case of broker-failure all clients search another broker and register their listeners automatically.
-<br/>
-The method gepard.findService ( { type:&lt;type> }, callback ) can be used to discover all services in the subnet of given type.
-If the callback returns true the search ends.
-<br/>
-To monitor services the file MDNSLookup.js can be used.
-<br/>
-Example to find any service for a given type:
-
-```js
-gepard.findService ( { type:<type> }, (service) => {
-	if ( service.host === os.hostname() )
-	{
-		console.log ( service ) ;
-	  return true ;
-	});
-```
+See details in the chapter [Zeroconf Usage in Detail](#zeroconf-usage-in-detail)
 
 ## Release 1-5-0 Channels
 
@@ -1889,6 +1724,187 @@ Examples with 2 clients:
 	sid: '::ffff:127.0.0.1_44246_1452621873697',
 	applicationName: 'org.gessinger.gepard.xmp.Listener' }
 ```
+
+# Zeroconf Usage in Detail
+
+## Zeronconf on the Broker's Side
+
+If configured the gepard Broker publishes a service in the local subnet and can be discovered by any interested client.
+<br/>
+The fully qualified domain name (FQDN) for the service consists out of 3 parts:
+
+1.	name, e.g. __Broker__
+
+1.	type, e.g. __gepard__
+
+1.	protocol, **tcp.local**
+
+The FQDN is derived from this parameters as: __Broker._gepard._tcp.local__
+<br/>
+This name and type can be defined by
+
+1.	an entry in the broker's json config
+<br/>
+	The form is either a comma separated list like
+
+	```js
+	{
+		"zeroconf": [<name>,]<type> [ ,<port>|0]
+	}
+	```
+	or
+	```js
+	{
+		"zeroconf": { "name":<name> , "type": <type> [ , "port": <port>|0] }
+	}
+	```
+1.	a startup parameter of the form: --gepard.zeroconv=[&lt;name>,]&lt;type>[,&lt;port>]
+1.	an environment variable of the form: export GEPARD_ZEROCONF=[&lt;name>,]&lt;type>[,&lt;port>]
+1.	calling the method broker.setZeroconfParameter ( [&lt;name>,]&lt;type> [ ,&lt;port>] )
+
+If only the &lt;type> is given the &lt;name> is choosen to be:
+```js
+Gepard-[H:<hostname>]-[P:<port>]
+```
+
+This postfix __-[H:&lt;hostname>]-[P:&lt;port>]__ is always appended to make the name unique.
+<br/>
+If the &lt;port> is not given the standard definitions are used.
+<br/>
+If the port is __exactly 0__ a random free port is choosen. Thus no special arrangement is needed for running a broker on the same machine.
+<br/>
+The __TXT__ segment contains a comma-list of all registered event-names as TOPIC entry and a comma-list of all channels as CHANNELS entry.
+<br/>
+With this information a client can make a profound decision whether to connect to a broker.
+
+## Zeroconf on the Client's Side
+
+Up to now only the JavaScript flavor works out of the box.
+<br/>
+Suppose the broker is started with __test-gepard,0__. (service-type is test-gepard and port is arbitrary)
+
+```js
+gp.broker --gepard.zeroconf=test-gepard,0
+```
+
+<br/>
+An interested listener would do the following:
+
+```js
+var gepard = require ( "gepard" ) ;
+var client = gepard.getClient ( { type: 'test-gepard' }, function acceptService ( service )
+{
+	// optional e.g.: ignore service which is not on localhost with:
+	// if ( ! service.isLocalhost() ) return false ;
+	return true ;
+} ) ;
+client.setReconnect ( true ) ; // This is for re-connect if broker dies.
+                               // in this case the above function __acceptService__ is re-used.
+client.on ( "ALARM", (e) => console.log ( e ) ) ; // The "ALARM" listener is registered.
+```
+
+or simpler:
+
+```js
+var client = gepard.getClient ( 'test-gepard' ) ;
+client.setReconnect ( true ) ;
+client.on ( "ALARM", (e) => console.log ( e ) ) ;
+```
+
+If a client uses no connection parameter it can be parametrised by
+
+*	start-parameter: --gepard.zeroconf.type=&lt;type>
+<br/>
+or
+<br/>
+*	environment-parameter: export GEPARD_ZEROCONF_TYPE=&lt;type>
+
+In this case the code to write is minimal:
+
+```js
+var client = gepard.getClient() ;
+client.setReconnect ( true ) ;
+client.on ( "ALARM", (e) => console.log ( e ) ) ;
+```
+
+Thus the behaviour of a client can be easily changed with only external parameters without
+any code-change.
+<br/>
+Example: [ZeroconfListener.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/ZeroconfListener.js)
+
+An interested emitter would do the following:
+
+```js
+var gepard = require ( "gepard" ) ;
+var client = gepard.getClient ( 'test-gepard', function acceptService ( service )
+{
+	if ( service.getTopics().indexOf ( "ALARM" ) < 0 ) // ignore if listener does not exist
+	{
+		return ;
+	}
+	client.emit ( "ALARM",
+	{
+	  write: function() // The event is sent -> end connection and exit
+	  {
+	    client.end() ;
+	  }
+	});
+	return true ;
+} ) ;
+```
+
+Example: [ZeroconfEmitter.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/ZeroconfEmitter.js)
+<br/>
+
+If no timout is specified the service lookup never ends if no valid broker is found.
+<br/>
+If a listener connects a broker renews its service advertisement. This leads to a recall of the
+interested client-callback and the event can be sent.
+
+The optional timout in milli-seconds is given as:
+
+var client = gepard.getClient ( <b>{ timeout:10000, type:'test-gepard' }</b>, &lt;callback> )
+
+The __service__ parameter can be used to get [more details:](https://github.com/gessinger-hj/gepard/blob/master/src/Service.js)
+
+*	service.getTopics()
+<br/>
+	list of registered event-names
+*	service.getChannels()
+<br/>
+	list of registered channels
+*	service.getHost()
+<br/>
+	host-name where the found broker is running.
+*	service.isLocalHost()
+<br/>
+	whether the found broker is on the same host as the client.
+
+If the client is configured to reconnect automatically in case the broker dies all existing event-names are re-registered upon
+connection to another discovered broker.
+<br/>
+This service- / broker-lookup is done as soon as the old broker has gone.
+<br/>
+__Conclusion: The set-up with one broker is no more a single point of failure.__
+<br/>
+In case of broker-failure all clients search another broker and register their listeners automatically.
+<br/>
+The method gepard.findService ( { type:&lt;type> }, callback ) can be used to discover all services in the subnet of given type.
+If the callback returns true the search ends.
+<br/>
+To monitor services the file MDNSLookup.js can be used.
+<br/>
+Example to find any service for a given type:
+
+```js
+gepard.findService ( { type:<type> }, (service) => {
+	if ( service.host === os.hostname() )
+	{
+		console.log ( service ) ;
+	  return true ;
+	});
+```
+
 
 # Technical Aspects of the Client
 
