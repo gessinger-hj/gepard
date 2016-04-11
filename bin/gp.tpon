@@ -1,4 +1,9 @@
 #!/usr/bin/env node
 process.env.tpon = "true"
-if ( process.argv.length > 2 ) process.env.tpon = process.argv[2] ;
+for ( var i = 2 ; i < process.argv.length ; i++ )
+{
+	if ( process.argv[i].startsWith ( "--" ) ) continue ;
+	process.env.tpon = process.argv[i] ;
+	break ;
+}
 new (require ( "../src/Admin" ))().main() ;

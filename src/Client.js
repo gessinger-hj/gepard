@@ -86,7 +86,7 @@ var Client = function ( port, host )
   var i = 0 ;
   if ( ! port && ! host )
   {
-    port = gepard.getProperty ( "gepard.zeroconf.type" ) ;
+    port = T.getProperty ( "gepard.zeroconf.type" ) ;
   }
   if ( typeof port === 'string' && isNaN ( parseInt ( port ) ) )
   {

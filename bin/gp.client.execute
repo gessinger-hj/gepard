@@ -1,13 +1,10 @@
 #!/usr/bin/env node
 process.env.client = "true" ;
 process.env.action = "execute" ;
-var i = 2
-if ( process.argv.length > 2 )
+for ( var i = 2 ; i < process.argv.length ; i++ )
 {
-	if ( process.argv[2].indexOf ( "--" ) === 0 )
-	{
-		i++ ;
-	}
+	if ( process.argv[i].startsWith ( "--" ) ) continue ;
+  process.env.cmd = process.argv[i] ;
+	break ;
 }
-if ( process.argv.length > i ) process.env.cmd = process.argv[i] ;
 new (require ( "../src/Admin" ))().main() ;

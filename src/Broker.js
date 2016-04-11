@@ -905,7 +905,7 @@ Broker.prototype._sendEventToClients = function ( conn, e )
           if ( ! conn.fullQualifiedEventNames[fullName] ) continue ;
         }
 
-        if ( e.clone )
+        if ( e.control.clone )
         {
           e.control.clone.number = number++ ;
           e.control.clone.of = socketList.length ;

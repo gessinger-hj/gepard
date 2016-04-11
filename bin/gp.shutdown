@@ -4,14 +4,16 @@ T = require ( "../src/Tango" ) ;
 if ( T.getProperty  ( "help" ) )
 {
 	console.log ( "Gepard shutdown" ) ;
-	console.log ( "Usage:\tgp.shutdown [ applicationName | application sid ]" ) ;
+	console.log ( "Usage:\tgp.shutdown [ applicationName | sid ]" ) ;
 	console.log ( "\tapplicationName or sid from gp.info" ) ;
 	return ;
 }
 var id = null ;
-if ( process.argv.length > 1 )
+for ( var i = 2 ; i < process.argv.length ; i++ )
 {
-	id = process.argv[2] ;
+	if ( process.argv[i].startsWith ( "--" ) ) continue ;
+	id = process.argv[i] ;
+	break ;
 }
 new (require ( "../src/Admin" ))().shutdown(id) ;
 

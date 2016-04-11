@@ -1,5 +1,11 @@
 #!/usr/bin/env node
 process.env.client = "true" ;
 process.env.action = "info" ;
-if ( process.argv.length > 2 ) process.env.sid = process.argv[2] ;
+for ( var i = 2 ; i < process.argv.length ; i++ )
+{
+	if ( process.argv[i].startsWith ( "--" ) ) continue ;
+	process.env.sid = process.argv[i] ;
+	break ;
+}
+
 new (require ( "../src/Admin" ))().main() ;
