@@ -127,9 +127,18 @@ There is a separate program for administration purposes:
 node_modules/.bin/gp.info
 ```
 or
+
 ```bash
 node_modules/.bin/gp.admin [ --help ]
 ```
+There is a special command for service-lookup:
+```bash
+node_modules/.bin/gp.lookup --gepard.zeronconf.type=<type-name>
+e.g.:
+node_modules/.bin/gp.lookup --gepard.zeronconf.type=test-gepard
+```
+This command lists all service-instances with the service-type __test-gepard__ in the local subnet.
+
 # What is new
 
 ## Release 1-6-0 mDNS / Zeroconf
@@ -480,7 +489,7 @@ To configure this hook a __subclass__ of __ConnectionHook__ must be implemented 
 	"connectionHook": "<path-to-javascript-code>/XmpConnectionHook"
 }
 ```
-This hook file is __require'd__ with the start of the broker.
+This hook file is __required__ with the start of the broker.
 <br/>
 In this case the command to start the broker is:
 <br/>

@@ -25,10 +25,12 @@ else
 }
 function execute()
 {
+	console.log ( "Note: does not start the websocket-proxy any more." ) ;
+	console.log ( "To include start of the websocket-proxy use gp.broker.web instead." ) ;
 	var logDir = Gepard.getLogDirectory() ;
 	var dir = Path.join ( logDir, "gp.broker.log" ) ;
 
-	var args = [ Path.join ( __dirname, "../src/Broker" ), "--web" ] ;
+	var args = [ Path.join ( __dirname, "../src/Broker" ) ] ;
 	for ( var i = 2 ; i < process.argv.length ; i++ )
 	{
 		args.push ( process.argv[i] ) ;

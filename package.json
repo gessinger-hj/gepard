@@ -49,8 +49,10 @@
   },
   "bin": {
     "gp.admin": "./bin/gp.admin",
+    "gp.lookup": "./bin/gp.lookup",
     "gp.broker": "./bin/gp.broker",
-    "gp.broker.no.web": "./bin/gp.broker.no.web",
+    "gp.broker.web": "./bin/gp.broker.web",
+    "gp.broker.no.web": "./bin/gp.broker",
     "gp.shutdown": "./bin/gp.shutdown",
     "gp.info": "./bin/gp.info",
     "gp.http.simple": "./bin/gp.http.simple",

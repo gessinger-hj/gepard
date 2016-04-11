@@ -13,12 +13,28 @@ var gepard = require ( "gepard" ) ;
  */
 var Admin = function ( port, host )
 {
-	this.port = gepard.getProperty ( "gepard.port", port ) ;
+	this.port = port ;
+	this.host = host ;
 	if ( ! this.port )
 	{
-		this.port = 17501 ;
+		var hp = this.host = gepard.getProperty ( "gepard" ) ;
+		if ( hp )
+		{
+			if ( ! isNaN ( parseInt ( hp ) ) )
+			{
+				this.port = parseInt ( hp ) ;
+			}
+			else
+			if ( hp.indexOf ( ":" ) > 0 )
+			{
+				this.host = hp.substring ( 0, hp.indexOf ( ":" ) ) ;
+				this.port = parseInt ( hp.substring ( hp.indexOf ( ":" ) + 1 ) ) ;
+			}
+		}
 	}
-	this.host = gepard.getProperty ( "gepard.host", host ) ;
+	if ( ! this.port ) this.port = gepard.getProperty ( "gepard.port" ) ;
+	if ( ! this.host ) this.host = gepard.getProperty ( "gepard.host" ) ;
+	if ( ! this.port ) this.port = 17501 ;
 };
 /**
  * method getPort
@@ -446,7 +462,7 @@ Admin.prototype.client = function ( p )
 	}
 // console.log ( "name=" + name ) ;
 	var util = require ( "util" ) ;
-	var c = gepard.getClient() ;
+	var c = gepard.getClient ( this.port, this.host ) ;
 	c.setReconnect ( false ) ;
   var n = 0 ;
 
@@ -479,7 +495,7 @@ Admin.prototype.client = function ( p )
   	}
   }, parameter );
 };
-Admin.prototype.main = function ()
+Admin.prototype.main = function()
 {
 	var what = gepard.getProperty ( "help" ) ;
 	if ( what )
@@ -648,6 +664,7 @@ console.log ( "n=" + n ) ;
 		return ;
 	}
 	what = gepard.getProperty ( "info", "true" ) ;
+
 	if ( what )
 	{
 		if ( what !== "true" )
@@ -661,12 +678,30 @@ console.log ( "n=" + n ) ;
 		return ;
 	}
 	return ;
-}
+};
+Admin.prototype.lookup = function()
+{
+	var zc = gepard.getProperty ( "gepard.zeroconf.type" ) ;
+	if ( ! zc )
+	{
+		console.log ( "lookup: Missing option --gepard.zeroconf.type=<>" ) ;
+		return ;
+	}
+  gepard.findService ( { type:zc, timeout:5000 }, function client_findService ( srv )
+  {
+    try
+    {
+      console.log ( srv.host + ":" + srv.port ) ;
+    }
+    catch ( exc )
+    {
+      console.log ( exc ) ;
+    }
+  } ) ;
+};
 module.exports = Admin ;
 if ( require.main === module )
 {
-	var port = gepard.getProperty ( "gepard.port", 17501 ) ; 
-	var host = gepard.getProperty ( "gepard.host" ) ;
-	var ad = new Admin ( port, host ) ;
+	var ad = new Admin() ;
 	ad.main() ;
 }
