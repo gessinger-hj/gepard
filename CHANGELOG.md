@@ -1,3 +1,6 @@
+## 1.6.0 (2016-04-11)
+- Zeroconv JavaScript.
+
 ## 1.5.0 (2016-02-04)
 - Channels.
 
