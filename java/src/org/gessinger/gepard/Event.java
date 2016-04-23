@@ -291,27 +291,27 @@ public class Event
   }
   public Object getValue ( String name )
   {
-    return this.body.get ( name ) ;
+    return jsa().value ( name ) ;
   }
   public Object getBodyValue ( String name )
   {
-    return this.body.get ( name ) ;
+    return getValue ( name ) ;
   }
   public void putValue ( String name, Object obj )
   {
-    this.body.put ( name, obj ) ;
+    jsa().add ( name, obj ) ;
   }
   public Object removeValue ( String name )
   {
-    return body.remove ( name ) ;
+    return jsa().remove ( name ) ;
   }
   public void putBodyValue ( String name, Object obj )
   {
-    this.body.put ( name, obj ) ;
+    putValue ( name, obj ) ;
   }
   public String getBodyString ( String name )
   {
-    return (String) this.body.get ( name ) ;
+    return (String) getValue ( name ) ;
   }
   public void sendBack()
   throws Exception

@@ -204,6 +204,7 @@ final public class Util
   static
   {
     _classNameToFullClassName.put ( "FileContainer", "org.gessinger.gepard.FileContainer" ) ;
+    // _classNameToFullClassName.put ( "User", "org.gessinger.gepard.User" ) ;
   }
   static void addClassNameToFullClassName ( String className, String fullClassName )
   {

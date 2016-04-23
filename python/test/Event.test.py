@@ -22,7 +22,6 @@ except ImportError:
 from glob import glob
 
 e = gepard.Event ( "__FILE__" )
-
 # e.setUser ( gepard.User ( "gess" ) )
 
 e.putValue ( "STRING", "TEXT" )
@@ -43,6 +42,6 @@ print ( "e.isResult()=" + str ( e.isResult() ) )
 t = e.serialize()
 print ( t )
 ee = gepard.Event.deserialize ( t )
-print ( e.getStatus() )
-print ( ee )
+print ( ee.getStatus() )
+print ( ee.getUser() )
 

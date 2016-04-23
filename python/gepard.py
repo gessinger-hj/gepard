@@ -47,6 +47,7 @@ class Event ( object ):
 			self.name = obj["name"]
 			if 'type' in obj and obj["type"] != None:
 				self.type = obj["type"]
+			self.user = obj.get('user')
 			self.control = obj["control"]
 			self.body = obj["body"]
 			return
@@ -247,7 +248,8 @@ class Event ( object ):
 			className = obj['className']
 			if className != "Event":
 				clazz = globals()[className]
-				return clazz(obj)
+				u = clazz(obj)
+				return u
 		return obj
 
 class User ( object ):
@@ -259,6 +261,7 @@ class User ( object ):
 			self.key = obj.get("key")
 			self._pwd = obj.get("_pwd")
 			self.rights = obj.get("rights")
+			self.groups = obj.get("groups")
 			return
 
 		self.className = "User"
@@ -282,6 +285,7 @@ class User ( object ):
 		s.write(",_pwd=" + "******" )
 		s.write(",key=" + str(self.key) )
 		s.write(",rights=" + str(self.rights) )
+		s.write(",groups=" + str(self.groups) )
 		s.write("]")
 		return s.getvalue()
 

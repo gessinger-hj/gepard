@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="get-project-version" default="get-project-version">
+
+	<target name="check-package.json-and-node">
+	  <available file="${build.root}/../../package.json" property="package.json.present"/>
+	</target>
+	<target name="get-project-version" depends="check-package.json-and-node" if="package.json.present">
+	  <echo message="package.json.present: ${package.json.present}" />
+	  <exec dir="${build.root}/../.." executable="node" outputproperty="version">
+	    <arg value="-e"/>
+	    <arg value="console.log(require('./package.json').version);"/>
+	  </exec>
+	</target>
+</project>

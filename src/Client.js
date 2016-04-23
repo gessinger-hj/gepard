@@ -1108,7 +1108,6 @@ Client.prototype.emit = function ( params, callback, opts )
   {
     ctx.hasCallbacks = true ;
   }
-
   var socketExists = !! this.socket ;
   if ( this.pendingEventList.length || ! socketExists )
   {
