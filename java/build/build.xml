@@ -1,25 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="VX 3.0" default="Gepard">
+<project name="Gepard" default="Gepard">
 	<property environment="env"/>
+  <property file="build.properties"/>
 	<property name="build.root" value="${ant.file}/../" />
-  <!-- <property file="build.properties" /> -->
 
-  <property name="source.dir" value="${build.root}/../src"/>
   <property name="external.lib.dir" value="${build.root}/../lib"/>
   <property name="bin.dir" value="java-classes"/>
   <property name="target.dir" value="${external.lib.dir}"/>
 
-  <!-- <property name="default.classpath" value="${bin.dir}:${external.lib.dir}/gson-2.3.1.jar:${external.lib.dir}/jmdns.jar"/> -->
-  <property name="default.classpath" value="${bin.dir}:${external.lib.dir}/gson-2.3.1.jar"/>
+  <property name="default.classpath" value="${bin.dir}"/>
 
-  <target name="Gepard" depends=".prepare ">
-    <ant antfile="Gepard.build.xml" />
+  <target name="Gepard" depends=".prepare, get-project-version">
+    <ant antfile="compile.build.xml" />
   </target>
-  <tstamp>
-    <format property="build.time" pattern="yyyy-MM-dd HH.mm:ss"/>
-  </tstamp>
   <target name=".prepare">
     <mkdir dir="${bin.dir}"/>
     <mkdir dir="${target.dir}"/>
   </target>
+  <import file="get-project-version.xml" />
 </project>

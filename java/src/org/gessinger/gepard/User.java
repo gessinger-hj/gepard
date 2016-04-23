@@ -13,7 +13,8 @@ public class User
   int key          = -1 ;
   String _pwd      = null ;
   HashMap<String,String> rights = new HashMap<String,String>() ;
-  private User ()
+  HashMap<String,Object> groups = new HashMap<String,Object>() ;
+  User ()
   {
   }
   public User ( String id )
@@ -32,7 +33,9 @@ public class User
   }
   public String toString()
   {
-    return "(User)[id=" + id + ",key=" + key + "]\n[rights=" + Util.toString ( rights ) + "]" ;
+    return "(User)[id=" + id + ",key=" + key + "]\n[rights=" + Util.toString ( rights ) + "]"
+    + "\n[groups=" + Util.toString ( groups ) + "]"
+    ;
   }
   public String getId()
   {
@@ -57,5 +60,9 @@ public class User
   public String getRight ( String name )
   {
     return rights.get ( name ) ;
+  }
+  public Map<String,Object> getGroups()
+  {
+    return groups ;
   }
 }

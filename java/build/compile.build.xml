@@ -1,29 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="compile" default="compile">
+  <tstamp>
+    <format property="build.time" pattern="yyyy-MM-dd HH.mm:ss"/>
+  </tstamp>
+
   <target name="compile" depends="setSourceDir1, setSourceDir2, compileOnly, buildJar" />
-  <target name="compileOnly" depends="editClassPath1, editClassPath2, excludeFiles" >
+  <target name="compileOnly" depends="editClassPath1, editClassPath2" >
     <delete dir="${bin.dir}/org/"/>
     <delete file="${target.dir}/${jar.file}"/>
     <property name="class.files" value="**/*.class" />
+    <path id="lib.path.ref">
+      <fileset dir="${external.lib.dir}" includes="*.jar"/>
+    </path>
     <javac debug="on" optimize="on"
-			source="1.6"
-			target="1.6"
+      source="1.7"
+      target="1.7"
       srcdir="${sourcedir}"
       destdir="${bin.dir}"
-      classpath="${classpath}"
+      classpath="${classpath}:${toString:lib.path.ref}"
       includes="${source.files}"
       excludes="${exclude.files}"
     />
   </target>
   <target name="buildJar">
     <property name="main.class" value="" />
+    <echo message="version: ${version}" />
     <jar destfile="${target.dir}/${jar.file}" compress="true">
-      <fileset dir="${bin.dir}" includes="${include.files} ${class.files}"/>
-      <fileset dir="${source.dir}" includes="${include.files}"/>
+      <fileset dir="${bin.dir}" includes="${class.files}"/>
+      <!-- <fileset dir="${source.dir}" includes="${include.files}"/> -->
       <manifest>
       	<attribute name="Main-Class" value="${main.class}"/>
         <attribute name="Built-By" value="${user.name}"/>
       	<attribute name="Build-Time" value="${build.time}"/>
+        <attribute name="Implementation-Title" value="Example"/>
+        <attribute name="Implementation-Version" value="${version} ${TODAY}"/>
+        <attribute name="Implementation-Vendor" value="Hans-Jürgen Gessinger"/>
       </manifest>
     </jar>
   </target>
@@ -33,9 +44,6 @@
   <target name="editClassPath2" unless="add.classpath" >
     <property name="classpath" value="${default.classpath}" />
   </target>
-  <target name="excludeFiles" unless="exclude.files" >
-    <property name="exclude.files" value="XXXX" />
-  </target >
   <target name="setSourceDir1" if="add.source.dir" >
     <property name="sourcedir" value="${source.dir}:${add.source.dir}" />
   </target >
