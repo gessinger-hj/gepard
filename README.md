@@ -190,7 +190,7 @@ There are 3 different possibilities to subscribe to one or more channels:
 
 2.	Regardless of the client's channel-membership a shortcut for registering a listener for a specific channel is:
 	<br/>
-	client.on ( &lt;channel-name>__::__&lt;event-name>, &lt;callback> )
+	client.on ( &lt;channel-name&gt;**::**&lt;event-name&gt;, &lt;callback> )
 	<br/>
 	As seen the channel-name and the event-name are concatenated with to colons (__::__).
 	<br/>
@@ -218,7 +218,7 @@ There are 2 different possibilities to emit an event on a channel:
 	The event can only be sent on one channel the so-called main-channel.
 	<br/>
 	By default the main-channel is the first in the comma-list of channel-names.
-	This may be changed by prefixing the appropriate channel-name with a asterisk (__*__)
+	This may be changed by prefixing the appropriate channel-name with an asterisk (__*__)
 	<br/>
 	Example: client.setChannel ( "A,B,<b>*</b>C" )
 	<br/>
@@ -228,7 +228,7 @@ There are 2 different possibilities to emit an event on a channel:
 	<br/>
 	client.emit ( &lt;channel-name>__::__&lt;event-name> )
 	<br/>
-	Example: client.emit ( "A__::__alarm" )
+	Example: client.emit ( "A**::**alarm" )
 
 3.	Simple external channel assignment:
 	-	Start the appropriate application with the option
