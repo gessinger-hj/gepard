@@ -7,6 +7,13 @@ except ImportError:
 
 from io import BytesIO
 
+zeroconfExists = False
+try:
+	from zeroconf import ServiceBrowser, Zeroconf
+	zeroconfExists = True
+except:
+	zeroconfExists = False
+
 import json
 import inspect
 import time
@@ -32,7 +39,12 @@ try:
 except NameError:
 	basestring = str
 
-import inspect
+def isInt(i):
+	try:
+		int(i)
+	except:
+		return False
+	return True
 
 class Event ( object ):
 	def __init__ (self,name,type=None,body=None):
@@ -436,7 +448,65 @@ class PatternContext:
 		self.cb = cb ;
 	def matches ( self, t ):
 		return self.p.match ( t )
-
+# -----------------------------------------------------------------------------------------
+class ZeroconfFindServiceAdapter(object):
+	def __init__(self,client,callback,first=True):
+		self.client   = client
+		self.callback = callback
+		self.host     = None
+		self.port     = None
+		self.TOPICS   = None
+		self.CHANNELS = None
+		self.first    = first
+	def remove_service(self, zeroconf, type, name):
+		# print("Service %s removed" % (name,))
+		pass
+	def add_service(self, zeroconf, type, name):
+			info = zeroconf.get_service_info(type, name)
+			self.parse_fqdn ( name )
+			if self.first:
+				self.client.init2 ( self.port, self.host )
+			answer = self.callback ( self.client, self )
+			if answer:
+				self.client.zeroconf.close()
+				self.client.zeroconf = None
+				self.client._condition.acquire()
+				try:
+					self.client._condition.notify_all()
+				except Exception as e:
+					raise
+				finally:
+					self.client._condition.release()
+				return
+			return
+	def parse_fqdn(self,fqdn):
+		# print("Service found: %s" % (fqdn)) bn
+		self.host     = self.extractFromPartFqdn ( fqdn, "H" )
+		self.port     = self.extractFromPartFqdn ( fqdn, "P" )
+		self.TOPICS   = self.extractFromPartFqdn ( fqdn, "T" )
+		self.CHANNELS = self.extractFromPartFqdn ( fqdn, "C" )
+	def __str__(self):
+		s = StringIO()
+		s.write("(")
+		s.write(self.__class__.__name__)
+		s.write(")[host=")
+		s.write(self.host)
+		s.write(",port=" + str(self.port) )
+		s.write(",TOPICS=" + str(self.TOPICS) )
+		s.write(",CHANNELS=" + str(self.CHANNELS) )
+		s.write("]" )
+		return s.getvalue()
+	def extractFromPartFqdn (self,name,tag):
+		pos1 = name.find ( "[" + str(tag) + ":" )
+		if pos1 < 0: return None
+		pos2 = name.find ( "]", pos1 )
+		part = name[pos1+3:pos2]
+		if tag == "H":
+			part = part.replace ( "-", "." )
+		if tag == "T" or tag == "C":
+			part = part.split ( ',' )
+		return part
+# -----------------------------------------------------------------------------------------
 class Client:
 	counter = 0
 	_Instances = {}
@@ -456,10 +526,60 @@ class Client:
 		return client
 
 	def __init__(self, port=None, host=None):
+		self.zeroconf  = None
+		self.connected = False
+		self._lock     = None
+		self.zeroconf_based_pending_list = None
+		self.userServiceLookupParameter  = None
+		self.userServiceLookupCallback   = None
+		if port == None and host == None:
+			port = util.getProperty ( "gepard.zeroconf.type" )
+
+		localhost = True
+		if isinstance ( port, str ) and not isInt(port):
+			port = { "type": port }
+		if isinstance ( port, dict ) and not isinstance ( host, types.FunctionType ):
+			if port["type"].find ( "localhost:" ) == 0:
+				port["type"] = port["type"][ len("localhost:"):]
+      
+			def auto_client_findService ( self, srv ):
+				print ( srv )
+				return True
+
+			host = auto_client_findService
+
+		if isinstance ( port, dict ) and isinstance ( host, types.FunctionType ):
+			self.zeroconf_based_pending_list = []
+			self.userServiceLookupParameter = port
+			self.userServiceLookupCallback  = host
+			self.zeroconf_lookup()
+		else:
+			self.init2 ( port, host )
+
+	def zeroconf_lookup(self,first=True):
+		if self._lock == None:
+			self._lock = threading.Lock()
+			self._condition = threading.Condition ( self._lock )
+		self._condition.acquire()
+		self.zeroconf = Zeroconf()
+		listener = ZeroconfFindServiceAdapter(self,self.userServiceLookupCallback,first)
+		type = "_" + str(self.userServiceLookupParameter["type"]) + "._tcp.local."
+		browser = ServiceBrowser(self.zeroconf, type, listener)
+		try:
+			self._condition.wait()
+		except Exception as e:
+			raise
+		finally:
+			self._condition.release()
+		self.port = int(listener.port)
+		self.host = listener.host
+
+	def init2(self, port=None, host=None):
 		if self.TPStore == None:
 			self.TPStore = TracePointStore.getStore ( "client" )
 			self.TPStore.add ( "EVENT_IN" ).setTitle ( "--------------------------- EVENT_IN ---------------------------" )
 			self.TPStore.add ( "EVENT_OUT" ).setTitle ( "--------------------------- EVENT_OUT --------------------------" )
+
 
 		self._first                 = False
 		self.infoCallbacks          = MultiMap()
@@ -558,13 +678,11 @@ class Client:
 			e = Event ( "system", "addEventListener" )
 			e.body["eventNameList"] = nameList
 			e.setUniqueId ( self.createUniqueId() )
-
 			self._Timer.stop()
-			print ( "re-connect in progress with events: " + str ( nameList ) )
 			self._emit ( "reconnect", str ( nameList ) )
 			self._send ( e )
 		except Exception as exc:
-			pass
+			self.sock = None
 			# print ( exc )
 
 	def setReconnect ( self, state ):
@@ -923,7 +1041,7 @@ class Client:
 					self.sock.shutdown ( socket.SHUT_RDWR )
 					self.sock.close()
 				except Exception as exc:
-					print ( exc )
+					# print ( exc )
 			key = str(self.port) + ":" + str(self.host)
 			if key in self._Instances:
 				del self._Instances[key]
@@ -933,7 +1051,11 @@ class Client:
 			self._ownedResources     = {}
 			self._NQ_lockEvents.awakeAll()
 			self.sock = None
-			self._Timer.start()
+			if self.userServiceLookupCallback != None:
+				self.zeroconf_lookup(False)
+				self._checkReconnect()
+			else:
+				self._Timer.start()
 		except Exception as e:
 			print ( e )
 

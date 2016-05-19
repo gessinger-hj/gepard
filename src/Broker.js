@@ -1704,12 +1704,15 @@ Broker.prototype.publishService = function()
   var channelNames = this._channelNameToSockets.getKeys() ;
   channelNames = channelNames.join ( ',' ) ;
   var name = this.zeroconf.name
-           + "-[H:" + os.hostname()
+           + "-[H:" + os.hostname().replace ( /\./g, "-")
            + "]-[P:" + this.port
-           // + "]-[PID:" + process.pid
-           // + "]-[T:" + eventNames
-           // + "]-[C:" + channelNames
-           + "]" ;
+           // + "-P:" + this.port
+           + "]-[T:" + eventNames
+           // + "-T:" + eventNames
+           + "]-[C:" + channelNames
+           // + "-C:" + channelNames
+           + "]"
+           ;
   this.bonjour.publish ( { name: name
                          , type: this.zeroconf.type
                          , port: this.zeroconf.port

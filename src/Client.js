@@ -84,6 +84,7 @@ var Client = function ( port, host )
   this.nameToActionCallback         = new MultiHash() ;
 
   var i = 0 ;
+  var localhost = false
   if ( ! port && ! host )
   {
     port = T.getProperty ( "gepard.zeroconf.type" ) ;
@@ -94,22 +95,19 @@ var Client = function ( port, host )
   }
   if ( typeof port === 'object' && typeof host !== 'function' )
   {
-    if ( typeof host !== 'function' )
+    if ( port.type.startsWith ( "localhost:" ) )
     {
-      if ( port.type.startsWith ( "localhost:" ) )
-      {
-        localhost = true ;
-        port.type = port.type.substring ( "localhost:".length ) ;
-      }
-      host = function auto_client_findService ( srv )
-      {
-        if ( localhost && ! srv.isLocalHost() )
-        {
-          return ;
-        }
-        return true ;
-      } ;
+      localhost = true ;
+      port.type = port.type.substring ( "localhost:".length ) ;
     }
+    host = function auto_client_findService ( srv )
+    {
+      if ( localhost && ! srv.isLocalHost() )
+      {
+        return ;
+      }
+      return true ;
+    } ;
   }
   if ( typeof port === 'object' && typeof host === 'function' )
   {

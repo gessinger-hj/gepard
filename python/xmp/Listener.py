@@ -14,7 +14,7 @@ if name == None:
 	name = "ALARM,BLARM"
 name = name.split ( ',' )
 
-client = gepard.Client.getInstance()
+client = gepard.Client() #gepard.Client.getInstance()
 # client.setDaemon ( True )
 client.setReconnect ( True ) # // Reconnection requested
 tp = client.registerTracePoint ( "BLARM_REMOVED" )
@@ -62,5 +62,5 @@ print ( "Listening for " + str ( name ) )
 client.on ( name, on_ABLARM )
 
 gepard.util.exitWithSIGINT()
-time.sleep(int('0x7FFFFFFF',16))
+time.sleep(100000) #int('0x7FFFFFFF',16))
 
