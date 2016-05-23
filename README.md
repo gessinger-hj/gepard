@@ -1882,9 +1882,7 @@ or simpler:
 ```py
 def on_ALARM ( event ):
 	print ( event )
-client = gepard.Client.getInstance('test-gepard')
-client.setReconnect ( True )
-client.on ( "ALARM", on_ALARM )
+gepard.Client.getInstance('test-gepard').setReconnect ( True ).on ( "ALARM", on_ALARM )
 ```
 
 Example: [ZeroconfListener.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/ZeroconfListener.py)
