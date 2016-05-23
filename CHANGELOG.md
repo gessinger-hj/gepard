@@ -1,3 +1,6 @@
+## 1.6.0 (2016-05-23)
+- Zeroconv Python.
+
 ## 1.6.0 (2016-04-11)
 - Zeroconv JavaScript.
 

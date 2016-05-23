@@ -130,26 +130,8 @@ from glob import glob
 # ret = _NQ.get ( "ID17" )
 # print ( "ret=" + ret )
 
-def extractFromPartFqdn (name,tag):
-	pos1 = name.find ( "[" + str(tag) + ":" )
-	if pos1 < 0: return None
-	pos2 = name.find ( "]", pos1 )
-	part = name[pos1+3:pos2]
-	if tag == "H":
-		part = part.replace ( "-", "." )
-	if tag == "T" or tag == "C":
-		part = part.split ( ',' )
-	return part
-
-name = "Gepard-[H:alghero-fritz-box]-[P:49555]-[T:ALARM,BLARM]-[C:]._test-gepard._tcp.local"
-
-host = extractFromPartFqdn ( name, "H" )
-print	( "host="+str(host))
-port = extractFromPartFqdn ( name, "P" )
-print	( "port="+str(port))
-TOPICS = extractFromPartFqdn ( name, "T" )
-print	( "TOPICS="+str(TOPICS))
-CHANNELS = extractFromPartFqdn ( name, "C" )
-print	( "CHANNELS="+str(CHANNELS))
+import socket
+print(socket.gethostname())
+print(socket.gethostbyname(socket.gethostname()))
 
 

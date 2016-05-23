@@ -984,7 +984,7 @@ Client.prototype.log = function ( messageText, callback )
  */
 Client.prototype.fire = function ( params, callback )
 {
-  this.emit ( params, callback, null ) ;
+  return this.emit ( params, callback, null ) ;
 };
 /**
  * Description
@@ -1138,6 +1138,7 @@ Client.prototype.emit = function ( params, callback, opts )
       if ( ctx.write ) ctx.write.apply ( thiz, arguments ) ;
     } ) ;
   }
+  return this ;
 };
 /**
  * Description
@@ -1265,6 +1266,7 @@ Client.prototype.addEventListener = function ( eventNameList, callback )
     var thiz = this ;
     this.send ( e ) ;
   }
+  return this ;
 };
 /**
  * Description
@@ -1289,6 +1291,7 @@ Client.prototype.on = function ( eventName, callback )
     }
   }
   this.addEventListener ( eventName, callback ) ;
+  return this ;
 };
 Client.prototype.onAction = function ( cmd, desc, callback )
 {

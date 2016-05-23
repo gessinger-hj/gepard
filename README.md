@@ -6,7 +6,8 @@ General purpose communication and synchronization layer for distributed applicat
 
 - [Overview](#overview)
 - [What is new](#what-is-new)
-	- [Release 1-6-0 mDNS / Zeroconf](#release-1-6-0-mdns--zeroconf)
+	- [Release 1-6-1 mDNS Zeroconf for Python](#release-1-6-1-mdns-zeroconf-for-python)
+	- [Release 1-6-0 mDNS Zeroconf](#release-1-6-0-mdns-zeroconf)
 	- [Release 1-5-0 Channels](#release-1-5-0-channels)
 		- [Using Channels](#using-channels)
 			- [Event-listener](#event-listener)
@@ -141,21 +142,43 @@ This command lists all service-instances with the service-type __test-gepard__ i
 
 # What is new
 
-## Release 1-6-0 mDNS / Zeroconf
+## Release 1-6-1 mDNS Zeroconf for Python
+
+This release introduces the __zeroconf__ mechanism for __Python__.
+The mechanism is set up as close as possible to the JavaScript version.
+Before you can use this mechanism the __python-module zeroconf must be installed__.
+This is done with the command: __pip install zeroconf__. On OSX and Linux/Unix this is a trivial task.
+On Windows it is more complicated so you have to read the installation documentation for this module carefully.
 
 Zero-configuration networking (zeroconf) is a set of technologies that automatically creates a usable computer network based on the Internet Protocol Suite (TCP/IP) when computers or network peripherals are interconnected. It does not require manual operator intervention or special configuration servers.
-<br/>
-Zeroconf mDNS plus DNS-SD: that is, multicast DNS plus DNS service discovery
-<br/>
+Zeroconf mDNS plus DNS-SD: that is, multicast DNS plus DNS service discovery.
 This technology is perfect to enhance the gepard based app communications.
-<br/>
 With Gepard it is such easy:
 
-1.	gp.broker --gepard.zeroconf=test-gepard,0
+1.	__gp.broker --gepard.zeroconf=test-gepard,0__
 <br/>type: __test-gepard__
-<br/>socket: __0__ (zero) means: any free port
-<br/>on any host in the subnet.
-1.	node xmp/Listener.js --gepard.zeroconf.type=test-gepard --gepard.reconnect=true
+<br/>socket: __0__ (zero) means: any free port of the host
+
+1.	__python Listener.py --gepard.zeroconf.type=test-gepard --gepard.reconnect=true__
+<br/>Finds any Broker in the subnet which advertizes the service-type __test-gepard__
+<br/>If currently no service is available waits for service coming up.
+<br/>If service goes down a new lookup is done and all listeners are re-registered to the new found Broker.
+
+See details in the chapter [Zeroconf Usage in Detail](#zeroconf-usage-in-detail)
+
+
+## Release 1-6-0 mDNS Zeroconf
+
+Zero-configuration networking (zeroconf) is a set of technologies that automatically creates a usable computer network based on the Internet Protocol Suite (TCP/IP) when computers or network peripherals are interconnected. It does not require manual operator intervention or special configuration servers.
+Zeroconf mDNS plus DNS-SD: that is, multicast DNS plus DNS service discovery.
+This technology is perfect to enhance the gepard based app communications.
+With Gepard it is such easy:
+
+1.	__gp.broker --gepard.zeroconf=test-gepard,__
+<br/>type: __test-gepard__
+<br/>socket: __0__ (zero) means: any free port of the host
+
+1.	__node xmp/Listener.js --gepard.zeroconf.type=test-gepard --gepard.reconnect=true__
 <br/>Finds any Broker in the subnet which advertizes the service-type __test-gepard__
 <br/>If currently no service is available waits for service coming up.
 <br/>If service goes down a new lookup is done and all listeners are re-registered to the new found Broker.
@@ -1768,8 +1791,12 @@ This name and type can be defined by
 	}
 	```
 1.	a startup parameter of the form: --gepard.zeroconv=[&lt;name>,]&lt;type>[,&lt;port>]
-1.	an environment variable of the form: export GEPARD_ZEROCONF=[&lt;name>,]&lt;type>[,&lt;port>]
-1.	calling the method broker.setZeroconfParameter ( [&lt;name>,]&lt;type> [ ,&lt;port>] )
+
+1.	an environment variable of the form:
+		export GEPARD_ZEROCONF=[&lt;name>,]&lt;type>[,&lt;port>]
+
+1.	calling the method
+		broker.setZeroconfParameter ( [&lt;name>,]&lt;type> [ ,&lt;port>] )
 
 If only the &lt;type> is given the &lt;name> is choosen to be:
 ```js
@@ -1779,17 +1806,26 @@ Gepard-[H:<hostname>]-[P:<port>]
 This postfix __-[H:&lt;hostname>]-[P:&lt;port>]__ is always appended to make the name unique.
 <br/>
 If the &lt;port> is not given the standard definitions are used.
-<br/>
 If the port is __exactly 0__ a random free port is choosen. Thus no special arrangement is needed for running a broker on the same machine.
-<br/>
 The __TXT__ segment contains a comma-list of all registered event-names as TOPIC entry and a comma-list of all channels as CHANNELS entry.
-<br/>
-With this information a client can make a profound decision whether to connect to a broker.
+With this an interested client can choose a a Broker depending on this information e.g. with the methods
+
+*	service.topicExists(&lt;topic-name&gt;) and
+
+* service.channelExists(&lt;channel-name&gt;)
+
+This convention is expanded because of the lack of proper parsing the __TXT__ segment of the advertised service in the python zeroconf-module.
+In addition to the __TXT__ segment the advertised service-name contains the comma-lists of topics and channels if given.
+The format is:
+
+[T:topic1,topic2,...] and [C:channel1,channel2,...]
+
+With this information a client can make a profound decision whether to connect to a found broker or ignore it and search another instance.
 
 ## Zeroconf on the Client's Side
 
-Up to now only the JavaScript flavor works out of the box.
-<br/>
+Up to now only the JavaScript and Python flavors works out of the box. The native Java only library JmDNS is not reliable.
+
 Suppose the broker is started with __test-gepard,0__. (service-type is test-gepard and port is arbitrary)
 
 ```js
@@ -1798,6 +1834,8 @@ gp.broker --gepard.zeroconf=test-gepard,0
 
 <br/>
 An interested listener would do the following:
+
+__JavaScript__
 
 ```js
 var gepard = require ( "gepard" ) ;
@@ -1808,7 +1846,7 @@ var client = gepard.getClient ( { type: 'test-gepard' }, function acceptService 
 	return true ;
 } ) ;
 client.setReconnect ( true ) ; // This is for re-connect if broker dies.
-                               // in this case the above function __acceptService__ is re-used.
+                               // in this case the above function <b>acceptService</b> is re-used.
 client.on ( "ALARM", (e) => console.log ( e ) ) ; // The "ALARM" listener is registered.
 ```
 
@@ -1820,28 +1858,72 @@ client.setReconnect ( true ) ;
 client.on ( "ALARM", (e) => console.log ( e ) ) ;
 ```
 
+Example: [ZeroconfListener.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/ZeroconfListener.js)
+
+__Python__
+```py
+import gepard
+
+def acceptService ( client, service ):
+	# optional e.g.: ignore service which is not on localhost with:
+	# if not service.isLocalhost() return False
+	return True
+
+def on_ALARM ( event ):
+	print ( event )
+
+client = gepard.Client.getInstance('test-gepard',acceptService)
+client.setReconnect ( True )
+client.on ( "ALARM", on_ALARM )
+```
+
+or simpler:
+
+```py
+def on_ALARM ( event ):
+	print ( event )
+client = gepard.Client.getInstance('test-gepard')
+client.setReconnect ( True )
+client.on ( "ALARM", on_ALARM )
+```
+
+Example: [ZeroconfListener.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/ZeroconfListener.py)
+
 If a client uses no connection parameter it can be parametrised by
 
-*	start-parameter: --gepard.zeroconf.type=&lt;type>
-<br/>
-or
-<br/>
-*	environment-parameter: export GEPARD_ZEROCONF_TYPE=&lt;type>
+*	start-parameter: --gepard.zeroconf.type=[__localhost__:]&lt;type> or
+
+*	environment-parameter: export GEPARD_ZEROCONF_TYPE=[__localhost__:]&lt;type>
+
+__localhost:__ is optional and indicates to include only Broker running on the same host.
 
 In this case the code to write is minimal:
+
+__JavaScript__
 
 ```js
 var client = gepard.getClient() ;
 client.setReconnect ( true ) ;
 client.on ( "ALARM", (e) => console.log ( e ) ) ;
 ```
+__Python__
+
+```py
+def on_ALARM ( event ):
+	print ( event )
+
+client = gepard.Client.getInstance()
+client.setReconnect ( True )
+client.on ( "ALARM", on_ALARM )
+```
 
 Thus the behaviour of a client can be easily changed with only external parameters without
 any code-change.
 <br/>
-Example: [ZeroconfListener.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/ZeroconfListener.js)
 
 An interested emitter would do the following:
+
+__JavaScript__
 
 ```js
 var gepard = require ( "gepard" ) ;
@@ -1861,8 +1943,25 @@ var client = gepard.getClient ( 'test-gepard', function acceptService ( service 
 	return true ;
 } ) ;
 ```
+__Python__
+```py
+def acceptService ( client, service ):
+	print ( service )
+	if service.isLocalHost():
+		client.emit ( "ALARM" )
+		client.close()
+		return True
+	return False
 
-Example: [ZeroconfEmitter.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/ZeroconfEmitter.js)
+client = gepard.Client.getInstance ( 'test-gepard', acceptService )
+```
+
+or with external parametrisation use simply the simple Emitter.py in python/xmp and start it as:
+```py
+python Emitter.py --gepard.zeroconf.type=test-gepard
+```
+
+Example: [ZeroconfEmitter.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/ZeroconfEmitter.js),[ZeroconfEmitter.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/ZeroconfListener.py)
 <br/>
 
 If no timout is specified the service lookup never ends if no valid broker is found.
@@ -1874,7 +1973,7 @@ The optional timout in milli-seconds is given as:
 
 var client = gepard.getClient ( <b>{ timeout:10000, type:'test-gepard' }</b>, &lt;callback> )
 
-The __service__ parameter can be used to get [more details:](https://github.com/gessinger-hj/gepard/blob/master/src/Service.js)
+The __service__ ([JavaScript](https://github.com/gessinger-hj/gepard/blob/master/src/Service.js),[Python](https://github.com/gessinger-hj/gepard/blob/master/python/gepard.py)) parameter can be used to get
 
 *	service.getTopics()
 <br/>

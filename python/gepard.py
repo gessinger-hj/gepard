@@ -479,6 +479,8 @@ class ZeroconfFindServiceAdapter(object):
 					self.client._condition.release()
 				return
 			return
+	def isLocalHost(self):
+		return socket.gethostname() == self.host
 	def parse_fqdn(self,fqdn):
 		# print("Service found: %s" % (fqdn)) bn
 		self.host     = self.extractFromPartFqdn ( fqdn, "H" )
@@ -506,6 +508,14 @@ class ZeroconfFindServiceAdapter(object):
 		if tag == "T" or tag == "C":
 			part = part.split ( ',' )
 		return part
+	def getChannels(self):
+		return self.CHANNELS
+	def getTopics(self):
+		return self.TOPICS
+	def topicExists(self,topic):
+		return topic in self.TOPICS
+	def channelExists(self,channel):
+		return channel in self.CHANNELS
 # -----------------------------------------------------------------------------------------
 class Client:
 	counter = 0
@@ -514,6 +524,24 @@ class Client:
 
 	@classmethod
 	def getInstance ( clazz, port=None, host=None ):
+		if port == None and host == None:
+			port = util.getProperty ( "gepard.zeroconf.type" )
+
+		localhost = False
+		if isinstance ( port, str ) and not isInt(port):
+			port = { "type": port }
+		if isinstance ( port, dict ) and not isinstance ( host, types.FunctionType ):
+			if port["type"].find ( "localhost:" ) == 0:
+				port["type"] = port["type"][ len("localhost:"):]
+				localhost = True
+      
+			def auto_client_findService ( self, srv ):
+				print ( srv )
+				if localhost and not srv.isLocalHost():
+					return False
+				return True
+			host = auto_client_findService
+
 		if host == None: host = util.getProperty ( "gepard.host", "localhost" )
 		if port == None: port = util.getProperty ( "gepard.port", 17501 )
 		key = str(port) + ":" + str(host)
@@ -532,22 +560,24 @@ class Client:
 		self.zeroconf_based_pending_list = None
 		self.userServiceLookupParameter  = None
 		self.userServiceLookupCallback   = None
+
 		if port == None and host == None:
 			port = util.getProperty ( "gepard.zeroconf.type" )
 
-		localhost = True
+		localhost = False
 		if isinstance ( port, str ) and not isInt(port):
 			port = { "type": port }
 		if isinstance ( port, dict ) and not isinstance ( host, types.FunctionType ):
 			if port["type"].find ( "localhost:" ) == 0:
 				port["type"] = port["type"][ len("localhost:"):]
+				localhost = True
       
 			def auto_client_findService ( self, srv ):
 				print ( srv )
+				if localhost and not srv.isLocalHost():
+					return False
 				return True
-
 			host = auto_client_findService
-
 		if isinstance ( port, dict ) and isinstance ( host, types.FunctionType ):
 			self.zeroconf_based_pending_list = []
 			self.userServiceLookupParameter = port
@@ -687,6 +717,7 @@ class Client:
 
 	def setReconnect ( self, state ):
 		self._reconnect = state == True
+		return self
 
 	def setDaemon(self,status=True):
 		self._workerIsDaemon = status
@@ -739,7 +770,7 @@ class Client:
 		e.body["eventNameList"] = eventNameList
 		e.setUniqueId ( self.createUniqueId() )
 		self._send ( e )
-
+		return self
 	def remove ( self, eventNameOrFunction ):
 		self.removeEventListener ( eventNameOrFunction )
 	def removeEventListener ( self, eventNameOrFunction ):
@@ -897,7 +928,7 @@ class Client:
 		# print	( e )
 		if callback != None:
 			self.callbacks[e.getUniqueId()] = callback
-
+		return self
 	def _handleSystemClientMessages(self,e):
 		try:
 			info = {}
@@ -1042,6 +1073,7 @@ class Client:
 					self.sock.close()
 				except Exception as exc:
 					# print ( exc )
+					pass
 			key = str(self.port) + ":" + str(self.host)
 			if key in self._Instances:
 				del self._Instances[key]

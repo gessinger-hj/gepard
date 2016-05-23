@@ -26,6 +26,8 @@ Service.prototype.getPort = function() { return this.port ; } ;
 Service.prototype.getHost = function() { return this.host ; } ;
 Service.prototype.getTopics = function() { return this.topics ; } ;
 Service.prototype.getChannels = function() { return this.channels ; } ;
+Service.prototype.topicExists = function ( channel ) { return this.channels.indexOf ( channel ) >= 0 }
+Service.prototype.topicExists = function ( topic ) { return this.topics.indexOf ( topic ) >= 0 }
 Service.prototype.isReconnect = function() { return this._isReconnect ; } ;
 Service.prototype.setIsReconnect = function ( state ) { this._isReconnect = state ; } ;
 Service.prototype.toString = function()
