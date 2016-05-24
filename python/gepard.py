@@ -11,7 +11,8 @@ zeroconfExists = False
 try:
 	from zeroconf import ServiceBrowser, Zeroconf
 	zeroconfExists = True
-except:
+except Exception as e:
+	print ( e )
 	zeroconfExists = False
 
 import json
@@ -587,6 +588,8 @@ class Client:
 			self.init2 ( port, host )
 
 	def zeroconf_lookup(self,first=True):
+		if not zeroconfExists:
+			raise Exception ( "module zeroconf is not installed. Please execute: pip install zeroconf." )
 		if self._lock == None:
 			self._lock = threading.Lock()
 			self._condition = threading.Condition ( self._lock )
@@ -601,7 +604,8 @@ class Client:
 			raise
 		finally:
 			self._condition.release()
-		self.port = int(listener.port)
+		if listener.port != None:
+			self.port = int(listener.port)
 		self.host = listener.host
 
 	def init2(self, port=None, host=None):
