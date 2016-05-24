@@ -6,7 +6,7 @@ General purpose communication and synchronization layer for distributed applicat
 
 - [Overview](#overview)
 - [What is new](#what-is-new)
-	- [Release 1-6-1 mDNS Zeroconf for Python](#release-1-6-1-mdns-zeroconf-for-python)
+	- [Release 1-7-0 mDNS Zeroconf for Python](#release-1-7-0-mdns-zeroconf-for-python)
 	- [Release 1-6-0 mDNS Zeroconf](#release-1-6-0-mdns-zeroconf)
 	- [Release 1-5-0 Channels](#release-1-5-0-channels)
 		- [Using Channels](#using-channels)
@@ -142,7 +142,7 @@ This command lists all service-instances with the service-type __test-gepard__ i
 
 # What is new
 
-## Release 1-6-1 mDNS Zeroconf for Python
+## Release 1-7-0 mDNS Zeroconf for Python
 
 This release introduces the __zeroconf__ mechanism for __Python__.
 The mechanism is set up as close as possible to the JavaScript version.
