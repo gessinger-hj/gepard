@@ -1,3 +1,6 @@
+## 1.7.1 (2016-05-23)
+- Removing hardcoded debug output
+
 ## 1.7.0 (2016-05-23)
 - Zeroconv Python.
 
