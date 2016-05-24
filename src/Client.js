@@ -251,6 +251,7 @@ Client.prototype.setReconnect = function ( state )
 {
   state = !! state ;
   this._reconnect = state ;
+  return this
 };
 Client.prototype.holdsLocksOrSemaphores = function()
 {
@@ -1287,7 +1288,7 @@ Client.prototype.on = function ( eventName, callback )
        )
     {
       EventEmitter.prototype.on.apply ( this, arguments ) ;
-      return ;
+      return this ;
     }
   }
   this.addEventListener ( eventName, callback ) ;

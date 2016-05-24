@@ -1806,7 +1806,7 @@ Gepard-[H:<hostname>]-[P:<port>]
 This postfix __-[H:&lt;hostname>]-[P:&lt;port>]__ is always appended to make the name unique.
 <br/>
 If the &lt;port> is not given the standard definitions are used.
-If the port is __exactly 0__ a random free port is choosen. Thus no special arrangement is needed for running a broker on the same machine.
+If the port is __exactly 0__ a random free port is choosen. Thus no special arrangement is needed for running several brokers on one machine.
 The __TXT__ segment contains a comma-list of all registered event-names as TOPIC entry and a comma-list of all channels as CHANNELS entry.
 With this an interested client can choose a a Broker depending on this information e.g. with the methods
 
@@ -1824,7 +1824,7 @@ With this information a client can make a profound decision whether to connect t
 
 ## Zeroconf on the Client's Side
 
-Up to now only the JavaScript and Python flavors works out of the box. The native Java only library JmDNS is not reliable.
+Up to now only the JavaScript and Python flavors works out of the box. There is no reliable pure Java implementation available.
 
 Suppose the broker is started with __test-gepard,0__. (service-type is test-gepard and port is arbitrary)
 
@@ -1882,9 +1882,7 @@ or simpler:
 ```py
 def on_ALARM ( event ):
 	print ( event )
-client = gepard.Client.getInstance('test-gepard')
-client.setReconnect ( True )
-client.on ( "ALARM", on_ALARM )
+gepard.Client.getInstance('test-gepard').setReconnect ( True ).on ( "ALARM", on_ALARM )
 ```
 
 Example: [ZeroconfListener.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/ZeroconfListener.py)
