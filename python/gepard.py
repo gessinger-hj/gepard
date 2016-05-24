@@ -12,7 +12,7 @@ try:
 	from zeroconf import ServiceBrowser, Zeroconf
 	zeroconfExists = True
 except Exception as e:
-	print ( e )
+	# print ( e )
 	zeroconfExists = False
 
 import json
