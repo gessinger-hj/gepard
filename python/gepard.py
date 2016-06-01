@@ -268,27 +268,29 @@ class Event ( object ):
 class User ( object ):
 	def __init__ ( self, id, key=None, pwd=None, rights=None ):
 		if isinstance ( id, dict ):
-			obj = id
-			self.className = self.__class__.__name__
-			self.id = obj.get("id")
-			self.key = obj.get("key")
-			self._pwd = obj.get("_pwd")
-			self.rights = obj.get("rights")
-			self.groups = obj.get("groups")
+			obj             = id
+			self.className  = self.__class__.__name__
+			self.id         = obj.get("id")
+			self.key        = obj.get("key")
+			self._pwd       = obj.get("_pwd")
+			self.rights     = obj.get("rights")
+			self.groups     = obj.get("groups")
+			self.attributes = obj.get("attributes")
 			return
 
-		self.className = "User"
-		self.id        = id
-		self.key       = key
-		self._pwd      = pwd
-		self.rights = {}
+		self.className  = "User"
+		self.id         = id
+		self.key        = key
+		self._pwd       = pwd
+		self.rights     = {}
+		self.groups     = {}
+		self.attributes = {}
 		if rights == None:
 			self.rights = {}
 		elif isinstance ( rights, dict ):
 			self.rights = rights
 		else:
 			raise ValueError ( "rights must be None or a dict, not: " + str(rights) + "(" + rights.__class__.__name__ + ")" )
-
 	def __str__(self):
 		s = StringIO()
 		s.write("(")
@@ -314,7 +316,12 @@ class User ( object ):
 		self.rights[name] = value
 	def getRight ( self, name ):
 		return self.rights[name]
-
+	def getAttributes(self):
+		return self.attributes
+	def getAttribute(self,name):
+		return self.attributes[name]
+	def getLanguage(self):
+		return self.getAttribute("lang")
 import socket, struct
 
 class CallbackWorker:

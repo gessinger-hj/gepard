@@ -14,6 +14,7 @@ public class User
   String _pwd      = null ;
   HashMap<String,String> rights = new HashMap<String,String>() ;
   HashMap<String,Object> groups = new HashMap<String,Object>() ;
+  HashMap<String,Object> attributes = new HashMap<String,Object>() ;
   User ()
   {
   }
@@ -35,6 +36,7 @@ public class User
   {
     return "(User)[id=" + id + ",key=" + key + "]\n[rights=" + Util.toString ( rights ) + "]"
     + "\n[groups=" + Util.toString ( groups ) + "]"
+    + "\n[attributes=" + Util.toString ( attributes ) + "]"
     ;
   }
   public String getId()
@@ -64,5 +66,21 @@ public class User
   public Map<String,Object> getGroups()
   {
     return groups ;
+  }
+  public Map<String,Object> getAttributes()
+  {
+    return attributes ;
+  }
+  public String getAttribute ( String name )
+  {
+    return (String)attributes.get ( name ) ;
+  }
+  public Object getObjectAttribute ( String name )
+  {
+    return attributes.get ( name ) ;
+  }
+  public String getLanguage()
+  {
+    return getAttribute ( "lang" ) ;
   }
 }

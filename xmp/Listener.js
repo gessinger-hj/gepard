@@ -74,10 +74,6 @@ if ( require.main === module )
 		{
 			console.log('reconnect: connection re-established');
 		});
-		// c.onActionInfo ( function ( cl, info )
-		// {
-		// 	info.add ( "kill", "Shut down this client." ) ;
-		// });
 		c.onAction ( "kill", function ( cl, cmd )
 		{
 			cmd.setResult ( "done") ;

@@ -1,3 +1,6 @@
+## 1.7.2 (2016-06-01)
+- mDNS via environment variables now works for simple JavaScript emitter (Emitter.js) by setting up an intermediate pending event list during service-lookup
+- User(.js,.java,.py) attributes/language
 ## 1.7.1 (2016-05-23)
 - Removing hardcoded debug output
 

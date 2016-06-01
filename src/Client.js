@@ -112,6 +112,7 @@ var Client = function ( port, host )
   if ( typeof port === 'object' && typeof host === 'function' )
   {
     this.zeroconf_based_pending_list = [] ;
+    this.zeroconf_based_pendingEventList = [] ;
     this.userServiceLookupCallback  = host ;
     this.userServiceLookupParameter = port ;
     var thiz                        = this ;
@@ -136,6 +137,14 @@ var Client = function ( port, host )
           {
             var o = list[i] ;
             thiz.addEventListener ( o.eventNameList, o.callback ) ;
+          }
+          list.length = 0 ;
+          list = thiz.zeroconf_based_pendingEventList ;
+          delete thiz["zeroconf_based_pendingEventList"] ;
+          for ( i = 0 ; i < list.length ; i++ )
+          {
+            var o = list[i] ;
+            thiz.emit ( o.params, o.callback, o.opts ) ;
           }
           list.length = 0 ;
           return true ;
@@ -487,7 +496,7 @@ Client.prototype.connect = function()
       if ( m.charAt ( 0 ) === '{' )
       {
         e = Event.prototype.deserialize ( m ) ;
-        // if ( e.getName() !== "system" )
+        if ( e.getName() !== "system" )
         {
           if ( TPStore.points["EVENT_IN"].isActive() )
           {
@@ -1000,6 +1009,11 @@ Client.prototype.fireEvent = function ( params, callback )
 };
 Client.prototype.emit = function ( params, callback, opts )
 {
+  if ( this.zeroconf_based_pendingEventList )
+  {
+    this.zeroconf_based_pendingEventList.push ( { params:params, callback:callback, opts:opts } ) ;
+    return ;
+  }
   if ( ! opts ) opts = {} ;
   var e = null, user, pos, name, channel ;
   if ( params instanceof Event )
@@ -1107,6 +1121,7 @@ Client.prototype.emit = function ( params, callback, opts )
   {
     ctx.hasCallbacks = true ;
   }
+
   var socketExists = !! this.socket ;
   if ( this.pendingEventList.length || ! socketExists )
   {
@@ -1584,7 +1599,7 @@ Client.prototype.send = function ( e )
   var json = e.serialize() ;
   this._stats.incrementOut ( json.length )
   this.getSocket().write ( json ) ;
-  // if ( e.getName() !== "system" )
+  if ( e.getName() !== "system" )
   {
     TPStore.points["EVENT_OUT"].log ( e ) ;
   }
