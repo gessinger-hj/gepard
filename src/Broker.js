@@ -37,7 +37,7 @@ var Connection = function ( broker, socket )
 {
   this.broker      = broker ;
   this.socket      = socket ;
-  this.client_info ;
+  this.client_info = undefined ;
   if ( ! this.socket.sid )
   {
     this.sid        = broker.hostname + "_" + process.pid + "_" + socket.remoteAddress + "_" + socket.remotePort + "_" + new Date().getTime() ;
@@ -47,7 +47,7 @@ var Connection = function ( broker, socket )
   {
     this.sid = socket.sid ;
   }
-  this.channels ;
+  this.channels = undefined ;
   this._lockedResourcesIdList                 = [] ;
   this._patternList                           = [] ;
   this._regexpList                            = [] ;
@@ -55,7 +55,7 @@ var Connection = function ( broker, socket )
   this._pendingAcquireSemaphoreRecourceIdList = [] ;
   this._numberOfPendingRequests               = 0 ;
   this._messageUidsToBeProcessed              = [] ;
-  this._isLocalHost ;
+  this._isLocalHost = undefined ;
   this._timeStamp                             = 0 ;
   this.fullQualifiedEventNames                = {} ;
   this.eventNameList                          = [] ;
@@ -149,19 +149,13 @@ Connection.prototype.write = function ( data )
   {
     if ( data instanceof Event )
     {
-      if ( data.getName() !== 'system' )
-      {
-        var t = this.client_info ? this.client_info.application : ""
+      var t = this.client_info ? this.client_info.application : "" ;
 
-        if ( data.getName() !== 'system' )
-        {
-          TPStore.points["EVENT_OUT"].log ( "--------------------------- EVENT_OUT --------------------------" ) ;
-          TPStore.points["EVENT_OUT"].log ( data.getName() + "/" + data.getType() + "-->" + t + "(" + this.sid + ")" ) ;
-          if ( data.isResult() )
-          {
-            TPStore.points["EVENT_OUT"].log ( data ) ;
-          }
-        }
+      var tp = TPStore.getTracePoint ( "EVENT_OUT" ) ;
+      if ( tp.isActive() && tp.includeSystem ) TPStore.log ( "EVENT_OUT", data.getName() + "/" + data.getType() + "-->" + t + "(" + this.sid + ")" ) ;
+      if ( data.isResult() )
+      {
+        TPStore.log ( "EVENT_OUT", data ) ;
       }
       this.setTimestamp() ;
       data.setTargetIsLocalHost ( this.isLocalHost() ) ;
@@ -375,9 +369,8 @@ Connection.prototype.getUSERNAME = function() { if ( ! this.client_info.USERNAME
 
 var TPStore = TracePoints.getStore ( "broker" ) ;
 
-TPStore.add ( "EVENT_IN" ) ;
-TPStore.add ( "EVENT_OUT" ) ;
-// TPStore.add ( "HEARTBEAT", true ) ;
+TPStore.add ( "EVENT_IN" ).setTitle ( "--------------------------- EVENT_IN ---------------------------" ) ;
+TPStore.add ( "EVENT_OUT" ).setTitle ( "--------------------------- EVENT_OUT ---------------------------" ) ;
 
 /**
  * @constructor
@@ -411,7 +404,7 @@ var Broker = function ( port, ip )
   this.server                              = net.createServer() ;
   for ( var kk in networkInterfaces )
   {
-    var ll = networkInterfaces[kk]
+    var ll = networkInterfaces[kk] ;
     for ( var ii = 0 ; ii < ll.length ; ii++ )
     {
       var oo = ll[ii] ;
@@ -603,11 +596,7 @@ Broker.prototype._ondata = function ( socket, chunk )
         socket.end() ;
         return ;
       }
-      // if ( e.getName() !== 'system' )
-      {
-        TPStore.points["EVENT_IN"].log ( "--------------------------- EVENT_IN ---------------------------" ) ;
-        TPStore.points["EVENT_IN"].log ( e ) ;
-      }
+      TPStore.log ( "EVENT_IN", e ) ;
 
       try
       {
@@ -1051,7 +1040,7 @@ Broker.prototype._handleSystemClientMessages = function ( conn, e )
       targetConn.write ( e ) ;
       numberOfEventsSent++ ;
     }
-  };
+  }
   if ( ! numberOfEventsSent )
   {
     e.setStatus ( 1, "warning", "no clients found for sid=" + ( sid ? sid : "*" ) ) ;
@@ -1106,7 +1095,7 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
     {
       conn.client_info.version = 0 ;
     }
-    conn.version         = conn.client_info.version
+    conn.version         = conn.client_info.version ;
     conn.client_info.sid = conn.sid ;
     CHANNEL = conn.client_info.channels ;
     if ( typeof CHANNEL === 'string' )
@@ -1477,7 +1466,7 @@ Broker.prototype._ejectSocket = function ( socket )
     delete this._lockOwner [ conn._lockedResourcesIdList ] ;
   }
   conn._lockedResourcesIdList.length = 0 ;
-  for ( var i = 0 ; i < conn._ownedSemaphoresRecourceIdList.length ; i++ )
+  for ( i = 0 ; i < conn._ownedSemaphoresRecourceIdList.length ; i++ )
   {
     rid = conn._ownedSemaphoresRecourceIdList[i] ;
     delete this._semaphoreOwner[rid] ;
@@ -1546,7 +1535,7 @@ Broker.prototype.listen = function ( port, callback )
     if ( thiz.zeroconf )
     {
       thiz.zeroconf.port = thiz.server.address().port ;
-      thiz.publishService()
+      thiz.publishService() ;
     }
     if ( typeof callback === 'function' )
     {
@@ -1738,11 +1727,12 @@ Broker.prototype.unpublishService = function()
  */
 Broker.prototype.setConfig = function ( configuration )
 {
+  var hbm = null ;
   var connectionHookIsFile = false ;
   var hook ;
   if ( ! configuration )
   {
-    configuration = T.getProperty ( "config" )
+    configuration = T.getProperty ( "config" ) ;
   }
   if ( typeof configuration === 'string' )
   {
@@ -1780,7 +1770,7 @@ Broker.prototype.setConfig = function ( configuration )
   this._connectionHook = new hook() ;
   if ( configuration.heartbeatMillis )
   {
-    var hbm = parseInt ( configuration.heartbeatMillis ) ;
+    hbm = parseInt ( configuration.heartbeatMillis ) ;
     if ( ! isNaN ( hbm ) ) this.heartbeatMillis = hbm ;
   }
   this.heartbeatMillis = T.getInt ( "gepard.heartbeat.millis", this.heartbeatMillis ) ;
@@ -1790,7 +1780,7 @@ Broker.prototype.setConfig = function ( configuration )
   {
     if ( configuration.maxMessageSize.endsWith ( "k" ) ) factor = 1000 ;
     if ( configuration.maxMessageSize.endsWith ( "m" ) ) factor = 1000000 ;
-    var hbm = parseInt ( configuration.maxMessageSize ) ;
+    hbm = parseInt ( configuration.maxMessageSize ) ;
     if ( ! isNaN ( hbm ) )
     {
       this._maxMessageSize = hbm * factor ;

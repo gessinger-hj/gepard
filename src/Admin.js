@@ -416,14 +416,16 @@ Admin.prototype.client = function ( p )
 		{
 			parameter.actionName = "tp" ;
 			parameter.output     = p.output ;
+			parameter.system     = p.system ;
 			parameter.points     = JSON.parse ( p.value )
-// gp.client.tp '[{"name":"BLARM_REMOVED","state":"on"},{"name":"EVENT_IN","state":"on"}]' --output=remote --sid=::ffff:127.0.0.1_30551_1449856585669
+// gp.client.tp '[{"name":"BLARM_REMOVED","state":"on"},{"name":"EVENT_IN","state":"on"}]' --system=true|false --output=remote --sid=::ffff:127.0.0.1_30551_1449856585669
 		}
 		else
 		if ( p.action.startsWith ( "tp" ) )
 		{
 			parameter.actionName = "tp" ;
 			parameter.output     = p.output ;
+			parameter.system     = p.system ;
 			if ( ! p.value ) p.value = "*" ;
 			var what = "toggle"
 			if ( p.action === "tpon" ) what = "on" ;
@@ -590,9 +592,13 @@ console.log ( "n=" + n ) ;
 		{
 			value = "" ;
 		}
-		var args   = gepard.getProperty ( "args" ) ;
-		var output = gepard.getProperty ( "output" ) ;
-		this.client ( { info:info, action:action, value:value, args: args, output: output } ) ;
+		this.client ( { info:info
+									, action:action
+									, value:value
+									, args: gepard.getProperty ( "args" )
+									, output: gepard.getProperty ( "output" )
+									, system: gepard.getProperty ( "system" )
+									} ) ;
 		return ;
 	}
 	what = gepard.getProperty ( "tp" ) ;
@@ -619,7 +625,7 @@ console.log ( "n=" + n ) ;
 		what = { "points":a } ;
 		for ( i = 0 ; i < l.length ; i++ )
 		{
-			a.push ( { "name": l[i], state:"on" } ) ;
+			a.push ( { "name": l[i], state:"on", "system":gepard.getProperty ( "system" ) } ) ;
 		}
 		this.tracePoint ( what ) ;
 		return ;
@@ -636,7 +642,11 @@ console.log ( "n=" + n ) ;
 		what = { "points":a } ;
 		for ( i = 0 ; i < l.length ; i++ )
 		{
-			a.push ( { "name": l[i], state:"off" } ) ;
+			a.push ( { "name": l[i]
+							 , state:"off"
+							 , system:gepard.getProperty ( "system" )
+							 }
+						 ) ;
 		}
 		this.tracePoint ( what ) ;
 		return ;

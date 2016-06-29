@@ -1,24 +1,23 @@
 var T     = require ( "./Tango" ) ;
 var Event = require ( "./Event" ) ;
 var Log   = require ( "./LogFile" ) ;
-var util  = require ( "util" ) ;
 
 /**
  * { function_description }
  *
  * @class      TracePoint
- * @param      {<type>}  name    { description }
- * @param      {<type>}  active  { description }
+ * @param      {string}  name    name of the tracepoint
+ * @param      {boolean}  active  true|false
  */
 var TracePoint = function ( name, active )
 {
-  this.active = !! active ;
-
-  this.name   = name ;
-  this.mode   = "" ;
-  this.store  = null ;
-  this.title  = "" ;
-  this.tracer = null ;
+  this.active        = !! active ;
+  this.name          = name ;
+  this.mode          = "" ;
+  this.store         = null ;
+  this.title         = "" ;
+  this.tracer        = null ;
+  this.includeSystem = false ;
 };
 /**
  * { function_description }
@@ -29,6 +28,7 @@ var TracePoint = function ( name, active )
 TracePoint.prototype.setTitle = function ( title )
 {
   this.title = title ;
+  return this ;
 };
 /**
  * { function_description }
@@ -50,6 +50,10 @@ TracePoint.prototype.log = function ( value )
   s = "" ;
   if ( value instanceof Event )
   {
+    if ( value.getName() === "system" && ! this.includeSystem )
+    {
+      return ;
+    }
     if ( this.title )
     {
       s += this.title ;
@@ -79,8 +83,11 @@ TracePoint.prototype.log = function ( value )
     }
     if ( mode.indexOf ( 's' ) >= 0 )
     {
-      s += T.toString ( value.getStatus() ) ;
-      s += "\n" ;
+      if ( value.getStatus() )
+      {
+        s += T.toString ( value.getStatus() ) ;
+        s += "\n" ;
+      }
     }
     if ( mode.indexOf ( 'b' ) >= 0 )
     {
@@ -103,6 +110,24 @@ TracePoint.prototype.isActive = function()
 {
   return this.active ;
 };
+TracePoint.prototype.action = function ( action )
+{
+  if ( ! action )
+  {
+    return ;
+  }
+  if ( typeof action.system !== 'undefined' )
+  {
+    if ( action.system == "true" )
+    {
+      this.includeSystem = true ;
+    }
+    else
+    {
+      this.includeSystem = false ;
+    }
+  }
+}
 /**
  * { function_description }
  *
@@ -111,15 +136,24 @@ TracePoint.prototype.isActive = function()
  */
 var TracePointStore = function ( name )
 {
-  this.points       = {} ;
-  this.name         = name ? name : "" ;
-  this.localTracer  = Log.logln.bind ( Log ) ;
-  this.remoteTracer = null ;
-  this.tracer       = this.localTracer ;
+  this.points        = {} ;
+  this.name          = name ? name : "" ;
+  this.localTracer   = Log.logln.bind ( Log ) ;
+  this.remoteTracer  = null ;
+  this.tracer        = this.localTracer ;
 };
 TracePointStore.prototype.getName = function()
 {
   return this.name ;
+};
+TracePointStore.prototype.log = function ( storeName, value )
+{
+  var tp = this.points[storeName] ;
+  if ( ! tp )
+  {
+    return ;
+  }
+  tp.log ( value ) ;
 };
 TracePointStore.prototype.add = function ( tp, isActive )
 {
@@ -152,6 +186,8 @@ TracePointStore.prototype.remove = function ( name )
 };
 TracePointStore.prototype.action = function ( action )
 {
+  var tp = null ;
+  var i, j, k ;
   if ( action && action.output )
   {
     if ( action.output === 'remote' )
@@ -163,7 +199,6 @@ TracePointStore.prototype.action = function ( action )
       this.tracer = this.localTracer ;
     }
   }
-  var i, j, k ;
   if ( action && action.points )
   {
     for ( i = 0 ; i < action.points.length ; i++ )
@@ -177,16 +212,18 @@ TracePointStore.prototype.action = function ( action )
           if ( item.state === 'off' ) this.points[k].active = false ;
           if ( item.state === 'toggle' ) this.points[k].active = ! this.points[k].active ;
           this.points[k].mode = item.mode ;
+          this.points[k].action ( item )
         }
         continue ;
       }
-      var tp = this.points[item.name] ;
+      tp = this.points[item.name] ;
       if ( tp )
       {
         if ( item.state === 'on' ) tp.active = true ;
         if ( item.state === 'off' ) tp.active = false ;
         if ( item.state === 'toggle' ) tp.active = ! tp.active ;
         tp.mode = item.mode ;
+        tp.action ( item )
       }
     }
   }
@@ -196,7 +233,11 @@ TracePointStore.prototype.action = function ( action )
     result["output"] = this.tracer == this.localTracer ? "local" : "remote" ;
     for ( k in this.points )
     {
-      result.list.push ( { name:this.points[k].name, active:this.points[k].active })
+      result.list.push ( { name:this.points[k].name
+                         , active:this.points[k].active
+                         , system:this.points[k].includeSystem
+                         }
+                       );
     }
   }
   return result ;

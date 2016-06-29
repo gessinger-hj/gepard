@@ -30,9 +30,9 @@ Stats.prototype =
   toString: function()
   {
     return "(Stats)[bytes-in=" + this.bytes.in
-              + "\n,bytes-out=" + this.bytes.out
-              + "\n]"
-              ;
+         + "\n,bytes-out=" + this.bytes.out
+         + "\n]"
+         ;
   },
   clear: function()
   {
@@ -84,7 +84,7 @@ var Client = function ( port, host )
   this.nameToActionCallback         = new MultiHash() ;
 
   var i = 0 ;
-  var localhost = false
+  var localhost = false ;
   if ( ! port && ! host )
   {
     port = T.getProperty ( "gepard.zeroconf.type" ) ;
@@ -122,6 +122,7 @@ var Client = function ( port, host )
       try
       {
         var service = new Service ( srv ) ;
+        var o ;
         thiz._initialize ( srv.port, srv.host ) ;
         var rc = thiz.userServiceLookupCallback ( service ) ;
         if ( ! rc )
@@ -135,7 +136,7 @@ var Client = function ( port, host )
           delete thiz["zeroconf_based_pending_list"] ;
           for ( i = 0 ; i < list.length ; i++ )
           {
-            var o = list[i] ;
+            o = list[i] ;
             thiz.addEventListener ( o.eventNameList, o.callback ) ;
           }
           list.length = 0 ;
@@ -143,7 +144,7 @@ var Client = function ( port, host )
           delete thiz["zeroconf_based_pendingEventList"] ;
           for ( i = 0 ; i < list.length ; i++ )
           {
-            var o = list[i] ;
+            o = list[i] ;
             thiz.emit ( o.params, o.callback, o.opts ) ;
           }
           list.length = 0 ;
@@ -182,7 +183,7 @@ Client.prototype._initialize = function ( port, host )
   var networkInterfaces                    = os.networkInterfaces() ;
   for ( var kk in networkInterfaces )
   {
-    var ll = networkInterfaces[kk]
+    var ll = networkInterfaces[kk] ;
     for ( var ii = 0 ; ii < ll.length ; ii++ )
     {
       var oo = ll[ii] ;
@@ -204,8 +205,8 @@ Client.prototype._initialize = function ( port, host )
   this.version                  = 1 ;
   this.brokerVersion            = 0 ;
   TPStore.remoteTracer          = this.log.bind ( this ) ;
-  this.channels ;
-  this.mainChannel ;
+  this.channels = undefined;
+  this.mainChannel = undefined ;
   this.setChannel ( T.getProperty ( "gepard.channel" ) ) ;
   this.sid                      = "" ;
 };
@@ -260,7 +261,7 @@ Client.prototype.setReconnect = function ( state )
 {
   state = !! state ;
   this._reconnect = state ;
-  return this
+  return this ;
 };
 Client.prototype.holdsLocksOrSemaphores = function()
 {
@@ -351,7 +352,7 @@ Client.prototype.connect = function()
     {
       if ( thiz.userServiceLookupParameter && thiz.userServiceLookupCallback )
       {
-        thiz._checkHeartbeat()
+        thiz._checkHeartbeat() ;
       }
       else
       {
@@ -368,7 +369,7 @@ Client.prototype.connect = function()
   });
   this.socket.on ( "connect", function()
   {
-    var json
+    var json ;
     thiz.brokerIsLocalHost() ;
     thiz.alive                      = true ;
     var client_info                 = new Event ( "system", "client_info" ) ;
@@ -383,6 +384,7 @@ Client.prototype.connect = function()
     json                            = client_info.serialize() ;
     thiz._stats.incrementOut ( json.length ) ;
     this.write ( json ) ;
+    var uid, ctx ;
 
     var i, j ;
     if ( thiz.pendingEventList.length )
@@ -390,8 +392,8 @@ Client.prototype.connect = function()
       for ( i = 0 ; i < thiz.pendingEventList.length ; i++ )
       {
         counter++ ;
-        var uid = os.hostname() + "_" + thiz.socket.localPort + "_" + new Date().getTime() + "_" + counter ;
-        var ctx = thiz.pendingEventList[i] ;
+        uid = os.hostname() + "_" + thiz.socket.localPort + "_" + new Date().getTime() + "_" + counter ;
+        ctx = thiz.pendingEventList[i] ;
         var e = ctx.e ;
         var resultCallback = ctx.resultCallback ;
         e.setUniqueId ( uid ) ;
@@ -403,7 +405,7 @@ Client.prototype.connect = function()
         e.setTargetIsLocalHost ( thiz.brokerIsLocalHost() ) ;
         e.setChannel ( thiz.mainChannel ) ;
         json = e.serialize() ;
-        thiz._stats.incrementOut ( json.length )
+        thiz._stats.incrementOut ( json.length ) ;
         this.write ( json, function()
         {
           if ( ctx.write ) ctx.write.apply ( thiz, arguments ) ;
@@ -416,8 +418,8 @@ Client.prototype.connect = function()
       for ( i = 0 ; i < thiz.pendingEventListenerList.length ; i++ )
       {
         counter++ ;
-        var uid = os.hostname() + "_" + this.localPort + "_" + new Date().getTime() + "_" + counter ;
-        var ctx = thiz.pendingEventListenerList[i] ;
+        uid = os.hostname() + "_" + this.localPort + "_" + new Date().getTime() + "_" + counter ;
+        ctx = thiz.pendingEventListenerList[i] ;
         ctx.e.setUniqueId ( uid ) ;
         thiz.send ( ctx.e ) ;
       }
@@ -428,8 +430,8 @@ Client.prototype.connect = function()
       for ( i = 0 ; i < thiz._pendingLockList.length ; i++ )
       {
         counter++ ;
-        var uid = os.hostname() + "_" + this.localPort + "_" + new Date().getTime() + "_" + counter ;
-        var ctx = thiz._pendingLockList[i] ;
+        uid = os.hostname() + "_" + this.localPort + "_" + new Date().getTime() + "_" + counter ;
+        ctx = thiz._pendingLockList[i] ;
         ctx.e.setUniqueId ( uid ) ;
         thiz.send ( ctx.e ) ;
         thiz._acquiredResources[ctx.e.body.resourceId] = ctx;
@@ -441,8 +443,8 @@ Client.prototype.connect = function()
       for ( i = 0 ; i < thiz._pendingAcquireSemaphoreList.length ; i++ )
       {
         counter++ ;
-        var uid = os.hostname() + "_" + this.localPort + "_" + new Date().getTime() + "_" + counter ;
-        var ctx = thiz._pendingAcquireSemaphoreList[i] ;
+        uid = os.hostname() + "_" + this.localPort + "_" + new Date().getTime() + "_" + counter ;
+        ctx = thiz._pendingAcquireSemaphoreList[i] ;
         ctx.e.setUniqueId ( uid ) ;
         thiz.send ( ctx.e ) ;
         thiz._acquiredSemaphores[ctx.e.body.resourceId] = ctx;
@@ -496,13 +498,7 @@ Client.prototype.connect = function()
       if ( m.charAt ( 0 ) === '{' )
       {
         e = Event.prototype.deserialize ( m ) ;
-        if ( e.getName() !== "system" )
-        {
-          if ( TPStore.points["EVENT_IN"].isActive() )
-          {
-            TPStore.points["EVENT_IN"].log ( e ) ;
-          }
-        }
+        TPStore.log ( "EVENT_IN", e ) ;
         // e._Client = thiz ;
         if ( e.isResult() )
         {
@@ -550,7 +546,7 @@ Client.prototype.connect = function()
           {
             thiz._private_emit ( "shutdown" ) ;
             if ( thiz._reconnect ) thiz._end ( true ) ;
-            else                   thiz._end()
+            else                   thiz._end() ;
             return ;
           }
           if ( e.getType().indexOf ( "client/" ) === 0 )
@@ -913,7 +909,7 @@ Client.prototype.request = function ( params, callback )
   }
   if ( typeof callback.result !== 'function' )
   {
-    throw new Error ( "Missing result function.")
+    throw new Error ( "Missing result function.") ;
   }
   this.emit ( params, callback, { isBroadcast:false } ) ;
 };
@@ -932,7 +928,7 @@ Client.prototype.broadcast = function ( params, callback )
   }
   if ( typeof callback.result !== 'function' )
   {
-    throw new Error ( "Missing result function.")
+    throw new Error ( "Missing result function.") ;
   }
   this.emit ( params, callback, { isBroadcast:true } ) ;
 };
@@ -946,7 +942,7 @@ Client.prototype.systemInfo = function ( callback, parameter )
   }
   if ( typeof callback.result !== 'function' )
   {
-    throw new Error ( "Missing result function.")
+    throw new Error ( "Missing result function.") ;
   }
   var e = new Event ( "system", parameter.name ) ;
   if ( parameter.sid )
@@ -979,9 +975,9 @@ Client.prototype.log = function ( messageText, callback )
     {
       callback.call ( this, messageText ) ;
     }
-    catch ( exc )
+    catch ( exc2 )
     {
-      console.log ( exc ) ;
+      console.log ( exc2 ) ;
     }
   }
 };
@@ -1036,7 +1032,7 @@ Client.prototype.emit = function ( params, callback, opts )
     e.setBody ( params.body ) ;
     e.setUser ( params.user ) ;
   }
-  if ( ! e.getUser() ) e.setUser ( this.user )
+  if ( ! e.getUser() ) e.setUser ( this.user ) ;
   if ( e.getName() === "system" && ! opts.internal )
   {
     throw new Error ( "Client.emit: eventName must not be 'system'" ) ;
@@ -1597,12 +1593,9 @@ Client.prototype.send = function ( e )
   e.setTargetIsLocalHost ( this.brokerIsLocalHost() ) ;
   e.setChannel ( this.mainChannel ) ;
   var json = e.serialize() ;
-  this._stats.incrementOut ( json.length )
+  this._stats.incrementOut ( json.length ) ;
   this.getSocket().write ( json ) ;
-  if ( e.getName() !== "system" )
-  {
-    TPStore.points["EVENT_OUT"].log ( e ) ;
-  }
+  TPStore.log ( "EVENT_OUT", e ) ;
   this._timeStamp = new Date().getTime() ;
 };
 /**
@@ -1646,12 +1639,12 @@ Client.prototype._handleSystemClientMessages = function ( e )
   try
   {
     var info = e.body.info = {} ;
-    var i, j, ctx, list, ai, al ;
+    var i, j, ctx, list, ai, al, tracePointResult ;
     if ( e.getType().startsWith ( "client/action/" ) )
     {
       if ( e.body.parameter.actionName === "tp" )
       {
-        var tracePointResult = TPStore.action ( e.body.parameter ) ;
+        tracePointResult = TPStore.action ( e.body.parameter ) ;
         if ( tracePointResult )
         {
           info.tracePointStatus = tracePointResult ;
@@ -1685,7 +1678,7 @@ Client.prototype._handleSystemClientMessages = function ( e )
       else
       if ( e.body.parameter.actionName === "execute" )
       {
-        var list = this.nameToActionCallback.get ( e.body.parameter.cmd ) ;
+        list = this.nameToActionCallback.get ( e.body.parameter.cmd ) ;
         if ( ! list )
         {
           e.control.status = { code:1, name:"error", reason:"no actions available for cmd=" + e.body.parameter.cmd } ;
@@ -1698,7 +1691,7 @@ Client.prototype._handleSystemClientMessages = function ( e )
           al = info.actionResult = [] ;
           for ( i = 0 ; i < list.length ; i++ )
           {
-            var ai = new ActionCmd ( e.body.parameter.cmd ) ;
+            ai = new ActionCmd ( e.body.parameter.cmd ) ;
             ai.parameter = e.body.parameter ;
             al.push ( ai ) ;
             list[i].callback.call ( this, this, ai ) ;
@@ -1725,7 +1718,7 @@ Client.prototype._handleSystemClientMessages = function ( e )
       else
       if ( e.getType().contains ( "/info/tp/" ) )
       {
-        var tracePointResult = TPStore.action ( e.body.tracePointActionList ) ;
+        tracePointResult = TPStore.action ( e.body.tracePointActionList ) ;
         if ( tracePointResult )
         {
           info.tracePointStatus = tracePointResult ;
