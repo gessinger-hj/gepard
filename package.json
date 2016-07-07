@@ -16,20 +16,15 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/gessinger-hj/gepard.git"
+    "url": "git+https://github.com/gessinger-hj/gepard.git"
   },
-  "author": {
-    "name": "Hans-Jürgen Gessinger",
-    "email": "gessinger.hj@gmail.com",
-    "url": ""
-  },
+  "author": "Hans-Jürgen Gessinger <gessinger.hj@gmail.com>",
   "licenses": [
     {
       "type": "MIT",
       "url": "https://github.com/gessinger-hj/gepard/LICENSE.md"
     }
   ],
-  "readmeFilename": "README.md",
   "bugs": {
     "url": "https://github.com/gessinger-hj/gepard/issues"
   },
@@ -70,5 +65,12 @@
     "gp.tpoff": "./bin/gp.tpoff",
     "gp.tpon": "./bin/gp.tpon",
     "gp.tp": "./bin/gp.tp"
-  }
+  },
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "license": "MIT"
 }
