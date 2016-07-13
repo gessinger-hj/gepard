@@ -159,7 +159,7 @@ tangojs.MultiHash.prototype =
     delete this._hash ;
   }
 };
-if ( typeof document === 'undefined' && typeof module !== 'undefined' && typeof require !== 'undefined' )
+if ( typeof module !== 'undefined' && typeof require !== 'undefined' )
 {
   module.exports = tangojs.MultiHash ;
 }

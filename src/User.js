@@ -64,8 +64,7 @@ gepard.User.prototype.addRight = function ( name, value )
   this.rights[name] = value ;
 }
 
-if ( typeof document === 'undefined' )
+if ( typeof module !== 'undefined' && typeof require !== 'undefined' )
 {
 	module.exports = gepard.User ;
-	// gepard = undefined ;
 }

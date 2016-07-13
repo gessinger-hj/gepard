@@ -12,13 +12,12 @@ if ( !Array.isArray )
   };
 }
 var _Event_isBrowser = true ;
-if ( typeof document !== 'undefined' && typeof module === 'undefined' ) // browser
-{
-	_Event_isBrowser = true ;
-}
-else
-{
-	_Event_isBrowser = false ;
+if ( typeof process === 'object' ) {
+  if ( typeof process.versions === 'object' ) {
+    if ( typeof process.versions.node !== 'undefined' ) {
+      _Event_isBrowser = false ;
+    }
+  }
 }
 var _Event_replace_Buffer_toJSON = null ;
 /**
@@ -165,7 +164,7 @@ gepard.Event.prototype =
 	  }
 	  if ( deepClassInspection )
 	  {
-		  if ( typeof document === 'undefined' )
+		  if ( ! _Event_isBrowser )
 		  {
 		  	module.exports.prototype.deepDeserializeClass ( obj ) ;
 		  }
@@ -176,7 +175,7 @@ gepard.Event.prototype =
 	  }
 	  if ( ! classNameToConstructor )
 	  {
-		  if ( typeof document === 'undefined' )
+		  if ( ! _Event_isBrowser )
 		  {
 		  	classNameToConstructor = module.exports.prototype._classNameToConstructor ;
 		  }
@@ -262,7 +261,7 @@ gepard.Event.prototype =
 		        continue ;
 		      }
 	      }
-	      if ( typeof document === 'undefined' )
+	      if ( ! _Event_isBrowser )
 	      {
 		      if ( o.type === 'Xml' )
 		      {
@@ -307,7 +306,7 @@ gepard.Event.prototype =
 							        continue ;
 							      }
 							    }
-						      if ( typeof document === 'undefined' )
+						      if ( ! _Event_isBrowser )
 						      {
 							      // if ( o.type === 'Xml' )
 							      // {
