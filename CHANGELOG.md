@@ -1,3 +1,9 @@
+## 1.7.3 (2016-07-13)
+- check browser / node / node webkit
+- setConfig() if Broker is instantiated from a JS script
+- rename: index.js -> main.js
+- package.json version, missing index.js
+
 ## 1.7.2 (2016-06-29)
 - system flag for tracepoints
 

@@ -1,7 +1,7 @@
 {
   "name": "gepard",
   "description": "General purpose communications for distributed applications / Microservices / events, semaphores and messages for JavaScript, Java and Python",
-  "version": "1.7.2",
+  "version": "1.7.4",
   "homepage": "https://github.com/gessinger-hj",
   "keywords": [
     "distributed-applications",
@@ -28,7 +28,7 @@
   "bugs": {
     "url": "https://github.com/gessinger-hj/gepard/issues"
   },
-  "main": "index.js",
+  "main": "main.js",
   "engines": {
     "node": ">= 0.10"
   },

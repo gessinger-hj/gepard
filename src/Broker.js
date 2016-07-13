@@ -383,6 +383,7 @@ TPStore.add ( "EVENT_OUT" ).setTitle ( "--------------------------- EVENT_OUT --
 var Broker = function ( port, ip )
 {
   EventEmitter.call ( this ) ;
+  this._configIsSet = false ;
   this._connections                        = {} ;
   this._eventNameToSockets                 = new MultiHash() ;
   this._channelNameToSockets               = new MultiHash() ;
@@ -1520,6 +1521,11 @@ Broker.prototype._closeAllSockets = function ( exceptSocket )
  */
 Broker.prototype.listen = function ( port, callback )
 {
+  if ( !this._configIsSet )
+  {
+    this.setConfig() ;
+  }
+
   if ( port ) this.port = port ;
   if ( ! this.port )
   {
@@ -1728,6 +1734,7 @@ Broker.prototype.unpublishService = function()
 Broker.prototype.setConfig = function ( configuration )
 {
   var hbm = null ;
+  this._configIsSet = true ;
   var connectionHookIsFile = false ;
   var hook ;
   if ( ! configuration )
@@ -1889,7 +1896,6 @@ if ( require.main === module )
     Log.init ( "level=info,Xedirect=3,file=%GEPARD_LOG%/%APPNAME%.log:max=1m:v=4") ;
 
     var b = new Broker() ;
-    b.setConfig() ;
     b.listen() ;
     var wse ;
     b.on ( "shutdown", function onshutdown(e)

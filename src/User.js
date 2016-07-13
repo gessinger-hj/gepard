@@ -114,8 +114,7 @@ gepard.User.prototype.getLanguage = function()
 	return this.getAttribute("lang") ;
 };
 
-if ( typeof document === 'undefined' )
+if ( typeof module !== 'undefined' && typeof require !== 'undefined' )
 {
 	module.exports = gepard.User ;
-	// gepard = undefined ;
 }
