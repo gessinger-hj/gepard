@@ -1,3 +1,9 @@
+## 1.7.3 (2016-07-13)
+- check browser / node / node webkit
+- setConfig() if Broker is instantiated from a JS script
+- rename: index.js -> main.js
+- package.json version, missing index.js
+
 ## 1.7.1 (2016-05-23)
 - Removing hardcoded debug output
 
