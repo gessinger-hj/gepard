@@ -40,7 +40,6 @@
     "promise": ">=7.0.3"
   },
   "devDependencies": {
-    "wait.for": "^0.6.6"
   },
   "bin": {
     "gp.admin": "./bin/gp.admin",
