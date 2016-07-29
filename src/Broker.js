@@ -1525,6 +1525,11 @@ Broker.prototype.listen = function ( port, callback )
   {
     this.setConfig() ;
   }
+  if ( Log._isInitialized )
+  {
+    var logDir = Gepard.getLogDirectory() ;
+    Log.init ( "level=info,Xedirect=3,file=%GEPARD_LOG%/%APPNAME%.log:max=1m:v=4") ;
+  }
 
   if ( port ) this.port = port ;
   if ( ! this.port )
