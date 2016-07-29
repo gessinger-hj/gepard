@@ -76,7 +76,7 @@ if ( require.main === module )
 		});
 		c.on('error', function(e)
 		{
-			c.setReconnect ( false ) ;
+			// c.setReconnect ( false ) ; // if not to wait for starting Broker
 			console.log(e);
 		});
 		c.onAction ( "kill", function ( cl, cmd )
