@@ -179,8 +179,8 @@ Client.prototype._initialize = function ( port, host )
   {
     this._application = "Unknown" ;
   }
-  this._networkAddresses                   = [] ;
-  var networkInterfaces                    = os.networkInterfaces() ;
+  this._networkAddresses = [] ;
+  var networkInterfaces  = os.networkInterfaces() ;
   for ( var kk in networkInterfaces )
   {
     var ll = networkInterfaces[kk] ;
@@ -209,6 +209,7 @@ Client.prototype._initialize = function ( port, host )
   this.mainChannel = undefined ;
   this.setChannel ( T.getProperty ( "gepard.channel" ) ) ;
   this.sid                      = "" ;
+  this._neverConnected          = true ;
 };
 Client.prototype.setChannel = function ( channel )
 {
@@ -342,8 +343,8 @@ Client.prototype.connect = function()
   this.socket.on ( 'end', function socket_on_end ( e )
   {
     thiz.alive = false ;
-    thiz._private_emit ( "end", e ) ;
     if ( thiz.intervalId ) clearInterval ( thiz.intervalId ) ;
+    thiz._private_emit ( "end", e ) ;
     if ( thiz._reconnect )
     {
       this.keepDataForReconnect = true ;
@@ -366,6 +367,14 @@ Client.prototype.connect = function()
     thiz.alive = false ;
     thiz.socket = null ;
     thiz._private_emit ( "error", e ) ;
+    if ( thiz._neverConnected && thiz._reconnect )
+    {
+      if ( thiz.intervalId ) clearInterval ( thiz.intervalId ) ;
+      if ( ! thiz.userServiceLookupParameter || ! thiz.userServiceLookupCallback )
+      {
+        thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._reconnectIntervalMillis ) ;
+      }
+    }
   });
   this.socket.on ( "connect", function()
   {
@@ -451,6 +460,7 @@ Client.prototype.connect = function()
       }
       thiz._pendingAcquireSemaphoreList.length = 0 ;
     }
+    thiz._neverConnected = false ;
     thiz._private_emit ( "connect" ) ;
   } ) ;
   this.socket.on ( 'data', function socket_on_data ( data )

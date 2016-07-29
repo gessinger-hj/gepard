@@ -1,3 +1,10 @@
+## 1.7.5
+- JavaScript: if reconnect == true and the Broker is not yet startet and zeroconf is not activated the client tries to connect all 5 seconds until the Broker is up.
+- JavaScript: mDNS via environment variables now works for simple JavaScript emitter (Emitter.js) by setting up an intermediate pending event list during service-lookup
+
+## 1.7.4
+- User(.js,.java,.py) attributes/language
+
 ## 1.7.3 (2016-07-13)
 - check browser / node / node webkit
 - setConfig() if Broker is instantiated from a JS script
@@ -6,10 +13,6 @@
 
 ## 1.7.2 (2016-06-29)
 - system flag for tracepoints
-
-## 1.7.2 (2016-06-01)
-- mDNS via environment variables now works for simple JavaScript emitter (Emitter.js) by setting up an intermediate pending event list during service-lookup
-- User(.js,.java,.py) attributes/language
 
 ## 1.7.1 (2016-05-23)
 - Removing hardcoded debug output

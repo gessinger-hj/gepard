@@ -6,6 +6,7 @@ General purpose communication and synchronization layer for distributed applicat
 
 - [Overview](#overview)
 - [What is new](#what-is-new)
+	- [Release 1-7-5 JavaScript Enhancements](#release-1-7-5-javascript-enhancements)
 	- [Release 1-7-0 mDNS Zeroconf for Python](#release-1-7-0-mdns-zeroconf-for-python)
 	- [Release 1-6-0 mDNS Zeroconf](#release-1-6-0-mdns-zeroconf)
 	- [Release 1-5-0 Channels](#release-1-5-0-channels)
@@ -53,7 +54,7 @@ General purpose communication and synchronization layer for distributed applicat
 			- [In Browser](#in-browser-1)
 - [File Transfer with the FileContainer Class](#file-transfer-with-the-filecontainer-class)
 	- [FileSender](#filesender)
-	- [ileReceiver](#ilereceiver)
+	- [FileReceiver](#filereceiver)
 - [Heartbeat and Reconnection Capability Parameterization](#heartbeat-and-reconnection-capability-parameterization)
 	- [Broker Side](#broker-side)
 	- [Client Side](#client-side)
@@ -141,6 +142,31 @@ node_modules/.bin/gp.lookup --gepard.zeronconf.type=test-gepard
 This command lists all service-instances with the service-type __test-gepard__ in the local subnet.
 
 # What is new
+
+## Release 1-7-5 JavaScript Enhancements
+
+If re-connect is requested with
+
+1.	Environment: export GEPARD_RECONNECT=true
+1.	Option as argument: --gepard.reconnect=true
+1.	client.SetReconnect ( true )
+
+the client acts as follows:
+
+1.	Ff a running Broker accepts a connection: connect.
+1.	If theris no running Broker try to connect every 5 seconds forever.
+
+If a re-connect is set but the client should exit if there is no running Broker then
+an error listener can be registered. In this listener-function the re-connect setting can be
+reset.
+Example:
+
+```js
+		c.on('error', function(e)
+		{
+			c.setReconnect ( false ) ;
+		});
+```
 
 ## Release 1-7-0 mDNS Zeroconf for Python
 

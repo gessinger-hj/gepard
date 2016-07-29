@@ -14,7 +14,7 @@ if ( require.main === module )
 		process.exit() ;
 	}
 
-	if ( ! gepard.getProperty ( "gepard.zeroconf.type" ) )
+	if ( ! gepard.getProperty ( "gepard.zeroconf.type" ) && ! gepard.getBool ( "gepard.reconnect", false ) )
 	{
 		new gepard.Admin().isRunning ( function admin_is_running ( state )
 		{
@@ -73,6 +73,11 @@ if ( require.main === module )
 		c.on('reconnect', function()
 		{
 			console.log('reconnect: connection re-established');
+		});
+		c.on('error', function(e)
+		{
+			c.setReconnect ( false ) ;
+			console.log(e);
 		});
 		c.onAction ( "kill", function ( cl, cmd )
 		{
