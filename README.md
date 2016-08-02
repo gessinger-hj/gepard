@@ -4,73 +4,56 @@ General purpose communication and synchronization layer for distributed applicat
 
 <!-- MarkdownTOC -->
 
-- [Overview](#overview)
-- [What is new](#what-is-new)
-	- [Release 1-7-5 JavaScript Enhancements](#release-1-7-5-javascript-enhancements)
-	- [Release 1-7-0 mDNS Zeroconf for Python](#release-1-7-0-mdns-zeroconf-for-python)
-	- [Release 1-6-0 mDNS Zeroconf](#release-1-6-0-mdns-zeroconf)
-	- [Release 1-5-0 Channels](#release-1-5-0-channels)
-		- [Using Channels](#using-channels)
-			- [Event-listener](#event-listener)
-			- [Event-emitter](#event-emitter)
-		- [Channel Examples](#channel-examples)
-	- [Release 1-4-5 Registered Event-names may contain Wildcards \(RegExp\)](#release-1-4-5-registered-event-names-may-contain-wildcards-regexp)
-	- [Release 1-4-5 Simplified Handling of JSON Trees](#release-1-4-5-simplified-handling-of-json-trees)
-	- [Release 1-4-3 Logging](#release-1-4-3-logging)
-	- [Release 1-4-0 New Heartbeat Protocol to ensure the Availability of Connections](#release-1-4-0-new-heartbeat-protocol-to-ensure-the-availability-of-connections)
-	- [Release 1-3-3 New FileContainer class for Python, JavaScript and Java to simplify file-transfer.](#release-1-3-3-new-filecontainer-class-for-python-javascript-and-java-to-simplify-file-transfer)
-	- [Release 1-3-0 Let's talk about Python](#release-1-3-0-lets-talk-about-python)
-	- [Controlling Connections and Actions with a Hook](#controlling-connections-and-actions-with-a-hook)
-	- [Perfect load balanced message handling.](#perfect-load-balanced-message-handling)
-	- [Java bindings for all features:](#java-bindings-for-all-features)
-- [Install](#install)
-- [Getting Started](#getting-started)
-	- [Base](#base)
-	- [JavaScript](#javascript)
-	- [Java](#java)
-	- [Python](#python)
-- [Configuration](#configuration)
-- [Use Cases](#use-cases)
-	- [Configuration Changes \(Events\)](#configuration-changes-events)
-	- [Concurrent editing of a Dataset \(Semaphores\)](#concurrent-editing-of-a-dataset-semaphores)
-	- [Synchronization of file processing \(Locks\)](#synchronization-of-file-processing-locks)
-	- [A Nice Exotic Mixture of Programming Languages](#a-nice-exotic-mixture-of-programming-languages)
-- [The Event Body](#the-event-body)
-- [Examples](#examples)
-	- [Examples Short](#examples-short)
-		- [Event listener](#event-listener-1)
-		- [Event Emitter](#event-emitter-1)
-		- [Locks](#locks)
-		- [Semaphores](#semaphores)
-		- [Request / Result](#request--result)
-			- [Send request](#send-request)
-			- [Send result](#send-result)
-	- [Examples Long](#examples-long)
-		- [Event listener](#event-listener-2)
-			- [In Application](#in-application)
-			- [In Browser](#in-browser)
-		- [Event Emitter](#event-emitter-2)
-			- [In Application](#in-application-1)
-			- [In Browser](#in-browser-1)
-- [File Transfer with the FileContainer Class](#file-transfer-with-the-filecontainer-class)
-	- [FileSender](#filesender)
-	- [FileReceiver](#filereceiver)
-- [Heartbeat and Reconnection Capability Parameterization](#heartbeat-and-reconnection-capability-parameterization)
-	- [Broker Side](#broker-side)
-	- [Client Side](#client-side)
-		- [Example to test](#example-to-test)
-- [The TracePoint Concept](#the-tracepoint-concept)
-	- [TracePoints in the Broker](#tracepoints-in-the-broker)
-	- [TracePoints in the Client](#tracepoints-in-the-client)
-- [Zeroconf Usage in Detail](#zeroconf-usage-in-detail)
-	- [Zeronconf on the Broker's Side](#zeronconf-on-the-brokers-side)
-	- [Zeroconf on the Client's Side](#zeroconf-on-the-clients-side)
-- [Technical Aspects of the Client](#technical-aspects-of-the-client)
-- [Found a bug? Help us fix it...](#found-a-bug-help-us-fix-it)
-- [https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md](#httpsgithubcomgessinger-hjgepardblobmasterchangelogmd)
-- [Contributors](#contributors)
-- [Features](#features)
-- [Changelog](#changelog)
+- Overview
+- What is new
+	- Release 1-7-6 WebClient Enhancement
+	- Release 1-7-5 JavaScript Enhancements
+	- Release 1-7-0 mDNS Zeroconf for Python
+	- Release 1-6-0 mDNS Zeroconf
+	- Release 1-5-0 Channels
+	- Release 1-4-5 Registered Event-names may contain Wildcards \(RegExp\)
+	- Release 1-4-5 Simplified Handling of JSON Trees
+	- Release 1-4-3 Logging
+	- Release 1-4-0 New Heartbeat Protocol to ensure the Availability of Connections
+	- Release 1-3-3 New FileContainer class for Python, JavaScript and Java to simplify file-transfer.
+	- Release 1-3-0 Let's talk about Python
+	- Controlling Connections and Actions with a Hook
+	- Perfect load balanced message handling.
+	- Java bindings for all features:
+- Install
+- Getting Started
+	- Base
+	- JavaScript
+	- Java
+	- Python
+- Configuration
+- Use Cases
+	- Configuration Changes \(Events\)
+	- Concurrent editing of a Dataset \(Semaphores\)
+	- Synchronization of file processing \(Locks\)
+	- A Nice Exotic Mixture of Programming Languages
+- The Event Body
+- Examples
+	- Examples Short
+	- Examples Long
+- File Transfer with the FileContainer Class
+	- FileSender
+	- FileReceiver
+- Heartbeat and Reconnection Capability Parameterization
+	- Broker Side
+	- Client Side
+- The TracePoint Concept
+	- TracePoints in the Broker
+	- TracePoints in the Client
+- Zeroconf Usage in Detail
+	- Zeronconf on the Broker's Side
+	- Zeroconf on the Client's Side
+- Technical Aspects of the Client
+- Found a bug? Help us fix it...
+- https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md
+- Contributors
+- Features
+- Changelog
 
 <!-- /MarkdownTOC -->
 
@@ -142,6 +125,12 @@ node_modules/.bin/gp.lookup --gepard.zeronconf.type=test-gepard
 This command lists all service-instances with the service-type __test-gepard__ in the local subnet.
 
 # What is new
+
+## Release 1-7-6 WebClient Enhancement
+
+Enable GPWebClient to optional use another target domain (host).
+Mainly the method gepard.getWebClient ( port ) now accepts an optional doman (host) as second parameter like:
+gepard.getWebClient ( 12345, "my.domain.com" ) ;
 
 ## Release 1-7-5 JavaScript Enhancements
 
@@ -943,7 +932,7 @@ Application
 Browser
 
 ```js
-	var client = gepard.getWebClient ( 17502 ) ;
+	var client = gepard.getWebClient ( 17502[, host] ) ;
 ```
 
 Code
@@ -1011,7 +1000,7 @@ client.emit ( "ALARM",
 Browser
 
 ```js
-var client = gepard.getWebClient ( 17502 ) ;
+var client = gepard.getWebClient ( 17502[, host] ) ;
 client.emit ( "CONFIG-CHANGED" ) ;
 ```
 
@@ -1218,7 +1207,7 @@ Application:
 Browser:
 
 ```js
-	var client = gepard.getWebClient ( 17502 ) ;
+	var client = gepard.getWebClient ( 17502[, host] ) ;
 ```
 Code:
 
@@ -1293,7 +1282,7 @@ Application:
 Browser:
 
 ```js
-	var client = gepard.getWebClient ( 17502 ) ;
+	var client = gepard.getWebClient ( 17502[, host] ) ;
 ```
 Code:
 

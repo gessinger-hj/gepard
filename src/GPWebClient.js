@@ -2,36 +2,49 @@ if ( typeof gepard === 'undefined' ) gepard = {} ;
 
 gepard.counter = 0 ;
 gepard.port = 17502 ; // default port
-gepard.getWebClient = function ( port )
+gepard.clients = {} ;
+/**
+ * get an existing client or create a new one
+ * @param  {int} port port
+ * @param  {[string]} host host (optional)
+ * @return {WebClient}      the WebClient object
+ */
+gepard.getWebClient = function ( port, host )
 {
+  host = ! host ? "" : host ;
   if ( ! port )
   {
     port = gepard.port ;
   }
-  if ( gepard._WebClientInstance ) return gepard._WebClientInstance ;
-  return new gepard.WebClient ( port ) ;
+  var key = "" + port + host ;
+  var wc = gepard[key] ;
+  if ( wc ) return wc ;
+  return new gepard.WebClient ( port, host ) ;
 };
 /**
- * Description
- * @param {} port
+ * WebClient class
+ * @param {int} port port of interest.
+ *                   Default: 17502
+ * @param {[string]} host host of interest
  */
-gepard.WebClient = function ( port )
+gepard.WebClient = function ( port, host )
 {
-  this._port                       = port ;
-  this._socket                     = null ;
-  this._user                       = null ;
-  this._pendingEventList           = [] ;
-  this._pendingResultList          = {} ;
-  this._callbacks                  = {} ;
-  this._eventListenerFunctions     = new tangojs.MultiHash() ;
-  this._pendingEventListenerList   = [] ;
+  this._port                     = port ;
+  this._socket                   = null ;
+  this._user                     = null ;
+  this._pendingEventList         = [] ;
+  this._pendingResultList        = {} ;
+  this._callbacks                = {} ;
+  this._eventListenerFunctions   = new tangojs.MultiHash() ;
+  this._pendingEventListenerList = [] ;
+  var domain                     = host ? host : document.domain ;
   if ( window.location.protocol == 'http:')
   {
-    this._url = "ws://" + document.domain + ":" + this._port ;
+    this._url = "ws://" + domain + ":" + this._port ;
   }
   else
   {
-    this._url = "wss://" + document.domain + ":" + this._port ;
+    this._url = "wss://" + domain + ":" + this._port ;
   }
 
   this._proxyIdentifier             = null ;
@@ -43,7 +56,7 @@ gepard.WebClient = function ( port )
   this._ownedSemaphores             = {} ;
   this._pendingAcquireSemaphoreList = [] ;
 
-  gepard._WebClientInstance = this ;
+  gepard.clients[""+port+host] = this ;
 };
 gepard.WebClient.prototype._initialize = function()
 {

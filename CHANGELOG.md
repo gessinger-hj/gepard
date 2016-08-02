@@ -1,3 +1,6 @@
+## 1.7.6
+- Enable GPWebClient to optional use another target domain (host).
+
 ## 1.7.5
 - JavaScript: if reconnect == true and the Broker is not yet startet and zeroconf is not activated the client tries to connect all 5 seconds until the Broker is up.
 - JavaScript: mDNS via environment variables now works for simple JavaScript emitter (Emitter.js) by setting up an intermediate pending event list during service-lookup
