@@ -1569,7 +1569,7 @@ Broker.prototype.listen = function ( port, callback )
   }
   if ( this.port <= 0 ) this.port = 0 ;
   this.server.listen ( this.port, callback2 ) ;
-  this.port = this.server.address().port ;
+  // this.port = this.server.address().port ;
 };
 Broker.prototype._send_PING_to_all = function()
 {
