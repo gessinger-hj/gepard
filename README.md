@@ -5,6 +5,7 @@ General purpose communication and synchronization layer for distributed applicat
 
 - [Overview](#overview)
 - [What is new](#what-is-new)
+	- [Release 1-7-8 WebClient Enhancement / Bugfix](#release-1-7-8-webclient-enhancement--bugfix)
 	- [Release 1-7-6 WebClient Enhancement](#release-1-7-6-webclient-enhancement)
 	- [Release 1-7-5 JavaScript Enhancements](#release-1-7-5-javascript-enhancements)
 	- [Release 1-7-0 mDNS Zeroconf for Python](#release-1-7-0-mdns-zeroconf-for-python)
@@ -126,6 +127,14 @@ This command lists all service-instances with the service-type __test-gepard__ i
 
 <a name="what-is-new"></a>
 # What is new
+
+<a name="release-1-7-8-webclient-enhancement--bugfix"></a>
+## Release 1-7-8 WebClient Enhancement / Bugfix
+- GPWebClient: protected event-names for method on ( name, callback):
+  "open", "close", "error", "shutdown", "end"
+- WebSocket: use protocol wss only for https:
+- GPWebClient: new method: close().
+	Can be used with the browser's event __onbeforeunload__ to close a connection.
 
 <a name="release-1-7-6-webclient-enhancement"></a>
 ## Release 1-7-6 WebClient Enhancement

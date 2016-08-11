@@ -38,13 +38,13 @@ gepard.WebClient = function ( port, host )
   this._eventListenerFunctions   = new tangojs.MultiHash() ;
   this._pendingEventListenerList = [] ;
   var domain                     = host ? host : document.domain ;
-  if ( window.location.protocol == 'http:')
+  if ( window.location.protocol === 'https:')
   {
-    this._url = "ws://" + domain + ":" + this._port ;
+    this._url = "wss://" + domain + ":" + this._port ;
   }
   else
   {
-    this._url = "wss://" + domain + ":" + this._port ;
+    this._url = "ws://" + domain + ":" + this._port ;
   }
 
   this._proxyIdentifier             = null ;
@@ -55,7 +55,6 @@ gepard.WebClient = function ( port, host )
   this._acquiredSemaphores          = {} ;
   this._ownedSemaphores             = {} ;
   this._pendingAcquireSemaphoreList = [] ;
-
   gepard.clients[""+port+host] = this ;
 };
 gepard.WebClient.prototype._initialize = function()
@@ -80,6 +79,19 @@ gepard.WebClient.prototype._emit = function ( p1, eventName )
     }
   }
 };
+gepard.WebClient.prototype.close = function()
+{
+  if ( ! this._socket ) return ;
+  try
+  {
+    this._socket.close() ;
+    this._socket = null ;
+  }
+  catch ( exc )
+  {
+    
+  }
+}
 /**
  * Description
  */
@@ -94,10 +106,13 @@ gepard.WebClient.prototype._connect = function()
    */
   this._socket.onerror = function(err)
   {
-    if ( ! thiz._socket ) return ;
-    thiz._socket.close() ;
-    thiz._socket = null ;
+    if ( thiz._socket )
+    {
+      thiz._socket.close() ;
+      thiz._socket = null ;
+    }
     thiz._emit ( err, "error" ) ;
+    thiz._emit ( null, "end" ) ;
   } ;
   /**
    * Description
@@ -249,9 +264,12 @@ gepard.WebClient.prototype._connect = function()
    */
   this._socket.onclose = function onclose(e)
   {
-    if ( ! thiz._socket ) return ;
-    thiz._socket = null ;
+    if ( ! thiz._socket )
+    {
+      thiz._socket = null ;
+    }
     thiz._emit ( null, "close" ) ;
+    thiz._emit ( null, "end" ) ;
   } ;
   /**
    * Description
@@ -454,6 +472,10 @@ gepard.WebClient.prototype.on = function ( eventNameList, callback )
     if (  eventNameList === "open"
        || eventNameList === "close"
        || eventNameList === "error"
+       || eventNameList === "shutdown"
+       || eventNameList === "end"
+       // || eventName === "reconnect"
+       // || eventName === "disconnect"
        )
     {
       this._onCallbackFunctions.put ( eventNameList, callback ) ;

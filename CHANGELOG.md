@@ -1,3 +1,10 @@
+## 1.7.7
+- GPWebClient: protected event-names for method on ( name, callback):
+  "open", "close", "error", "shutdown", "end"
+- WebSocket: use protocol wss only for https:
+- GPWebClient: new method: close().
+	Can be used with the browser's event __onbeforeunload__ to close a connection.
+
 ## 1.7.6
 - Enable GPWebClient to optional use another target domain (host).
 

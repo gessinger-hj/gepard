@@ -69,6 +69,10 @@ App.initialize = function()
   try
   {
     this.wc = gepard.getWebClient ( this.port ) ;
+    // window.onbeforeunload = function()
+    // {
+    //   thiz.wc.close() ;
+    // }
     this.wc.on ( "open", function onopen()
     {
     }) ;
