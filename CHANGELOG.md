@@ -1,4 +1,6 @@
-## 1.7.7
+## 1.7.9
+- GPWebClient: reconnect
+## 1.7.8
 - GPWebClient: protected event-names for method on ( name, callback):
   "open", "close", "error", "shutdown", "end"
 - WebSocket: use protocol wss only for https:
