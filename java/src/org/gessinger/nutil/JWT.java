@@ -54,7 +54,7 @@ String token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpZCI6Im1pbGxlciIsImNvbnR
   {
     return head ;  
   }
-  public Map<String,Object> getṔayload()
+  public Map<String,Object> getPayload()
   {
     return payload ;  
   }

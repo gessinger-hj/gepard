@@ -409,7 +409,7 @@ public class Client
 		return _out ;
 	}
 	public void startReconnections()
-	throws Exception
+	throws IOException
 	{
 		if ( socket != null )
 		{
@@ -428,7 +428,7 @@ public class Client
 				}
 	    	socket.close() ;
 			}
-			catch ( Exception exc )
+			catch ( IOException exc )
 			{
 				LOGGER.info ( Util.toString ( exc ) ) ;
 			}
@@ -604,7 +604,15 @@ public class Client
 		catch ( IOException exc )
 		{
 	  	_emit ( "error", null ) ;
-			throw exc ;
+System.out.println("_reconnect=" + _reconnect);
+	  	if ( _reconnect )
+	  	{
+	  		startReconnections() ;	
+	  	}
+	  	else
+	  	{
+				throw exc ;
+	  	}
 		}
 	}
   String _LOCK = "LOCK" ;

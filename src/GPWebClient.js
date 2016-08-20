@@ -401,7 +401,7 @@ gepard.WebClient.prototype._connect = function()
     {
       thiz._isReconnecting = false ;
       console.log ( "re-connect in progress." ) ;
-      thiz._emit ( "reconnect", null ) ;
+      thiz._emit ( null, "reconnect" ) ;
     }
     thiz._isReconnecting = false ;
     if ( thiz.intervalId )

@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 var ws           = require ( "nodejs-websocket" ) ;
 var EventEmitter = require ( "events" ).EventEmitter ;
 var util         = require ( 'util' ) ;

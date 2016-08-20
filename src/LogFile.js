@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 var Path = require ( "path" ) ;
 var fs   = require ( "fs" ) ;
 var util = require ( "util" ) ;
@@ -159,6 +161,7 @@ LogFile.prototype.init = function ( s )
     nv = tango_app_str.split ( "," ) ;
   }
   var redirectOutput = 0 ;
+  this._redirect_TEE = false ;
   for ( i = 0 ; i < nv.length ; i++ )
   {
     var tag = nv[i] ;
@@ -174,6 +177,10 @@ LogFile.prototype.init = function ( s )
     else
     if ( tag.startsWith ( "redirect" ) )
     {
+      if ( val.indexOf ( "+" ) === val.length - 1 )
+      {
+        this._redirect_TEE = true ;
+      }
       redirectOutput = parseInt ( val ) ;
       if ( isNaN ( redirectOutput ) ) redirectOutput = 3 ;
     }
@@ -344,7 +351,6 @@ LogFile.prototype.init = function ( s )
     if ( this._fileName.indexOf ( '.' ) < 0 ) this._fileName += ".log" ;
     this._outputToFile = true ;
   }
-
   if ( redirectOutput )
   {
     this.redirectOutput ( redirectOutput ) ;
@@ -471,6 +477,11 @@ LogFile.prototype._writeToOutputBuffer = function ( s
   if ( ln ) this._out.write ( "\n" ) ;
   if ( s != null ) this._CurSize += dateLen + s.length + (ln ? 1 : 0) ;
   else             this._CurSize += dateLen + (ln ? 1 : 0) ;
+  if ( this._isRedirected && this._redirect_TEE )
+  {
+    process.stdout.write ( s ) ;
+    if ( ln ) process.stdout.write ( "\n" ) ;
+  }
 };
 /**
  * Description
@@ -834,6 +845,7 @@ LogFile.prototype.redirectOutput = function ( channelFlags )
   {
     channelFlags = 3 ;
   }
+  this._isRedirected = true ;
   if ( channelFlags & 1 )
   {
     if ( ! this._oldout )
@@ -872,10 +884,13 @@ LogFile.prototype.redirectOutput = function ( channelFlags )
         thiz.warning ( util.format.apply ( console, arguments ) + "\n");
       };
       this._oldout = process.stdout;
-      process.__defineGetter__("stdout", function()
+      if ( ! this._redirect_TEE )
       {
-        return thiz._out;
-      });
+        process.__defineGetter__("stdout", function()
+        {
+          return thiz._out;
+        });
+      }
     }
   }
   if ( channelFlags & 2 )
@@ -884,10 +899,13 @@ LogFile.prototype.redirectOutput = function ( channelFlags )
     {
       this._olderr = process.stderr ;
       var thiz = this ;
-      process.__defineGetter__("stderr", function()
+      if ( ! this._redirect_TEE )
       {
-        return thiz._out;
-      });
+        process.__defineGetter__("stderr", function()
+        {
+          return thiz._out;
+        });
+      }
     }
   }
 };
@@ -901,6 +919,7 @@ LogFile.prototype.unredirectOutput = function ( channelFlags )
   {
     channelFlags = 3 ;
   }
+  this._isRedirected = false ;
   if ( channelFlags & 1 )
   {
     if ( this._oldout )
@@ -918,10 +937,13 @@ LogFile.prototype.unredirectOutput = function ( channelFlags )
       }
       var oout = this._oldout ;
       this._oldout = null ;
-      process.__defineGetter__("stdout", function()
+      if ( ! this._redirect_TEE )
       {
-        return oout ;
-      });
+        process.__defineGetter__("stdout", function()
+        {
+          return oout ;
+        });
+      }
     }
   }
   if ( channelFlags & 2 )
@@ -931,10 +953,10 @@ LogFile.prototype.unredirectOutput = function ( channelFlags )
       var thiz = this ;
       var oerr = this._olderr ;
       this._olderr = null ;
-      process.__defineGetter__("stderr", function()
-      {
-        return oerr ;
-      });
+      // process.__defineGetter__("stderr", function()
+      // {
+      //   return oerr ;
+      // });
     }
   }
 };
@@ -1021,7 +1043,7 @@ module.exports = org.gessinger.tangojs.LogFile ;
 if ( require.main === module )
 {
   var Log = org.gessinger.tangojs.LogFile ;
-  Log.init ( "level=notice,file=Log-%DATE%.log" ) ;
+  Log.init ( "redirect=3+-,level=notice,file=Log-%DATE%.log" ) ;
   Log.emergency ( "----------------" ) ;
   Log.alert ( "----------------" ) ;
   Log.critical ( "----------------" ) ;

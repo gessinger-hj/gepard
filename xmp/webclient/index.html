@@ -75,12 +75,19 @@ App.initialize = function()
     // }
     this.wc.on ( "open", function onopen()
     {
+      gepard.where() ;
     }) ;
     this.wc.on ( "error", function onerror()
     {
+      gepard.where() ;
     }) ;
     this.wc.on ( "close", function onclose()
     {
+      gepard.where() ;
+    }) ;
+    this.wc.on ( "reconnect", function onreconnect()
+    {
+      gepard.where() ;
     }) ;
     this.wc.setReconnect ( true ) ;
   }
