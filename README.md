@@ -5,6 +5,7 @@ General purpose communication and synchronization layer for distributed applicat
 
 - [Overview](#overview)
 - [What is new](#what-is-new)
+	- [Release 1-7-10 Java Reconnect on First Connect](#release-1-7-10-java-reconnect-on-first-connect)
 	- [Release 1-7-9 WebClient New Reconnect Mechanism](#release-1-7-9-webclient-new-reconnect-mechanism)
 	- [Release 1-7-8 WebClient Enhancement / Bugfix](#release-1-7-8-webclient-enhancement--bugfix)
 	- [Release 1-7-6 WebClient Enhancement](#release-1-7-6-webclient-enhancement)
@@ -144,6 +145,11 @@ node_modules/.bin/gp.lookup --gepard.zeronconf.type=test-gepard
 This command lists all service-instances with the service-type __test-gepard__ in the local subnet.
 
 # What is new
+
+## Release 1-7-10 Java Reconnect on First Connect
+If re-connect is requested and there is no reachable Broker then the Java client tries to
+connect every 5 seconds to establish a valid connection.
+This is the same behaviour as the JavaScript client and the WebClient used in a browser.
 
 ## Release 1-7-9 WebClient New Reconnect Mechanism
 

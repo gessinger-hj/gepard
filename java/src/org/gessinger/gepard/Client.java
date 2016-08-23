@@ -604,7 +604,6 @@ public class Client
 		catch ( IOException exc )
 		{
 	  	_emit ( "error", null ) ;
-System.out.println("_reconnect=" + _reconnect);
 	  	if ( _reconnect )
 	  	{
 	  		startReconnections() ;	
