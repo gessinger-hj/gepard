@@ -1,4 +1,4 @@
-## 1.7.10
+## 1.8.0
 - GPWebClient: emit event "reconnect"
 - LogFile: new redirction mode.
 - Java Client: if reconnect == true and the Broker is not yet startet the client tries to connect all 5 seconds until the Broker is up.
