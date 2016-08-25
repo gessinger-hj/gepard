@@ -63,7 +63,7 @@ if ( require.main === module )
 		});
 		c.on('shutdown', function()
 		{
-			console.log('broker shut down');
+			console.log('shutdown requested');
 			this.setReconnect ( false ) ;
 		});
 		c.on('disconnect', function()
@@ -77,7 +77,7 @@ if ( require.main === module )
 		c.on('error', function(e)
 		{
 			// c.setReconnect ( false ) ; // if not to wait for starting Broker
-			console.log(e);
+			console.log(""+e);
 		});
 		c.onAction ( "kill", function ( cl, cmd )
 		{
