@@ -39,7 +39,7 @@ if ( require.main === module )
 		}
 		name = name.split ( ',' ) ;
 		var c = gepard.getClient() ;
-		c.setReconnect ( true ) ; // Reconnection requested
+		// c.setReconnect ( true ) ; // Reconnection requested
 		var tracePoint = c.registerTracePoint ( "BLARM_REMOVED" ) ;
 		c.on ( "reconnect", function on_reconnect ( e )
 		{
