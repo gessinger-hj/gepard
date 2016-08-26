@@ -364,24 +364,17 @@ Client.prototype.connect = function()
   });
   this.socket.on ( 'error', function socket_on_error ( e )
   {
-T.lwhere() ;
-console.log ( "thiz._neverConnected=" + thiz._neverConnected ) ;
-console.log ( "thiz._reconnect=" + thiz._reconnect ) ;
-console.log ( "thiz._reconnectIntervalMillis=" + thiz._reconnectIntervalMillis ) ;
     thiz.alive = false ;
     thiz.socket = null ;
     thiz._private_emit ( "error", e ) ;
     // if ( thiz._neverConnected && thiz._reconnect )
     if ( thiz._reconnect )
     {
-T.lwhere() ;
       if ( thiz.intervalId ) clearInterval ( thiz.intervalId ) ;
       if ( ! thiz.userServiceLookupParameter || ! thiz.userServiceLookupCallback )
       {
-T.lwhere() ;
         thiz.intervalId = setInterval ( thiz._checkHeartbeat.bind ( thiz ), thiz._reconnectIntervalMillis ) ;
       }
-T.lwhere() ;
     }
   });
   this.socket.on ( "connect", function()
@@ -834,7 +827,6 @@ Client.prototype._checkHeartbeat = function()
 {
   var i ;
   var thiz = this ;
-T.lwhere() ;
   if ( ! this.alive )
   {
     if ( ! this._reconnect )
