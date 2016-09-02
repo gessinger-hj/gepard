@@ -389,7 +389,7 @@ Client.prototype.connect = function()
     client_info.body.application    = thiz._application ;
     client_info.body.USERNAME       = thiz.USERNAME ;
     client_info.body.version        = thiz.version ;
-    client_info.body.channels           = thiz.channels ;
+    client_info.body.channels       = thiz.channels ;
     client_info.setChannel ( thiz.mainChannel ) ;
     json                            = client_info.serialize() ;
     thiz._stats.incrementOut ( json.length ) ;
