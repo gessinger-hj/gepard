@@ -471,30 +471,22 @@ JavaScript:
 	var tracePoint = client.registerTracePoint ( "MY_TRACE_POINT" ) ;
 	tracePoint.log ( "Action ended" ) ;
 ```
-	Python:
+Python:
 
 ```python
 	tracePoint = client.registerTracePoint ( "MY_TRACE_POINT" )
 	tracePoint.log ( "Action ended" )
 ```
-	Java:
+Java:
 
 ```java
 	TracePoint tp = client.registerTracePoint ( "MY_TRACE_POINT" ) ;
 	tracePoint.log ( "Action ended" ) ;
 ```
-	<br/>
-	Each TracePoint can be activated and deactivated at runtime.
-	<br/>
-
-	[See details](#the-tracepoint-concept)
-
-	<br/>
-	This function can be rejected by overwriting the __system() method__ in the ConnectionHook class.
-	<br/>
-	Event.getName() is 'system'
-	<br/>
-	Event.getType() is 'log'
+Each TracePoint can be activated and deactivated at runtime.
+This function can be rejected by overwriting the __ConnectionHook.prototype.system(connection,event)__ method in the ConnectionHook class.
+Event.getName() is 'system'
+Event.getType() is 'log'
 
 
 ## Release 1-4-0 New Heartbeat Protocol to ensure the Availability of Connections
@@ -503,17 +495,14 @@ Gepard is based on fast communication by means of always-open sockets. Therefore
 This is achieved by a mechanism which exchanges packets between the broker and all connected clients in fixed time intervals defined
 by the broker. This interval is transmitted to clients as they connect.
 
-<br/>
 The broker sends a __PING__ message to the connected clients in each interval to which all clients are expected to respond with a __PONG__
 message within the three next intervals. If no such response is received by the end of the third interval, the broker closes the connection-socket.
 
-<br/>
 On the other end, after dispatching a __PONG__ message, the client waits for the next __PING__ from the broker to arrive within 3 intervals.
 In case the subsequent __PING__ is not received, the client closes the connection socket and emits a __"disconnect"__ event to signal the status to the application.
 
-<br/>
-If the client is configured to re-connect, it will try to establish a new connection to the broker in a pre-defined interval. On success, the client
-will emit a __"reconnect"__ event to the application. All gepard-event-listeners which had been registered at the time of disconnect will then automatically be registered
+If the client is configured to re-connect, it will try to establish a new connection to the broker in a pre-defined interval.
+On success, the client will emit a __"reconnect"__ event to the application. All gepard-event-listeners which had been registered at the time of disconnect will then automatically be registered
 with the broker again.
 
 Example time-out conditions are:
@@ -565,7 +554,7 @@ sendEvent ( connection, eventName )
 lockResource ( connection, resourceId )
 acquireSemaphore ( connection, resourceId )
 clientAction ( connection, resourceId )
-system ( connection, resourceId )
+system ( connection, event )
 ```
 Each of these methods must return an answer wether to allow or reject the corresponding action.
 <br/>
