@@ -1167,6 +1167,24 @@ TangoClass.prototype.findService = function ( serviceParameter, callback )
     }, serviceParameter.timeout ) ;
   }
 };
+TangoClass.prototype.getScriptName = function()
+{
+  let argv1 = process.argv[1] ;
+  if ( argv1 )
+  {
+    argv1 = argv1.replace ( /\\/g, "/" ) ;
+  }
+  else
+  {
+    argv1 = "Unknown" ;
+  }
+  if ( argv1.indexOf ( '/' >= 0 ) )
+  {
+    return argv1.substring ( argv1.lastIndexOf ( '/' ) + 1 ) ; 
+  }
+  return argv1 ; 
+}
+
 var Tango = null ;
 
 if ( typeof org === 'undefined' ) org = {} ;

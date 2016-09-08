@@ -1,3 +1,7 @@
+## 1.8.1
+- client.setReconnect() is overwritten by option/env if this is not set
+- zeroconf: published service-name contains port=0
+
 ## 1.8.0
 - GPWebClient: emit event "reconnect"
 - LogFile: new redirction mode.
