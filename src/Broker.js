@@ -1705,8 +1705,8 @@ Broker.prototype.publishService = function()
   channelNames = channelNames.join ( ',' ) ;
   var name = this.zeroconf.name
            + "-[H:" + os.hostname().replace ( /\./g, "-")
-           + "]-[P:" + this.port
-           // + "-P:" + this.port
+           + "]-[P:" + this.zeroconf.port
+           // + "-P:" + this.zeroconf.port
            + "]-[T:" + eventNames
            // + "-T:" + eventNames
            + "]-[C:" + channelNames
