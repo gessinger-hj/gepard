@@ -201,7 +201,7 @@ Client.prototype._initialize = function ( port, host )
   this._timeStamp               = 0 ;
   this._heartbeatIntervalMillis = 10000 ;
   this._reconnectIntervalMillis = 5000 ;
-  this._reconnect               = T.getBool ( "gepard.reconnect", false ) ;
+  this._reconnect               = T.getBool ( "gepard.reconnect", this._reconnect ) ;
   this.version                  = 1 ;
   this.brokerVersion            = 0 ;
   TPStore.remoteTracer          = this.log.bind ( this ) ;
@@ -367,7 +367,11 @@ Client.prototype.connect = function()
     thiz.alive = false ;
     thiz.socket = null ;
     thiz._private_emit ( "error", e ) ;
-    // if ( thiz._neverConnected && thiz._reconnect )
+    if ( thiz.userServiceLookupParameter && thiz.userServiceLookupCallback )
+    {
+      thiz._checkHeartbeat() ;
+    }
+    else
     if ( thiz._reconnect )
     {
       if ( thiz.intervalId ) clearInterval ( thiz.intervalId ) ;

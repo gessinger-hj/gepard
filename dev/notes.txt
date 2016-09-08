@@ -6,8 +6,8 @@ Feature
 Start
 --------------------------------
 
-$ git checkout -b myfeature develop
-																								Switched to a new branch "myfeature"
+$ git checkout -b feature/<feature-name> develop
+																								Switched to a new branch feature/<feature-name>
 
 Incorporating a finished feature on develop
 
