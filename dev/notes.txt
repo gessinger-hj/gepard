@@ -152,7 +152,7 @@ Tags
 
 Create:
 $ git checkout master
-$ git tag -a tags/v1.4.5 -m "tag v1.4.5"
+$ git tag -a tags/v1.8.1 -m "tag v1.8.1"
 
 List:
 $git tag -l
