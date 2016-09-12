@@ -25,8 +25,9 @@ else
 }
 function execute()
 {
-	console.log ( "Note: does not start the websocket-proxy any more." ) ;
-	console.log ( "To include start of the websocket-proxy use gp.broker.web instead." ) ;
+	// console.log ( "Note: does not start the websocket-proxy any more." ) ;
+	// console.log ( "To include start of the websocket-proxy use gp.broker.web instead." ) ;
+
 	var logDir = Gepard.getLogDirectory() ;
 	var dir = Path.join ( logDir, "gp.broker.log" ) ;
 
@@ -50,6 +51,12 @@ function execute()
 	  detached: true,
 	  stdio: [ 'ignore', out, err ]
 	 });
+	console.log ( "Gepard Broker started detached as deamon." ) ;
+	console.log ( "Additional commands:" ) ;
+	console.log ( "  gp.shutdown" ) ;
+	console.log ( "  gp.info" ) ;
+	console.log ( "Log output goes to file:" ) ;
+	console.log ( "  " + logDir + "/Broker.log_1" ) ;
 
 	child.unref();
 }
