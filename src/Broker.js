@@ -1,10 +1,5 @@
 #!/usr/bin/env node
 
-/**
- * [net description]
- * @type {[type]}
- */
-var net           = require ( 'net' ) ;
 var util          = require ( 'util' ) ;
 var EventEmitter  = require ( "events" ).EventEmitter ;
 var Event         = require ( "./Event" ) ;
@@ -20,352 +15,12 @@ var Gepard        = require ( "./Gepard" ) ;
 var TracePoints   = require ( "./TracePoints" ) ;
 var JSAcc         = require ( "./JSAcc" ) ;
 var BTaskHandler  = require ( "./BTaskHandler" ) ;
+var Connection    = require ( "./Connection" ) ;
 
 if ( typeof Promise === 'undefined' ) // since node 0.12+
 {
   Promise = require ( "promise" ) ;
 }
-
-/**
- * Description
- * @constructor Connection
- * @param {} broker
- * @param {} socket
- * @return 
- */
-var Connection = function ( broker, socket )
-{
-  this.broker      = broker ;
-  this.socket      = socket ;
-  this.client_info = undefined ;
-  if ( ! this.socket.sid )
-  {
-    this.sid        = broker.hostname + "_" + process.pid + "_" + socket.remoteAddress + "_" + socket.remotePort + "_" + new Date().getTime() ;
-    this.socket.sid = this.sid ;
-  }
-  else
-  {
-    this.sid = socket.sid ;
-  }
-  this.channels = undefined ;
-  this._lockedResourcesIdList                 = [] ;
-  this._patternList                           = [] ;
-  this._regexpList                            = [] ;
-  this._ownedSemaphoresRecourceIdList         = [] ;
-  this._pendingAcquireSemaphoreRecourceIdList = [] ;
-  this._numberOfPendingRequests               = 0 ;
-  this._messageUidsToBeProcessed              = [] ;
-  this._isLocalHost = undefined ;
-  this._timeStamp                             = 0 ;
-  this.fullQualifiedEventNames                = {} ;
-  this.eventNameList                          = [] ;
-  this.channelNameList                        = [] ;
-};
-/**
- * Description
- * @method toString
- * @return Literal
- */
-Connection.prototype.toString = function()
-{
-  return "(Connection)[client_info=" + util.inspect ( this.client_info, { showHidden: false, depth: null } ) + "]" ;
-};
-Connection.prototype.getClientInfo = function()
-{
-  return this.client_info ;
-};
-Connection.prototype.setTimestamp = function()
-{
-  this._timeStamp = new Date().getTime() ;
-};
-Connection.prototype.flush = function()
-{
-  this.broker                                        = null ;
-  this.socket                                        = null ;
-  this._lockedResourcesIdList.length                 = 0 ;
-  this._patternList.length                           = 0 ;
-  this._regexpList.length                            = 0 ;
-  this._ownedSemaphoresRecourceIdList.length         = 0 ;
-  this._pendingAcquireSemaphoreRecourceIdList.length = 0 ;
-  this._messageUidsToBeProcessed.length              = 0 ;
-};
-/**
- * Description
- * @method removeEventListener
- * @param {} e
- * @return 
- */
-Connection.prototype.removeEventListener = function ( e )
-{
-  var i, index ;
-  var eventNameList = e.body.eventNameList ;
-  if ( ! eventNameList || ! eventNameList.length )
-  {
-    eventNameList = this.eventNameList ;
-  }
-  if ( ! eventNameList || ! eventNameList.length )
-  {
-    e.control.status = { code:1, name:"error", reason:"Missing eventNameList" } ;
-    Log.error ( e.toString() ) ;
-    return ;
-  }
-  var toBeRemoved = [] ;
-  for  ( i = 0 ; i < eventNameList.length ; i++ )
-  {
-    this.broker._eventNameToSockets.remove ( eventNameList[i], this.socket ) ;
-    index  = this.eventNameList.indexOf ( eventNameList[i] ) ;
-    if ( index >= 0 )
-    {
-      toBeRemoved.push ( eventNameList[i] ) ;
-    }
-    index = this._patternList.indexOf ( eventNameList[i] ) ;
-    if ( index >= 0 )
-    {
-      this._patternList.remove ( index ) ;
-      this._regexpList.remove ( index ) ;
-    }
-    // var pos = eventNameList[i].indexOf ( "::" ) ;
-    // if ( pos > 0 )
-    // {
-    //   delete this.fullQualifiedEventNames[eventNameList[i]] ;
-    // }
-  }
-  for  ( i = 0 ; i < toBeRemoved.length ; i++ )
-  {
-    this.eventNameList.remove ( toBeRemoved[i] ) ;
-  }
-  this.broker.republishService() ;
-  toBeRemoved.length = 0 ;
-};
-/**
- * Description
- * @method write
- * @param {} data
- * @return 
- */
-Connection.prototype.write = function ( data )
-{
-  try
-  {
-    if ( data instanceof Event )
-    {
-      var t = this.client_info ? this.client_info.application : "" ;
-
-      var tp = TPStore.getTracePoint ( "EVENT_OUT" ) ;
-      if ( tp.isActive() && tp.includeSystem ) TPStore.log ( "EVENT_OUT", data.getName() + "/" + data.getType() + "-->" + t + "(" + this.sid + ")" ) ;
-      if ( data.isResult() )
-      {
-        TPStore.log ( "EVENT_OUT", data ) ;
-      }
-      this.setTimestamp() ;
-      data.setTargetIsLocalHost ( this.isLocalHost() ) ;
-      this.socket.write ( data.serialize() ) ;
-    }
-    if ( typeof data === 'string' )
-    {
-      this.setTimestamp() ;
-      this.socket.write ( data ) ;
-    }
-  }
-  catch ( exc )
-  {
-    Log.log ( exc ) ;
-  }
-};
-/**
- * Description
- * @method _sendInfoResult
- * @param {} e
- * @return 
- */
-Connection.prototype._sendInfoResult = function ( e )
-{
-  var i, j, first, str, key, conn, key2 ;
-  e.setType ( "getInfoResult" ) ;
-  e.control.status                     = { code:0, name:"ack" } ;
-  e.body.gepardVersion                 = Gepard.getVersion() ;
-  e.body.brokerVersion                 = this.broker.brokerVersion ;
-  if ( this.broker.zeroconf )
-  {
-    e.body.zeroconf = this.broker.zeroconf ;
-  }
-  e.body.port                          = this.broker.port ;
-  e.body.startupTime                   = this.broker.startupTime   ;
-  e.body.heartbeatIntervalMillis       = this.broker.heartbeatMillis ;
-  e.body.maxMessageSize                = this.broker._maxMessageSize ;
-  e.body.log                           = { levelName: Log.getLevelName(), level:Log.getLevel(), file: Log.getCurrentLogFileName() } ;
-  e.body.numberOfPendingMessages       = this.broker._numberOfPendingMessages ;
-  e.body.currentEventNames             = this.broker._eventNameToSockets.getKeys() ;
-  for ( i = 0 ; i < this.broker._connectionList.length ; i++ )
-  {
-    list = this.broker._connectionList[i]._regexpList ;
-    if ( list )
-    {
-      if ( ! e.body.currentEventPattern ) e.body.currentEventPattern = [] ;
-      for ( j = 0 ; j < list.length ; j++ )
-      {
-        e.body.currentEventPattern.push ( list[j].toString() ) ;
-      }
-    }
-  }     
-  var mhclone = new MultiHash() ;
-  for ( key in this.broker._eventNameToSockets._hash )
-  {
-    var afrom = this.broker._eventNameToSockets.get ( key ) ;
-    if ( typeof ( afrom ) === 'function' ) continue ;
-    for ( i = 0 ; i < afrom.length ; i++ )
-    {
-      mhclone.put ( key, afrom[i].sid ) ;
-    }
-  }
-  e.body.mapping = mhclone._hash ;
-  e.body.connectionList = [] ;
-  for ( key in this.broker._connections )
-  {
-    conn = this.broker._connections[key] ;
-    var client_info = conn.client_info ;
-    if ( ! client_info ) continue ;
-    var client_info2 = {} ;
-    for ( key2 in client_info )
-    {
-      client_info2[key2] = client_info[key2] ;
-    }
-    client_info2.lastActionTime = new Date ( conn._timeStamp ).toISOString() ;
-    e.body.connectionList.push ( client_info2 ) ;
-    if ( conn._ownedSemaphoresRecourceIdList.length )
-    {
-      client_info2.ownedSemaphores = conn._ownedSemaphoresRecourceIdList ;
-    }
-    if ( conn._pendingAcquireSemaphoreRecourceIdList.length )
-    {
-      client_info2.pendingSemaphores = conn._pendingAcquireSemaphoreRecourceIdList ;
-    }
-    client_info2.channels = conn.channels ;
-  }
-  for ( key in this.broker._lockOwner )
-  {
-    if ( ! e.body.lockList )
-    {
-      e.body.lockList = [] ;
-    }
-    e.body.lockList.push ( { resourceId: key, owner: this.broker._lockOwner[key].client_info } ) ;
-  }
-  for ( key in this.broker._semaphoreOwner )
-  {
-    if ( ! e.body.semaphoreList )
-    {
-      e.body.semaphoreList = [] ;
-    }
-    e.body.semaphoreList.push ( { resourceId: key, owner: this.broker._semaphoreOwner[key].client_info } ) ;
-  }
-  this.write ( e ) ;
-};
-/**
- * Description
- * @method addEventListener
- * @param {} e
- * @return 
- */
-Connection.prototype._addEventListener = function ( e )
-{
-  var eventNameList = e.body.eventNameList ;
-  var str, regexp, eventName ;
-  if ( ! eventNameList || ! eventNameList.length )
-  {
-    e.control.status = { code:1, name:"error", reason:"Missing eventNameList" } ;
-    Log.error ( e.toString() ) ;
-    this.write ( e ) ;
-    return ;
-  }
-  for  ( i = 0 ; i < eventNameList.length ; i++ )
-  {
-    eventName = eventNameList[i] ;
-    regexp = null ;
-    if ( eventName.charAt ( 0 ) === '/' && eventName.charAt ( eventName.length - 1 ) === '/' )
-    {
-      regexp = new RegExp ( eventName.substring ( 1, eventName.length - 1 ) ) ;
-    }
-    else
-    if ( eventName.indexOf ( '.*' ) >= 0 )
-    {
-      regexp = new RegExp ( eventName ) ;
-    }
-    else
-    if ( eventName.indexOf ( '*' ) >= 0 || eventName.indexOf ( '?' ) >= 0 )
-    {
-      regexp = new RegExp ( eventName.replace ( /\./, "\\." ).replace ( /\*/, ".*" ).replace ( '?', '.' ) ) ;
-    }
-
-    if ( ! regexp )
-    {
-      var pos = eventName.indexOf ( "::" ) ;
-      if ( pos > 0 )
-      {
-        if ( ! this.channels ) this.channels = {} ;
-        this.fullQualifiedEventNames[eventName] = true ;
-      }
-      this.eventNameList.push ( eventName ) ;
-      this.broker._eventNameToSockets.put ( eventName, this.socket ) ;
-    }
-    else
-    {
-      this._patternList.push ( eventName ) ;
-      this._regexpList.push ( regexp ) ;
-    }
-  }
-  e.control.status = { code:0, name:"ack" } ;
-  this.write ( e ) ;
-  this.broker.republishService() ;
-};
-Connection.prototype._setCurrentlyProcessedMessageUid = function ( uid )
-{
-  this._currentlyProcessedMessageUid = uid ;
-};
-Connection.prototype._getCurrentlyProcessedMessageUid = function()
-{
-  return this._currentlyProcessedMessageUid ;
-};
-Connection.prototype._getNextMessageUidToBeProcessed = function()
-{
-  return this._messageUidsToBeProcessed.shift() ;
-};
-Connection.prototype.isLocalHost = function()
-{
-  if ( typeof this._isLocalHost === 'boolean' )
-  {
-    return this._isLocalHost ;
-  }
-  for ( i = 0 ; i < this.broker._networkAddresses.length ; i++ )
-  {
-    var ra = this.socket.remoteAddress ;
-    if ( ! ra )
-    {
-      continue ;
-    }
-    var index = ra.indexOf ( this.broker._networkAddresses[i] ) ;
-    if ( index < 0 )
-    {
-      continue ;
-    }
-    if ( this.socket.remoteAddress.indexOf ( this.broker._networkAddresses[i] ) === this.socket.remoteAddress.length - this.broker._networkAddresses[i].length )
-    {
-      this._isLocalHost = true ;
-      return this._isLocalHost ;
-    }
-  }
-  this._isLocalHost = false ;
-  return this._isLocalHost ;
-};
-Connection.prototype.getRemoteAddress = function()
-{
-  return this.socket ? this.socket.remoteAddress : "" ;
-};
-Connection.prototype.getHostName = function() { if ( ! this.client_info ) return "" ; return this.client_info.hostname ; } ;
-Connection.prototype.getLanguage = function() { if ( ! this.client_info ) return "" ; return this.client_info.language ; } ;
-Connection.prototype.getApplicationName = function() { if ( ! this.client_info ) return "" ; return this.client_info.applicationName ; } ;
-Connection.prototype.getApplication = function() { if ( ! this.client_info ) return "" ; return this.client_info.application ; } ;
-Connection.prototype.getId = function() { if ( ! this.client_info ) return "" ; return this.client_info.sid ; } ;
-Connection.prototype.getUSERNAME = function() { if ( ! this.client_info.USERNAME ) return "" ; return this.client_info.USERNAME ; } ;
 
 var TPStore = TracePoints.getStore ( "broker" ) ;
 
@@ -375,14 +30,17 @@ TPStore.add ( "EVENT_OUT" ).setTitle ( "--------------------------- EVENT_OUT --
 /**
  * @constructor
  * @extends {EventEmitter}
- * @method Broker
+ * @method AbstractBroker
  * @param {} port
  * @param {} ip
  * @return 
  */
-var Broker = function ( port, ip )
+var AbstractBroker = function()
 {
   EventEmitter.call ( this ) ;
+};
+AbstractBroker.prototype._initialize = function ( port, ip, options )
+{
   this._configIsSet = false ;
   this._connections                        = {} ;
   this._eventNameToSockets                 = new MultiHash() ;
@@ -402,7 +60,7 @@ var Broker = function ( port, ip )
   this._networkAddresses                   = [] ;
   var networkInterfaces                    = os.networkInterfaces() ;
   this._messagesToBeProcessed              = {} ;
-  this.server                              = net.createServer() ;
+  this.server                              = this.createServer ( options ) ;
   for ( var kk in networkInterfaces )
   {
     var ll = networkInterfaces[kk] ;
@@ -446,9 +104,9 @@ var Broker = function ( port, ip )
   this._republishServiceTimeoutMillis = 5000 ;
 };
 
-util.inherits ( Broker, EventEmitter ) ;
+util.inherits ( AbstractBroker, EventEmitter ) ;
 
-Broker.prototype.validateAction = function ( hookFunctionToBeCalled, parray, this_of_actionFunction, actionFunction, parray_for_actionFunction )
+AbstractBroker.prototype.validateAction = function ( hookFunctionToBeCalled, parray, this_of_actionFunction, actionFunction, parray_for_actionFunction )
 {
   var conn = parray[0] ;
   var answer ;
@@ -493,7 +151,7 @@ Broker.prototype.validateAction = function ( hookFunctionToBeCalled, parray, thi
     actionFunction.apply ( this_of_actionFunction, parray_for_actionFunction ) ;
   }
 };
-Broker.prototype._checkInConnection = function ( conn )
+AbstractBroker.prototype._checkInConnection = function ( conn )
 {
   this._connections[conn.sid] = conn ;
   this._connectionList.push ( conn ) ;
@@ -503,7 +161,7 @@ Broker.prototype._checkInConnection = function ( conn )
   conn.socket.on ( 'end', this._ejectSocket.bind ( this, conn.socket ) ) ;
   conn.socket.on ( "data", this._ondata.bind ( this, conn.socket ) ) ;
 };
-Broker.prototype._ondata = function ( socket, chunk )
+AbstractBroker.prototype._ondata = function ( socket, chunk )
 {
   if ( this.closing )
   {
@@ -731,11 +389,11 @@ Broker.prototype._ondata = function ( socket, chunk )
  * @method toString
  * @return Literal
  */
-Broker.prototype.toString = function()
+AbstractBroker.prototype.toString = function()
 {
-  return "(Broker)[]" ;
+  return "(AbstractBroker)[]" ;
 };
-Broker.prototype._setSystemParameter = function ( conn, e )
+AbstractBroker.prototype._setSystemParameter = function ( conn, e )
 {
   var sp = e.body.systemParameter ;
   if ( sp._heartbeatIntervalMillis >= 3000 )
@@ -754,7 +412,7 @@ Broker.prototype._setSystemParameter = function ( conn, e )
   e.removeValue ( "systemParameter" ) ;
   conn._sendInfoResult ( e ) ;
 };
-Broker.prototype._tracePoint = function ( conn, e )
+AbstractBroker.prototype._tracePoint = function ( conn, e )
 {
   var tracePointResult = TPStore.action ( e.body.tracePointActionList ) ;
   e.control.status = { code:0, name:"ack" } ;
@@ -765,8 +423,8 @@ Broker.prototype._tracePoint = function ( conn, e )
   e.removeValue ( "tracePointActionList" ) ;
   conn.write ( e ) ;
 };
-Broker.prototype.logMessageTemplate = "[%date-rfc3339% %HOSTNAME% %app-name% %sid%] %msg%" ;
-Broker.prototype._logMessage = function ( conn, e )
+AbstractBroker.prototype.logMessageTemplate = "[%date-rfc3339% %HOSTNAME% %app-name% %sid%] %msg%" ;
+AbstractBroker.prototype._logMessage = function ( conn, e )
 {
   var map = { "HOSTNAME": conn.getHostName()
             , "app-name": conn.getApplicationName()
@@ -792,7 +450,7 @@ Broker.prototype._logMessage = function ( conn, e )
  * @param {} e
  * @return 
  */
-Broker.prototype._sendMessageToClient = function ( e, socketList )
+AbstractBroker.prototype._sendMessageToClient = function ( e, socketList )
 {
   var socket, found = false, i ;
   var uid           = e.getUniqueId() ;
@@ -841,7 +499,7 @@ Broker.prototype._sendMessageToClient = function ( e, socketList )
  * @param {} e
  * @return 
  */
-Broker.prototype._sendEventToClients = function ( conn, e )
+AbstractBroker.prototype._sendEventToClients = function ( conn, e )
 {
   var i, j, found = false, done = false, str, list, target_conn ;
   var name = e.getName() ;
@@ -988,7 +646,7 @@ Broker.prototype._sendEventToClients = function ( conn, e )
     Log.info ( reasonText ) ;
   }
 };
-Broker.prototype._handleSystemClientMessages = function ( conn, e )
+AbstractBroker.prototype._handleSystemClientMessages = function ( conn, e )
 {
   var i = 0 ;
   var number = 1 ;
@@ -1056,7 +714,7 @@ Broker.prototype._handleSystemClientMessages = function ( conn, e )
  * @param {} e
  * @return 
  */
-Broker.prototype._handleSystemMessages = function ( conn, e )
+AbstractBroker.prototype._handleSystemMessages = function ( conn, e )
 {
   var i, found, list, CHANNEL, t, key ;
   if ( e.getType() === "addMultiplexer" )
@@ -1229,7 +887,7 @@ Broker.prototype._handleSystemMessages = function ( conn, e )
   Log.error ( "Invalid type: '" + e.getType() + "' for " + e.getName() ) ;
   Log.error ( e.toString() ) ;
 };
-Broker.prototype._lockResource = function ( conn, e )
+AbstractBroker.prototype._lockResource = function ( conn, e )
 {
     var resourceId = e.body.resourceId ;
     if ( ! resourceId )
@@ -1250,7 +908,7 @@ Broker.prototype._lockResource = function ( conn, e )
     }
     conn.write ( e ) ;
 };
-Broker.prototype._shutdown = function ( conn, e )
+AbstractBroker.prototype._shutdown = function ( conn, e )
 {
   var shutdown_sid = e.body.shutdown_sid ;
   if ( shutdown_sid )
@@ -1318,7 +976,7 @@ Broker.prototype._shutdown = function ( conn, e )
     }
   }
 };
-Broker.prototype._acquireSemaphoreRequest = function ( conn, e )
+AbstractBroker.prototype._acquireSemaphoreRequest = function ( conn, e )
 {
   var resourceId = e.body.resourceId ;
   if ( ! resourceId )
@@ -1343,7 +1001,7 @@ Broker.prototype._acquireSemaphoreRequest = function ( conn, e )
   }
   this._setIsSemaphoreOwner ( conn, resourceId ) ;
 };
-Broker.prototype._setIsSemaphoreOwner = function ( conn, resourceId )
+AbstractBroker.prototype._setIsSemaphoreOwner = function ( conn, resourceId )
 {
   this._semaphoreOwner[resourceId] = conn ;
   conn._ownedSemaphoresRecourceIdList.push ( resourceId ) ;
@@ -1354,7 +1012,7 @@ Broker.prototype._setIsSemaphoreOwner = function ( conn, resourceId )
   e.body.isSemaphoreOwner = true ;
   conn.write ( e ) ;
 };
-Broker.prototype._releaseSemaphoreRequest = function ( socket, e )
+AbstractBroker.prototype._releaseSemaphoreRequest = function ( socket, e )
 {
   var conn = this._connections[socket.sid] ;
   var resourceId = e.body.resourceId ;
@@ -1389,7 +1047,7 @@ Broker.prototype._releaseSemaphoreRequest = function ( socket, e )
  * @param {} socket
  * @return 
  */
-Broker.prototype._ejectSocket = function ( socket )
+AbstractBroker.prototype._ejectSocket = function ( socket )
 {
   var i, rid ;
   var sid = socket.sid ;
@@ -1490,7 +1148,7 @@ Broker.prototype._ejectSocket = function ( socket )
  * @param {} exceptSocket
  * @return 
  */
-Broker.prototype._closeAllSockets = function ( exceptSocket )
+AbstractBroker.prototype._closeAllSockets = function ( exceptSocket )
 {
   if ( this.closing )
   {
@@ -1519,7 +1177,7 @@ Broker.prototype._closeAllSockets = function ( exceptSocket )
  * @param {} callback
  * @return 
  */
-Broker.prototype.listen = function ( port, callback )
+AbstractBroker.prototype.listen = function ( port, callback )
 {
   if ( !this._configIsSet )
   {
@@ -1571,7 +1229,7 @@ Broker.prototype.listen = function ( port, callback )
   this.server.listen ( this.port, callback2 ) ;
   // this.port = this.server.address().port ;
 };
-Broker.prototype._send_PING_to_all = function()
+AbstractBroker.prototype._send_PING_to_all = function()
 {
   var e = new Event ( "system", "PING" ) ;
   e.control._heartbeatIntervalMillis = this.heartbeatMillis ;
@@ -1593,7 +1251,7 @@ Broker.prototype._send_PING_to_all = function()
     }
   }
 };
-Broker.prototype._checkHeartbeat = function()
+AbstractBroker.prototype._checkHeartbeat = function()
 {
   // if ( ! TPStore.points["HEARTBEAT"].isActive() )
   // {
@@ -1665,7 +1323,7 @@ Broker.prototype._checkHeartbeat = function()
   }
   socketsToBePINGed.length = 0 ;
 };
-Broker.prototype.republishService = function()
+AbstractBroker.prototype.republishService = function()
 {
   if ( this.republishServiceTimeoutId )
   {
@@ -1677,7 +1335,7 @@ Broker.prototype.republishService = function()
     thiz._republishService() ;
   }, this._republishServiceTimeoutMillis );
 };
-Broker.prototype._republishService = function()
+AbstractBroker.prototype._republishService = function()
 {
   if ( ! this.bonjour ) return ;
   this.bonjour.unpublishAll() ;
@@ -1691,7 +1349,7 @@ Broker.prototype._republishService = function()
     thiz.publishService() ;
   }, 1000 ) ;
 };
-Broker.prototype.publishService = function()
+AbstractBroker.prototype.publishService = function()
 {
   if ( ! this.bonjour )
   {
@@ -1723,7 +1381,7 @@ Broker.prototype.publishService = function()
                          }
                          }) ;
 };
-Broker.prototype.unpublishService = function()
+AbstractBroker.prototype.unpublishService = function()
 {
   if ( ! this.bonjour ) return ;
   this.bonjour.unpublishAll() ;
@@ -1736,7 +1394,7 @@ Broker.prototype.unpublishService = function()
  * @param {object} configJson
  * @return {void}
  */
-Broker.prototype.setConfig = function ( configuration )
+AbstractBroker.prototype.setConfig = function ( configuration )
 {
   var hbm = null ;
   this._configIsSet = true ;
@@ -1847,7 +1505,7 @@ Broker.prototype.setConfig = function ( configuration )
   }
   this._taskHandler.init ( configuration ) ;
 };
-Broker.prototype.setHeartbeatIntervalMillis = function ( millis )
+AbstractBroker.prototype.setHeartbeatIntervalMillis = function ( millis )
 {
   if ( isNaN ( millis ) || millis < 10 )
   {
@@ -1855,10 +1513,44 @@ Broker.prototype.setHeartbeatIntervalMillis = function ( millis )
   }
   this.heartbeatMillis = millis ;
 };
-Broker.prototype.setZeroconfParameter = function ( zeroconfCommaList )
+AbstractBroker.prototype.setZeroconfParameter = function ( zeroconfCommaList )
 {
   this.zeroconf = zeroconfCommaList ;
 };
+var Broker = function ( port, ip, options )
+{
+  AbstractBroker.call ( this ) ;
+  if ( typeof port === 'object' )
+  {
+    options = port ;
+    port = null ;
+  }
+  else
+  if ( typeof ip === 'object' )
+  {
+    options = ip ;
+    ip = null ;
+  }
+  this._initialize ( port, ip, options ) ;
+};
+Broker.prototype.createServer = function ( options ) {
+  if ( ! options )
+  {
+    var net = require ( 'net' ) ;
+    return net.createServer() ;
+  }
+
+  var options = {
+     key  : fs.readFileSync(options.key),
+     cert : fs.readFileSync(options.cert),
+     ca: [ fs.readFileSync ( options.cert ) ]
+  };
+
+  var tls = require('tls');
+  return tls.createServer ( options ) ;
+};
+util.inherits ( Broker, AbstractBroker ) ;
+
 module.exports = Broker ;
 
 if ( require.main === module )
@@ -1900,7 +1592,23 @@ if ( require.main === module )
     var logDir = Gepard.getLogDirectory() ;
     Log.init ( "level=info,Xedirect=3,file=%GEPARD_LOG%/%APPNAME%.log:max=1m:v=4") ;
 
-    var b = new Broker() ;
+    var b ;
+    var gepard_private_key = T.getProperty ( "gepard.private.key" ) ;
+    var gepard_public_cert = T.getProperty ( "gepard.public.cert" ) ; //TODO: from config.json
+    if ( gepard_private_key && gepard_public_cert )
+    {
+console.log ( "gepard_private_key=" + Path.normalize(gepard_private_key) ) ;
+console.log ( "gepard_public_cert=" + gepard_public_cert ) ;
+      var options = {
+         key  : Path.normalize ( gepard_private_key ),
+         cert : Path.normalize ( gepard_public_cert )
+      };
+      b = new Broker(options) ;
+    }
+    else
+    {
+      b = new Broker() ;
+    }
     b.listen() ;
     var wse ;
     b.on ( "shutdown", function onshutdown(e)

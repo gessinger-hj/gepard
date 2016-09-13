@@ -2,6 +2,8 @@ var net           = require('net');
 var os            = require('os');
 var EventEmitter  = require ( "events" ).EventEmitter ;
 var util          = require ( "util" ) ;
+var fs            = require ( "fs" ) ;
+var Path          = require ( "path" ) ;
 
 var T             = require ( "./Tango" ) ;
 var Event         = require ( "./Event" ) ;
@@ -327,7 +329,50 @@ Client.prototype.brokerIsLocalHost = function()
   this._brokerIsLocalHost = false ;
   return this._brokerIsLocalHost ;
 };
+Client.prototype.createSocket = function()
+{
+  var b ;
+  var gepard_private_key = T.getProperty ( "gepard.private.key" ) ;
+  var gepard_public_cert = T.getProperty ( "gepard.public.cert" ) ; //TODO: from config.json
+  if ( gepard_private_key && gepard_public_cert )
+  {
+console.log ( "gepard_private_key=" + Path.normalize(gepard_private_key) ) ;
+console.log ( "gepard_public_cert=" + Path.normalize ( gepard_public_cert ) ) ;
+    var options = {
+       key  : fs.readFileSync ( Path.normalize ( gepard_private_key ) ),
+       cert : fs.readFileSync ( Path.normalize ( gepard_public_cert ) ),
+       ca: [ fs.readFileSync ( Path.normalize ( gepard_public_cert ) ) ]
+    };
+    if ( this.port  ) options.port = this.port ;
+    if ( this.host  ) options.host = this.host ;
+    var tls = require ( 'tls' ) ;
+console.log ( options ) ;
+    return tls.connect ( options ) ;
+  }
+  var p = {} ;
+  if ( this.port  ) p.port = this.port ;
+  if ( this.host  ) p.host = this.host ;
+  var thiz = this ;
+  return net.connect ( p ) ;
+/*
+var tls = require('tls');
+var fs = require('fs');
 
+var options = {
+   key  : fs.readFileSync('private.key'),
+   cert : fs.readFileSync('public.cert')
+};
+
+var client = tls.connect(8000, options, function () {
+   console.log(client.authorized ? 'Authorized' : 'Not authorized');
+});
+
+client.on('data', function (data) {
+   console.log(data.toString());
+   client.end();
+});
+ */
+};
 /**
  * Description
  * @method connect
@@ -335,11 +380,9 @@ Client.prototype.brokerIsLocalHost = function()
  */
 Client.prototype.connect = function()
 {
-  var p = {} ;
-  if ( this.port  ) p.port = this.port ;
-  if ( this.host  ) p.host = this.host ;
   var thiz = this ;
-  this.socket = net.connect ( p ) ;
+  this.socket = this.createSocket() ;
+
   this.socket.on ( 'end', function socket_on_end ( e )
   {
     thiz.alive = false ;
@@ -799,12 +842,9 @@ Client.prototype.isRunning = function ( callback )
     return ;
   }
   var socket ;
-  var p = {} ;
-  if ( this.port  ) p.port = this.port ;
-  if ( this.host  ) p.host = this.host ;
   try
   {
-    socket = net.connect ( p ) ;
+    socket = this.createSocket ( p ) ;
     socket.on ( 'error', function socket_on_error( data )
     {
       socket.removeAllListeners() ;
