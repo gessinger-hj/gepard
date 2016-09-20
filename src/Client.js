@@ -336,17 +336,15 @@ Client.prototype.createSocket = function()
   var gepard_public_cert = T.getProperty ( "gepard.public.cert" ) ; //TODO: from config.json
   if ( gepard_private_key && gepard_public_cert )
   {
-console.log ( "gepard_private_key=" + Path.normalize(gepard_private_key) ) ;
-console.log ( "gepard_public_cert=" + Path.normalize ( gepard_public_cert ) ) ;
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
     var options = {
-       key  : fs.readFileSync ( Path.normalize ( gepard_private_key ) ),
-       cert : fs.readFileSync ( Path.normalize ( gepard_public_cert ) ),
-       ca: [ fs.readFileSync ( Path.normalize ( gepard_public_cert ) ) ]
+       // key  : fs.readFileSync ( Path.normalize ( gepard_private_key ) ),
+       // cert : fs.readFileSync ( Path.normalize ( gepard_public_cert ) ),
+       // ca: [ fs.readFileSync ( Path.normalize ( gepard_public_cert ) ) ]
     };
     if ( this.port  ) options.port = this.port ;
     if ( this.host  ) options.host = this.host ;
     var tls = require ( 'tls' ) ;
-console.log ( options ) ;
     return tls.connect ( options ) ;
   }
   var p = {} ;
@@ -354,24 +352,6 @@ console.log ( options ) ;
   if ( this.host  ) p.host = this.host ;
   var thiz = this ;
   return net.connect ( p ) ;
-/*
-var tls = require('tls');
-var fs = require('fs');
-
-var options = {
-   key  : fs.readFileSync('private.key'),
-   cert : fs.readFileSync('public.cert')
-};
-
-var client = tls.connect(8000, options, function () {
-   console.log(client.authorized ? 'Authorized' : 'Not authorized');
-});
-
-client.on('data', function (data) {
-   console.log(data.toString());
-   client.end();
-});
- */
 };
 /**
  * Description
@@ -380,6 +360,7 @@ client.on('data', function (data) {
  */
 Client.prototype.connect = function()
 {
+T.lwhere (  ) ;
   var thiz = this ;
   this.socket = this.createSocket() ;
 
@@ -426,6 +407,7 @@ Client.prototype.connect = function()
   });
   this.socket.on ( "connect", function()
   {
+T.lwhere (  ) ;
     var json ;
     thiz.brokerIsLocalHost() ;
     thiz.alive                      = true ;
@@ -440,7 +422,9 @@ Client.prototype.connect = function()
     client_info.setChannel ( thiz.mainChannel ) ;
     json                            = client_info.serialize() ;
     thiz._stats.incrementOut ( json.length ) ;
+T.lwhere (  ) ;
     this.write ( json ) ;
+T.lwhere (  ) ;
     var uid, ctx ;
 
     var i, j ;

@@ -1597,8 +1597,6 @@ if ( require.main === module )
     var gepard_public_cert = T.getProperty ( "gepard.public.cert" ) ; //TODO: from config.json
     if ( gepard_private_key && gepard_public_cert )
     {
-console.log ( "gepard_private_key=" + Path.normalize(gepard_private_key) ) ;
-console.log ( "gepard_public_cert=" + gepard_public_cert ) ;
       var options = {
          key  : Path.normalize ( gepard_private_key ),
          cert : Path.normalize ( gepard_public_cert )
