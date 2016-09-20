@@ -4,6 +4,13 @@ General purpose communication and synchronization layer for distributed applicat
 <!-- MarkdownTOC -->
 
 - [Overview](#overview)
+- [Install](#install)
+- [Getting Started](#getting-started)
+	- [Base](#base)
+	- [JavaScript](#javascript)
+	- [Java](#java)
+	- [Python](#python)
+- [Configuration](#configuration)
 - [What is new](#what-is-new)
 	- [Release 1-8-1 Maintenance and Bugfix](#release-1-8-1-maintenance-and-bugfix)
 	- [Release 1-8-0 Java Connect Retry on First Connect](#release-1-8-0-java-connect-retry-on-first-connect)
@@ -23,13 +30,6 @@ General purpose communication and synchronization layer for distributed applicat
 	- [Controlling Connections and Actions with a Hook](#controlling-connections-and-actions-with-a-hook)
 	- [Perfect load balanced message handling.](#perfect-load-balanced-message-handling)
 	- [Java bindings for all features:](#java-bindings-for-all-features)
-- [Install](#install)
-- [Getting Started](#getting-started)
-	- [Base](#base)
-	- [JavaScript](#javascript)
-	- [Java](#java)
-	- [Python](#python)
-- [Configuration](#configuration)
 - [Use Cases](#use-cases)
 	- [Configuration Changes \(Events\)](#configuration-changes-events)
 	- [Concurrent editing of a Dataset \(Semaphores\)](#concurrent-editing-of-a-dataset-semaphores)
@@ -101,14 +101,14 @@ The broker can be instantiated from a JavaScript program but the most common and
 The appropriate command is:
 
 ```bash
-node_modules/.bin/gp.broker
+node_modules/.bin/gp.broker.web
 ```
 This starts the Broker and the corresponding web-socket-proxy
 <br/>
 If you want to start the broker alone:
 
 ```bash
-node_modules/.bin/gp.broker.no.web
+node_modules/.bin/gp.broker
 ```
 
 There is a separate program for administration purposes:
@@ -127,6 +127,158 @@ e.g.:
 node_modules/.bin/gp.lookup --gepard.zeronconf.type=test-gepard
 ```
 This command lists all service-instances with the service-type __test-gepard__ in the local subnet.
+
+<a name="install"></a>
+# Install
+
+__npm install gepard__
+
+or the newest stable but development version:
+
+npm install git+https://github.com/gessinger-hj/gepard
+
+<a name="getting-started"></a>
+# Getting Started
+
+Here are some kind of "Hello World" examples.
+
+All commands are in the directory: __node_modules/.bin__ or __node_modules/.bin/gepard__
+
+Up to now the JavaScript and the Java classes are implemented.
+<br/>
+The examples show the nice and easy interaction between programs written in these different languages.
+
+<a name="base"></a>
+## Base
+1.  __gp.broker.web<br/>__
+		Start the gepard broker with websocket proxy
+
+1.  __gp.shutdown<br/>__
+		Send a __shutdown__ event to all clients and stop the broker
+
+1.  __gp.info<br/>__
+		Show basic information from the broker
+
+<a name="javascript"></a>
+## JavaScript
+
+1.  __gp.listen --name=hello<br/>__
+		Start a listener for events named __hello__.
+		If you want to listen to all events with name starting with hello use a wildcard:
+		gp.listen "--name=hello__*__"
+
+1.  __gp.sem__<br/>
+		Acquire a semaphore
+
+1.  __gp.lock__<br/>
+		Acquire a lock
+
+1.  If you want to play with the web-client implementation use the appropriate files in:
+		__node_modules/gepard/xmp/webclient__
+		
+To simplyfy this the command
+```bash
+gp.http.simple [options]
+```
+
+is supplied starting a simple js webserver detached.
+Options are:
+
+* --port=<port&gt;, default=8888
+* --root=<web-root&gt;, default=node_modules/gepard/xmp/webclient
+* --index=<index-file&gt;, default=index.html
+
+Start your browser and go to: __localhost:8888__
+
+1.  __gp.http.simple.shutdown__<br/>
+		Stop the simple webserver.
+
+1.  __gp.http.simple.is.running__<br/>
+		Check if the simple webserver is running.
+
+<br/>
+In order to try out the examples goto node_modules/gepard/xmp.
+<br/>
+The following examples exist:
+
+* Listener.js
+* Emitter.js
+* EmitterWithBody.js
+* EmitterWithStatusInfo.js
+* Requester.js
+* Responder.js
+* Locker.js
+* AsyncSemaphore.js
+
+<a name="java"></a>
+## Java
+
+In order to try out the examples goto node_modules/gepard/java.
+All examples are included in lib/Gepard.jar.
+With the following command all examples can be executed:
+
+```bash
+java [-D<name>=<value>] -cp lib/Gepard.jar:lib/gson-2.3.1.jar org/gessinger/gepard/xmp/Listener
+```
+
+__Listener__ may be replaced by:
+
+* Listener
+* Emitter
+* EmitterWithBody
+* EmitterWithStatusInfo
+* Requester
+* Responder
+* Locker
+* AsyncSemaphore
+* BlockingSemaphore
+
+The class-version in the existing Gepard.jar is 1.6, so you need to have at least java 1.6 installed.
+There is an ant file to build your own jar.
+
+Options, e.g. for the event-name must be set in the common Java format: -Dname=hello
+
+<a name="python"></a>
+## Python
+
+In order to try out the examples goto node_modules/gepard/python/xmp.
+
+The following examples exist:
+
+* Listener.py
+* Emitter.py
+* EmitterWithBody.py
+* EmitterWithStatusInfo.py
+* Requester.py
+* Responder.py
+* Locker.py
+* AsyncSemaphore.py
+* BlockingSemaphore.py
+
+<a name="configuration"></a>
+# Configuration
+
+The communication is based on sockets. Thus only the port and optional the host must be specified to use Gepard.
+The defaults are:
+
+* port=17501
+* host=localhost
+* web-socket port=17502
+
+The port, host and logging directory can be set either by
+supplying these items
+
+1. within creating an instance of Client or Broker in your code.
+
+2. as startup arguments of your program as:
+	- -Dgepard.port=<port&gt;
+	- -Dgepard.host=<host&gt;
+	- -Dgepard.log=<log-dir&gt;
+
+3. with environmant variables of the form:
+	- export ( or set ) GEPARD_PORT=<port&gt;
+	- export ( or set ) GEPARD_HOST=<host&gt;
+	- export ( or set ) GEPARD_LOG=<log-dir&gt;
 
 <a name="what-is-new"></a>
 # What is new
@@ -655,165 +807,6 @@ The Event-class may convert the json to map Java's byte[]-array to NodeJS's Buff
 This can be set statically by Event.mapByteArrayToJavaScriptBuffer ( boolean state ).
 The default is true.
 
-
-<a name="install"></a>
-# Install
-
-__npm install gepard__
-
-or the newest stable but development version:
-
-npm install git+https://github.com/gessinger-hj/gepard
-
-<a name="getting-started"></a>
-# Getting Started
-
-Here are some kind of "Hello World" examples.
-
-All commands are in the directory: __node_modules/.bin__ or __node_modules/.bin/gepard__
-
-Up to now the JavaScript and the Java classes are implemented.
-<br/>
-The examples show the nice and easy interaction between programs written in these different languages.
-
-<a name="base"></a>
-## Base
-1.  __gp.broker<br/>__
-		Start the gepard broker with websocket proxy
-
-1.  __gp.shutdown<br/>__
-		Send a __shutdown__ event to all clients an stop the broker
-
-1.  __gp.info<br/>__
-		Show basic information from the broker
-
-<a name="javascript"></a>
-## JavaScript
-
-1.  __gp.listen --name=hello<br/>__
-		Start a listener for events named __hello__
-		<br/>
-		If you want to listen to all events with name starting with hello use a wildcard:
-		<br/>
-		__gp.listen "--name=hello*"__
-
-1.  __gp.emit --name=hello__ [--body='{"City":"Frankfurt"}']
-		emit an event with name __hello__
-
-1.  __gp.sem__<br/>
-		Acquire a semaphore
-
-1.  __gp.lock__<br/>
-		Acquire a lock
-
-1.  If you want to play with the web-client implementation use the appropriate files in:
-		__node_modules/gepard/xmp/webclient__
-<br/>
-To simplyfy this the command
-
-
-```bash
-gp.http.simple [options]
-```
-
-is supplied starting a simple js webserver detached.
-Options are:
-
-* --port=<port&gt;, default=8888
-* --root=<web-root&gt;, default=node_modules/gepard/xmp/webclient
-* --index=<index-file&gt;, default=index.html
-
-Start your browser and go to: __localhost:8888__
-
-1.  __gp.http.simple.shutdown__<br/>
-		Stop the simple webserver.
-
-1.  __gp.http.simple.is.running__<br/>
-		Check if the simple webserver is running.
-
-<br/>
-In order to try out the examples goto node_modules/gepard/xmp.
-<br/>
-The following examples exist:
-
-* Listener.js
-* Emitter.js
-* EmitterWithBody.js
-* EmitterWithStatusInfo.js
-* Requester.js
-* Responder.js
-* Locker.js
-* AsyncSemaphore.js
-
-<a name="java"></a>
-## Java
-
-In order to try out the examples goto node_modules/gepard/java.
-All examples are included in lib/Gepard.jar.
-With the following command all examples can be executed:
-
-```bash
-java [-D<name>=<value>] -cp lib/Gepard.jar:lib/gson-2.3.1.jar org/gessinger/gepard/xmp/Listener
-```
-
-__Listener__ may be replaced by:
-
-* Listener
-* Emitter
-* EmitterWithBody
-* EmitterWithStatusInfo
-* Requester
-* Responder
-* Locker
-* AsyncSemaphore
-* BlockingSemaphore
-
-The class-version in the existing Gepard.jar is 1.6, so you need to have at least java 1.6 installed.
-There is an ant file to build your own jar.
-
-Options, e.g. for the event-name must be set in the common Java format: -Dname=hello
-
-<a name="python"></a>
-## Python
-
-In order to try out the examples goto node_modules/gepard/python/xmp.
-
-The following examples exist:
-
-* Listener.py
-* Emitter.py
-* EmitterWithBody.py
-* EmitterWithStatusInfo.py
-* Requester.py
-* Responder.py
-* Locker.py
-* AsyncSemaphore.py
-* BlockingSemaphore.py
-
-<a name="configuration"></a>
-# Configuration
-
-The communication is based on sockets. Thus only the port and optional the host must be specified to use Gepard.
-The defaults are:
-
-* port=17501
-* host=localhost
-* web-socket port=17502
-
-The port, host and logging directory can be set either by
-supplying these items
-
-1. within creating an instance of Client or Broker in your code.
-
-2. as startup arguments of your program as:
-	- -Dgepard.port=<port&gt;
-	- -Dgepard.host=<host&gt;
-	- -Dgepard.log=<log-dir&gt;
-
-3. with environmant variables of the form:
-	- export ( or set ) GEPARD_PORT=<port&gt;
-	- export ( or set ) GEPARD_HOST=<host&gt;
-	- export ( or set ) GEPARD_LOG=<log-dir&gt;
 
 <a name="use-cases"></a>
 # Use Cases
