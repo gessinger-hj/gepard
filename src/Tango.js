@@ -1169,7 +1169,7 @@ TangoClass.prototype.findService = function ( serviceParameter, callback )
 };
 TangoClass.prototype.getScriptName = function()
 {
-  let argv1 = process.argv[1] ;
+  var argv1 = process.argv[1] ;
   if ( argv1 )
   {
     argv1 = argv1.replace ( /\\/g, "/" ) ;

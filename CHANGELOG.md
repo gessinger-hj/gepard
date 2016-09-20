@@ -1,3 +1,8 @@
+## 1.8.2
+- Tango.js: usage of __let__ not allowed without "use strict"
+						let replaced by var
+- rearrange readme.md
+
 ## 1.8.1
 - client.setReconnect() is overwritten by option/env if this is not set
 - zeroconf: published service-name contains port=0
