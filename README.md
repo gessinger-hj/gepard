@@ -12,6 +12,7 @@ General purpose communication and synchronization layer for distributed applicat
 	- [Python](#python)
 - [Configuration](#configuration)
 - [What is new](#what-is-new)
+	- [Release 1-8-2 Enhance GPWebClient to use a Standard Webserver \(nginx, ...\)](#release-1-8-2-enhance-gpwebclient-to-use-a-standard-webserver-nginx-)
 	- [Release 1-8-1 Maintenance and Bugfix](#release-1-8-1-maintenance-and-bugfix)
 	- [Release 1-8-0 Java Connect Retry on First Connect](#release-1-8-0-java-connect-retry-on-first-connect)
 	- [Release 1-7-9 WebClient New Reconnect Mechanism](#release-1-7-9-webclient-new-reconnect-mechanism)
@@ -282,6 +283,11 @@ supplying these items
 
 <a name="what-is-new"></a>
 # What is new
+
+<a name="release-1-8-2-enhance-gpwebclient-to-use-a-standard-webserver-nginx-"></a>
+## Release 1-8-2 Enhance GPWebClient to use a Standard Webserver (nginx, ...)
+The GPWebClient now accepts a full qualified URL as connection attributes.
+This is useful in cas a statndard web-server is used as proxy.
 
 <a name="release-1-8-1-maintenance-and-bugfix"></a>
 ## Release 1-8-1 Maintenance and Bugfix
