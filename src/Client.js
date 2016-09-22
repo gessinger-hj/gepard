@@ -360,7 +360,6 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
  */
 Client.prototype.connect = function()
 {
-T.lwhere (  ) ;
   var thiz = this ;
   this.socket = this.createSocket() ;
 
@@ -407,7 +406,6 @@ T.lwhere (  ) ;
   });
   this.socket.on ( "connect", function()
   {
-T.lwhere (  ) ;
     var json ;
     thiz.brokerIsLocalHost() ;
     thiz.alive                      = true ;
@@ -422,9 +420,7 @@ T.lwhere (  ) ;
     client_info.setChannel ( thiz.mainChannel ) ;
     json                            = client_info.serialize() ;
     thiz._stats.incrementOut ( json.length ) ;
-T.lwhere (  ) ;
     this.write ( json ) ;
-T.lwhere (  ) ;
     var uid, ctx ;
 
     var i, j ;
