@@ -62,13 +62,20 @@ Console._log = function ( p )
 
 var App = {};
 
-App.initialize = function()
+App.initialize = function ( url )
 {
   this.port = 17502 ;
   var thiz = this ;
   try
   {
-    this.wc = gepard.getWebClient ( this.port ) ;
+    if ( typeof url === "string" )
+    {
+      this.wc = gepard.getWebClient ( url ) ;
+    }
+    else
+    {
+      this.wc = gepard.getWebClient ( this.port ) ;
+    }
     // window.onbeforeunload = function()
     // {
     //   thiz.wc.close() ;
@@ -205,7 +212,7 @@ App.toFullString = function ( text, indent )
 <script type="text/javascript">
 try
 {
-    App.initialize();
+  App.initialize ( "ws://localhost/ws" );
 }
 catch ( exc )
 {

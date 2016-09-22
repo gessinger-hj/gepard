@@ -11,12 +11,20 @@ gepard.clients = {} ;
  */
 gepard.getWebClient = function ( port, host )
 {
-  host = ! host ? "" : host ;
-  if ( ! port )
-  {
-    port = gepard.port ;
-  }
   var key = "" + port + host ;
+  if ( typeof port === "string" )
+  {
+    key = port ;
+  }
+  else
+  {
+    host = ! host ? "" : host ;
+    if ( ! port )
+    {
+      port = gepard.port ;
+    }
+    key = "" + port + host ;
+  }
   var wc = gepard[key] ;
   if ( wc ) return wc ;
   return new gepard.WebClient ( port, host ) ;
@@ -115,6 +123,11 @@ gepard.WebClient = function ( port, host )
   this._eventListenerFunctions   = new tangojs.MultiHash() ;
   this._pendingEventListenerList = [] ;
   var domain                     = host ? host : document.domain ;
+  if ( typeof port === 'string' )
+  {
+    this._url = port ;
+  }
+  else
   if ( window.location.protocol === 'https:')
   {
     this._url = "wss://" + domain + ":" + this._port ;
