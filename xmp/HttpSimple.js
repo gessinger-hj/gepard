@@ -23,34 +23,6 @@ if ( require.main === module )
     return ;
   }
 
-  var client = null ;
-  var connect_to_boker = function()
-  {
-    new gepard.Admin().isRunning ( function admin_is_running ( state )
-    {
-      if ( ! state )
-      {
-        return ;
-      }
-      try
-      {
-        client = gepard.getClient() ;
-        client.setReconnect ( true ) ;
-        client.on ( "shutdown", function client_onshutdown()
-        {
-          process.exit ( 0 ) ;
-        }) ;
-        client.on ( "http.simple.shutdown", function http_simple_onshutdown()
-        {
-          process.exit ( 0 ) ;
-        }) ;
-      }
-      catch ( exc )
-      {
-        console.log ( exc ) ;
-      }
-    });
-  }
   var mime = null ;
   try
   {
@@ -85,6 +57,17 @@ if ( require.main === module )
   Log.init ( "level=info,Xedirect=3,file=%GEPARD_LOG%/%APPNAME%.log:max=1m:v=4") ;
   accessLog.init ( "file=%GEPARD_LOG%/%APPNAME%.access-%DATE%.log" ) ;
 
+  var client = gepard.getClient() ;
+  client.setReconnect ( true ) ;
+  client.on ( "shutdown", function client_onshutdown()
+  {
+    process.exit ( 0 ) ;
+  }) ;
+  client.on ( "http.simple.shutdown", function http_simple_onshutdown()
+  {
+    process.exit ( 0 ) ;
+  }) ;
+
   try
   {
     var stat = fs.statSync ( root ) ;
@@ -113,7 +96,6 @@ if ( require.main === module )
     console.log ( exc ) ;
     return ;
   }
-  connect_to_boker() ;
 
   try
   {
