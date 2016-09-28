@@ -29,6 +29,7 @@ var WebSocketEventProxy = function ( port )
 	this.client = null ;
 	this.port = port ;
 	this._create() ;
+	this._excludeSelf = T.getBool ( "gepard.websocket.exclude.self", false ) ;
 };
 util.inherits ( WebSocketEventProxy, EventEmitter ) ;
 
@@ -87,10 +88,9 @@ WebSocketEventProxy.prototype.generalEventListenerFunction = function ( e )
 		for ( i = 0 ; i < list.length ; i++ )
 		{
 			conn = list[i] ;
-			if ( conn.socket.key !== e.getProxyIdentifier() ) // TODO
-			{
-				conn.socket.sendText ( se ) ;
-			}
+			this._excludeSelf
+			if ( this._excludeSelf && conn.socket.key === e.getProxyIdentifier() ) continue ;
+			conn.socket.sendText ( se ) ;
 		}
 	}
 };
@@ -165,13 +165,7 @@ WebSocketEventProxy.prototype._create = function()
 				}
 				thiz.client.fire ( e
 	      , { 
-/**
-  * Description
-  * @method result
-  * @param {} e
-  * @return 
-  */
- result: function(e)
+						result: function(e)
 	          {
 							if ( e.isResult() )
 							{
@@ -179,26 +173,15 @@ WebSocketEventProxy.prototype._create = function()
 							}
 	          }
 	        	, 
-/**
-  * Description
-  * @method error
-  * @param {} e
-  * @return 
-  */
- error: function(e)
-	          	{
-								thiz.sendToWebSocket ( e ) ;
-	          	}
+						error: function(e)
+	          {
+							thiz.sendToWebSocket ( e ) ;
+	          }
 	         	, 
-/**
-  * Description
-  * @method write
-  * @return 
-  */
- write: function()
-	          	{
-	          	}
-	        	}) ;
+						write: function()
+	          {
+	          }
+	        }) ;
 				}
 		}) ;
 		socket.on ( "error", function ( e )
