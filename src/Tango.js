@@ -1015,7 +1015,7 @@ TangoClass.prototype._LZ = function (x){return(x<0||x>9?"":"0")+x;} ;
 TangoClass.prototype._LZ2 = function (x)
 {
   if ( x < 0 || x >= 100 ) return "" + x ;
-  if ( x >= 10 || x < 100 ) return "0" + x ;
+  if ( x >= 10 && x < 100 ) return "0" + x ;
   return "00" + x ;
 } ;
 TangoClass.prototype._MLZ = function (x)
