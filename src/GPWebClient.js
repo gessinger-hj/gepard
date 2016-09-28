@@ -9,6 +9,16 @@ gepard.clients = {} ;
  * @param  {[string]} host host (optional)
  * @return {WebClient}      the WebClient object
  */
+gepard.getClient = function ( port, host )
+{
+  return this.getWebClient ( port, host ) ;
+};
+/**
+ * get an existing client or create a new one
+ * @param  {int} port port
+ * @param  {[string]} host host (optional)
+ * @return {WebClient}      the WebClient object
+ */
 gepard.getWebClient = function ( port, host )
 {
   var key = "" + port + host ;
