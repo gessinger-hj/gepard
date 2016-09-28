@@ -824,7 +824,7 @@ Client.prototype.isRunning = function ( callback )
   var socket ;
   try
   {
-    socket = this.createSocket ( p ) ;
+    socket = this.createSocket() ;
     socket.on ( 'error', function socket_on_error( data )
     {
       socket.removeAllListeners() ;
@@ -845,6 +845,7 @@ Client.prototype.isRunning = function ( callback )
   }
   catch ( exc )
   {
+// console.log ( exc ) ;
   }
 };
 Client.prototype._checkHeartbeat = function()
