@@ -2147,7 +2147,7 @@ http {
         '' close;                                                                   #
     }                                                                               #
     ## --------------- nginx as proxy for gepard based websocket proxy --------------
-	upstream websocket {                                                              #
+    upstream websocket {                                                            #
         server localhost:17502; # WebSocketEventProxy listens here                  #
     }                                                                               #
 
@@ -2165,7 +2165,7 @@ http {
         }
         location /ws {
             ## ------------------- forwarding to WebSocketEventProxy ----------------
-			proxy_pass http://websocket;                                            			#
+            proxy_pass http://websocket;                                            #
             proxy_http_version 1.1;                                                 #
             proxy_set_header X-Forwarded-For proxy_add_x_forwarded_for_by_nginx;    #
             proxy_set_header Host $host;                                            #
