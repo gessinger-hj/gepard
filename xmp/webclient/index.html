@@ -70,11 +70,11 @@ App.initialize = function ( url )
   {
     if ( typeof url === "string" )
     {
-      this.wc = gepard.getWebClient ( url ) ;
+      this.wc = gepard.getClient ( url ) ;
     }
     else
     {
-      this.wc = gepard.getWebClient ( this.port ) ;
+      this.wc = gepard.getClient ( this.port ) ;
     }
     // window.onbeforeunload = function()
     // {
@@ -212,7 +212,15 @@ App.toFullString = function ( text, indent )
 <script type="text/javascript">
 try
 {
-  App.initialize ( "ws://localhost/ws" );
+  var str = ""+document.cookie ;
+  if ( str.indexOf ( "Proxy-Used=true" ) )
+  {
+    App.initialize ( "ws://localhost/ws" ) ;
+  }
+  else
+  {
+    App.initialize() ;
+  }
 }
 catch ( exc )
 {

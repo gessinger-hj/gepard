@@ -52,6 +52,8 @@ General purpose communication and synchronization layer for distributed applicat
 - [Zeroconf Usage in Detail](#zeroconf-usage-in-detail)
 	- [Zeronconf on the Broker's Side](#zeronconf-on-the-brokers-side)
 	- [Zeroconf on the Client's Side](#zeroconf-on-the-clients-side)
+- [How to use a Standard Webserver as a Proxy for the WebSocketEventProxy](#how-to-use-a-standard-webserver-as-a-proxy-for-the-websocketeventproxy)
+	- [WebSocket Configuration Example for nginx](#websocket-configuration-example-for-nginx)
 - [Technical Aspects of the Client](#technical-aspects-of-the-client)
 - [Found a bug? Help us fix it...](#found-a-bug-help-us-fix-it)
 - [https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md](#httpsgithubcomgessinger-hjgepardblobmasterchangelogmd)
@@ -287,7 +289,9 @@ supplying these items
 <a name="release-1-8-2-enhance-gpwebclient-to-use-a-standard-webserver-nginx-"></a>
 ## Release 1-8-2 Enhance GPWebClient to use a Standard Webserver (nginx, ...)
 The GPWebClient now accepts a full qualified URL as connection attributes.
-This is useful in cas a statndard web-server is used as proxy.
+This is useful in case a standard web-server is used as a proxy.
+
+Details [see](#how-to-use-a-standard-webserver-as-a-proxy-for-the-websocketeventproxy)
 
 <a name="release-1-8-1-maintenance-and-bugfix"></a>
 ## Release 1-8-1 Maintenance and Bugfix
@@ -2106,6 +2110,76 @@ gepard.findService ( { type:<type> }, (service) => {
 	});
 ```
 
+<a name="how-to-use-a-standard-webserver-as-a-proxy-for-the-websocketeventproxy"></a>
+# How to use a Standard Webserver as a Proxy for the WebSocketEventProxy
+
+If you use a standard web-server like apache, nginx or iis the web-socket communication is iniated with a so called __Upgrade__ request based on the http protocol.
+
+This request must be re-directed to the running WebSocketEventProxy which in turn is connected to a running Broker.
+Re-directions must be configured in the appropriate web-server's configuration.
+Examples:
+
+<a name="websocket-configuration-example-for-nginx"></a>
+## WebSocket Configuration Example for nginx
+
+The default localhost port 80 is passed to port 8888 of the example http-server in gepard's example.
+The web-socket upgrade request is passed to a running WebSocketEventProxy.
+In this case the WebClient's url must be: __ws://localhost/ws__:
+
+```js
+var client = gepard.getClient ( "ws://localhost/ws")
+```
+If the connection is based on https then the url is __wss://localhost/ws__
+
+The sample are prepared to detect a proxy and use the appropriate web-socket parameters.
+A sample nginx config file is located in: [.../node_modules/gepard/xmp/nginx.conf](https://github.com/gessinger-hj/gepard/blob/master/xmp/nginx.conf)
+```conf
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    sendfile        on;
+    keepalive_timeout  65;
+
+    ## --------------- nginx as proxy for node based http server --------------------
+    map $http_upgrade $connection_upgrade {                                         #
+        default upgrade;                                                            #
+        '' close;                                                                   #
+    }                                                                               #
+    ## --------------- nginx as proxy for gepard based websocket proxy --------------
+	upstream websocket {                                                              #
+        server localhost:17502; # WebSocketEventProxy listens here                  #
+    }                                                                               #
+
+    server {
+        ## ------------------- standard port for incoming requests ------------------
+        listen       80;
+        server_name  localhost;
+
+        location / {
+            ## ------------------- forwarding to HttpSimple -------------------------
+            proxy_pass http://localhost:8888;                                       #
+            proxy_http_version 1.1;                                                 #
+            proxy_set_header X-Forwarded-For proxy_add_x_forwarded_for_by_nginx;    #
+            proxy_set_header Host $host;                                            #
+        }
+        location /ws {
+            ## ------------------- forwarding to WebSocketEventProxy ----------------
+			proxy_pass http://websocket;                                            			#
+            proxy_http_version 1.1;                                                 #
+            proxy_set_header X-Forwarded-For proxy_add_x_forwarded_for_by_nginx;    #
+            proxy_set_header Host $host;                                            #
+            proxy_set_header Upgrade $http_upgrade;                                 #
+            proxy_set_header Connection $connection_upgrade;                        #
+        }
+
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   html;
+        }
+    }
+}
+```
 
 <a name="technical-aspects-of-the-client"></a>
 # Technical Aspects of the Client

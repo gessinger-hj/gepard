@@ -2,6 +2,10 @@
 - Tango.js: usage of __let__ not allowed without "use strict"
 						let replaced by var
 - rearrange readme.md
+- Tango.js: toRFC3339String() format millis < 10
+- JavaScript re-connect
+- WebClient accepts fully qualified URL to use a http(s)-proxy
+- HttpSimple discovers wether a proxy is present.
 
 ## 1.8.1
 - client.setReconnect() is overwritten by option/env if this is not set

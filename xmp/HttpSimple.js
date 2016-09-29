@@ -101,6 +101,8 @@ if ( require.main === module )
   {
     http.createServer ( function ( req, res )
     {
+      var proxyUsed = req.headers["connection"] === "keep-alive" ? false : true ;
+
       var requestUrl  = url.parse ( req.url ) ;
       var urlPathName = decodeURIComponent ( requestUrl.pathname ) ;
       var path ;
@@ -140,7 +142,7 @@ if ( require.main === module )
         Log.logln ( path ) ;
         if ( mime )
         {
-          res.writeHead ( 200, { "Content-Type": mime.lookup ( path ) } ) ;
+          res.writeHead ( 200, { "Content-Type": mime.lookup ( path ), "Set-Cookie": ["Proxy-Used=" + proxyUsed] } ) ;
         }
         else
         {
