@@ -6,6 +6,7 @@
 - JavaScript re-connect
 - WebClient accepts fully qualified URL to use a http(s)-proxy
 - HttpSimple discovers wether a proxy is present.
+- Python: timer thread no daemon for reconnect
 
 ## 1.8.1
 - client.setReconnect() is overwritten by option/env if this is not set

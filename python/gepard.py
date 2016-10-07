@@ -1753,7 +1753,7 @@ class MutableTimer:
 	def __init__(self,isDaemon=None):
 		self.maxperiod          = 24*3600
 		self.period             = self.maxperiod
-		self.isDaemon           = isDaemon == True
+		self.isDaemon           = isDaemon == False
 		self._lock              = threading.Lock()
 		self._runnerlock        = threading.Lock()
 		self._condition         = threading.Condition ( self._lock )
