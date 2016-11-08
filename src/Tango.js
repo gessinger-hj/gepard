@@ -1043,6 +1043,10 @@ TangoClass.prototype._MLZ = function (x)
  */
 TangoClass.prototype.toRFC3339String = function ( date )
 {
+  if ( !date )
+  {
+    date = new Date() ;
+  }
   var to = date.getTimezoneOffset() ;
   var signum = to > 0 ? "-" : "+" ;
   if ( to < 0 ) to *= -1 ;
@@ -1203,42 +1207,3 @@ if ( ! Date.toRFC3339String )
   };
 }
 module.exports = org.gessinger.tangojs.Tango ;
-if ( require.main === module )
-{
-  var T = org.gessinger.tangojs.Tango ;
-  var o =
-  {
-    "XconnectionHook": "XmpConnectionHook.js"
-  , "XheartbeatMillis": 10000
-  , "tasks": {
-      "rule": "XmpTaskRule"
-    , "list": [
-      { "name":"ack"
-      , "Xrule":"XmpTaskRule"
-      , "stepList": [
-          { "name": "req1", "rule":"%HOSTNAME%" }
-        , { "name": "req2", "rule":"null" }
-        ]
-      }
-    ]
-    }
-  };
-  T.visit ( o, function ( oo )
-  {
-    if ( Array.isArray ( oo ) )
-    {
-      return ;
-    }
-    for ( var key in oo )
-    {
-      if ( typeof oo[key] !== 'string' ) continue ;
-      if ( oo[key].indexOf ( '%' ) < 0 ) continue ;
-      oo[key] = T.resolve ( oo[key], {} ) ;
-    }
-  });
-  T.log ( o ) ;
-  T.isLocalHost ( "wevli077", function ( err, p )
-  {
-console.log ( "p=" + p ) ;
-  }) ;
-}
