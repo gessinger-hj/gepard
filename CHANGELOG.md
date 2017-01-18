@@ -1,3 +1,6 @@
+## 1.8.3
+- bugfix for python: module resource in windows does not exist.
+
 ## 1.8.2
 - Tango.js: usage of __let__ not allowed without "use strict"
 						let replaced by var
