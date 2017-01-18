@@ -22,6 +22,10 @@ General purpose communication and synchronization layer for distributed applicat
 	- [Release 1-7-0 mDNS Zeroconf for Python](#release-1-7-0-mdns-zeroconf-for-python)
 	- [Release 1-6-0 mDNS Zeroconf](#release-1-6-0-mdns-zeroconf)
 	- [Release 1-5-0 Channels](#release-1-5-0-channels)
+		- [Using Channels](#using-channels)
+			- [Event-listener](#event-listener)
+			- [Event-emitter](#event-emitter)
+		- [Channel Examples](#channel-examples)
 	- [Release 1-4-5 Registered Event-names may contain Wildcards \(RegExp\)](#release-1-4-5-registered-event-names-may-contain-wildcards-regexp)
 	- [Release 1-4-5 Simplified Handling of JSON Trees](#release-1-4-5-simplified-handling-of-json-trees)
 	- [Release 1-4-3 Logging](#release-1-4-3-logging)
@@ -39,13 +43,27 @@ General purpose communication and synchronization layer for distributed applicat
 - [The Event Body](#the-event-body)
 - [Examples](#examples)
 	- [Examples Short](#examples-short)
+		- [Event listener](#event-listener-1)
+		- [Event Emitter](#event-emitter-1)
+		- [Locks](#locks)
+		- [Semaphores](#semaphores)
+		- [Request / Result](#request--result)
+			- [Send request](#send-request)
+			- [Send result](#send-result)
 	- [Examples Long](#examples-long)
+		- [Event listener](#event-listener-2)
+			- [In Application](#in-application)
+			- [In Browser](#in-browser)
+		- [Event Emitter](#event-emitter-2)
+			- [In Application](#in-application-1)
+			- [In Browser](#in-browser-1)
 - [File Transfer with the FileContainer Class](#file-transfer-with-the-filecontainer-class)
 	- [FileSender](#filesender)
 	- [FileReceiver](#filereceiver)
 - [Heartbeat and Reconnection Capability Parameterization](#heartbeat-and-reconnection-capability-parameterization)
 	- [Broker Side](#broker-side)
 	- [Client Side](#client-side)
+		- [Example to test](#example-to-test)
 - [The TracePoint Concept](#the-tracepoint-concept)
 	- [TracePoints in the Broker](#tracepoints-in-the-broker)
 	- [TracePoints in the Client](#tracepoints-in-the-client)
@@ -63,7 +81,6 @@ General purpose communication and synchronization layer for distributed applicat
 
 <!-- /MarkdownTOC -->
 
-<a name="overview"></a>
 # Overview
 Gepard is a system consisting of a broker and connected clients.
 The communication is done via sockets or web-sockets.
@@ -131,7 +148,6 @@ node_modules/.bin/gp.lookup --gepard.zeronconf.type=test-gepard
 ```
 This command lists all service-instances with the service-type __test-gepard__ in the local subnet.
 
-<a name="install"></a>
 # Install
 
 __npm install gepard__
@@ -140,18 +156,16 @@ or the newest stable but development version:
 
 npm install git+https://github.com/gessinger-hj/gepard
 
-<a name="getting-started"></a>
 # Getting Started
 
 Here are some kind of "Hello World" examples.
 
 All commands are in the directory: __node_modules/.bin__ or __node_modules/.bin/gepard__
 
-Up to now the JavaScript and the Java classes are implemented.
+Up to now the JavaScript, the Python and the Java classes are implemented.
 <br/>
 The examples show the nice and easy interaction between programs written in these different languages.
 
-<a name="base"></a>
 ## Base
 1.  __gp.broker.web<br/>__
 		Start the gepard broker with websocket proxy
@@ -162,7 +176,6 @@ The examples show the nice and easy interaction between programs written in thes
 1.  __gp.info<br/>__
 		Show basic information from the broker
 
-<a name="javascript"></a>
 ## JavaScript
 
 1.  __gp.listen --name=hello<br/>__
@@ -213,7 +226,6 @@ The following examples exist:
 * Locker.js
 * AsyncSemaphore.js
 
-<a name="java"></a>
 ## Java
 
 In order to try out the examples goto node_modules/gepard/java.
@@ -241,7 +253,6 @@ There is an ant file to build your own jar.
 
 Options, e.g. for the event-name must be set in the common Java format: -Dname=hello
 
-<a name="python"></a>
 ## Python
 
 In order to try out the examples goto node_modules/gepard/python/xmp.
@@ -258,7 +269,6 @@ The following examples exist:
 * AsyncSemaphore.py
 * BlockingSemaphore.py
 
-<a name="configuration"></a>
 # Configuration
 
 The communication is based on sockets. Thus only the port and optional the host must be specified to use Gepard.
@@ -283,27 +293,22 @@ supplying these items
 	- export ( or set ) GEPARD_HOST=<host&gt;
 	- export ( or set ) GEPARD_LOG=<log-dir&gt;
 
-<a name="what-is-new"></a>
 # What is new
 
-<a name="release-1-8-2-enhance-gpwebclient-to-use-a-standard-webserver-nginx-"></a>
 ## Release 1-8-2 Enhance GPWebClient to use a Standard Webserver (nginx, ...)
 The GPWebClient now accepts a full qualified URL as connection attributes.
 This is useful in case a standard web-server is used as a proxy.
 
 Details [see](#how-to-use-a-standard-webserver-as-a-proxy-for-the-websocketeventproxy)
 
-<a name="release-1-8-1-maintenance-and-bugfix"></a>
 ## Release 1-8-1 Maintenance and Bugfix
 Maintenance release. [Details](https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md)
 
-<a name="release-1-8-0-java-connect-retry-on-first-connect"></a>
 ## Release 1-8-0 Java Connect Retry on First Connect
 If re-connect is requested and there is no reachable Broker then the Java client tries to
 connect every 5 seconds to establish a valid connection.
 This is the same behaviour as the JavaScript client and the WebClient used in a browser.
 
-<a name="release-1-7-9-webclient-new-reconnect-mechanism"></a>
 ## Release 1-7-9 WebClient New Reconnect Mechanism
 
 If re-connect is requested with
@@ -330,7 +335,6 @@ Example:
 In addition if a WebSocket-connection dies a re-connect is tried every 5 seconds.
 In this case all event-listener are registered again.
 
-<a name="release-1-7-8-webclient-enhancement--bugfix"></a>
 ## Release 1-7-8 WebClient Enhancement / Bugfix
 - GPWebClient: protected event-names for method on ( name, callback):
   "open", "close", "error", "shutdown", "end"
@@ -338,14 +342,12 @@ In this case all event-listener are registered again.
 - GPWebClient: new method: close().
 	Can be used with the browser's event __onbeforeunload__ to close a connection.
 
-<a name="release-1-7-6-webclient-enhancement"></a>
 ## Release 1-7-6 WebClient Enhancement
 
 Enable GPWebClient to optional use another target domain (host).
 Mainly the method gepard.getWebClient ( port ) now accepts an optional doman (host) as second parameter like:
 gepard.getWebClient ( 12345, "my.domain.com" ) ;
 
-<a name="release-1-7-5-javascript-enhancements"></a>
 ## Release 1-7-5 JavaScript Enhancements
 
 If re-connect is requested with
@@ -371,7 +373,6 @@ Example:
 		});
 ```
 
-<a name="release-1-7-0-mdns-zeroconf-for-python"></a>
 ## Release 1-7-0 mDNS Zeroconf for Python
 
 This release introduces the __zeroconf__ mechanism for __Python__.
@@ -397,7 +398,6 @@ With Gepard it is such easy:
 See details in the chapter [Zeroconf Usage in Detail](#zeroconf-usage-in-detail)
 
 
-<a name="release-1-6-0-mdns-zeroconf"></a>
 ## Release 1-6-0 mDNS Zeroconf
 
 Zero-configuration networking (zeroconf) is a set of technologies that automatically creates a usable computer network based on the Internet Protocol Suite (TCP/IP) when computers or network peripherals are interconnected. It does not require manual operator intervention or special configuration servers.
@@ -416,7 +416,6 @@ With Gepard it is such easy:
 
 See details in the chapter [Zeroconf Usage in Detail](#zeroconf-usage-in-detail)
 
-<a name="release-1-5-0-channels"></a>
 ## Release 1-5-0 Channels
 
 This release introduces __Channels__ as a meta-layer to organize different realms in a very simple and effective manner.
@@ -519,7 +518,6 @@ A interested client only needs to know the appropriate channel and requests
 
 -	client.request ( "DB-B::db-request", callback )
 
-<a name="release-1-4-5-registered-event-names-may-contain-wildcards-regexp"></a>
 ## Release 1-4-5 Registered Event-names may contain Wildcards (RegExp)
 
 Up to now an event-handler is registered with one or more exact event-names, e.g.
@@ -547,7 +545,6 @@ In general a regular-expression pattern is derived from the given string if it c
 	<br/>
 	The string between the slashes is used as is to compile the appropriate regular-expression.
 
-<a name="release-1-4-5-simplified-handling-of-json-trees"></a>
 ## Release 1-4-5 Simplified Handling of JSON Trees
 
 Creating and editing JSON objects in Python and Java is a little bit unhandy. The class JSAcc in Python, JavaScript and Java simplifies
@@ -597,7 +594,6 @@ jsacc.add ( "result/header/status", true ) ;
 
 Path-elements which do not exist are created if needed.
 
-<a name="release-1-4-3-logging"></a>
 ## Release 1-4-3 Logging
 
 - Client Logging into central Log-File on Broker side by calling the method
@@ -651,7 +647,6 @@ Event.getName() is 'system'
 Event.getType() is 'log'
 
 
-<a name="release-1-4-0-new-heartbeat-protocol-to-ensure-the-availability-of-connections"></a>
 ## Release 1-4-0 New Heartbeat Protocol to ensure the Availability of Connections
 
 Gepard is based on fast communication by means of always-open sockets. Therefore it is crucial to monitor these connections.
@@ -676,7 +671,6 @@ Example time-out conditions are:
 
 [Parameter, details and example](#heartbeat-and-reconnection-capability-parameterization)
 
-<a name="release-1-3-3-new-filecontainer-class-for-python-javascript-and-java-to-simplify-file-transfer"></a>
 ## Release 1-3-3 New FileContainer class for Python, JavaScript and Java to simplify file-transfer.
 
 An instance of the __FileContainer__ class may be inserted at any place inside the body of an Event.
@@ -691,7 +685,6 @@ This is done on a per connection basis.
 <br/>
 [See details](#file-transfer-with-the-filecontainer-class)
 
-<a name="release-1-3-0-lets-talk-about-python"></a>
 ## Release 1-3-0 Let's talk about Python
 
 In this release a full featured Python client is included. The implementation is __pure generic Python code__.
@@ -703,7 +696,6 @@ The features are:
 * semaphores ( synchronously / asynchronously )
 * locks
 
-<a name="controlling-connections-and-actions-with-a-hook"></a>
 ## Controlling Connections and Actions with a Hook
 
 In order to control connections and actions a default hook class is provided:
@@ -779,7 +771,6 @@ The parameter __connection__ in the above method-signatures is an internal used 
 1.  connection.getApplication()
 1.  connection.getId()
 
-<a name="perfect-load-balanced-message-handling"></a>
 ## Perfect load balanced message handling.
 
 The use-case for request/respond is enhanced to a perfect load balancing.
@@ -798,7 +789,6 @@ As long as a sent message is not returned the Broker stores it in relation to th
 If this connection dies the stored message is sent back to the originator marked with the fail state and appropriate text.
 The status can be tested with event.isBad() which returns true or false.
 
-<a name="java-bindings-for-all-features"></a>
 ## Java bindings for all features:
 
 * emit event
@@ -818,10 +808,8 @@ This can be set statically by Event.mapByteArrayToJavaScriptBuffer ( boolean sta
 The default is true.
 
 
-<a name="use-cases"></a>
 # Use Cases
 
-<a name="configuration-changes-events"></a>
 ## Configuration Changes (Events)
 
 Suppose you have 1 program that changes configuration-entries in a database-table.
@@ -839,7 +827,6 @@ All clients including web-clients setup a listener for example with
 client.on ( "CONFIG-CHANGE", function callback(e) {} ) ;
 ```
 
-<a name="concurrent-editing-of-a-dataset-semaphores"></a>
 ## Concurrent editing of a Dataset (Semaphores)
 Two users with their web browser want to edit the same user-data in a database.
 In this case a Semaphore is very useful.
@@ -861,7 +848,6 @@ this.sem.acquire ( function sem_callback ( err )
 }) ;
 ```
 
-<a name="synchronization-of-file-processing-locks"></a>
 ## Synchronization of file processing (Locks)
 
 Suppose there are many files in a directory waiting to be processed.
@@ -895,7 +881,6 @@ for ( var i = 0 ; i < array.length ; i++ )
 	} ) ;
 }
 ```
-<a name="a-nice-exotic-mixture-of-programming-languages"></a>
 ## A Nice Exotic Mixture of Programming Languages
 
 Suppose the following: There are a couple of JavaScript and Python programs to interact with a database. The database changes.
@@ -914,7 +899,6 @@ In this combination changing a database vendor is only a 10 second job changing 
 <br/>
 No compilation, no installation no problems.
 
-<a name="the-event-body"></a>
 # The Event Body
 This member of an event is the holder for all payload-data. In all languages this is a hashtable with the restriction that the key must be
 of type string.
@@ -965,7 +949,6 @@ Details in:
 * Java: [gepard/java/org.gessinger/gepard/xmp/EmitterWithBody.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/EmitterWithBody.java)
 * Python: [gepard/python/xmp/EmitterWithBody.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/EmitterWithBody.py)
 
-<a name="examples"></a>
 # Examples
 
 Ready to use examples for JavaScript are located in __.../gepard/xmp__
@@ -975,7 +958,6 @@ __.../gepard/java/lib/Gepard.jar__
 <br/>
 Ready to use examples for Python are located in __.../gepard/python/xmp__
 
-<a name="examples-short"></a>
 ## Examples Short
 
 ### Event listener
@@ -1407,7 +1389,6 @@ Details in:
 * Java: [gepard/java/org.gessinger/gepard/xmp/Responder.java](https://github.com/gessinger-hj/gepard/blob/master/java/src/org/gessinger/gepard/xmp/Responder.java)
 * Python: [gepard/python/xmp/Responder.py](https://github.com/gessinger-hj/gepard/blob/master/python/xmp/Responder.py)
 
-<a name="examples-long"></a>
 ## Examples Long
 
 ### Event listener
@@ -1496,12 +1477,10 @@ event.setBody ( { "config-name" : "app.conf" } ) ;
 wc.emit ( event ) ;
 ```
 
-<a name="file-transfer-with-the-filecontainer-class"></a>
 # File Transfer with the FileContainer Class
 
 The basic usage of this class is as follows:
 
-<a name="filesender"></a>
 ## FileSender
 
 JavaScript:
@@ -1578,7 +1557,6 @@ Java:
 		}) ;
 ```
 
-<a name="filereceiver"></a>
 ##FileReceiver
 
 JavaScript:
@@ -1659,10 +1637,8 @@ client.on ( "__FILE__", new EventListener()
 
 ```
 
-<a name="heartbeat-and-reconnection-capability-parameterization"></a>
 # Heartbeat and Reconnection Capability Parameterization
 
-<a name="broker-side"></a>
 ## Broker Side
 
 The default ping interval for the broker is 180000 milli-sec or 3 minutes. This value can be changed in different ways:
@@ -1672,7 +1648,6 @@ The default ping interval for the broker is 180000 milli-sec or 3 minutes. This 
 1.  Variable in configuration-file: { "heartbeatMillis":&lt;nnn> }
 1.  In program: broker.setHeartbeatMillis ( &lt;nnn> )
 
-<a name="client-side"></a>
 ## Client Side
 
 The default is reconnect=false
@@ -1717,7 +1692,6 @@ Appropriate output is visible.
 <br/>
 Then start the Broker again and all clients reconnect again. Check with gp.info that all event-listener are registered again.
 
-<a name="the-tracepoint-concept"></a>
 # The TracePoint Concept
 
 TracePoints or short __TP__ are used to monitor a data flow at specific places in an application. The combination of all traced-data
@@ -1729,7 +1703,6 @@ and system-restart.
 All defined TracePoints in a Gepard-based distributed application can be switched on/off and reconfigured at runtime on behalf of the Admin programm.
 TracePoint commands are sent to the running Broker and forwarded to all or selected clients.
 
-<a name="tracepoints-in-the-broker"></a>
 ## TracePoints in the Broker
 
 There are 2 predefined __TPs__ in the Broker. Each TP in the context of a program has a unique name to address commands to.
@@ -1762,7 +1735,6 @@ Switching the __TPs__ is done with the commands:
 
 In all cases the current status of the __TPs__ is shown.
 
-<a name="tracepoints-in-the-client"></a>
 ## TracePoints in the Client
 
 There are 2 predefined __TPs__ in each client. Each TP in the context of a program has a unique name to address commands to.
@@ -1853,10 +1825,8 @@ Examples with 2 clients:
 	applicationName: 'org.gessinger.gepard.xmp.Listener' }
 ```
 
-<a name="zeroconf-usage-in-detail"></a>
 # Zeroconf Usage in Detail
 
-<a name="zeronconf-on-the-brokers-side"></a>
 ## Zeronconf on the Broker's Side
 
 If configured the gepard Broker publishes a service in the local subnet and can be discovered by any interested client.
@@ -1920,7 +1890,6 @@ The format is:
 
 With this information a client can make a profound decision whether to connect to a found broker or ignore it and search another instance.
 
-<a name="zeroconf-on-the-clients-side"></a>
 ## Zeroconf on the Client's Side
 
 Up to now only the JavaScript and Python flavors works out of the box. There is no reliable pure Java implementation available.
@@ -2110,7 +2079,6 @@ gepard.findService ( { type:<type> }, (service) => {
 	});
 ```
 
-<a name="how-to-use-a-standard-webserver-as-a-proxy-for-the-websocketeventproxy"></a>
 # How to use a Standard Webserver as a Proxy for the WebSocketEventProxy
 
 If you use a standard web-server like apache, nginx or iis the web-socket communication is iniated with a so called __Upgrade__ request based on the http protocol.
@@ -2119,7 +2087,6 @@ This request must be re-directed to the running WebSocketEventProxy which in tur
 Re-directions must be configured in the appropriate web-server's configuration.
 Examples:
 
-<a name="websocket-configuration-example-for-nginx"></a>
 ## WebSocket Configuration Example for nginx
 
 The default localhost port 80 is passed to port 8888 of the example http-server in gepard's example.
@@ -2181,7 +2148,6 @@ http {
 }
 ```
 
-<a name="technical-aspects-of-the-client"></a>
 # Technical Aspects of the Client
 
 NodeJS clients use the powerful but simple framework for asynchronously callbacks.
@@ -2206,7 +2172,6 @@ Per default the internal thread is not a daemon thread. If needed this can be ch
 
 before the first action on a Client instance because the internal thread is started when the first connection is needed.
 
-<a name="found-a-bug-help-us-fix-it"></a>
 # Found a bug? Help us fix it...
 
 We are trying our best to keep Gepard as free of bugs as possible, but if you find a problem that looks like a bug to you please follow these steps to help us fix it...
@@ -2224,16 +2189,13 @@ We are trying our best to keep Gepard as free of bugs as possible, but if you fi
 	<br/>
 	Having all the required information saves a lot of work.
 
-<a name="httpsgithubcomgessinger-hjgepardblobmasterchangelogmd"></a>
 #
 https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md
 
-<a name="contributors"></a>
 # Contributors
 - Hans-Jürgen Gessinger
 - Paul Gessinger
 
-<a name="features"></a>
 # Features
 * High performance
 * Minimal configuration with
@@ -2243,6 +2205,5 @@ https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md
 	are available in any web-browser apps.
 * All client features are also available for Java and Python
 
-<a name="changelog"></a>
 # Changelog
 See [change log details](https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md)
