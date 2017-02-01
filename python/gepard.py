@@ -264,10 +264,14 @@ class Event ( object ):
 				return bytes(obj['data'])
 		if 'className' in obj:
 			className = obj['className']
-			if className != "Event":
-				clazz = globals()[className]
-				u = clazz(obj)
-				return u
+			try:
+				if className != "Event":
+					clazz = globals()[className]
+					u = clazz(obj)
+					return u
+				except Exception as exc:
+					# print ( exc )
+					pass
 		return obj
 
 class User ( object ):

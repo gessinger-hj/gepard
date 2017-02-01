@@ -1,3 +1,6 @@
+## 1.8.4
+- bugfix for python: ignore entry __className__ in json-decode if class does not exist.
+
 ## 1.8.3
 - bugfix for python: module resource in windows does not exist.
 
