@@ -1,3 +1,6 @@
+## 1.8.5
+- fix broken README
+
 ## 1.8.4
 - bugfix for python: ignore entry __className__ in json-decode if class does not exist.
 
