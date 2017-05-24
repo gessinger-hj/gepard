@@ -1134,3 +1134,6 @@ gepard.Lock.prototype.release = function()
   this._isLockOwner = false ;
   this._client._unlockResource ( this._resourceId ) ;
 };
+if ( typeof module === 'undefined' ) module = {} ;
+module.exports = gepard ;
+

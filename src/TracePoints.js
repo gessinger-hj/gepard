@@ -40,7 +40,7 @@ TracePoint.prototype.log = function ( value )
 {
   if ( ! this.active )
   {
-    return ;
+    return false ;
   }
   var tracer = this.tracer ;
   if ( ! tracer )
@@ -52,7 +52,7 @@ TracePoint.prototype.log = function ( value )
   {
     if ( value.getName() === "system" && ! this.includeSystem )
     {
-      return ;
+      return false ;
     }
     if ( this.title )
     {
@@ -105,6 +105,7 @@ TracePoint.prototype.log = function ( value )
     s += T.toString ( value ) ;
   }
   tracer ( s ) ;
+  return true ;
 };
 TracePoint.prototype.isActive = function()
 {
@@ -153,7 +154,7 @@ TracePointStore.prototype.log = function ( storeName, value )
   {
     return ;
   }
-  tp.log ( value ) ;
+  return tp.log ( value ) ;
 };
 TracePointStore.prototype.add = function ( tp, isActive )
 {

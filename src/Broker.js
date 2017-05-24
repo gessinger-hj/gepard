@@ -255,7 +255,10 @@ AbstractBroker.prototype._ondata = function ( socket, chunk )
         socket.end() ;
         return ;
       }
-      TPStore.log ( "EVENT_IN", e ) ;
+      if ( TPStore.log ( "EVENT_IN", e ) )
+      {
+        TPStore.log ( "EVENT_IN", conn.client_info ) ;
+      }
 
       try
       {

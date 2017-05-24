@@ -48,6 +48,12 @@ function execute()
 	  detached: true,
 	  stdio: [ 'ignore', out, err ]
 	 });
+	console.log ( "Gepard Broker started detached as deamon." ) ;
+	console.log ( "Additional commands:" ) ;
+	console.log ( "  gp.shutdown" ) ;
+	console.log ( "  gp.info" ) ;
+	console.log ( "Log output goes to file:" ) ;
+	console.log ( "  " + logDir + "/Broker.log_1" ) ;
 
 	child.unref();
 }

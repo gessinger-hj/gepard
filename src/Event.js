@@ -263,13 +263,13 @@ gepard.Event.prototype =
 	      }
 	      if ( ! _Event_isBrowser )
 	      {
-		      if ( o.type === 'Xml' )
-		      {
-		        var txml = require ( "Xml" ) ;
-		        var f = new txml.XmlFactory() ;
-		        obj[k] = f.create ( o.value ) ;
-		        continue ;
-		      }
+		      // if ( o.type === 'Xml' )
+		      // {
+		      //   var txml = require ( "Xml" ) ;
+		      //   var f = new txml.XmlFactory() ;
+		      //   obj[k] = f.create ( o.value ) ;
+		      //   continue ;
+		      // }
 	      }
 	    }
 	    if ( o.className && typeof o.className === 'string' )
@@ -840,6 +840,13 @@ if ( _Event_isBrowser )
 	gepard.deserialize = gepard.Event.prototype.deserialize ;
  	gepard.Event.prototype._classNameToConstructor["Event"] = gepard.Event ;
 	gepard.Event.prototype._classNameToConstructor.User = gepard.User ;
+}
+else
+if ( typeof require === 'undefined' )
+{
+console.log("-----------------------------------------\n") ;
+	// export gepard.Event ;
+console.log("-----------------------------------------\n") ;
 }
 else
 {
