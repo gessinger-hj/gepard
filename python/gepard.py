@@ -269,9 +269,9 @@ class Event ( object ):
 					clazz = globals()[className]
 					u = clazz(obj)
 					return u
-				except Exception as exc:
-					# print ( exc )
-					pass
+			except Exception as exc:
+				# print ( exc )
+				pass
 		return obj
 
 class User ( object ):
