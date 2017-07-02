@@ -136,6 +136,7 @@ WebSocketEventProxy.prototype._create = function()
 			if ( ! conn )
 			{
 				conn = new Conn  ( thiz, socket ) ;
+				Log.info ( 'web-socket connection created.' ) ;
 			}
 			if ( ! thiz.client )
 			{
@@ -186,13 +187,13 @@ WebSocketEventProxy.prototype._create = function()
 		}) ;
 		socket.on ( "error", function ( e )
 		{
-			Log.info ( "web-socket closed with error" ) ;
 			thiz.removeWebsocket ( this ) ;
+			Log.info ( 'web-socket closed with error.' ) ;
 		}) ;
 		socket.on ( "close", function ( message )
 		{
-			Log.info ( "web-socket closed" ) ;
 			thiz.removeWebsocket ( this ) ;
+			Log.info ( 'web-socket closed.' ) ;
 		}) ;
 	}) ;
 };
