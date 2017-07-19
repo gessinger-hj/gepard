@@ -13,8 +13,8 @@
       <fileset dir="${external.lib.dir}" includes="*.jar"/>
     </path>
     <javac debug="on" optimize="on"
-      source="1.7"
-      target="1.7"
+      source="1.8"
+      target="1.8"
       srcdir="${sourcedir}"
       destdir="${bin.dir}"
       classpath="${classpath}:${toString:lib.path.ref}"

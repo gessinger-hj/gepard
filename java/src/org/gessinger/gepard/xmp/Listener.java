@@ -18,13 +18,10 @@ public class Listener
       final String[] nameArray = name.split ( "," ) ;
 
       System.out.println ( "Listen for events with name=" + name ) ;
-      client.on ( nameArray, new EventListener()
-      {
-        public void event ( Event e )
-        {
+      client.on ( nameArray, (e) -> {
           System.out.println ( e ) ;
         }
-      } ) ;
+      ) ;
     }
     catch ( Exception exc )
     {
