@@ -51,34 +51,6 @@ General purpose communication and synchronization layer for distributed applicat
 - [Examples](#examples)
 	- [Examples Short](#examples-short)
 		- [Event listener](#event-listener-1)
-		- [Event Emitter](#event-emitter-1)
-		- [Locks](#locks)
-		- [Semaphores](#semaphores)
-		- [Request / Result](#request--result)
-			- [Send request](#send-request)
-			- [Send result](#send-result)
-	- [Examples Long](#examples-long)
-		- [Event listener](#event-listener-2)
-			- [In Application](#in-application)
-			- [In Browser](#in-browser)
-		- [Event Emitter](#event-emitter-2)
-			- [In Application](#in-application-1)
-			- [In Browser](#in-browser-1)
-- [File Transfer with the FileContainer Class](#file-transfer-with-the-filecontainer-class)
-	- [FileSender](#filesender)
-	- [FileReceiver](#filereceiver)
-- [Heartbeat and Reconnection Capability Parameterization](#heartbeat-and-reconnection-capability-parameterization)
-	- [Broker Side](#broker-side)
-	- [Client Side](#client-side)
-		- [Example to test](#example-to-test)
-- [The TracePoint Concept](#the-tracepoint-concept)
-	- [TracePoints in the Broker](#tracepoints-in-the-broker)
-	- [TracePoints in the Client](#tracepoints-in-the-client)
-- [Zeroconf Usage in Detail](#zeroconf-usage-in-detail)
-	- [Zeronconf on the Broker's Side](#zeronconf-on-the-brokers-side)
-	- [Zeroconf on the Client's Side](#zeroconf-on-the-clients-side)
-- [How to use a Standard Webserver as a Proxy for the WebSocketEventProxy](#how-to-use-a-standard-webserver-as-a-proxy-for-the-websocketeventproxy)
-	- [WebSocket Configuration Example for nginx](#websocket-configuration-example-for-nginx)
 - [Technical Aspects of the Client](#technical-aspects-of-the-client)
 - [Found a bug? Help us fix it...](#found-a-bug-help-us-fix-it)
 - [https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md](#httpsgithubcomgessinger-hjgepardblobmasterchangelogmd)
@@ -136,8 +108,9 @@ $client = Client::getInstance ( [ port [, host ] ] ) ;
 
 * JavaScript:
 ```js
-gepard = require  ( "gepard" )  :
-client = gepard.getClient ( [ port [, host ] ] ) ;
+gepard.getClient().emit ( "ALARM", { write: function() { this.end() } } ) ;
+
+gepard.getClient().on ( "ALARM", (e) => { console.log(e) } ) ;
 ```
 
 * Java:
@@ -160,9 +133,7 @@ gepard.Client.getInstance().on ( ["ALARM","BLARM"], on_ABLARM )
 ```php
 Client::getInstance()->emit("ALARM") ;
 
-Client::getInstance()->on(["ALARM","BLARM"],function($e) {
-	echo($e);
-}) ;
+Client::getInstance()->on ( ["ALARM","BLARM"], function($e) { echo($e); } ) ;
 
 ```
 
@@ -1071,7 +1042,10 @@ __Java__: client.on ( "ALARM", callback )
 __Python__: client.on ( "ALARM", callback )
 <br/>or client.on ( [ "ALARM", "BLARM" ], callback )
 
-The callback will be called with an Event object of the appropriate name ( e.getName() )
+__PHP__: client->on ( "ALARM", callback )
+<br/>or client->on ( [ "ALARM", "BLARM" ], callback )
+
+The callback will be called with an Event object of the appropriate name ( e.getName() or $e->getName() )
 
 
 Application
@@ -1125,6 +1099,19 @@ def on_ABLARM ( event ):
 client.on ( "ALARM", on_ABLARM )
 ```
 
+PHP
+
+```php
+namespace Gepard;
+require ( 'vendor/autoload.php' );
+use Gepard;
+$client = Client::getInstance();
+$client->on ( 'ALARM', function($event) {
+	echo ( $event ) ;
+}) ;
+
+``
+
 Details in:
 
 * JavaScript: [gepard/xmp/Listener.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/Listener.js)
@@ -1172,6 +1159,14 @@ client = gepard.Client.getInstance()
 client.emit ( "ALARM" )
 ```
 
+PHP
+```php
+namespace Gepard;
+require ( 'vendor/autoload.php' );
+use Gepard;
+$client = Client::getInstance();
+$client->emit ( 'ALARM' );
+```
 Details in:
 
 * JavaScript: [gepard/xmp/Emitter.js](https://github.com/gessinger-hj/gepard/blob/master/xmp/Emitter.js)

@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 var gepard = require ( "gepard" ) ;
 var name   = gepard.getProperty ( "name", "ALARM" ) ;
-var c      = gepard.getClient() ;
-c.emit ( name,
+var client = gepard.getClient() ;
+client.emit ( name,
 {
-  write: function() // The event is sent -> end connection and exit
-  {
-    this.end() ;
+  write: () => {// The event is sent -> end connection and exit
+    client.end() ;
   }
 });
