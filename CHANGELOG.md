@@ -1,3 +1,7 @@
+## 1.9.0
+-	fix python indentation error
+-	publish new PHP client
+
 ## 1.8.5
 - fix broken README
 
