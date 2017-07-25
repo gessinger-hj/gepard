@@ -132,13 +132,13 @@ gepard.WebClient = function ( port, host )
   this._callbacks                = {} ;
   this._eventListenerFunctions   = new tangojs.MultiHash() ;
   this._pendingEventListenerList = [] ;
-  var domain                     = host ? host : document.domain ;
+  var domain                     = host ? host : typeof document === 'object' ? document.domain : "" ;
   if ( typeof port === 'string' )
   {
     this._url = port ;
   }
   else
-  if ( window.location.protocol === 'https:')
+  if ( typeof window === 'object' && typeof window.location === 'object' && window.location.protocol === 'https:')
   {
     this._url = "wss://" + domain + ":" + this._port ;
   }
@@ -220,13 +220,16 @@ gepard.WebClient.prototype._connect = function()
 {
   var thiz = this ;
   this._socket = new WebSocket ( this._url ) ;
+  console.log("Creating WebSocket for url: " + this._url ) ;
   var list, i ;
+
   /**
    * Description
    * @param {} err
    */
   this._socket.onerror = function(err)
   {
+    console.log("WebSocket error '"+err.message+"' for url: " + thiz._url ) ;
     if ( thiz._socket )
     {
       thiz._socket.close() ;
@@ -251,6 +254,7 @@ gepard.WebClient.prototype._connect = function()
   } ;
   this._socket.onclose = function onclose(e)
   {
+    console.log("WebSocket closed for url: " + thiz._url ) ;
     thiz._socket = null ;
     thiz._emit ( null, "close" ) ;
     thiz._emit ( null, "end" ) ;
@@ -419,6 +423,7 @@ gepard.WebClient.prototype._connect = function()
    */
   this._socket.onopen = function()
   {
+    console.log("WebSocket opened for url: " + thiz._url ) ;
     var wasReconnecting
     if ( thiz._isReconnecting )
     {
@@ -435,7 +440,7 @@ gepard.WebClient.prototype._connect = function()
     var einfo = new gepard.Event ( "system", "client_info" ) ;
     einfo.body.userAgent = navigator.userAgent ;
     einfo.body.connectionTime = new Date() ;
-    einfo.body.domain = document.domain ;
+    einfo.body.domain = typeof document === 'object' ? document.domain : "" ;
     thiz._socket.send ( einfo.serialize() ) ;
 
     thiz._emit ( null, "open" ) ;
