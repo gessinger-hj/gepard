@@ -92,6 +92,7 @@ AbstractBroker.prototype._initialize = function ( port, ip, options )
     thiz.validateAction ( thiz._connectionHook.connect, [ conn ], thiz, thiz._checkInConnection, [ conn ] ) ;
   });
   var ee = new Event() ;
+  ee._setHostname  ( os.hostname() ) ;
   ee.addClassNameToConstructor ( "FileContainer", FileContainer ) ;
   this.heartbeatMillis = 30000 ;
   this.heartbeatMillis = T.getInt ( "gepard.heartbeat.millis", this.heartbeatMillis ) ;
@@ -198,6 +199,7 @@ AbstractBroker.prototype._ondata = function ( socket, chunk )
       str = "Message size exceeds maximum.\nsid=" + conn.sid + "\nmax=" + this._maxMessageSize + "\nactual size=" + result.actual ;
       Log.log ( str ) ;
       e = new Event ( "ERROR" ) ;
+      e._setHostname  ( os.hostname() ) ;
       e.setStatus ( 1, "error", str ) ;
       conn.write ( e ) ;
       socket.end() ;
@@ -218,6 +220,7 @@ AbstractBroker.prototype._ondata = function ( socket, chunk )
       str = "Message size exceeds maximum.\nsid=" + conn.sid + "\nmax=" + this._maxMessageSize + "\nactual size=" + conn.partialMessage.length ;
       Log.log ( str ) ;
       e = new Event ( "ERROR" ) ;
+      e._setHostname  ( os.hostname() ) ;
       e.setStatus ( 1, "error", str ) ;
       conn.write ( e ) ;
       socket.end() ;
@@ -237,6 +240,7 @@ AbstractBroker.prototype._ondata = function ( socket, chunk )
       str = "Message size exceeds maximum.\nsid=" + conn.sid + "\nmax=" + this._maxMessageSize + "\nactual size=" + m.length ;
       Log.log ( str ) ;
       e = new Event ( "ERROR" ) ;
+      e._setHostname  ( os.hostname() ) ;
       e.setStatus ( 1, "error", str ) ;
       conn.write ( e ) ;
       socket.end() ;
@@ -827,6 +831,7 @@ AbstractBroker.prototype._handleSystemMessages = function ( conn, e )
       setTimeout ( function()
       {
         var broker_info                           = new Event ( "system", "broker_info" ) ;
+        broker_info._setHostname  ( os.hostname() ) ;
         broker_info.body.brokerVersion            = thiz.brokerVersion ;
         broker_info.body._heartbeatIntervalMillis = thiz.heartbeatMillis ;
         conn.write ( broker_info ) ;
@@ -1235,6 +1240,7 @@ AbstractBroker.prototype.listen = function ( port, callback )
 AbstractBroker.prototype._send_PING_to_all = function()
 {
   var e = new Event ( "system", "PING" ) ;
+  e._setHostname  ( os.hostname() ) ;
   e.control._heartbeatIntervalMillis = this.heartbeatMillis ;
   var se = e.serialize() ;
   for ( i = 0 ; i < this._connectionList.length ; i++ )
@@ -1268,6 +1274,7 @@ AbstractBroker.prototype._checkHeartbeat = function()
   var heartbeatInterval = ( this.heartbeatMillis / 1000 ) ;
   var heartbeatInterval_x_3 = ( this.heartbeatMillis / 1000 ) * 3 ;
   var e = new Event ( "system", "PING" ) ;
+  e._setHostname  ( os.hostname() ) ;
   e.control._heartbeatIntervalMillis = this.heartbeatMillis ;
   var se = e.serialize() ;
   for ( i = 0 ; i < this._connectionList.length ; i++ )

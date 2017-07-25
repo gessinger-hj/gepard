@@ -5,6 +5,7 @@ var MultiHash     = require ( "./MultiHash" ) ;
 var Log           = require ( "./LogFile" ) ;
 var Gepard        = require ( "./Gepard" ) ;
 var TracePoints   = require ( "./TracePoints" ) ;
+var os            = require ( "os" ) ;
 
 /**
  * Description
@@ -139,6 +140,7 @@ Connection.prototype.write = function ( data )
       }
       this.setTimestamp() ;
       data.setTargetIsLocalHost ( this.isLocalHost() ) ;
+      data._setHostname  ( os.hostname() ) ;
       this.socket.write ( data.serialize() ) ;
     }
     if ( typeof data === 'string' )

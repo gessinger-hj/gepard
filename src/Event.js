@@ -353,11 +353,6 @@ gepard.Event.prototype =
 			}
 		}
 		else this.body = {} ;
-		if ( ! _Event_isBrowser )
-		{
-			var os = require ( "os" ) ;
-			this._setHostname  ( os.hostname() ) ;
-		}
 	},
 	/**
 	 * Description
@@ -406,7 +401,7 @@ gepard.Event.prototype =
 	      if ( typeof ( p ) == 'function' ) continue ;
 	      if ( Array.isArray ( p ) || ( typeof ( p ) == 'object' && ! ( p instanceof Date ) ) )
 	      {
-	        str += indent + "\"" + key + "\": <br/>" + this.toFullString ( p, indent + "  " ) + "\n" ;
+	        str += indent + "\"" + key + "\":\n" + this.toFullString ( p, indent + "  " ) + "\n" ;
 	        continue ;
 	      }
 	      str += indent + "\"" + key + "\": \"" + p + "\"\n" ;
@@ -834,6 +829,12 @@ gepard.Event.prototype =
 		return this.control.hostname ;
 	}
 };
+// export default gepard.Event ;
+
+if ( typeof module === 'undefined' ) module = {} ;
+module.exports = gepard.Event ;
+gepard.Event.prototype._classNameToConstructor["Event"] = gepard.Event ;
+gepard.Event.prototype._classNameToConstructor.User = require ( "./User" ) ;
 if ( _Event_isBrowser )
 {
 	gepard.serialize = gepard.Event.prototype.serialize ;
@@ -844,9 +845,6 @@ if ( _Event_isBrowser )
 else
 if ( typeof require === 'undefined' )
 {
-console.log("-----------------------------------------\n") ;
-	// export gepard.Event ;
-console.log("-----------------------------------------\n") ;
 }
 else
 {

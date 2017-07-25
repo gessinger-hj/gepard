@@ -193,6 +193,7 @@ Client.prototype._initialize = function ( port, host )
     }
   }
   var ee = new Event() ;
+  ee._setHostname  ( os.hostname() ) ;
   ee.addClassNameToConstructor ( "FileContainer", FileContainer ) ;
   this.USERNAME = T.getUSERNAME() ;
   if ( ! this.USERNAME )
@@ -410,6 +411,7 @@ Client.prototype.connect = function()
     thiz.brokerIsLocalHost() ;
     thiz.alive                      = true ;
     var client_info                 = new Event ( "system", "client_info" ) ;
+    client_info._setHostname  ( os.hostname() ) ;
     client_info.body.language       = "JavaScript" ;
     client_info.body.hostname       = os.hostname() ;
     client_info.body.connectionTime = new Date() ;
@@ -873,6 +875,7 @@ Client.prototype._checkHeartbeat = function()
       if ( keyList.length )
       {
         var e = new Event ( "system", "addEventListener" ) ;
+        e._setHostname  ( os.hostname() ) ;
         if ( thiz.user )
         {
           e.setUser ( thiz.user ) ;
@@ -981,6 +984,7 @@ Client.prototype.systemInfo = function ( callback, parameter )
     throw new Error ( "Missing result function.") ;
   }
   var e = new Event ( "system", parameter.name ) ;
+  e._setHostname  ( os.hostname() ) ;
   if ( parameter.sid )
   {
     e.putValue ( "sid", parameter.sid ) ;
@@ -997,6 +1001,7 @@ Client.prototype.log = function ( messageText, callback )
   try
   {
     var e            = new Event ( "system", "log" ) ;
+    e._setHostname  ( os.hostname() ) ;
     var message      = { text: T.toString ( messageText ) } ;
     message.severity = "INFO" ;
     message.date     = new Date().toRFC3339String() ;
@@ -1083,6 +1088,7 @@ Client.prototype.emit = function ( params, callback, opts )
     e.setName ( name ) ;
     e.setChannel ( channel ) ;
   }
+  e._setHostname  ( os.hostname() ) ;
   var ctx = {} ;
   if ( callback )
   {
@@ -1257,6 +1263,7 @@ Client.prototype.addEventListener = function ( eventNameList, callback )
     return ;
   }
   var e = new Event ( "system", "addEventListener" ) ;
+  e._setHostname  ( os.hostname() ) ;
   if ( this.user )
   {
     e.setUser ( this.user ) ;
@@ -1425,6 +1432,7 @@ Client.prototype.removeEventListener = function ( eventNameOrFunction )
     }
     if ( ! eventNameList.length ) return ;
     var e = new Event ( "system", "removeEventListener" ) ;
+    e._setHostname  ( os.hostname() ) ;
     e.setUser ( this.user ) ;
     e.body.eventNameList = eventNameList ;
     this.send ( e ) ;
@@ -1456,6 +1464,7 @@ Client.prototype.lockResource = function ( resourceId, callback )
   }
 
   var e = new Event ( "system", "lockResourceRequest" ) ;
+  e._setHostname  ( os.hostname() ) ;
   e.body.resourceId = resourceId ;
   var ctx = {} ;
   ctx.resourceId = resourceId ;
@@ -1502,6 +1511,7 @@ Client.prototype.unlockResource = function ( resourceId )
   }
 
   var e = new Event ( "system", "unlockResourceRequest" ) ;
+  e._setHostname  ( os.hostname() ) ;
   e.body.resourceId = resourceId ;
   var s = this.getSocket() ;
   counter++ ;
@@ -1537,6 +1547,7 @@ Client.prototype.acquireSemaphore = function ( resourceId, callback )
   }
 
   var e = new Event ( "system", "acquireSemaphoreRequest" ) ;
+  e._setHostname  ( os.hostname() ) ;
   e.body.resourceId = resourceId ;
   var ctx = {} ;
   ctx.resourceId = resourceId ;
@@ -1584,6 +1595,7 @@ Client.prototype.releaseSemaphore = function ( resourceId )
   // }
 
   var e = new Event ( "system", "releaseSemaphoreRequest" ) ;
+  e._setHostname  ( os.hostname() ) ;
   e.body.resourceId = resourceId ;
   var s = this.getSocket() ;
   counter++ ;
