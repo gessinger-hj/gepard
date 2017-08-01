@@ -834,7 +834,7 @@ gepard.Event.prototype =
 if ( typeof module === 'undefined' ) module = {} ;
 module.exports = gepard.Event ;
 gepard.Event.prototype._classNameToConstructor["Event"] = gepard.Event ;
-if ( typeof gepard !== 'undefined' )
+if ( typeof gepard.User !== 'undefined' )
 {
 	gepard.Event.prototype._classNameToConstructor.User = gepard.User ;
 }
