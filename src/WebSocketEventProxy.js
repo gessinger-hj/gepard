@@ -121,7 +121,7 @@ WebSocketEventProxy.prototype._create = function()
 
 		Log.info ( 'web connects' ) ;
 		var e ;
-		socket.on ( "text", function ( message )
+		socket.on ( "text", function ontext( message )
 		{
 			try
 			{
@@ -185,12 +185,15 @@ WebSocketEventProxy.prototype._create = function()
 	        }) ;
 				}
 		}) ;
-		socket.on ( "error", function ( e )
+		socket.on ( "connect", function onconnect( e )
+		{
+		}) ;
+		socket.on ( "error", function onerror( e )
 		{
 			thiz.removeWebsocket ( this ) ;
 			Log.info ( 'web-socket closed with error.' ) ;
 		}) ;
-		socket.on ( "close", function ( message )
+		socket.on ( "close", function onclose( message )
 		{
 			thiz.removeWebsocket ( this ) ;
 			Log.info ( 'web-socket closed.' ) ;
@@ -398,9 +401,6 @@ Conn.prototype.send = function ( what )
 Conn.prototype.remove = function()
 {
 	var eventNamesToBeRemoved = [] ;
-	this.socket.removeAllListeners ( "text" ) ;
-	this.socket.removeAllListeners ( "error" ) ;
-	this.socket.removeAllListeners ( "close" ) ;
 
 	var currentKeys = this.proxy._eventNameToSocketContext.getKeys() ;
 	this.proxy._eventNameToSocketContext.remove ( this ) ;
@@ -417,6 +417,9 @@ Conn.prototype.remove = function()
 	{
 		this.proxy.client.removeEventListener ( eventNamesToBeRemoved ) ;
 	}
+	this.socket.removeAllListeners ( "text" ) ;
+	// this.socket.removeAllListeners ( "error" ) ;
+	this.socket.removeAllListeners ( "close" ) ;
 	this.flush() ;
 };
 Conn.prototype.flush = function ()
