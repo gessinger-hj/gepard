@@ -834,12 +834,15 @@ gepard.Event.prototype =
 if ( typeof module === 'undefined' ) module = {} ;
 module.exports = gepard.Event ;
 gepard.Event.prototype._classNameToConstructor["Event"] = gepard.Event ;
+if ( typeof gepard !== 'undefined' )
+{
+	gepard.Event.prototype._classNameToConstructor.User = gepard.User ;
+}
 if ( _Event_isBrowser )
 {
 	gepard.serialize = gepard.Event.prototype.serialize ;
 	gepard.deserialize = gepard.Event.prototype.deserialize ;
  	gepard.Event.prototype._classNameToConstructor["Event"] = gepard.Event ;
-	gepard.Event.prototype._classNameToConstructor.User = gepard.User ;
 }
 else
 if ( typeof require === 'undefined' )
@@ -849,7 +852,10 @@ else
 {
 	module.exports = gepard.Event ;
  	gepard.Event.prototype._classNameToConstructor["Event"] = gepard.Event ;
-	gepard.Event.prototype._classNameToConstructor.User = require ( "./User" ) ;
+ 	if ( typeof gepard.Event.prototype._classNameToConstructor.User === 'undefined' )
+ 	{
+		gepard.Event.prototype._classNameToConstructor.User = require ( "./User" ) ;
+ 	}
 	if ( require.main === module )
 	{
 		var e = new gepard.Event ( 'ALARM', "TEST" ) ;
