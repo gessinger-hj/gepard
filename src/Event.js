@@ -834,7 +834,6 @@ gepard.Event.prototype =
 if ( typeof module === 'undefined' ) module = {} ;
 module.exports = gepard.Event ;
 gepard.Event.prototype._classNameToConstructor["Event"] = gepard.Event ;
-gepard.Event.prototype._classNameToConstructor.User = require ( "./User" ) ;
 if ( _Event_isBrowser )
 {
 	gepard.serialize = gepard.Event.prototype.serialize ;
