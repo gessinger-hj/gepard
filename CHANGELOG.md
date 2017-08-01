@@ -1,3 +1,6 @@
+## 1.9.1
+- WebSocketEventProxy: do not remove error-eventlistener on socket to prevent unhandled event.
+
 ## 1.9.0
 -	fix python indentation error
 -	publish new PHP client
