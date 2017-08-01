@@ -213,7 +213,7 @@ App.toFullString = function ( text, indent )
 try
 {
   var str = ""+document.cookie ;
-  if ( str.indexOf ( "Proxy-Used=true" ) )
+  if ( str.indexOf ( "Proxy-Used=true" ) > 0 )
   {
     App.initialize ( "ws://localhost/ws" ) ;
   }
