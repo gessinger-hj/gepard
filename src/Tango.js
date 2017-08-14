@@ -608,8 +608,8 @@ TangoClass.prototype.serialize = function ( obj )
     Date.prototype.toJSON = function()
     {
       return { type:'Date', 'value': this.toISOString() } ;
-    };
     return JSON.stringify ( obj ) ; //+ "\r\n" ;
+    };
   }
   finally
   {
@@ -780,7 +780,6 @@ TangoClass.prototype.resolve = function ( src, map, delimiter )
         name = sb2 ;
         v = null ;
         if ( map ) v = map[name] ;
-  
         if ( typeof v !== 'string' )
         {
           v = this.getProperty ( name ) ;
@@ -788,6 +787,14 @@ TangoClass.prototype.resolve = function ( src, map, delimiter )
         if ( v && v.indexOf ( "${" ) >= 0  )
         {
           v = this.resolve ( v, map, delimiter ) ;
+        }
+        if ( name === "HOME" && typeof v === 'string' )
+        {
+          var fs = require ( "fs" ) ;
+          if ( ! fs.existsSync ( v ) )
+          {
+            v = null ;
+          }
         }
         if ( typeof v !== 'string' && name === 'HOME' )
         {
@@ -833,6 +840,7 @@ TangoClass.prototype.resolve = function ( src, map, delimiter )
           n = name ;
           v = null ;
           if ( map ) v = map[n] ;
+          
           if ( typeof v !== 'string' )
           {
             v = this.getProperty ( n ) ;
@@ -840,6 +848,14 @@ TangoClass.prototype.resolve = function ( src, map, delimiter )
           if ( v && v.indexOf ( delimiter ) >= 0  )
           {
             v = this.resolve ( v, map, delimiter ) ;
+          }
+          if ( name === "HOME" && typeof v === 'string' )
+          {
+            var fs = require ( "fs" ) ;
+            if ( ! fs.existsSync ( v ) )
+            {
+              v = null ;
+            }
           }
           if ( typeof v !== 'string' && name === 'HOME' )
           {
