@@ -1,3 +1,6 @@
+## 1.9.2
+- handle env HOME under cygwin
+
 ## 1.9.1
 - WebSocketEventProxy: do not remove error-eventlistener on socket to prevent unhandled event.
 
