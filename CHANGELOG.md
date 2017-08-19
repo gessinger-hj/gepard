@@ -1,5 +1,6 @@
 ## 1.9.2
 - handle env HOME under cygwin
+- handle default log directory for Broker unde cygwin
 
 ## 1.9.1
 - WebSocketEventProxy: do not remove error-eventlistener on socket to prevent unhandled event.

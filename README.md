@@ -3,60 +3,56 @@ General purpose communication and synchronization layer for distributed applicat
 
 <!-- MarkdownTOC -->
 
-- [Overview](#overview)
-	- [Basic Client Creation](#basic-client-creation)
-	- [Most Simple Usage with emit and listen](#most-simple-usage-with-emit-and-listen)
-	- [Starting the Broker](#starting-the-broker)
-- [Install](#install)
-- [Getting Started](#getting-started)
-	- [Base](#base)
-	- [JavaScript](#javascript)
-	- [Java](#java)
-	- [Python](#python)
-	- [PHP](#php)
-- [Configuration](#configuration)
-- [What is new](#what-is-new)
-	- [Release 1-9-0 New PHP Client implementation and published on Packagist](#release-1-9-0-new-php-client-implementation-and-published-on-packagist)
-	- [Release 1-8-4 Python Flavour now ist pubished on __pypi__](#release-1-8-4-python-flavour-now-ist-pubished-on-pypi)
-	- [Release 1-8-3 Bugfix Release](#release-1-8-3-bugfix-release)
-	- [Release 1-8-2 Enhance GPWebClient to use a Standard Webserver \(nginx, ...\)](#release-1-8-2-enhance-gpwebclient-to-use-a-standard-webserver-nginx-)
-	- [Release 1-8-1 Maintenance and Bugfix](#release-1-8-1-maintenance-and-bugfix)
-	- [Release 1-8-0 Java Connect Retry on First Connect](#release-1-8-0-java-connect-retry-on-first-connect)
-	- [Release 1-7-9 WebClient New Reconnect Mechanism](#release-1-7-9-webclient-new-reconnect-mechanism)
-	- [Release 1-7-8 WebClient Enhancement / Bugfix](#release-1-7-8-webclient-enhancement--bugfix)
-	- [Release 1-7-6 WebClient Enhancement](#release-1-7-6-webclient-enhancement)
-	- [Release 1-7-5 JavaScript Enhancements](#release-1-7-5-javascript-enhancements)
-	- [Release 1-7-0 mDNS Zeroconf for Python](#release-1-7-0-mdns-zeroconf-for-python)
-	- [Release 1-6-0 mDNS Zeroconf](#release-1-6-0-mdns-zeroconf)
-	- [Release 1-5-0 Channels](#release-1-5-0-channels)
-		- [Using Channels](#using-channels)
-			- [Event-listener](#event-listener)
-			- [Event-emitter](#event-emitter)
-		- [Channel Examples](#channel-examples)
-	- [Release 1-4-5 Registered Event-names may contain Wildcards \(RegExp\)](#release-1-4-5-registered-event-names-may-contain-wildcards-regexp)
-	- [Release 1-4-5 Simplified Handling of JSON Trees](#release-1-4-5-simplified-handling-of-json-trees)
-	- [Release 1-4-3 Logging](#release-1-4-3-logging)
-	- [Release 1-4-0 New Heartbeat Protocol to ensure the Availability of Connections](#release-1-4-0-new-heartbeat-protocol-to-ensure-the-availability-of-connections)
-	- [Release 1-3-3 New FileContainer class for Python, JavaScript and Java to simplify file-transfer.](#release-1-3-3-new-filecontainer-class-for-python-javascript-and-java-to-simplify-file-transfer)
-	- [Release 1-3-0 Let's talk about Python](#release-1-3-0-lets-talk-about-python)
-	- [Controlling Connections and Actions with a Hook](#controlling-connections-and-actions-with-a-hook)
-	- [Perfect load balanced message handling.](#perfect-load-balanced-message-handling)
-	- [Java bindings for all features:](#java-bindings-for-all-features)
-- [Use Cases](#use-cases)
-	- [Configuration Changes \(Events\)](#configuration-changes-events)
-	- [Concurrent editing of a Dataset \(Semaphores\)](#concurrent-editing-of-a-dataset-semaphores)
-	- [Synchronization of file processing \(Locks\)](#synchronization-of-file-processing-locks)
-	- [A Nice Exotic Mixture of Programming Languages](#a-nice-exotic-mixture-of-programming-languages)
-- [The Event Body](#the-event-body)
-- [Examples](#examples)
-	- [Examples Short](#examples-short)
-		- [Event listener](#event-listener-1)
-- [Technical Aspects of the Client](#technical-aspects-of-the-client)
-- [Found a bug? Help us fix it...](#found-a-bug-help-us-fix-it)
-- [https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md](#httpsgithubcomgessinger-hjgepardblobmasterchangelogmd)
-- [Contributors](#contributors)
-- [Features](#features)
-- [Changelog](#changelog)
+- Overview
+	- Basic Client Creation
+	- Most Simple Usage with emit and listen
+	- Starting the Broker
+- Install
+- Getting Started
+	- Base
+	- JavaScript
+	- Java
+	- Python
+	- PHP
+- Configuration
+- What is new
+	- Release 1-9-2 Bugfix Release
+	- Release 1-9-0 New PHP Client implementation and published on Packagist
+	- Release 1-8-4 Python Flavour now ist pubished on __pypi__
+	- Release 1-8-3 Bugfix Release
+	- Release 1-8-2 Enhance GPWebClient to use a Standard Webserver \(nginx, ...\)
+	- Release 1-8-1 Maintenance and Bugfix
+	- Release 1-8-0 Java Connect Retry on First Connect
+	- Release 1-7-9 WebClient New Reconnect Mechanism
+	- Release 1-7-8 WebClient Enhancement / Bugfix
+	- Release 1-7-6 WebClient Enhancement
+	- Release 1-7-5 JavaScript Enhancements
+	- Release 1-7-0 mDNS Zeroconf for Python
+	- Release 1-6-0 mDNS Zeroconf
+	- Release 1-5-0 Channels
+	- Release 1-4-5 Registered Event-names may contain Wildcards \(RegExp\)
+	- Release 1-4-5 Simplified Handling of JSON Trees
+	- Release 1-4-3 Logging
+	- Release 1-4-0 New Heartbeat Protocol to ensure the Availability of Connections
+	- Release 1-3-3 New FileContainer class for Python, JavaScript and Java to simplify file-transfer.
+	- Release 1-3-0 Let's talk about Python
+	- Controlling Connections and Actions with a Hook
+	- Perfect load balanced message handling.
+	- Java bindings for all features:
+- Use Cases
+	- Configuration Changes \(Events\)
+	- Concurrent editing of a Dataset \(Semaphores\)
+	- Synchronization of file processing \(Locks\)
+	- A Nice Exotic Mixture of Programming Languages
+- The Event Body
+- Examples
+	- Examples Short
+- Technical Aspects of the Client
+- Found a bug? Help us fix it...
+- https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md
+- Contributors
+- Features
+- Changelog
 
 <!-- /MarkdownTOC -->
 
@@ -335,6 +331,10 @@ supplying these items
 	- export ( or set ) GEPARD_LOG=<log-dir&gt;
 
 # What is new
+
+## Release 1-9-2 Bugfix Release
+
+See [change log details](https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md)
 
 ## Release 1-9-0 New PHP Client implementation and published on Packagist
 In this release a basic featured PHP client is included. The implementation is __pure generic PHP code__.
