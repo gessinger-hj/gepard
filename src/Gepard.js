@@ -50,12 +50,10 @@ Gepard.prototype.getLogDirectory = function()
   if ( s )
   {
     this._logDir = s ;
+    return ;
   }
-  else
-  {
-    this._logDir = T.resolve ( "%HOME%/log" ) ;
-    T.setProperty ( "GEPARD_LOG", this._logDir ) ;
-  }
+  this._logDir = T.resolve ( "%HOME%/log" ) ;
+  T.setProperty ( "GEPARD_LOG", this._logDir ) ;
   try
   {
     fs.statSync ( this._logDir ).isDirectory() ;
