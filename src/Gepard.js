@@ -43,11 +43,22 @@ Gepard.prototype.getVersion = function()
  * Description
  * @return string 
  */
+Gepard.prototype.isDirectory = function ( dir )
+{
+  try
+  {
+    return fs.statSync ( dir ).isDirectory() ;
+  }
+  catch ( exc )
+  {
+    return false ;
+  }
+}
 Gepard.prototype.getLogDirectory = function()
 {
   var s = T.getProperty ( "GEPARD_LOG" ) ;
   var fs = require ( "fs" ) ;
-  if ( s )
+  if ( s && this.isDirectory ( s ) )
   {
     this._logDir = s ;
     return ;

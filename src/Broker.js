@@ -1624,6 +1624,11 @@ if ( require.main === module )
       if ( wse ) wse.shutdown() ;
       process.exit ( 0 ) ;
     });
+    b.on ( "error", function onshutdown(e)
+    {
+      if ( wse ) wse.shutdown() ;
+      process.exit ( 0 ) ;
+    });
     if ( T.getBool ( "web", false ) )
     {
       var WebSocketEventProxy = require ( "./WebSocketEventProxy" ) ;
