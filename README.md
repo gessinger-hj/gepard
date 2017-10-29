@@ -16,6 +16,7 @@ General purpose communication and synchronization layer for distributed applicat
     - [PHP](#php)
 - [Configuration](#configuration)
 - [What is new](#what-is-new)
+    - [Release 1-9-3 Webclient adapted to ReactJS \(Mobile\) and single page Apps](#release-1-9-3-webclient-adapted-to-reactjs-mobile-and-single-page-apps)
     - [Release 1-9-2 Bugfix Release](#release-1-9-2-bugfix-release)
     - [Release 1-9-0 New PHP Client implementation and published on Packagist](#release-1-9-0-new-php-client-implementation-and-published-on-packagist)
     - [Release 1-8-4 Python Flavour now ist pubished on __pypi__](#release-1-8-4-python-flavour-now-ist-pubished-on-pypi)
@@ -336,6 +337,8 @@ supplying these items
 	- export ( or set ) GEPARD_LOG=<log-dir&gt;
 
 # What is new
+
+## Release 1-9-3 Webclient adapted to ReactJS (Mobile) and single page Apps
 
 ## Release 1-9-2 Bugfix Release
 
