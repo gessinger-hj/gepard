@@ -340,6 +340,14 @@ supplying these items
 
 ## Release 1-9-3 Webclient adapted to ReactJS (Mobile) and single page Apps
 
+The JavaScript Web-client is separated from gepard core to use it with mobile applications, standard single page
+web-applications and standalone environments like WebKit / Electron.
+For more information See [npm gebard-web](https://www.npmjs.com/package/gepard-web).
+
+The Java version of the gepard-client (Gepard.jar and Google's gson-2.3.1.jar) can be used seamlessly in any
+Android environment. No special wrapper-classes should be created because experience shows that nothing can be simpler
+than the gepard-api used directly.
+
 ## Release 1-9-2 Bugfix Release
 
 See [change log details](https://github.com/gessinger-hj/gepard/blob/master/CHANGELOG.md)

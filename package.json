@@ -1,7 +1,7 @@
 {
   "name": "gepard",
   "description": "General purpose communications for distributed applications / Microservices / events, semaphores and messages for JavaScript, Java, Python and PHP",
-  "version": "1.9.3",
+  "version": "1.9.4",
   "homepage": "https://github.com/gessinger-hj",
   "keywords": [
     "distributed-applications",
