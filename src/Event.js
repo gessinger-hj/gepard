@@ -818,15 +818,31 @@ gepard.Event.prototype =
 			this.control.hostname = hostName ;
 		}
 	},
-	/**
-	 * Description
-	 * @method _getHostname
-	 * @param {} hostName
-	 * @return {string} hostname
-	 */
 	getHostname: function()
 	{
 		return this.control.hostname ;
+	},
+	_setOriginatorIp: function ( originatorIp )
+	{
+		if ( ! this.control.originatorIp )
+		{
+			this.control.originatorIp = originatorIp ;
+		}
+	},
+	getOriginatorIp: function()
+	{
+		return this.control.originatorIp ;
+	},
+	_setResponderIp: function ( responderIp )
+	{
+		if ( ! this.control.responderIp )
+		{
+			this.control.responderIp = responderIp ;
+		}
+	},
+	getResponderIp: function()
+	{
+		return this.control.responderIp ;
 	}
 };
 // export default gepard.Event ;

@@ -36,7 +36,7 @@ var Connection = function ( broker, socket )
   this._pendingAcquireSemaphoreRecourceIdList = [] ;
   this._numberOfPendingRequests               = 0 ;
   this._messageUidsToBeProcessed              = [] ;
-  this._isLocalHost = undefined ;
+  this._isLocalHost                           = undefined ;
   this._timeStamp                             = 0 ;
   this.fullQualifiedEventNames                = {} ;
   this.eventNameList                          = [] ;
@@ -51,6 +51,10 @@ Connection.prototype.toString = function()
 {
   return "(Connection)[client_info=" + util.inspect ( this.client_info, { showHidden: false, depth: null } ) + "]" ;
 };
+Connection.prototype.getRemoteAddress = function()
+{
+  return this.socket.remoteAddress ;
+}
 Connection.prototype.getClientInfo = function()
 {
   return this.client_info ;

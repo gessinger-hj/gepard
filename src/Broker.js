@@ -271,9 +271,15 @@ AbstractBroker.prototype._ondata = function ( socket, chunk )
           this._ejectSocket ( socket ) ;
           continue ;
         }
+        e._setOriginatorIp ( socket.remoteAddress ) ;
+console.log("------------------------------------");
+console.log(e);
         if ( e.isResult() )
         {
           responderConnection  = conn ;
+          e._setResponderIp ( responderConnection.socket.remoteAddress ) ;
+console.log(e);
+console.log ( "responderConnection.socket.remoteAddress=" + responderConnection.socket.remoteAddress ) ;
           responderConnection._numberOfPendingRequests-- ;
           sid                  = e.getSourceIdentifier() ;
           uid                  = e.getUniqueId() ;
