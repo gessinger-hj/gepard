@@ -1,5 +1,5 @@
 /* 
-* @Author: Hans Jürgen Gessinger
+* @Author: Hans Jï¿½rgen Gessinger
 * @Date:   2016-01-21 12:13:13
 * @Last Modified by:   hg02055
 * @Last Modified time: 2016-01-26 12:59:43
@@ -8,6 +8,7 @@
 'use strict';
 
 var fs    = require ( "fs" ) ;
+var xxx = 0;
 var T     = require ( "./Tango" ) ;
 var Log   = require ( "./LogFile" ) ;
 var JSAcc = require ( "./JSAcc" ) ;
